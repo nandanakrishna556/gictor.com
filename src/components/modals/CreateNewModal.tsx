@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Image, Video, FileText, X } from 'lucide-react';
+import { Image, Video, FileText, ArrowLeft } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -66,20 +66,20 @@ export default function CreateNewModal({
         } rounded-2xl border-border`}
       >
         <DialogHeader className="border-b border-border p-6">
-          <div className="flex items-center justify-between">
-            <DialogTitle className="text-xl font-semibold">
-              {selectedType
-                ? contentTypes.find((t) => t.id === selectedType)?.title
-                : 'What would you like to create?'}
-            </DialogTitle>
+          <div className="flex items-center gap-3">
             {selectedType && (
               <button
                 onClick={() => setSelectedType(null)}
                 className="rounded-lg p-1.5 text-muted-foreground transition-apple hover:bg-secondary"
               >
-                <X className="h-4 w-4" />
+                <ArrowLeft className="h-4 w-4" />
               </button>
             )}
+            <DialogTitle className="text-xl font-semibold">
+              {selectedType
+                ? contentTypes.find((t) => t.id === selectedType)?.title
+                : 'What would you like to create?'}
+            </DialogTitle>
           </div>
         </DialogHeader>
 

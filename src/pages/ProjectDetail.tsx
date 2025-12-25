@@ -140,6 +140,7 @@ export default function ProjectDetail() {
               folders={folders || []}
               projectId={projectId}
               viewMode={viewMode}
+              onCreateNew={() => setCreateModalOpen(true)}
             />
           )}
         </div>
