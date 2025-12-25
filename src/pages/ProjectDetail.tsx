@@ -61,7 +61,7 @@ export default function ProjectDetail() {
 
   const { files, folders, isLoading, createFolder, updateFile, updateFolder, deleteFile, deleteFolder, bulkDeleteFiles, bulkUpdateFiles } = useFiles(projectId!, folderId);
   const { pipelines, createPipeline } = usePipelines();
-  const { tags, createTag } = useTags();
+  const { tags, createTag, deleteTag } = useTags();
 
   // Filter files based on selected filters
   const filteredFiles = (files || []).filter((file) => {
@@ -151,6 +151,12 @@ export default function ProjectDetail() {
     setSelectedFileTypes([]);
   };
 
+  const handleDeleteTag = async (id: string) => {
+    await deleteTag(id);
+    // Remove deleted tag from selected filters
+    setSelectedTags((prev) => prev.filter((t) => t !== id));
+  };
+
   if (!projectId) {
     navigate('/projects');
     return null;
@@ -174,6 +180,7 @@ export default function ProjectDetail() {
           onStatusesChange={setSelectedStatuses}
           onFileTypesChange={setSelectedFileTypes}
           onCreateTag={() => setCreateTagOpen(true)}
+          onDeleteTag={handleDeleteTag}
           onClearFilters={handleClearFilters}
         />
 
@@ -230,6 +237,7 @@ export default function ProjectDetail() {
               onCreatePipeline={() => setCreatePipelineOpen(true)}
               onCreateNew={() => setCreateModalOpen(true)}
               onCreateTag={() => setCreateTagOpen(true)}
+              onDeleteTag={handleDeleteTag}
               onDeleteFile={handleDeleteFile}
               onDeleteFolder={handleDeleteFolder}
               onUpdateFileStatus={handleUpdateFileStatus}
