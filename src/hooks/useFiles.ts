@@ -185,7 +185,28 @@ export function useFiles(projectId: string, folderId?: string) {
       if (error) throw error;
       return data as File;
     },
-    onSuccess: () => {
+    onMutate: async ({ id, updates }) => {
+      // Cancel any outgoing refetches
+      await queryClient.cancelQueries({ queryKey: ['files', projectId] });
+      
+      // Snapshot the previous value
+      const previousFiles = queryClient.getQueryData(['files', projectId, folderId]);
+      
+      // Optimistically update
+      queryClient.setQueryData(['files', projectId, folderId], (old: File[] | undefined) => {
+        if (!old) return old;
+        return old.map(file => file.id === id ? { ...file, ...updates } : file);
+      });
+      
+      return { previousFiles };
+    },
+    onError: (err, variables, context) => {
+      // Rollback on error
+      if (context?.previousFiles) {
+        queryClient.setQueryData(['files', projectId, folderId], context.previousFiles);
+      }
+    },
+    onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['files', projectId] });
     },
   });
@@ -202,7 +223,24 @@ export function useFiles(projectId: string, folderId?: string) {
       if (error) throw error;
       return data as Folder;
     },
-    onSuccess: () => {
+    onMutate: async ({ id, updates }) => {
+      await queryClient.cancelQueries({ queryKey: ['folders', projectId] });
+      
+      const previousFolders = queryClient.getQueryData(['folders', projectId, folderId]);
+      
+      queryClient.setQueryData(['folders', projectId, folderId], (old: Folder[] | undefined) => {
+        if (!old) return old;
+        return old.map(folder => folder.id === id ? { ...folder, ...updates } : folder);
+      });
+      
+      return { previousFolders };
+    },
+    onError: (err, variables, context) => {
+      if (context?.previousFolders) {
+        queryClient.setQueryData(['folders', projectId, folderId], context.previousFolders);
+      }
+    },
+    onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['folders', projectId] });
     },
   });

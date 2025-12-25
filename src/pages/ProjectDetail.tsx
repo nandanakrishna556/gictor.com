@@ -229,6 +229,7 @@ export default function ProjectDetail() {
               onPipelineChange={setSelectedPipelineId}
               onCreatePipeline={() => setCreatePipelineOpen(true)}
               onCreateNew={() => setCreateModalOpen(true)}
+              onCreateTag={() => setCreateTagOpen(true)}
               onDeleteFile={handleDeleteFile}
               onDeleteFolder={handleDeleteFolder}
               onUpdateFileStatus={handleUpdateFileStatus}
