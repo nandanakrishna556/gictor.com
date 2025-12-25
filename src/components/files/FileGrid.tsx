@@ -83,18 +83,18 @@ export default function FileGrid({
   }
 
   return (
-    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+    <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
       {folders.map((folder) => (
         <div
           key={folder.id}
           onClick={() => navigate(`/projects/${projectId}/folder/${folder.id}`)}
-          className="group relative cursor-pointer rounded-2xl border border-border bg-card p-5 shadow-apple transition-apple hover-lift"
+          className="group relative cursor-pointer rounded-2xl border border-border bg-card p-6 shadow-apple transition-apple hover-lift"
         >
-          <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10">
-            <FolderOpen className="h-6 w-6 text-primary" />
+          <div className="mb-6 flex aspect-[4/3] items-center justify-center rounded-xl bg-primary/10">
+            <FolderOpen className="h-10 w-10 text-primary" />
           </div>
-          <h3 className="font-semibold text-card-foreground">{folder.name}</h3>
-          <p className="text-sm text-muted-foreground">Folder</p>
+          <h3 className="text-lg font-semibold text-card-foreground">{folder.name}</h3>
+          <p className="mt-1 text-sm text-muted-foreground">Folder</p>
         </div>
       ))}
 
@@ -116,14 +116,14 @@ function FileCard({ file, compact = false }: { file: File; compact?: boolean }) 
         'group relative cursor-pointer rounded-2xl border bg-card shadow-apple transition-apple hover-lift',
         isProcessing && 'animate-pulse-subtle',
         isFailed && 'border-destructive/50',
-        compact ? 'p-4' : 'border-border p-5'
+        compact ? 'p-4' : 'border-border p-6'
       )}
     >
       {/* Preview */}
       <div
         className={cn(
-          'mb-4 flex items-center justify-center rounded-xl bg-secondary',
-          compact ? 'h-20' : 'h-32'
+          'mb-5 flex items-center justify-center rounded-xl bg-secondary',
+          compact ? 'h-24' : 'aspect-[4/5]'
         )}
       >
         {file.preview_url ? (
@@ -135,7 +135,7 @@ function FileCard({ file, compact = false }: { file: File; compact?: boolean }) 
         ) : isProcessing ? (
           <div className="shimmer h-full w-full rounded-xl" />
         ) : (
-          <Icon className="h-8 w-8 text-muted-foreground" />
+          <Icon className="h-10 w-10 text-muted-foreground" />
         )}
       </div>
 

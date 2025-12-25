@@ -2,106 +2,103 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Apple-inspired Design System */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-
 @layer base {
   :root {
-    /* Apple-inspired color palette */
+    /* Orange-based color palette */
     --background: 0 0% 100%;
-    --foreground: 0 0% 11%;
+    --foreground: 24 10% 10%;
     
     --card: 0 0% 100%;
-    --card-foreground: 0 0% 11%;
+    --card-foreground: 24 10% 10%;
     
     --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 11%;
+    --popover-foreground: 24 10% 10%;
     
-    /* Apple Blue */
-    --primary: 211 100% 50%;
+    /* Vibrant Orange */
+    --primary: 24 95% 53%;
     --primary-foreground: 0 0% 100%;
     
-    /* Light gray surface */
-    --secondary: 240 5% 97%;
-    --secondary-foreground: 0 0% 11%;
+    /* Warm gray surface */
+    --secondary: 30 10% 96%;
+    --secondary-foreground: 24 10% 10%;
     
-    --muted: 240 5% 97%;
-    --muted-foreground: 0 0% 53%;
+    --muted: 30 10% 96%;
+    --muted-foreground: 24 5% 45%;
     
-    --accent: 240 5% 97%;
-    --accent-foreground: 0 0% 11%;
+    --accent: 30 10% 96%;
+    --accent-foreground: 24 10% 10%;
     
     /* Status colors */
     --success: 142 71% 45%;
     --success-foreground: 0 0% 100%;
     
-    --warning: 32 100% 50%;
-    --warning-foreground: 0 0% 100%;
+    --warning: 45 100% 51%;
+    --warning-foreground: 24 10% 10%;
     
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
     
     /* Borders and inputs */
-    --border: 240 6% 90%;
-    --input: 240 6% 90%;
-    --ring: 211 100% 50%;
+    --border: 30 10% 88%;
+    --input: 30 10% 88%;
+    --ring: 24 95% 53%;
     
-    --radius: 0.75rem;
+    --radius: 0.875rem;
     
     /* Sidebar */
-    --sidebar-background: 0 0% 100%;
-    --sidebar-foreground: 0 0% 11%;
-    --sidebar-primary: 211 100% 50%;
+    --sidebar-background: 30 10% 98%;
+    --sidebar-foreground: 24 10% 10%;
+    --sidebar-primary: 24 95% 53%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 5% 97%;
-    --sidebar-accent-foreground: 0 0% 11%;
-    --sidebar-border: 240 6% 90%;
-    --sidebar-ring: 211 100% 50%;
+    --sidebar-accent: 30 10% 94%;
+    --sidebar-accent-foreground: 24 10% 10%;
+    --sidebar-border: 30 10% 90%;
+    --sidebar-ring: 24 95% 53%;
   }
 
   .dark {
-    --background: 0 0% 7%;
-    --foreground: 0 0% 98%;
+    --background: 24 10% 6%;
+    --foreground: 30 10% 98%;
     
-    --card: 0 0% 10%;
-    --card-foreground: 0 0% 98%;
+    --card: 24 10% 9%;
+    --card-foreground: 30 10% 98%;
     
-    --popover: 0 0% 10%;
-    --popover-foreground: 0 0% 98%;
+    --popover: 24 10% 9%;
+    --popover-foreground: 30 10% 98%;
     
-    --primary: 211 100% 50%;
+    --primary: 24 95% 53%;
     --primary-foreground: 0 0% 100%;
     
-    --secondary: 0 0% 15%;
-    --secondary-foreground: 0 0% 98%;
+    --secondary: 24 10% 14%;
+    --secondary-foreground: 30 10% 98%;
     
-    --muted: 0 0% 15%;
-    --muted-foreground: 0 0% 60%;
+    --muted: 24 10% 14%;
+    --muted-foreground: 30 10% 55%;
     
-    --accent: 0 0% 15%;
-    --accent-foreground: 0 0% 98%;
+    --accent: 24 10% 14%;
+    --accent-foreground: 30 10% 98%;
     
     --success: 142 71% 45%;
     --success-foreground: 0 0% 100%;
     
-    --warning: 32 100% 50%;
-    --warning-foreground: 0 0% 100%;
+    --warning: 45 100% 51%;
+    --warning-foreground: 24 10% 10%;
     
-    --destructive: 0 62% 30%;
-    --destructive-foreground: 0 0% 98%;
+    --destructive: 0 62% 35%;
+    --destructive-foreground: 30 10% 98%;
     
-    --border: 0 0% 20%;
-    --input: 0 0% 20%;
-    --ring: 211 100% 50%;
+    --border: 24 10% 18%;
+    --input: 24 10% 18%;
+    --ring: 24 95% 53%;
     
-    --sidebar-background: 0 0% 10%;
-    --sidebar-foreground: 0 0% 98%;
-    --sidebar-primary: 211 100% 50%;
+    --sidebar-background: 24 10% 8%;
+    --sidebar-foreground: 30 10% 98%;
+    --sidebar-primary: 24 95% 53%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 0 0% 15%;
-    --sidebar-accent-foreground: 0 0% 98%;
-    --sidebar-border: 0 0% 20%;
-    --sidebar-ring: 211 100% 50%;
+    --sidebar-accent: 24 10% 14%;
+    --sidebar-accent-foreground: 30 10% 98%;
+    --sidebar-border: 24 10% 18%;
+    --sidebar-ring: 24 95% 53%;
   }
 }
 
@@ -115,7 +112,7 @@
   }
 
   html {
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   }
 }
 
