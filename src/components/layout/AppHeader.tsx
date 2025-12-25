@@ -1,5 +1,5 @@
 import { Link, useNavigate } from 'react-router-dom';
-import { ChevronRight, Filter, Grid3X3, Kanban, Plus, Coins, LogOut, Settings } from 'lucide-react';
+import { ChevronRight, Filter, Grid3X3, Kanban, Plus, Coins, LogOut, Settings, Sun, Moon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
@@ -11,6 +11,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { useAuth } from '@/contexts/AuthContext';
 import { useProfile } from '@/hooks/useProfile';
+import { useTheme } from 'next-themes';
 
 interface BreadcrumbItem {
   label: string;
@@ -37,6 +38,7 @@ export default function AppHeader({
   const { user, signOut } = useAuth();
   const { profile } = useProfile();
   const navigate = useNavigate();
+  const { theme, setTheme } = useTheme();
 
   const getInitials = (name?: string | null, email?: string | null) => {
     if (name) {
@@ -143,6 +145,14 @@ export default function AppHeader({
           {profile?.credits ?? 0} Credits
           <Plus className="h-3 w-3 text-muted-foreground" />
         </Link>
+
+        {/* Dark Mode Toggle */}
+        <button
+          onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+          className="flex h-9 w-9 items-center justify-center rounded-lg border border-border bg-background text-muted-foreground transition-apple hover:bg-secondary hover:text-foreground"
+        >
+          {theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+        </button>
 
         {/* User Menu */}
         <DropdownMenu>

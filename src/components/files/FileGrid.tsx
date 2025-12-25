@@ -8,6 +8,7 @@ import {
   MoreHorizontal,
   Trash2,
   Copy,
+  Plus,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
@@ -24,6 +25,7 @@ interface FileGridProps {
   folders: Folder[];
   projectId: string;
   viewMode: 'grid' | 'kanban';
+  onCreateNew?: () => void;
 }
 
 const fileTypeIcons = {
@@ -43,6 +45,7 @@ export default function FileGrid({
   folders,
   projectId,
   viewMode,
+  onCreateNew,
 }: FileGridProps) {
   const navigate = useNavigate();
 
@@ -84,20 +87,33 @@ export default function FileGrid({
 
   return (
     <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+      {/* Create New Card - First item */}
+      {onCreateNew && (
+        <button
+          onClick={onCreateNew}
+          className="group relative flex aspect-[2/3] cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed border-border bg-card transition-apple hover:border-primary hover:bg-primary/5"
+        >
+          <div className="flex h-14 w-14 items-center justify-center rounded-full bg-primary/10 transition-apple group-hover:bg-primary/20">
+            <Plus className="h-7 w-7 text-primary" />
+          </div>
+          <span className="mt-4 text-base font-medium text-muted-foreground transition-apple group-hover:text-primary">
+            Create new
+          </span>
+        </button>
+      )}
+
+      {/* Folders */}
       {folders.map((folder) => (
         <div
           key={folder.id}
           onClick={() => navigate(`/projects/${projectId}/folder/${folder.id}`)}
-          className="group relative cursor-pointer rounded-2xl border border-border bg-card p-6 shadow-apple transition-apple hover-lift"
+          className="group relative flex aspect-[2/3] cursor-pointer flex-col justify-end rounded-2xl border border-border bg-card p-5 transition-apple hover:border-primary"
         >
-          <div className="mb-6 flex aspect-[4/3] items-center justify-center rounded-xl bg-primary/10">
-            <FolderOpen className="h-10 w-10 text-primary" />
-          </div>
           <h3 className="text-lg font-semibold text-card-foreground">{folder.name}</h3>
-          <p className="mt-1 text-sm text-muted-foreground">Folder</p>
         </div>
       ))}
 
+      {/* Files */}
       {files.map((file) => (
         <FileCard key={file.id} file={file} />
       ))}
@@ -106,41 +122,38 @@ export default function FileGrid({
 }
 
 function FileCard({ file, compact = false }: { file: File; compact?: boolean }) {
-  const Icon = fileTypeIcons[file.file_type];
   const isProcessing = file.status === 'processing';
   const isFailed = file.status === 'failed';
 
   return (
     <div
       className={cn(
-        'group relative cursor-pointer rounded-2xl border bg-card shadow-apple transition-apple hover-lift',
+        'group relative flex cursor-pointer flex-col rounded-2xl border bg-card transition-apple hover:border-primary',
         isProcessing && 'animate-pulse-subtle',
         isFailed && 'border-destructive/50',
-        compact ? 'p-4' : 'border-border p-6'
+        compact ? 'p-4' : 'aspect-[2/3] border-border'
       )}
     >
-      {/* Preview */}
+      {/* Preview Area */}
       <div
         className={cn(
-          'mb-5 flex items-center justify-center rounded-xl bg-secondary',
-          compact ? 'h-24' : 'aspect-[4/5]'
+          'flex flex-1 items-center justify-center rounded-t-2xl bg-secondary',
+          compact && 'h-24 rounded-2xl'
         )}
       >
         {file.preview_url ? (
           <img
             src={file.preview_url}
             alt={file.name}
-            className="h-full w-full rounded-xl object-cover"
+            className="h-full w-full rounded-t-2xl object-cover"
           />
         ) : isProcessing ? (
-          <div className="shimmer h-full w-full rounded-xl" />
-        ) : (
-          <Icon className="h-10 w-10 text-muted-foreground" />
-        )}
+          <div className="shimmer h-full w-full rounded-t-2xl" />
+        ) : null}
       </div>
 
       {/* Info */}
-      <div className="flex items-start justify-between">
+      <div className="flex items-start justify-between p-4">
         <div className="min-w-0 flex-1">
           <h3 className="truncate font-medium text-card-foreground">
             {file.name}
@@ -150,9 +163,9 @@ function FileCard({ file, compact = false }: { file: File; compact?: boolean }) 
               variant="secondary"
               className={cn(
                 'text-xs',
-                file.file_type === 'first_frame' && 'bg-blue-100 text-blue-700',
-                file.file_type === 'talking_head' && 'bg-purple-100 text-purple-700',
-                file.file_type === 'script' && 'bg-amber-100 text-amber-700'
+                file.file_type === 'first_frame' && 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
+                file.file_type === 'talking_head' && 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400',
+                file.file_type === 'script' && 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
               )}
             >
               {fileTypeLabels[file.file_type]}
