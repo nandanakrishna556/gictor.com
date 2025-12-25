@@ -138,31 +138,16 @@ export default function AppHeader({
           </div>
         )}
 
-        {/* Create Buttons */}
-        {showCreateButtons && (
-          <>
-            {onCreateFolder && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={onCreateFolder}
-                className="gap-2 rounded-lg border-border"
-              >
-                <Plus className="h-4 w-4" />
-                Create folder
-              </Button>
-            )}
-            {onCreateNew && (
-              <Button
-                size="sm"
-                onClick={onCreateNew}
-                className="gap-2 rounded-lg bg-primary font-medium text-primary-foreground transition-apple hover:opacity-90"
-              >
-                <Plus className="h-4 w-4" />
-                Create new
-              </Button>
-            )}
-          </>
+        {/* Create Button */}
+        {showCreateButtons && onCreateNew && (
+          <Button
+            size="sm"
+            onClick={onCreateNew}
+            className="gap-2 rounded-lg bg-primary font-medium text-primary-foreground transition-apple hover:opacity-90"
+          >
+            <Plus className="h-4 w-4" />
+            Create new
+          </Button>
         )}
 
         {/* Credits */}
