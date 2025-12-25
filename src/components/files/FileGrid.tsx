@@ -55,6 +55,7 @@ interface FileGridProps {
   onPipelineChange: (id: string | null) => void;
   onCreatePipeline: () => void;
   onCreateNew?: () => void;
+  onCreateTag?: () => void;
   onDeleteFile?: (id: string) => void;
   onDeleteFolder?: (id: string) => void;
   onUpdateFileStatus?: (id: string, status: string) => void;
@@ -95,6 +96,7 @@ export default function FileGrid({
   onPipelineChange,
   onCreatePipeline,
   onCreateNew,
+  onCreateTag,
   onDeleteFile,
   onDeleteFolder,
   onUpdateFileStatus,
@@ -420,6 +422,7 @@ export default function FileGrid({
               onDelete={onDeleteFolder}
               onStatusChange={onUpdateFolderStatus}
               onTagsChange={onUpdateFolderTags}
+              onCreateTag={onCreateTag}
             />
           ) : (
             <FileCard
@@ -433,6 +436,7 @@ export default function FileGrid({
               onDelete={onDeleteFile}
               onStatusChange={onUpdateFileStatus}
               onTagsChange={onUpdateFileTags}
+              onCreateTag={onCreateTag}
             />
           )
         )}
@@ -560,6 +564,7 @@ function FolderCard({
   onDelete,
   onStatusChange,
   onTagsChange,
+  onCreateTag,
 }: {
   folder: FolderType;
   projectId: string;
@@ -571,6 +576,7 @@ function FolderCard({
   onDelete?: (id: string) => void;
   onStatusChange?: (id: string, status: string) => void;
   onTagsChange?: (id: string, tags: string[]) => void;
+  onCreateTag?: () => void;
 }) {
   const navigate = useNavigate();
   // Default status to first stage if not set
@@ -675,34 +681,76 @@ function FolderCard({
           </Select>
         </div>
 
-        {/* Tags Row - Two Column Layout */}
-        <div className="flex items-center gap-3">
-          <span className="text-xs text-muted-foreground w-12">Tags</span>
-          <div className="flex flex-1 items-center gap-1.5">
-            {folderTags.length > 0 ? (
-              <>
-                {folderTags.slice(0, 2).map((tagId) => {
-                  const tag = tags.find((t) => t.id === tagId);
-                  if (!tag) return null;
-                  return (
-                    <span
-                      key={tagId}
-                      className="rounded px-1.5 py-0.5 text-xs"
-                      style={{ backgroundColor: `${tag.color}20`, color: tag.color }}
-                    >
-                      {tag.tag_name}
-                    </span>
-                  );
-                })}
-                {folderTags.length > 2 && (
-                  <span className="text-xs text-muted-foreground">+{folderTags.length - 2}</span>
+        {/* Tags Row - Two Column Layout with Popover */}
+        <Popover>
+          <PopoverTrigger asChild>
+            <button
+              className="flex w-full items-center gap-3 rounded-md p-1 -m-1 hover:bg-secondary/50 transition-colors"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <span className="text-xs text-muted-foreground w-12">Tags</span>
+              <div className="flex flex-1 items-center gap-1.5">
+                {folderTags.length > 0 ? (
+                  <>
+                    {folderTags.slice(0, 2).map((tagId) => {
+                      const tag = tags.find((t) => t.id === tagId);
+                      if (!tag) return null;
+                      return (
+                        <span
+                          key={tagId}
+                          className="rounded px-1.5 py-0.5 text-xs"
+                          style={{ backgroundColor: `${tag.color}20`, color: tag.color }}
+                        >
+                          {tag.tag_name}
+                        </span>
+                      );
+                    })}
+                    {folderTags.length > 2 && (
+                      <span className="text-xs text-muted-foreground">+{folderTags.length - 2}</span>
+                    )}
+                  </>
+                ) : (
+                  <span className="text-xs text-muted-foreground">+ Add tag</span>
                 )}
-              </>
-            ) : (
-              <span className="text-xs text-muted-foreground">—</span>
-            )}
-          </div>
-        </div>
+              </div>
+            </button>
+          </PopoverTrigger>
+          <PopoverContent align="start" className="w-48 bg-card border shadow-lg">
+            <div className="space-y-2">
+              <h4 className="text-sm font-medium">Tags</h4>
+              {tags.length === 0 ? (
+                <p className="text-xs text-muted-foreground">No tags available</p>
+              ) : (
+                tags.map((tag) => (
+                  <label
+                    key={tag.id}
+                    className="flex cursor-pointer items-center gap-2 rounded-md p-1.5 hover:bg-secondary"
+                  >
+                    <Checkbox
+                      checked={folderTags.includes(tag.id)}
+                      onCheckedChange={() => toggleTag(tag.id)}
+                    />
+                    <span
+                      className="h-2 w-2 rounded-full"
+                      style={{ backgroundColor: tag.color }}
+                    />
+                    <span className="text-sm">{tag.tag_name}</span>
+                  </label>
+                ))
+              )}
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onCreateTag?.();
+                }}
+                className="flex w-full items-center gap-2 rounded-md p-1.5 text-sm text-primary hover:bg-secondary"
+              >
+                <Plus className="h-3.5 w-3.5" />
+                Create new tag
+              </button>
+            </div>
+          </PopoverContent>
+        </Popover>
       </div>
 
       {/* Actions */}
@@ -780,6 +828,7 @@ function FileCard({
   onDelete,
   onStatusChange,
   onTagsChange,
+  onCreateTag,
 }: {
   file: File;
   stages: PipelineStage[];
@@ -790,6 +839,7 @@ function FileCard({
   onDelete?: (id: string) => void;
   onStatusChange?: (id: string, status: string) => void;
   onTagsChange?: (id: string, tags: string[]) => void;
+  onCreateTag?: () => void;
 }) {
   const isProcessing = file.status === 'processing';
   const isFailed = file.status === 'failed';
@@ -893,34 +943,76 @@ function FileCard({
           </Select>
         </div>
 
-        {/* Tags Row - Two Column Layout */}
-        <div className="flex items-center gap-3">
-          <span className="text-xs text-muted-foreground w-12">Tags</span>
-          <div className="flex flex-1 items-center gap-1.5">
-            {fileTags.length > 0 ? (
-              <>
-                {fileTags.slice(0, 2).map((tagId) => {
-                  const tag = tags.find((t) => t.id === tagId);
-                  if (!tag) return null;
-                  return (
-                    <span
-                      key={tagId}
-                      className="rounded px-1.5 py-0.5 text-xs"
-                      style={{ backgroundColor: `${tag.color}20`, color: tag.color }}
-                    >
-                      {tag.tag_name}
-                    </span>
-                  );
-                })}
-                {fileTags.length > 2 && (
-                  <span className="text-xs text-muted-foreground">+{fileTags.length - 2}</span>
+        {/* Tags Row - Two Column Layout with Popover */}
+        <Popover>
+          <PopoverTrigger asChild>
+            <button
+              className="flex w-full items-center gap-3 rounded-md p-1 -m-1 hover:bg-secondary/50 transition-colors"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <span className="text-xs text-muted-foreground w-12">Tags</span>
+              <div className="flex flex-1 items-center gap-1.5">
+                {fileTags.length > 0 ? (
+                  <>
+                    {fileTags.slice(0, 2).map((tagId) => {
+                      const tag = tags.find((t) => t.id === tagId);
+                      if (!tag) return null;
+                      return (
+                        <span
+                          key={tagId}
+                          className="rounded px-1.5 py-0.5 text-xs"
+                          style={{ backgroundColor: `${tag.color}20`, color: tag.color }}
+                        >
+                          {tag.tag_name}
+                        </span>
+                      );
+                    })}
+                    {fileTags.length > 2 && (
+                      <span className="text-xs text-muted-foreground">+{fileTags.length - 2}</span>
+                    )}
+                  </>
+                ) : (
+                  <span className="text-xs text-muted-foreground">+ Add tag</span>
                 )}
-              </>
-            ) : (
-              <span className="text-xs text-muted-foreground">—</span>
-            )}
-          </div>
-        </div>
+              </div>
+            </button>
+          </PopoverTrigger>
+          <PopoverContent align="start" className="w-48 bg-card border shadow-lg">
+            <div className="space-y-2">
+              <h4 className="text-sm font-medium">Tags</h4>
+              {tags.length === 0 ? (
+                <p className="text-xs text-muted-foreground">No tags available</p>
+              ) : (
+                tags.map((tag) => (
+                  <label
+                    key={tag.id}
+                    className="flex cursor-pointer items-center gap-2 rounded-md p-1.5 hover:bg-secondary"
+                  >
+                    <Checkbox
+                      checked={fileTags.includes(tag.id)}
+                      onCheckedChange={() => toggleTag(tag.id)}
+                    />
+                    <span
+                      className="h-2 w-2 rounded-full"
+                      style={{ backgroundColor: tag.color }}
+                    />
+                    <span className="text-sm">{tag.tag_name}</span>
+                  </label>
+                ))
+              )}
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onCreateTag?.();
+                }}
+                className="flex w-full items-center gap-2 rounded-md p-1.5 text-sm text-primary hover:bg-secondary"
+              >
+                <Plus className="h-3.5 w-3.5" />
+                Create new tag
+              </button>
+            </div>
+          </PopoverContent>
+        </Popover>
       </div>
 
       {/* Download button */}
