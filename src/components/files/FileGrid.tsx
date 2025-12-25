@@ -655,9 +655,8 @@ function FolderCard({
           >
             <SelectTrigger
               className={cn(
-                'h-8 w-fit rounded-full text-xs border-2 px-3 py-1 text-white [&>svg]:hidden',
-                currentStage?.color,
-                currentStage?.color?.replace('bg-', 'border-')
+                'h-7 w-fit rounded-md text-xs border-0 px-3 py-1 text-white gap-1',
+                currentStage?.color
               )}
               onClick={(e) => e.stopPropagation()}
             >
@@ -874,9 +873,8 @@ function FileCard({
           >
             <SelectTrigger
               className={cn(
-                'h-8 w-fit rounded-full text-xs border-2 px-3 py-1 text-white [&>svg]:hidden',
-                currentStage?.color,
-                currentStage?.color?.replace('bg-', 'border-')
+                'h-7 w-fit rounded-md text-xs border-0 px-3 py-1 text-white gap-1',
+                currentStage?.color
               )}
               onClick={(e) => e.stopPropagation()}
             >
