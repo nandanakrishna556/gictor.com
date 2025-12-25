@@ -791,22 +791,7 @@ function FolderCard({
             <MoreHorizontal className="h-4 w-4 text-muted-foreground" />
           </button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end">
-          {onCreateNew && (
-            <>
-              <DropdownMenuItem
-                className="gap-2"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onCreateNew();
-                }}
-              >
-                <Plus className="h-4 w-4" />
-                Create new
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-            </>
-          )}
+        <DropdownMenuContent align="end" className="bg-card border shadow-lg">
           <Popover>
             <PopoverTrigger asChild>
               <DropdownMenuItem className="gap-2" onSelect={(e) => e.preventDefault()}>
@@ -814,29 +799,55 @@ function FolderCard({
                 Assign Tags
               </DropdownMenuItem>
             </PopoverTrigger>
-            <PopoverContent align="start" className="w-48">
-              <div className="space-y-2">
-                <h4 className="text-sm font-medium">Tags</h4>
+            <PopoverContent align="start" className="w-52 bg-card border shadow-lg" onClick={(e) => e.stopPropagation()}>
+              <div className="space-y-1">
+                <h4 className="text-sm font-medium mb-2">Tags</h4>
                 {tags.length === 0 ? (
                   <p className="text-xs text-muted-foreground">No tags available</p>
                 ) : (
                   tags.map((tag) => (
-                    <label
+                    <div
                       key={tag.id}
-                      className="flex cursor-pointer items-center gap-2 rounded-md p-1.5 hover:bg-secondary"
+                      className="flex items-center gap-2 rounded-md p-1.5 hover:bg-secondary cursor-pointer"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        toggleTag(tag.id);
+                      }}
                     >
                       <Checkbox
                         checked={folderTags.includes(tag.id)}
                         onCheckedChange={() => toggleTag(tag.id)}
+                        onClick={(e) => e.stopPropagation()}
                       />
                       <span
-                        className="h-2 w-2 rounded-full"
+                        className="h-2 w-2 rounded-full flex-shrink-0"
                         style={{ backgroundColor: tag.color }}
                       />
-                      <span className="text-sm">{tag.tag_name}</span>
-                    </label>
+                      <span className="flex-1 text-sm truncate">{tag.tag_name}</span>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          e.preventDefault();
+                          onDeleteTag?.(tag.id);
+                        }}
+                        className="rounded p-0.5 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+                        title="Delete tag"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
                   ))
                 )}
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onCreateTag?.();
+                  }}
+                  className="flex w-full items-center gap-2 rounded-md p-1.5 text-sm text-primary hover:bg-secondary mt-2"
+                >
+                  <Plus className="h-3.5 w-3.5" />
+                  Create new tag
+                </button>
               </div>
             </PopoverContent>
           </Popover>
@@ -1100,22 +1111,7 @@ function FileCard({
             <MoreHorizontal className="h-4 w-4 text-muted-foreground" />
           </button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end">
-          {onCreateNew && (
-            <>
-              <DropdownMenuItem
-                className="gap-2"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onCreateNew();
-                }}
-              >
-                <Plus className="h-4 w-4" />
-                Create new
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-            </>
-          )}
+        <DropdownMenuContent align="end" className="bg-card border shadow-lg">
           <Popover>
             <PopoverTrigger asChild>
               <DropdownMenuItem className="gap-2" onSelect={(e) => e.preventDefault()}>
@@ -1123,29 +1119,55 @@ function FileCard({
                 Assign Tags
               </DropdownMenuItem>
             </PopoverTrigger>
-            <PopoverContent align="start" className="w-48">
-              <div className="space-y-2">
-                <h4 className="text-sm font-medium">Tags</h4>
+            <PopoverContent align="start" className="w-52 bg-card border shadow-lg" onClick={(e) => e.stopPropagation()}>
+              <div className="space-y-1">
+                <h4 className="text-sm font-medium mb-2">Tags</h4>
                 {tags.length === 0 ? (
                   <p className="text-xs text-muted-foreground">No tags available</p>
                 ) : (
                   tags.map((tag) => (
-                    <label
+                    <div
                       key={tag.id}
-                      className="flex cursor-pointer items-center gap-2 rounded-md p-1.5 hover:bg-secondary"
+                      className="flex items-center gap-2 rounded-md p-1.5 hover:bg-secondary cursor-pointer"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        toggleTag(tag.id);
+                      }}
                     >
                       <Checkbox
                         checked={fileTags.includes(tag.id)}
                         onCheckedChange={() => toggleTag(tag.id)}
+                        onClick={(e) => e.stopPropagation()}
                       />
                       <span
-                        className="h-2 w-2 rounded-full"
+                        className="h-2 w-2 rounded-full flex-shrink-0"
                         style={{ backgroundColor: tag.color }}
                       />
-                      <span className="text-sm">{tag.tag_name}</span>
-                    </label>
+                      <span className="flex-1 text-sm truncate">{tag.tag_name}</span>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          e.preventDefault();
+                          onDeleteTag?.(tag.id);
+                        }}
+                        className="rounded p-0.5 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+                        title="Delete tag"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
                   ))
                 )}
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onCreateTag?.();
+                  }}
+                  className="flex w-full items-center gap-2 rounded-md p-1.5 text-sm text-primary hover:bg-secondary mt-2"
+                >
+                  <Plus className="h-3.5 w-3.5" />
+                  Create new tag
+                </button>
               </div>
             </PopoverContent>
           </Popover>
