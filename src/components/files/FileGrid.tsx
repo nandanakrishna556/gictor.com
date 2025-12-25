@@ -396,7 +396,7 @@ export default function FileGrid({
         {onCreateNew && (
           <button
             onClick={onCreateNew}
-            className="group relative flex aspect-[2/3] cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed border-border bg-card transition-all duration-200 hover:border-primary hover:bg-primary/5 hover:scale-[1.02]"
+            className="group relative flex aspect-[2/3] cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed border-border bg-card transition-colors duration-200 hover:border-primary hover:bg-primary/5"
           >
             <div className="flex h-14 w-14 items-center justify-center rounded-full bg-primary/10 transition-all duration-200 group-hover:bg-primary/20">
               <Plus className="h-7 w-7 text-primary" />
@@ -423,6 +423,7 @@ export default function FileGrid({
               onStatusChange={onUpdateFolderStatus}
               onTagsChange={onUpdateFolderTags}
               onCreateTag={onCreateTag}
+              onCreateNew={onCreateNew}
             />
           ) : (
             <FileCard
@@ -437,6 +438,7 @@ export default function FileGrid({
               onStatusChange={onUpdateFileStatus}
               onTagsChange={onUpdateFileTags}
               onCreateTag={onCreateTag}
+              onCreateNew={onCreateNew}
             />
           )
         )}
@@ -565,6 +567,7 @@ function FolderCard({
   onStatusChange,
   onTagsChange,
   onCreateTag,
+  onCreateNew,
 }: {
   folder: FolderType;
   projectId: string;
@@ -577,6 +580,7 @@ function FolderCard({
   onStatusChange?: (id: string, status: string) => void;
   onTagsChange?: (id: string, tags: string[]) => void;
   onCreateTag?: () => void;
+  onCreateNew?: () => void;
 }) {
   const navigate = useNavigate();
   // Default status to first stage if not set
@@ -605,7 +609,7 @@ function FolderCard({
     <div
       onClick={handleCardClick}
       className={cn(
-        'group relative flex aspect-[2/3] cursor-pointer flex-col rounded-2xl border bg-amber-50/50 transition-all duration-200 hover:border-primary hover:scale-[1.02] dark:bg-amber-950/20',
+        'group relative flex aspect-[2/3] cursor-pointer flex-col rounded-2xl border bg-amber-50/50 transition-colors duration-200 hover:border-primary dark:bg-amber-950/20',
         isSelected && 'border-primary ring-2 ring-primary/20'
       )}
     >
@@ -764,6 +768,21 @@ function FolderCard({
           </button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
+          {onCreateNew && (
+            <>
+              <DropdownMenuItem
+                className="gap-2"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onCreateNew();
+                }}
+              >
+                <Plus className="h-4 w-4" />
+                Create new
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+            </>
+          )}
           <Popover>
             <PopoverTrigger asChild>
               <DropdownMenuItem className="gap-2" onSelect={(e) => e.preventDefault()}>
@@ -829,6 +848,7 @@ function FileCard({
   onStatusChange,
   onTagsChange,
   onCreateTag,
+  onCreateNew,
 }: {
   file: File;
   stages: PipelineStage[];
@@ -840,6 +860,7 @@ function FileCard({
   onStatusChange?: (id: string, status: string) => void;
   onTagsChange?: (id: string, tags: string[]) => void;
   onCreateTag?: () => void;
+  onCreateNew?: () => void;
 }) {
   const isProcessing = file.status === 'processing';
   const isFailed = file.status === 'failed';
@@ -868,7 +889,7 @@ function FileCard({
     <div
       onClick={handleCardClick}
       className={cn(
-        'group relative flex aspect-[2/3] cursor-pointer flex-col rounded-2xl border bg-card transition-all duration-200 hover:border-primary hover:scale-[1.02]',
+        'group relative flex aspect-[2/3] cursor-pointer flex-col rounded-2xl border bg-card transition-colors duration-200 hover:border-primary',
         isProcessing && 'animate-pulse-subtle',
         isFailed && 'border-destructive/50',
         isSelected && 'border-primary ring-2 ring-primary/20'
@@ -1038,6 +1059,21 @@ function FileCard({
           </button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
+          {onCreateNew && (
+            <>
+              <DropdownMenuItem
+                className="gap-2"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onCreateNew();
+                }}
+              >
+                <Plus className="h-4 w-4" />
+                Create new
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+            </>
+          )}
           <Popover>
             <PopoverTrigger asChild>
               <DropdownMenuItem className="gap-2" onSelect={(e) => e.preventDefault()}>
