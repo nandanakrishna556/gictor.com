@@ -727,20 +727,25 @@ function FolderCard({
               </div>
             </button>
           </PopoverTrigger>
-          <PopoverContent align="start" className="w-52 bg-card border shadow-lg">
-            <div className="space-y-2">
-              <h4 className="text-sm font-medium">Tags</h4>
+          <PopoverContent align="start" className="w-52 bg-card border shadow-lg" onClick={(e) => e.stopPropagation()}>
+            <div className="space-y-1">
+              <h4 className="text-sm font-medium mb-2">Tags</h4>
               {tags.length === 0 ? (
                 <p className="text-xs text-muted-foreground">No tags available</p>
               ) : (
                 tags.map((tag) => (
                   <div
                     key={tag.id}
-                    className="flex items-center gap-2 rounded-md p-1.5 hover:bg-secondary"
+                    className="flex items-center gap-2 rounded-md p-1.5 hover:bg-secondary cursor-pointer"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      toggleTag(tag.id);
+                    }}
                   >
                     <Checkbox
                       checked={folderTags.includes(tag.id)}
                       onCheckedChange={() => toggleTag(tag.id)}
+                      onClick={(e) => e.stopPropagation()}
                     />
                     <span
                       className="h-2 w-2 rounded-full flex-shrink-0"
@@ -750,6 +755,7 @@ function FolderCard({
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
+                        e.preventDefault();
                         onDeleteTag?.(tag.id);
                       }}
                       className="rounded p-0.5 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
@@ -765,7 +771,7 @@ function FolderCard({
                   e.stopPropagation();
                   onCreateTag?.();
                 }}
-                className="flex w-full items-center gap-2 rounded-md p-1.5 text-sm text-primary hover:bg-secondary"
+                className="flex w-full items-center gap-2 rounded-md p-1.5 text-sm text-primary hover:bg-secondary mt-2"
               >
                 <Plus className="h-3.5 w-3.5" />
                 Create new tag
@@ -1018,20 +1024,25 @@ function FileCard({
               </div>
             </button>
           </PopoverTrigger>
-          <PopoverContent align="start" className="w-52 bg-card border shadow-lg">
-            <div className="space-y-2">
-              <h4 className="text-sm font-medium">Tags</h4>
+          <PopoverContent align="start" className="w-52 bg-card border shadow-lg" onClick={(e) => e.stopPropagation()}>
+            <div className="space-y-1">
+              <h4 className="text-sm font-medium mb-2">Tags</h4>
               {tags.length === 0 ? (
                 <p className="text-xs text-muted-foreground">No tags available</p>
               ) : (
                 tags.map((tag) => (
                   <div
                     key={tag.id}
-                    className="flex items-center gap-2 rounded-md p-1.5 hover:bg-secondary"
+                    className="flex items-center gap-2 rounded-md p-1.5 hover:bg-secondary cursor-pointer"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      toggleTag(tag.id);
+                    }}
                   >
                     <Checkbox
                       checked={fileTags.includes(tag.id)}
                       onCheckedChange={() => toggleTag(tag.id)}
+                      onClick={(e) => e.stopPropagation()}
                     />
                     <span
                       className="h-2 w-2 rounded-full flex-shrink-0"
@@ -1041,6 +1052,7 @@ function FileCard({
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
+                        e.preventDefault();
                         onDeleteTag?.(tag.id);
                       }}
                       className="rounded p-0.5 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
@@ -1056,7 +1068,7 @@ function FileCard({
                   e.stopPropagation();
                   onCreateTag?.();
                 }}
-                className="flex w-full items-center gap-2 rounded-md p-1.5 text-sm text-primary hover:bg-secondary"
+                className="flex w-full items-center gap-2 rounded-md p-1.5 text-sm text-primary hover:bg-secondary mt-2"
               >
                 <Plus className="h-3.5 w-3.5" />
                 Create new tag
@@ -1302,20 +1314,25 @@ function KanbanCard({
                   Assign Tags
                 </DropdownMenuItem>
               </PopoverTrigger>
-              <PopoverContent align="start" className="w-52 bg-card border shadow-lg">
-                <div className="space-y-2">
-                  <h4 className="text-sm font-medium">Tags</h4>
+              <PopoverContent align="start" className="w-52 bg-card border shadow-lg" onClick={(e) => e.stopPropagation()}>
+                <div className="space-y-1">
+                  <h4 className="text-sm font-medium mb-2">Tags</h4>
                   {tags.length === 0 ? (
                     <p className="text-xs text-muted-foreground">No tags available</p>
                   ) : (
                     tags.map((tag) => (
                       <div
                         key={tag.id}
-                        className="flex items-center gap-2 rounded-md p-1.5 hover:bg-secondary"
+                        className="flex items-center gap-2 rounded-md p-1.5 hover:bg-secondary cursor-pointer"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          toggleTag(tag.id);
+                        }}
                       >
                         <Checkbox
                           checked={itemTags.includes(tag.id)}
                           onCheckedChange={() => toggleTag(tag.id)}
+                          onClick={(e) => e.stopPropagation()}
                         />
                         <span
                           className="h-2 w-2 rounded-full flex-shrink-0"
@@ -1325,6 +1342,7 @@ function KanbanCard({
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
+                            e.preventDefault();
                             onDeleteTag?.(tag.id);
                           }}
                           className="rounded p-0.5 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
@@ -1340,7 +1358,7 @@ function KanbanCard({
                       e.stopPropagation();
                       onCreateTag?.();
                     }}
-                    className="flex w-full items-center gap-2 rounded-md p-1.5 text-sm text-primary hover:bg-secondary"
+                    className="flex w-full items-center gap-2 rounded-md p-1.5 text-sm text-primary hover:bg-secondary mt-2"
                   >
                     <Plus className="h-3.5 w-3.5" />
                     Create new tag
