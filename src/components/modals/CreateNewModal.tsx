@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Image, Video, FileText, ArrowLeft } from 'lucide-react';
+import { Image, Video, FileText, ArrowLeft, FolderPlus } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -15,11 +15,19 @@ interface CreateNewModalProps {
   onOpenChange: (open: boolean) => void;
   projectId: string;
   folderId?: string;
+  onCreateFolder?: () => void;
 }
 
 type ContentType = 'first_frame' | 'talking_head' | 'script' | null;
 
 const contentTypes = [
+  {
+    id: 'folder' as const,
+    icon: FolderPlus,
+    title: 'Folder',
+    description: 'Organize your content',
+    isFolder: true,
+  },
   {
     id: 'first_frame' as const,
     icon: Image,
@@ -45,6 +53,7 @@ export default function CreateNewModal({
   onOpenChange,
   projectId,
   folderId,
+  onCreateFolder,
 }: CreateNewModalProps) {
   const [selectedType, setSelectedType] = useState<ContentType>(null);
 
@@ -56,6 +65,15 @@ export default function CreateNewModal({
   const handleSuccess = () => {
     setSelectedType(null);
     onOpenChange(false);
+  };
+
+  const handleTypeSelect = (type: typeof contentTypes[0]) => {
+    if (type.id === 'folder') {
+      onOpenChange(false);
+      onCreateFolder?.();
+    } else {
+      setSelectedType(type.id as ContentType);
+    }
   };
 
   return (
@@ -88,7 +106,7 @@ export default function CreateNewModal({
             {contentTypes.map((type) => (
               <button
                 key={type.id}
-                onClick={() => setSelectedType(type.id)}
+                onClick={() => handleTypeSelect(type)}
                 className="flex flex-col items-center rounded-2xl border border-border bg-card p-6 text-center transition-apple hover:border-primary hover:bg-primary/5"
               >
                 <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10">

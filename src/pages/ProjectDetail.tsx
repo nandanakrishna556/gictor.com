@@ -59,7 +59,7 @@ export default function ProjectDetail() {
     enabled: !!folderId,
   });
 
-  const { files, folders, isLoading, createFolder, updateFile, deleteFile } = useFiles(projectId!, folderId);
+  const { files, folders, isLoading, createFolder, updateFile, updateFolder, deleteFile, deleteFolder, bulkDeleteFiles, bulkUpdateFiles } = useFiles(projectId!, folderId);
   const { pipelines, createPipeline } = usePipelines();
   const { tags, createTag } = useTags();
 
@@ -118,12 +118,31 @@ export default function ProjectDetail() {
   };
 
   const handleUpdateFileTags = async (id: string, newTags: string[]) => {
-    // Tags are stored in the files table, need to update via supabase
-    await supabase.from('files').update({ tags: newTags }).eq('id', id);
+    await updateFile({ id, updates: { tags: newTags } });
+  };
+
+  const handleUpdateFolderStatus = async (id: string, status: string) => {
+    await updateFolder({ id, updates: { status } });
+  };
+
+  const handleUpdateFolderTags = async (id: string, newTags: string[]) => {
+    await updateFolder({ id, updates: { tags: newTags } });
   };
 
   const handleDeleteFile = async (id: string) => {
     await deleteFile(id);
+  };
+
+  const handleDeleteFolder = async (id: string) => {
+    await deleteFolder(id);
+  };
+
+  const handleBulkDelete = async (ids: string[]) => {
+    await bulkDeleteFiles(ids);
+  };
+
+  const handleBulkUpdateStatus = async (ids: string[], status: string) => {
+    await bulkUpdateFiles({ ids, updates: { status } });
   };
 
   const handleClearFilters = () => {
@@ -211,8 +230,13 @@ export default function ProjectDetail() {
               onCreatePipeline={() => setCreatePipelineOpen(true)}
               onCreateNew={() => setCreateModalOpen(true)}
               onDeleteFile={handleDeleteFile}
+              onDeleteFolder={handleDeleteFolder}
               onUpdateFileStatus={handleUpdateFileStatus}
               onUpdateFileTags={handleUpdateFileTags}
+              onUpdateFolderStatus={handleUpdateFolderStatus}
+              onUpdateFolderTags={handleUpdateFolderTags}
+              onBulkDelete={handleBulkDelete}
+              onBulkUpdateStatus={handleBulkUpdateStatus}
             />
           )}
         </div>
@@ -223,6 +247,7 @@ export default function ProjectDetail() {
         onOpenChange={setCreateModalOpen}
         projectId={projectId}
         folderId={folderId}
+        onCreateFolder={() => setCreateFolderOpen(true)}
       />
 
       <CreateFolderDialog
