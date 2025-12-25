@@ -174,7 +174,7 @@ export function useFiles(projectId: string, folderId?: string) {
   });
 
   const updateFileMutation = useMutation({
-    mutationFn: async ({ id, updates }: { id: string; updates: { name?: string; status?: string; preview_url?: string; download_url?: string } }) => {
+    mutationFn: async ({ id, updates }: { id: string; updates: { name?: string; status?: string; preview_url?: string; download_url?: string; tags?: string[] } }) => {
       const { data, error } = await supabase
         .from('files')
         .update(updates)
@@ -187,6 +187,65 @@ export function useFiles(projectId: string, folderId?: string) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['files', projectId] });
+    },
+  });
+
+  const updateFolderMutation = useMutation({
+    mutationFn: async ({ id, updates }: { id: string; updates: { name?: string; status?: string; tags?: string[] } }) => {
+      const { data, error } = await supabase
+        .from('folders')
+        .update(updates)
+        .eq('id', id)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data as Folder;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['folders', projectId] });
+    },
+  });
+
+  const deleteFolderMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from('folders').delete().eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['folders', projectId] });
+      toast({
+        title: 'Folder deleted',
+        description: 'The folder has been deleted.',
+      });
+    },
+  });
+
+  const bulkDeleteFilesMutation = useMutation({
+    mutationFn: async (ids: string[]) => {
+      const { error } = await supabase.from('files').delete().in('id', ids);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['files', projectId] });
+      toast({
+        title: 'Files deleted',
+        description: 'Selected files have been deleted.',
+      });
+    },
+  });
+
+  const bulkUpdateFilesMutation = useMutation({
+    mutationFn: async ({ ids, updates }: { ids: string[]; updates: { status?: string; tags?: string[] } }) => {
+      const { error } = await supabase.from('files').update(updates).in('id', ids);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['files', projectId] });
+      toast({
+        title: 'Files updated',
+        description: 'Selected files have been updated.',
+      });
     },
   });
 
@@ -211,6 +270,10 @@ export function useFiles(projectId: string, folderId?: string) {
     createFile: createFileMutation.mutateAsync,
     createFolder: createFolderMutation.mutateAsync,
     updateFile: updateFileMutation.mutateAsync,
+    updateFolder: updateFolderMutation.mutateAsync,
     deleteFile: deleteFileMutation.mutateAsync,
+    deleteFolder: deleteFolderMutation.mutateAsync,
+    bulkDeleteFiles: bulkDeleteFilesMutation.mutateAsync,
+    bulkUpdateFiles: bulkUpdateFilesMutation.mutateAsync,
   };
 }
