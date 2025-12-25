@@ -646,57 +646,61 @@ function FolderCard({
       {/* Info Section */}
       <div className="flex flex-col gap-2 p-4">
 
-        {/* Status Selector */}
-        <Select
-          value={effectiveStatus}
-          onValueChange={(value) => onStatusChange?.(folder.id, value)}
-        >
-          <SelectTrigger
-            className="h-7 w-full rounded-lg text-xs"
-            onClick={(e) => e.stopPropagation()}
+        {/* Status Row - Two Column Layout */}
+        <div className="flex items-center gap-3">
+          <span className="text-xs text-muted-foreground w-12">Status</span>
+          <Select
+            value={effectiveStatus}
+            onValueChange={(value) => onStatusChange?.(folder.id, value)}
           >
-            <div className="flex items-center gap-2">
-              <div className={cn('h-2 w-2 rounded-full', currentStage?.color || 'bg-gray-500')} />
-              <SelectValue />
-            </div>
-          </SelectTrigger>
-          <SelectContent>
-            {stages.map((stage) => (
-              <SelectItem key={stage.id} value={stage.id}>
-                <div className="flex items-center gap-2">
-                  <div className={cn('h-2 w-2 rounded-full', stage.color)} />
-                  {stage.name}
-                </div>
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+            <SelectTrigger
+              className="h-7 flex-1 rounded-lg text-xs border-0 bg-transparent p-0 hover:bg-secondary/50"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <span className={cn('rounded px-2 py-1 text-xs text-white', currentStage?.color)}>
+                {currentStage?.name || 'Select status'}
+              </span>
+            </SelectTrigger>
+            <SelectContent>
+              {stages.map((stage) => (
+                <SelectItem key={stage.id} value={stage.id}>
+                  <div className="flex items-center gap-2">
+                    <div className={cn('h-2 w-2 rounded-full', stage.color)} />
+                    {stage.name}
+                  </div>
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
 
-        {/* Inline Tags Display */}
-        <div className="flex items-center gap-1.5">
-          <Paperclip className="h-3.5 w-3.5 text-muted-foreground" />
-          {folderTags.length > 0 ? (
-            <>
-              {folderTags.slice(0, 2).map((tagId) => {
-                const tag = tags.find((t) => t.id === tagId);
-                if (!tag) return null;
-                return (
-                  <span
-                    key={tagId}
-                    className="rounded px-1.5 py-0.5 text-xs"
-                    style={{ backgroundColor: `${tag.color}20`, color: tag.color }}
-                  >
-                    {tag.tag_name}
-                  </span>
-                );
-              })}
-              {folderTags.length > 2 && (
-                <span className="text-xs text-muted-foreground">+{folderTags.length - 2}</span>
-              )}
-            </>
-          ) : (
-            <span className="text-xs text-muted-foreground">No tags</span>
-          )}
+        {/* Tags Row - Two Column Layout */}
+        <div className="flex items-center gap-3">
+          <span className="text-xs text-muted-foreground w-12">Tags</span>
+          <div className="flex flex-1 items-center gap-1.5">
+            {folderTags.length > 0 ? (
+              <>
+                {folderTags.slice(0, 2).map((tagId) => {
+                  const tag = tags.find((t) => t.id === tagId);
+                  if (!tag) return null;
+                  return (
+                    <span
+                      key={tagId}
+                      className="rounded px-1.5 py-0.5 text-xs"
+                      style={{ backgroundColor: `${tag.color}20`, color: tag.color }}
+                    >
+                      {tag.tag_name}
+                    </span>
+                  );
+                })}
+                {folderTags.length > 2 && (
+                  <span className="text-xs text-muted-foreground">+{folderTags.length - 2}</span>
+                )}
+              </>
+            ) : (
+              <span className="text-xs text-muted-foreground">—</span>
+            )}
+          </div>
         </div>
       </div>
 
@@ -859,57 +863,61 @@ function FileCard({
           {fileTypeLabels[file.file_type] || file.file_type}
         </Badge>
 
-        {/* Status Selector */}
-        <Select
-          value={effectiveStatus}
-          onValueChange={(value) => onStatusChange?.(file.id, value)}
-        >
-          <SelectTrigger
-            className="h-7 w-full rounded-lg text-xs"
-            onClick={(e) => e.stopPropagation()}
+        {/* Status Row - Two Column Layout */}
+        <div className="flex items-center gap-3">
+          <span className="text-xs text-muted-foreground w-12">Status</span>
+          <Select
+            value={effectiveStatus}
+            onValueChange={(value) => onStatusChange?.(file.id, value)}
           >
-            <div className="flex items-center gap-2">
-              <div className={cn('h-2 w-2 rounded-full', currentStage?.color || 'bg-gray-500')} />
-              <SelectValue />
-            </div>
-          </SelectTrigger>
-          <SelectContent>
-            {stages.map((stage) => (
-              <SelectItem key={stage.id} value={stage.id}>
-                <div className="flex items-center gap-2">
-                  <div className={cn('h-2 w-2 rounded-full', stage.color)} />
-                  {stage.name}
-                </div>
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+            <SelectTrigger
+              className="h-7 flex-1 rounded-lg text-xs border-0 bg-transparent p-0 hover:bg-secondary/50"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <span className={cn('rounded px-2 py-1 text-xs text-white', currentStage?.color)}>
+                {currentStage?.name || 'Select status'}
+              </span>
+            </SelectTrigger>
+            <SelectContent>
+              {stages.map((stage) => (
+                <SelectItem key={stage.id} value={stage.id}>
+                  <div className="flex items-center gap-2">
+                    <div className={cn('h-2 w-2 rounded-full', stage.color)} />
+                    {stage.name}
+                  </div>
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
 
-        {/* Inline Tags Display */}
-        <div className="flex items-center gap-1.5">
-          <Paperclip className="h-3.5 w-3.5 text-muted-foreground" />
-          {fileTags.length > 0 ? (
-            <>
-              {fileTags.slice(0, 2).map((tagId) => {
-                const tag = tags.find((t) => t.id === tagId);
-                if (!tag) return null;
-                return (
-                  <span
-                    key={tagId}
-                    className="rounded px-1.5 py-0.5 text-xs"
-                    style={{ backgroundColor: `${tag.color}20`, color: tag.color }}
-                  >
-                    {tag.tag_name}
-                  </span>
-                );
-              })}
-              {fileTags.length > 2 && (
-                <span className="text-xs text-muted-foreground">+{fileTags.length - 2}</span>
-              )}
-            </>
-          ) : (
-            <span className="text-xs text-muted-foreground">No tags</span>
-          )}
+        {/* Tags Row - Two Column Layout */}
+        <div className="flex items-center gap-3">
+          <span className="text-xs text-muted-foreground w-12">Tags</span>
+          <div className="flex flex-1 items-center gap-1.5">
+            {fileTags.length > 0 ? (
+              <>
+                {fileTags.slice(0, 2).map((tagId) => {
+                  const tag = tags.find((t) => t.id === tagId);
+                  if (!tag) return null;
+                  return (
+                    <span
+                      key={tagId}
+                      className="rounded px-1.5 py-0.5 text-xs"
+                      style={{ backgroundColor: `${tag.color}20`, color: tag.color }}
+                    >
+                      {tag.tag_name}
+                    </span>
+                  );
+                })}
+                {fileTags.length > 2 && (
+                  <span className="text-xs text-muted-foreground">+{fileTags.length - 2}</span>
+                )}
+              </>
+            ) : (
+              <span className="text-xs text-muted-foreground">—</span>
+            )}
+          </div>
         </div>
       </div>
 
