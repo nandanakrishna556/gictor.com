@@ -617,7 +617,7 @@ function FolderCard({
     <div
       onClick={handleCardClick}
       className={cn(
-        'group relative flex aspect-[2/3] cursor-pointer flex-col rounded-2xl border bg-amber-50/50 transition-colors duration-200 hover:border-primary dark:bg-amber-950/20',
+        'group relative flex aspect-[2/3] cursor-pointer flex-col rounded-2xl border bg-amber-50/50 transition-colors duration-200 hover:border-primary dark:bg-card dark:border-border/50',
         isSelected && 'border-primary ring-2 ring-primary/20'
       )}
     >
@@ -1225,7 +1225,7 @@ function KanbanCard({
       className={cn(
         'group rounded-xl border bg-card p-3 transition-all duration-200 hover:border-primary',
         isDragging && 'rotate-2 scale-105 shadow-lg',
-        isFolder && 'bg-amber-50/50 dark:bg-amber-950/20',
+        isFolder && 'bg-amber-50/50 dark:bg-card dark:border-border/50',
         isSelected && 'border-primary ring-2 ring-primary/20'
       )}
     >
