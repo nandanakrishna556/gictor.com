@@ -35,6 +35,7 @@ interface AppHeaderProps {
   onStatusesChange?: (statuses: string[]) => void;
   onFileTypesChange?: (types: string[]) => void;
   onCreateTag?: () => void;
+  onDeleteTag?: (id: string) => void;
   onClearFilters?: () => void;
 }
 
@@ -53,6 +54,7 @@ export default function AppHeader({
   onStatusesChange = () => {},
   onFileTypesChange = () => {},
   onCreateTag = () => {},
+  onDeleteTag,
   onClearFilters = () => {},
 }: AppHeaderProps) {
   const { user, signOut } = useAuth();
@@ -108,6 +110,7 @@ export default function AppHeader({
             onStatusesChange={onStatusesChange}
             onFileTypesChange={onFileTypesChange}
             onCreateTag={onCreateTag}
+            onDeleteTag={onDeleteTag}
             onClearAll={onClearFilters}
           />
         )}

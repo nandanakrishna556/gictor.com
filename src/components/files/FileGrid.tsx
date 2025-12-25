@@ -56,6 +56,7 @@ interface FileGridProps {
   onCreatePipeline: () => void;
   onCreateNew?: () => void;
   onCreateTag?: () => void;
+  onDeleteTag?: (id: string) => void;
   onDeleteFile?: (id: string) => void;
   onDeleteFolder?: (id: string) => void;
   onUpdateFileStatus?: (id: string, status: string) => void;
@@ -97,6 +98,7 @@ export default function FileGrid({
   onCreatePipeline,
   onCreateNew,
   onCreateTag,
+  onDeleteTag,
   onDeleteFile,
   onDeleteFolder,
   onUpdateFileStatus,
@@ -325,6 +327,8 @@ export default function FileGrid({
                                       ? onUpdateFileTags
                                       : onUpdateFolderTags
                                   }
+                                  onDeleteTag={onDeleteTag}
+                                  onCreateTag={onCreateTag}
                                 />
                               </div>
                             )}
@@ -423,6 +427,7 @@ export default function FileGrid({
               onStatusChange={onUpdateFolderStatus}
               onTagsChange={onUpdateFolderTags}
               onCreateTag={onCreateTag}
+              onDeleteTag={onDeleteTag}
               onCreateNew={onCreateNew}
             />
           ) : (
@@ -438,6 +443,7 @@ export default function FileGrid({
               onStatusChange={onUpdateFileStatus}
               onTagsChange={onUpdateFileTags}
               onCreateTag={onCreateTag}
+              onDeleteTag={onDeleteTag}
               onCreateNew={onCreateNew}
             />
           )
@@ -567,6 +573,7 @@ function FolderCard({
   onStatusChange,
   onTagsChange,
   onCreateTag,
+  onDeleteTag,
   onCreateNew,
 }: {
   folder: FolderType;
@@ -580,6 +587,7 @@ function FolderCard({
   onStatusChange?: (id: string, status: string) => void;
   onTagsChange?: (id: string, tags: string[]) => void;
   onCreateTag?: () => void;
+  onDeleteTag?: (id: string) => void;
   onCreateNew?: () => void;
 }) {
   const navigate = useNavigate();
@@ -719,27 +727,37 @@ function FolderCard({
               </div>
             </button>
           </PopoverTrigger>
-          <PopoverContent align="start" className="w-48 bg-card border shadow-lg">
+          <PopoverContent align="start" className="w-52 bg-card border shadow-lg">
             <div className="space-y-2">
               <h4 className="text-sm font-medium">Tags</h4>
               {tags.length === 0 ? (
                 <p className="text-xs text-muted-foreground">No tags available</p>
               ) : (
                 tags.map((tag) => (
-                  <label
+                  <div
                     key={tag.id}
-                    className="flex cursor-pointer items-center gap-2 rounded-md p-1.5 hover:bg-secondary"
+                    className="flex items-center gap-2 rounded-md p-1.5 hover:bg-secondary"
                   >
                     <Checkbox
                       checked={folderTags.includes(tag.id)}
                       onCheckedChange={() => toggleTag(tag.id)}
                     />
                     <span
-                      className="h-2 w-2 rounded-full"
+                      className="h-2 w-2 rounded-full flex-shrink-0"
                       style={{ backgroundColor: tag.color }}
                     />
-                    <span className="text-sm">{tag.tag_name}</span>
-                  </label>
+                    <span className="flex-1 text-sm truncate">{tag.tag_name}</span>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onDeleteTag?.(tag.id);
+                      }}
+                      className="rounded p-0.5 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+                      title="Delete tag"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
                 ))
               )}
               <button
@@ -848,6 +866,7 @@ function FileCard({
   onStatusChange,
   onTagsChange,
   onCreateTag,
+  onDeleteTag,
   onCreateNew,
 }: {
   file: File;
@@ -860,6 +879,7 @@ function FileCard({
   onStatusChange?: (id: string, status: string) => void;
   onTagsChange?: (id: string, tags: string[]) => void;
   onCreateTag?: () => void;
+  onDeleteTag?: (id: string) => void;
   onCreateNew?: () => void;
 }) {
   const isProcessing = file.status === 'processing';
@@ -998,27 +1018,37 @@ function FileCard({
               </div>
             </button>
           </PopoverTrigger>
-          <PopoverContent align="start" className="w-48 bg-card border shadow-lg">
+          <PopoverContent align="start" className="w-52 bg-card border shadow-lg">
             <div className="space-y-2">
               <h4 className="text-sm font-medium">Tags</h4>
               {tags.length === 0 ? (
                 <p className="text-xs text-muted-foreground">No tags available</p>
               ) : (
                 tags.map((tag) => (
-                  <label
+                  <div
                     key={tag.id}
-                    className="flex cursor-pointer items-center gap-2 rounded-md p-1.5 hover:bg-secondary"
+                    className="flex items-center gap-2 rounded-md p-1.5 hover:bg-secondary"
                   >
                     <Checkbox
                       checked={fileTags.includes(tag.id)}
                       onCheckedChange={() => toggleTag(tag.id)}
                     />
                     <span
-                      className="h-2 w-2 rounded-full"
+                      className="h-2 w-2 rounded-full flex-shrink-0"
                       style={{ backgroundColor: tag.color }}
                     />
-                    <span className="text-sm">{tag.tag_name}</span>
-                  </label>
+                    <span className="flex-1 text-sm truncate">{tag.tag_name}</span>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onDeleteTag?.(tag.id);
+                      }}
+                      className="rounded p-0.5 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+                      title="Delete tag"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
                 ))
               )}
               <button
@@ -1142,6 +1172,8 @@ function KanbanCard({
   onSelect,
   onDelete,
   onTagsChange,
+  onDeleteTag,
+  onCreateTag,
 }: {
   item: GridItem;
   tags: TagType[];
@@ -1152,6 +1184,8 @@ function KanbanCard({
   onSelect: () => void;
   onDelete?: (id: string) => void;
   onTagsChange?: (id: string, tags: string[]) => void;
+  onDeleteTag?: (id: string) => void;
+  onCreateTag?: () => void;
 }) {
   const navigate = useNavigate();
   const itemTags = item.tags || [];
@@ -1268,29 +1302,49 @@ function KanbanCard({
                   Assign Tags
                 </DropdownMenuItem>
               </PopoverTrigger>
-              <PopoverContent align="start" className="w-48">
+              <PopoverContent align="start" className="w-52 bg-card border shadow-lg">
                 <div className="space-y-2">
                   <h4 className="text-sm font-medium">Tags</h4>
                   {tags.length === 0 ? (
                     <p className="text-xs text-muted-foreground">No tags available</p>
                   ) : (
                     tags.map((tag) => (
-                      <label
+                      <div
                         key={tag.id}
-                        className="flex cursor-pointer items-center gap-2 rounded-md p-1.5 hover:bg-secondary"
+                        className="flex items-center gap-2 rounded-md p-1.5 hover:bg-secondary"
                       >
                         <Checkbox
                           checked={itemTags.includes(tag.id)}
                           onCheckedChange={() => toggleTag(tag.id)}
                         />
                         <span
-                          className="h-2 w-2 rounded-full"
+                          className="h-2 w-2 rounded-full flex-shrink-0"
                           style={{ backgroundColor: tag.color }}
                         />
-                        <span className="text-sm">{tag.tag_name}</span>
-                      </label>
+                        <span className="flex-1 text-sm truncate">{tag.tag_name}</span>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onDeleteTag?.(tag.id);
+                          }}
+                          className="rounded p-0.5 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+                          title="Delete tag"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
                     ))
                   )}
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onCreateTag?.();
+                    }}
+                    className="flex w-full items-center gap-2 rounded-md p-1.5 text-sm text-primary hover:bg-secondary"
+                  >
+                    <Plus className="h-3.5 w-3.5" />
+                    Create new tag
+                  </button>
                 </div>
               </PopoverContent>
             </Popover>

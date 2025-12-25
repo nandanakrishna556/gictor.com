@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Filter, Plus, Tag, X } from 'lucide-react';
+import { Filter, Plus, Tag, Trash2 } from 'lucide-react';
 import {
   Popover,
   PopoverContent,
@@ -21,6 +21,7 @@ interface FilterPopoverProps {
   onStatusesChange: (statuses: string[]) => void;
   onFileTypesChange: (types: string[]) => void;
   onCreateTag: () => void;
+  onDeleteTag?: (id: string) => void;
   onClearAll: () => void;
 }
 
@@ -47,6 +48,7 @@ export default function FilterPopover({
   onStatusesChange,
   onFileTypesChange,
   onCreateTag,
+  onDeleteTag,
   onClearAll,
 }: FilterPopoverProps) {
   const [open, setOpen] = useState(false);
@@ -172,17 +174,29 @@ export default function FilterPopover({
                 </p>
               ) : (
                 tags.map((tag) => (
-                  <label
+                  <div
                     key={tag.id}
-                    className="flex cursor-pointer items-center gap-2 rounded-md p-2 hover:bg-secondary"
+                    className="flex items-center gap-2 rounded-md p-2 hover:bg-secondary"
                   >
                     <Checkbox
                       checked={selectedTags.includes(tag.id)}
                       onCheckedChange={() => toggleTag(tag.id)}
                     />
-                    <Tag className="h-3 w-3" style={{ color: tag.color }} />
-                    <span className="text-sm">{tag.tag_name}</span>
-                  </label>
+                    <Tag className="h-3 w-3 flex-shrink-0" style={{ color: tag.color }} />
+                    <span className="flex-1 text-sm truncate">{tag.tag_name}</span>
+                    {onDeleteTag && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onDeleteTag(tag.id);
+                        }}
+                        className="rounded p-0.5 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+                        title="Delete tag"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
+                    )}
+                  </div>
                 ))
               )}
             </div>
