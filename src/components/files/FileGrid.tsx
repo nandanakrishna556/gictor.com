@@ -666,7 +666,7 @@ function FolderCard({
 
         {/* Status Row - Two Column Layout */}
         <div className="flex items-center gap-3">
-          <span className="text-xs text-muted-foreground w-12">Status</span>
+          <span className="text-xs text-muted-foreground w-10 shrink-0">Status</span>
           <Select
             value={effectiveStatus}
             onValueChange={(value) => onStatusChange?.(folder.id, value)}
@@ -696,11 +696,11 @@ function FolderCard({
         {/* Tags Row - Two Column Layout with Popover */}
         <Popover>
           <PopoverTrigger asChild>
-            <button
-              className="flex w-full items-center gap-3 rounded-md hover:bg-secondary/50 transition-colors"
+            <div
+              className="flex items-center gap-3 rounded-md hover:bg-secondary/50 transition-colors cursor-pointer"
               onClick={(e) => e.stopPropagation()}
             >
-              <span className="text-xs text-muted-foreground w-12">Tags</span>
+              <span className="text-xs text-muted-foreground w-10 shrink-0">Tags</span>
               <div className="flex flex-1 items-center gap-1.5">
                 {folderTags.length > 0 ? (
                   <>
@@ -725,7 +725,7 @@ function FolderCard({
                   <span className="text-xs text-muted-foreground">+ Add tag</span>
                 )}
               </div>
-            </button>
+            </div>
           </PopoverTrigger>
           <PopoverContent align="start" className="w-52 bg-card border shadow-lg" onClick={(e) => e.stopPropagation()}>
             <div className="space-y-1">
@@ -963,7 +963,7 @@ function FileCard({
 
         {/* Status Row - Two Column Layout */}
         <div className="flex items-center gap-3">
-          <span className="text-xs text-muted-foreground w-12">Status</span>
+          <span className="text-xs text-muted-foreground w-10 shrink-0">Status</span>
           <Select
             value={effectiveStatus}
             onValueChange={(value) => onStatusChange?.(file.id, value)}
@@ -993,11 +993,11 @@ function FileCard({
         {/* Tags Row - Two Column Layout with Popover */}
         <Popover>
           <PopoverTrigger asChild>
-            <button
-              className="flex w-full items-center gap-3 rounded-md hover:bg-secondary/50 transition-colors"
+            <div
+              className="flex items-center gap-3 rounded-md hover:bg-secondary/50 transition-colors cursor-pointer"
               onClick={(e) => e.stopPropagation()}
             >
-              <span className="text-xs text-muted-foreground w-12">Tags</span>
+              <span className="text-xs text-muted-foreground w-10 shrink-0">Tags</span>
               <div className="flex flex-1 items-center gap-1.5">
                 {fileTags.length > 0 ? (
                   <>
@@ -1022,7 +1022,7 @@ function FileCard({
                   <span className="text-xs text-muted-foreground">+ Add tag</span>
                 )}
               </div>
-            </button>
+            </div>
           </PopoverTrigger>
           <PopoverContent align="start" className="w-52 bg-card border shadow-lg" onClick={(e) => e.stopPropagation()}>
             <div className="space-y-1">
