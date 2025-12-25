@@ -1273,10 +1273,10 @@ function KanbanCard({
           <Popover>
             <PopoverTrigger asChild>
               <button
-                className="mt-2 flex w-full items-center gap-1.5 rounded-md p-1 -m-1 hover:bg-secondary/50 transition-colors text-left"
+                className="mt-2 flex w-full items-center gap-3 rounded-md p-1 -m-1 hover:bg-secondary/50 transition-colors text-left"
                 onClick={(e) => e.stopPropagation()}
               >
-                <Paperclip className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
+                <span className="text-xs text-muted-foreground w-8">Tags</span>
                 {itemTags.length > 0 ? (
                   <div className="flex flex-wrap items-center gap-1">
                     {itemTags.slice(0, 2).map((tagId) => {
