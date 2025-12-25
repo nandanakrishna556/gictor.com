@@ -1269,32 +1269,90 @@ function KanbanCard({
             </Badge>
           )}
 
-          {/* Tags (Kanban shows only tags with inline style matching grid view) */}
-          <div className="mt-2 flex items-center gap-1.5">
-            <Paperclip className="h-3.5 w-3.5 text-muted-foreground" />
-            {itemTags.length > 0 ? (
-              <>
-                {itemTags.slice(0, 2).map((tagId) => {
-                  const tag = tags.find((t) => t.id === tagId);
-                  if (!tag) return null;
-                  return (
-                    <span
-                      key={tagId}
-                      className="rounded px-1.5 py-0.5 text-xs"
-                      style={{ backgroundColor: `${tag.color}20`, color: tag.color }}
-                    >
-                      {tag.tag_name}
-                    </span>
-                  );
-                })}
-                {itemTags.length > 2 && (
-                  <span className="text-xs text-muted-foreground">+{itemTags.length - 2}</span>
+          {/* Tags - Clickable with Popover */}
+          <Popover>
+            <PopoverTrigger asChild>
+              <button
+                className="mt-2 flex w-full items-center gap-1.5 rounded-md p-1 -m-1 hover:bg-secondary/50 transition-colors text-left"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <Paperclip className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
+                {itemTags.length > 0 ? (
+                  <div className="flex flex-wrap items-center gap-1">
+                    {itemTags.slice(0, 2).map((tagId) => {
+                      const tag = tags.find((t) => t.id === tagId);
+                      if (!tag) return null;
+                      return (
+                        <span
+                          key={tagId}
+                          className="rounded px-1.5 py-0.5 text-xs"
+                          style={{ backgroundColor: `${tag.color}20`, color: tag.color }}
+                        >
+                          {tag.tag_name}
+                        </span>
+                      );
+                    })}
+                    {itemTags.length > 2 && (
+                      <span className="text-xs text-muted-foreground">+{itemTags.length - 2}</span>
+                    )}
+                  </div>
+                ) : (
+                  <span className="text-xs text-muted-foreground">+ Add tag</span>
                 )}
-              </>
-            ) : (
-              <span className="text-xs text-muted-foreground">No tags</span>
-            )}
-          </div>
+              </button>
+            </PopoverTrigger>
+            <PopoverContent align="start" className="w-52 bg-card border shadow-lg" onClick={(e) => e.stopPropagation()}>
+              <div className="space-y-1">
+                <h4 className="text-sm font-medium mb-2">Tags</h4>
+                {tags.length === 0 ? (
+                  <p className="text-xs text-muted-foreground">No tags available</p>
+                ) : (
+                  tags.map((tag) => (
+                    <div
+                      key={tag.id}
+                      className="flex items-center gap-2 rounded-md p-1.5 hover:bg-secondary cursor-pointer"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        toggleTag(tag.id);
+                      }}
+                    >
+                      <Checkbox
+                        checked={itemTags.includes(tag.id)}
+                        onCheckedChange={() => toggleTag(tag.id)}
+                        onClick={(e) => e.stopPropagation()}
+                      />
+                      <span
+                        className="h-2 w-2 rounded-full flex-shrink-0"
+                        style={{ backgroundColor: tag.color }}
+                      />
+                      <span className="flex-1 text-sm truncate">{tag.tag_name}</span>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          e.preventDefault();
+                          onDeleteTag?.(tag.id);
+                        }}
+                        className="rounded p-0.5 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+                        title="Delete tag"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                  ))
+                )}
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onCreateTag?.();
+                  }}
+                  className="flex w-full items-center gap-2 rounded-md p-1.5 text-sm text-primary hover:bg-secondary mt-2"
+                >
+                  <Plus className="h-3.5 w-3.5" />
+                  Create new tag
+                </button>
+              </div>
+            </PopoverContent>
+          </Popover>
         </div>
 
         <DropdownMenu>
