@@ -1,17 +1,10 @@
 import { useState } from 'react';
-import { Upload, Sparkles, ChevronDown, Play, Star } from 'lucide-react';
+import { Upload, Sparkles, ChevronDown, Play, Star, Minus, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Slider } from '@/components/ui/slider';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import {
   Collapsible,
   CollapsibleContent,
@@ -21,6 +14,7 @@ import { cn } from '@/lib/utils';
 import { useFiles } from '@/hooks/useFiles';
 import { useProfile } from '@/hooks/useProfile';
 import { useToast } from '@/hooks/use-toast';
+import LocationSelector from './LocationSelector';
 
 interface TalkingHeadFormProps {
   projectId: string;
@@ -35,20 +29,24 @@ const voices = [
   { id: 'voice_4', name: 'James', gender: 'male', accent: 'American' },
 ];
 
-const characterLimits = [120, 240, 360, 480, 600, 720, 840, 960];
+const CHARS_PER_BLOCK = 120;
+const SECONDS_PER_BLOCK = 8;
 
 export default function TalkingHeadForm({
   projectId,
   folderId,
   onSuccess,
 }: TalkingHeadFormProps) {
-  const { createFile } = useFiles(projectId, folderId);
+  const [currentProjectId, setCurrentProjectId] = useState(projectId);
+  const [currentFolderId, setCurrentFolderId] = useState(folderId);
+  
+  const { createFile } = useFiles(currentProjectId, currentFolderId);
   const { profile, deductCredits } = useProfile();
   const { toast } = useToast();
 
   const [fileName, setFileName] = useState('Untitled');
   const [firstFrameUrl, setFirstFrameUrl] = useState('');
-  const [maxCharacters, setMaxCharacters] = useState('240');
+  const [characterBlocks, setCharacterBlocks] = useState(2); // 2 blocks = 240 chars
   const [script, setScript] = useState('');
   const [selectedVoice, setSelectedVoice] = useState(voices[0]);
   const [voiceOpen, setVoiceOpen] = useState(false);
@@ -59,12 +57,19 @@ export default function TalkingHeadForm({
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  const maxChars = characterBlocks * CHARS_PER_BLOCK;
   const characterCount = script.length;
-  const maxChars = parseInt(maxCharacters);
   const isOverLimit = characterCount > maxChars;
-  const estimatedDuration = Math.ceil(characterCount / 120) * 8;
-  const creditCost = Math.max(1, Math.ceil(characterCount / 120));
+  
+  // Dynamic estimated time based on actual character count
+  const estimatedDuration = Math.max(SECONDS_PER_BLOCK, Math.ceil(characterCount / CHARS_PER_BLOCK) * SECONDS_PER_BLOCK);
+  const creditCost = Math.max(1, Math.ceil(characterCount / CHARS_PER_BLOCK));
   const hasEnoughCredits = (profile?.credits ?? 0) >= creditCost;
+
+  const handleLocationChange = (newProjectId: string, newFolderId?: string) => {
+    setCurrentProjectId(newProjectId);
+    setCurrentFolderId(newFolderId);
+  };
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -72,6 +77,18 @@ export default function TalkingHeadForm({
     
     const url = URL.createObjectURL(file);
     setFirstFrameUrl(url);
+  };
+
+  const decrementBlocks = () => {
+    if (characterBlocks > 1) {
+      setCharacterBlocks(characterBlocks - 1);
+    }
+  };
+
+  const incrementBlocks = () => {
+    if (characterBlocks < 10) {
+      setCharacterBlocks(characterBlocks + 1);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -119,8 +136,8 @@ export default function TalkingHeadForm({
       const fileId = crypto.randomUUID();
       await createFile({
         id: fileId,
-        project_id: projectId,
-        folder_id: folderId || null,
+        project_id: currentProjectId,
+        folder_id: currentFolderId || null,
         name: fileName,
         file_type: 'talking_head',
         status: 'processing',
@@ -154,15 +171,22 @@ export default function TalkingHeadForm({
   return (
     <form onSubmit={handleSubmit} className="max-h-[70vh] overflow-y-auto p-6">
       <div className="space-y-6">
-        {/* File Name */}
+        {/* File Name & Location */}
         <div className="space-y-2">
           <Label htmlFor="fileName">File name</Label>
-          <Input
-            id="fileName"
-            value={fileName}
-            onChange={(e) => setFileName(e.target.value)}
-            className="rounded-xl"
-          />
+          <div className="flex items-center gap-2">
+            <Input
+              id="fileName"
+              value={fileName}
+              onChange={(e) => setFileName(e.target.value)}
+              className="flex-1 rounded-xl"
+            />
+            <LocationSelector
+              projectId={currentProjectId}
+              folderId={currentFolderId}
+              onLocationChange={handleLocationChange}
+            />
+          </div>
         </div>
 
         {/* First Frame Upload */}
@@ -178,13 +202,13 @@ export default function TalkingHeadForm({
               <button
                 type="button"
                 onClick={() => setFirstFrameUrl('')}
-                className="absolute right-2 top-2 rounded-lg bg-background/80 p-1.5 text-foreground backdrop-blur transition-apple hover:bg-background"
+                className="absolute right-2 top-2 rounded-lg bg-background/80 p-1.5 text-foreground backdrop-blur transition-all duration-200 hover:bg-background"
               >
                 Change
               </button>
             </div>
           ) : (
-            <label className="flex h-40 cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed border-border text-muted-foreground transition-apple hover:border-primary hover:text-primary">
+            <label className="flex h-40 cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed border-border text-muted-foreground transition-all duration-200 hover:border-primary hover:text-primary">
               <Upload className="mb-2 h-8 w-8" />
               <span className="text-sm font-medium">Upload first frame</span>
               <span className="text-xs">or drag and drop</span>
@@ -200,25 +224,7 @@ export default function TalkingHeadForm({
 
         {/* Script Section */}
         <div className="space-y-3">
-          <div className="flex items-center justify-between">
-            <Label>Script</Label>
-            <Select value={maxCharacters} onValueChange={setMaxCharacters}>
-              <SelectTrigger className="h-8 w-32 rounded-lg">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {characterLimits.map((limit) => (
-                  <SelectItem key={limit} value={limit.toString()}>
-                    {limit} chars
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <p className="text-sm text-muted-foreground">
-            ~{estimatedDuration} seconds estimated
-          </p>
+          <Label>Script</Label>
 
           <div className="relative">
             <Textarea
@@ -240,6 +246,34 @@ export default function TalkingHeadForm({
             </div>
           </div>
 
+          {/* Character limit toggle & estimated time */}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={decrementBlocks}
+                disabled={characterBlocks <= 1}
+                className="flex h-8 w-8 items-center justify-center rounded-lg border border-border bg-background text-foreground transition-all duration-200 hover:bg-secondary disabled:opacity-50"
+              >
+                <Minus className="h-4 w-4" />
+              </button>
+              <span className="min-w-20 text-center text-sm font-medium">
+                {maxChars} chars
+              </span>
+              <button
+                type="button"
+                onClick={incrementBlocks}
+                disabled={characterBlocks >= 10}
+                className="flex h-8 w-8 items-center justify-center rounded-lg border border-border bg-background text-foreground transition-all duration-200 hover:bg-secondary disabled:opacity-50"
+              >
+                <Plus className="h-4 w-4" />
+              </button>
+            </div>
+            <p className="text-sm text-muted-foreground">
+              ~{estimatedDuration} seconds
+            </p>
+          </div>
+
           {isOverLimit && (
             <p className="text-sm text-destructive">
               Increase max characters to continue
@@ -252,7 +286,7 @@ export default function TalkingHeadForm({
           <CollapsibleTrigger asChild>
             <button
               type="button"
-              className="flex w-full items-center justify-between rounded-xl border border-border bg-card p-4 transition-apple hover:bg-secondary/50"
+              className="flex w-full items-center justify-between rounded-xl border border-border bg-card p-4 transition-all duration-200 hover:bg-secondary/50"
             >
               <div className="flex items-center gap-3">
                 <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
@@ -284,7 +318,7 @@ export default function TalkingHeadForm({
                   type="button"
                   onClick={() => setSelectedVoice(voice)}
                   className={cn(
-                    'flex w-full items-center justify-between rounded-lg p-3 transition-apple',
+                    'flex w-full items-center justify-between rounded-lg p-3 transition-all duration-200',
                     selectedVoice.id === voice.id
                       ? 'bg-primary/10 text-primary'
                       : 'hover:bg-secondary'
@@ -379,7 +413,7 @@ export default function TalkingHeadForm({
             !firstFrameUrl ||
             isOverLimit
           }
-          className="h-12 w-full gap-2 rounded-xl bg-primary font-medium text-primary-foreground transition-apple hover:opacity-90"
+          className="h-12 w-full gap-2 rounded-xl bg-primary font-medium text-primary-foreground transition-all duration-200 hover:opacity-90"
         >
           {isSubmitting ? (
             <div className="h-5 w-5 animate-spin rounded-full border-2 border-primary-foreground border-t-transparent" />

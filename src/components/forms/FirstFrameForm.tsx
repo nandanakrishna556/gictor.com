@@ -14,6 +14,7 @@ import {
 import { useFiles } from '@/hooks/useFiles';
 import { useProfile } from '@/hooks/useProfile';
 import { useToast } from '@/hooks/use-toast';
+import LocationSelector from './LocationSelector';
 
 interface FirstFrameFormProps {
   projectId: string;
@@ -26,7 +27,10 @@ export default function FirstFrameForm({
   folderId,
   onSuccess,
 }: FirstFrameFormProps) {
-  const { createFile } = useFiles(projectId, folderId);
+  const [currentProjectId, setCurrentProjectId] = useState(projectId);
+  const [currentFolderId, setCurrentFolderId] = useState(folderId);
+  
+  const { createFile } = useFiles(currentProjectId, currentFolderId);
   const { profile, deductCredits } = useProfile();
   const { toast } = useToast();
 
@@ -40,6 +44,11 @@ export default function FirstFrameForm({
 
   const creditCost = 0.25;
   const hasEnoughCredits = (profile?.credits ?? 0) >= creditCost;
+
+  const handleLocationChange = (newProjectId: string, newFolderId?: string) => {
+    setCurrentProjectId(newProjectId);
+    setCurrentFolderId(newFolderId);
+  };
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
@@ -56,8 +65,6 @@ export default function FirstFrameForm({
 
     setUploadingImages(true);
 
-    // For demo, we'll just use object URLs
-    // In production, upload to cloud storage
     const newImages: string[] = [];
     for (const file of Array.from(files)) {
       const url = URL.createObjectURL(file);
@@ -96,12 +103,11 @@ export default function FirstFrameForm({
     setIsSubmitting(true);
 
     try {
-      // Create file record
       const fileId = crypto.randomUUID();
       await createFile({
         id: fileId,
-        project_id: projectId,
-        folder_id: folderId || null,
+        project_id: currentProjectId,
+        folder_id: currentFolderId || null,
         name: fileName,
         file_type: 'first_frame',
         status: 'processing',
@@ -113,7 +119,6 @@ export default function FirstFrameForm({
         },
       });
 
-      // Deduct credits
       await deductCredits(creditCost);
 
       toast({
@@ -136,15 +141,22 @@ export default function FirstFrameForm({
   return (
     <form onSubmit={handleSubmit} className="p-6">
       <div className="space-y-6">
-        {/* File Name */}
+        {/* File Name & Location */}
         <div className="space-y-2">
           <Label htmlFor="fileName">File name</Label>
-          <Input
-            id="fileName"
-            value={fileName}
-            onChange={(e) => setFileName(e.target.value)}
-            className="rounded-xl"
-          />
+          <div className="flex items-center gap-2">
+            <Input
+              id="fileName"
+              value={fileName}
+              onChange={(e) => setFileName(e.target.value)}
+              className="flex-1 rounded-xl"
+            />
+            <LocationSelector
+              projectId={currentProjectId}
+              folderId={currentFolderId}
+              onLocationChange={handleLocationChange}
+            />
+          </div>
         </div>
 
         {/* Image Type */}
@@ -154,7 +166,7 @@ export default function FirstFrameForm({
             <button
               type="button"
               onClick={() => setImageType('ugc')}
-              className={`flex-1 rounded-lg py-2 text-sm font-medium transition-apple ${
+              className={`flex-1 rounded-lg py-2 text-sm font-medium transition-all duration-200 ${
                 imageType === 'ugc'
                   ? 'bg-background text-foreground shadow-sm'
                   : 'text-muted-foreground hover:text-foreground'
@@ -165,7 +177,7 @@ export default function FirstFrameForm({
             <button
               type="button"
               onClick={() => setImageType('studio')}
-              className={`flex-1 rounded-lg py-2 text-sm font-medium transition-apple ${
+              className={`flex-1 rounded-lg py-2 text-sm font-medium transition-all duration-200 ${
                 imageType === 'studio'
                   ? 'bg-background text-foreground shadow-sm'
                   : 'text-muted-foreground hover:text-foreground'
@@ -205,14 +217,14 @@ export default function FirstFrameForm({
                 <button
                   type="button"
                   onClick={() => removeImage(index)}
-                  className="absolute -right-2 -top-2 rounded-full bg-destructive p-1 text-destructive-foreground opacity-0 transition-apple group-hover:opacity-100"
+                  className="absolute -right-2 -top-2 rounded-full bg-destructive p-1 text-destructive-foreground opacity-0 transition-all duration-200 group-hover:opacity-100"
                 >
                   <X className="h-3 w-3" />
                 </button>
               </div>
             ))}
             {referenceImages.length < 5 && (
-              <label className="flex h-20 w-20 cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed border-border text-muted-foreground transition-apple hover:border-primary hover:text-primary">
+              <label className="flex h-20 w-20 cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed border-border text-muted-foreground transition-all duration-200 hover:border-primary hover:text-primary">
                 <Upload className="h-5 w-5" />
                 <span className="mt-1 text-xs">Upload</span>
                 <input
@@ -249,7 +261,7 @@ export default function FirstFrameForm({
         <Button
           type="submit"
           disabled={isSubmitting || !hasEnoughCredits || !prompt.trim()}
-          className="h-12 w-full gap-2 rounded-xl bg-primary font-medium text-primary-foreground transition-apple hover:opacity-90"
+          className="h-12 w-full gap-2 rounded-xl bg-primary font-medium text-primary-foreground transition-all duration-200 hover:opacity-90"
         >
           {isSubmitting ? (
             <div className="h-5 w-5 animate-spin rounded-full border-2 border-primary-foreground border-t-transparent" />

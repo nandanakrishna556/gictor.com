@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, FolderOpen, MoreHorizontal, Trash2, Pencil } from 'lucide-react';
+import { Plus, MoreHorizontal, Trash2, Pencil, Archive, Layers } from 'lucide-react';
 import MainLayout from '@/components/layout/MainLayout';
 import AppHeader from '@/components/layout/AppHeader';
 import { Button } from '@/components/ui/button';
@@ -21,7 +21,6 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { useProjects } from '@/hooks/useProjects';
-import { formatDistanceToNow } from 'date-fns';
 
 export default function Projects() {
   const navigate = useNavigate();
@@ -51,18 +50,18 @@ export default function Projects() {
 
         <div className="flex-1 overflow-y-auto p-6">
           {isLoading ? (
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
               {[...Array(4)].map((_, i) => (
                 <div
                   key={i}
-                  className="h-40 animate-pulse rounded-2xl bg-secondary"
+                  className="aspect-[2/3] animate-pulse rounded-2xl bg-secondary"
                 />
               ))}
             </div>
           ) : projects?.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-24">
               <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-secondary">
-                <FolderOpen className="h-8 w-8 text-muted-foreground" />
+                <Layers className="h-8 w-8 text-muted-foreground" />
               </div>
               <h2 className="mb-2 text-xl font-semibold text-foreground">
                 No projects yet
@@ -72,37 +71,89 @@ export default function Projects() {
               </p>
               <Button
                 onClick={handleCreateProject}
-                className="gap-2 rounded-xl bg-primary px-6 font-medium text-primary-foreground transition-apple hover:opacity-90"
+                className="gap-2 rounded-xl bg-primary px-6 font-medium text-primary-foreground transition-all duration-200 hover:opacity-90"
               >
                 <Plus className="h-4 w-4" />
                 Create your first project
               </Button>
             </div>
           ) : (
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+              {/* Create New Project Card */}
+              <button
+                onClick={handleCreateProject}
+                className="group relative flex aspect-[2/3] cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed border-border bg-card transition-all duration-200 hover:border-primary hover:bg-primary/5 hover:scale-[1.02]"
+              >
+                <div className="flex h-14 w-14 items-center justify-center rounded-full bg-primary/10 transition-all duration-200 group-hover:bg-primary/20">
+                  <Plus className="h-7 w-7 text-primary" />
+                </div>
+                <span className="mt-4 text-base font-medium text-muted-foreground transition-all duration-200 group-hover:text-primary">
+                  New project
+                </span>
+              </button>
+
               {projects?.map((project) => (
                 <div
                   key={project.id}
-                  className="group relative cursor-pointer rounded-2xl border border-border bg-card p-5 shadow-apple transition-apple hover-lift"
+                  className="group relative flex aspect-[2/3] cursor-pointer flex-col items-center justify-center rounded-2xl border border-border bg-card transition-all duration-200 hover:border-primary hover:scale-[1.02]"
                   onClick={() => navigate(`/projects/${project.id}`)}
                 >
-                  <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10">
-                    <FolderOpen className="h-6 w-6 text-primary" />
+                  {/* Project Icon - Stacked layers */}
+                  <div className="relative mb-4">
+                    <svg 
+                      width="72" 
+                      height="72" 
+                      viewBox="0 0 72 72" 
+                      fill="none" 
+                      className="text-primary"
+                    >
+                      {/* Bottom layer */}
+                      <rect 
+                        x="8" 
+                        y="24" 
+                        width="56" 
+                        height="40" 
+                        rx="8" 
+                        fill="currentColor"
+                        opacity="0.2"
+                      />
+                      {/* Middle layer */}
+                      <rect 
+                        x="12" 
+                        y="16" 
+                        width="48" 
+                        height="40" 
+                        rx="6" 
+                        fill="currentColor"
+                        opacity="0.4"
+                      />
+                      {/* Top layer */}
+                      <rect 
+                        x="16" 
+                        y="8" 
+                        width="40" 
+                        height="40" 
+                        rx="6" 
+                        fill="currentColor"
+                        opacity="0.8"
+                      />
+                      {/* Play/content indicator */}
+                      <path 
+                        d="M32 22L44 28L32 34V22Z" 
+                        fill="white"
+                        opacity="0.9"
+                      />
+                    </svg>
                   </div>
-                  <h3 className="mb-1 font-semibold text-card-foreground">
+
+                  <h3 className="text-base font-semibold text-card-foreground text-center px-4">
                     {project.name}
                   </h3>
-                  <p className="text-sm text-muted-foreground">
-                    Updated{' '}
-                    {formatDistanceToNow(new Date(project.updated_at), {
-                      addSuffix: true,
-                    })}
-                  </p>
 
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <button
-                        className="absolute right-3 top-3 rounded-lg p-1.5 opacity-0 transition-apple hover:bg-secondary group-hover:opacity-100"
+                        className="absolute right-3 top-3 rounded-lg p-1.5 opacity-0 transition-all duration-200 hover:bg-secondary group-hover:opacity-100"
                         onClick={(e) => e.stopPropagation()}
                       >
                         <MoreHorizontal className="h-4 w-4 text-muted-foreground" />
@@ -112,6 +163,10 @@ export default function Projects() {
                       <DropdownMenuItem className="gap-2">
                         <Pencil className="h-4 w-4" />
                         Rename
+                      </DropdownMenuItem>
+                      <DropdownMenuItem className="gap-2">
+                        <Archive className="h-4 w-4" />
+                        Archive
                       </DropdownMenuItem>
                       <DropdownMenuItem
                         className="gap-2 text-destructive"

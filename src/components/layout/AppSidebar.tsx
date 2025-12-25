@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ChevronLeft, ChevronRight, ChevronDown, Plus, Sparkles, FolderOpen } from 'lucide-react';
+import { ChevronLeft, ChevronRight, ChevronDown, Plus, Sparkles, Layers } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
@@ -24,6 +24,15 @@ export default function AppSidebar({ collapsed, onCollapse }: AppSidebarProps) {
     }
   };
 
+  const handleProjectsClick = () => {
+    navigate('/projects');
+  };
+
+  const handleToggleProjects = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setProjectsOpen(!projectsOpen);
+  };
+
   return (
     <aside
       className={cn(
@@ -44,27 +53,41 @@ export default function AppSidebar({ collapsed, onCollapse }: AppSidebarProps) {
       {/* Projects Section */}
       <div className="flex-1 overflow-y-auto p-3">
         <Collapsible open={projectsOpen && !collapsed} onOpenChange={setProjectsOpen}>
-          <CollapsibleTrigger asChild>
-            <button
-              className={cn(
-                'flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground transition-apple hover:bg-sidebar-accent hover:text-sidebar-accent-foreground',
-                collapsed && 'justify-center px-2'
-              )}
-            >
-              {!collapsed && (
-                <>
-                  <ChevronDown
-                    className={cn(
-                      'h-4 w-4 transition-transform',
-                      !projectsOpen && '-rotate-90'
-                    )}
-                  />
-                  <span>Projects</span>
-                </>
-              )}
-              {collapsed && <FolderOpen className="h-5 w-5" />}
-            </button>
-          </CollapsibleTrigger>
+          <div
+            className={cn(
+              'flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground transition-all duration-200 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground cursor-pointer',
+              collapsed && 'justify-center px-2'
+            )}
+          >
+            {!collapsed && (
+              <>
+                <CollapsibleTrigger asChild>
+                  <button
+                    onClick={handleToggleProjects}
+                    className="p-0.5 rounded hover:bg-sidebar-accent"
+                  >
+                    <ChevronDown
+                      className={cn(
+                        'h-4 w-4 transition-transform',
+                        !projectsOpen && '-rotate-90'
+                      )}
+                    />
+                  </button>
+                </CollapsibleTrigger>
+                <button 
+                  onClick={handleProjectsClick}
+                  className="flex-1 text-left"
+                >
+                  Projects
+                </button>
+              </>
+            )}
+            {collapsed && (
+              <button onClick={handleProjectsClick}>
+                <Layers className="h-5 w-5" />
+              </button>
+            )}
+          </div>
 
           <CollapsibleContent className="mt-1 space-y-1">
             {projects?.map((project) => (
@@ -72,20 +95,20 @@ export default function AppSidebar({ collapsed, onCollapse }: AppSidebarProps) {
                 key={project.id}
                 onClick={() => navigate(`/projects/${project.id}`)}
                 className={cn(
-                  'flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm transition-apple',
+                  'flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm transition-all duration-200',
                   projectId === project.id
                     ? 'bg-primary/10 font-medium text-primary'
                     : 'text-sidebar-foreground hover:bg-sidebar-accent'
                 )}
               >
-                <FolderOpen className="h-4 w-4 shrink-0" />
+                <Layers className="h-4 w-4 shrink-0" />
                 <span className="truncate">{project.name}</span>
               </button>
             ))}
 
             <button
               onClick={handleCreateProject}
-              className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-muted-foreground transition-apple hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+              className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-muted-foreground transition-all duration-200 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
             >
               <Plus className="h-4 w-4" />
               <span>New project</span>
@@ -101,7 +124,7 @@ export default function AppSidebar({ collapsed, onCollapse }: AppSidebarProps) {
           size="sm"
           onClick={() => onCollapse(!collapsed)}
           className={cn(
-            'w-full justify-center text-muted-foreground transition-apple hover:bg-sidebar-accent hover:text-sidebar-accent-foreground',
+            'w-full justify-center text-muted-foreground transition-all duration-200 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground',
             collapsed && 'px-2'
           )}
         >
