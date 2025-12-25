@@ -654,14 +654,16 @@ function FolderCard({
             onValueChange={(value) => onStatusChange?.(folder.id, value)}
           >
             <SelectTrigger
-              className="h-7 flex-1 rounded-lg text-xs border-0 bg-transparent p-0 hover:bg-secondary/50"
+              className={cn(
+                'h-8 w-fit rounded-full text-xs border-2 px-3 py-1 text-white [&>svg]:hidden',
+                currentStage?.color,
+                currentStage?.color?.replace('bg-', 'border-')
+              )}
               onClick={(e) => e.stopPropagation()}
             >
-              <span className={cn('rounded px-2 py-1 text-xs text-white', currentStage?.color)}>
-                {currentStage?.name || 'Select status'}
-              </span>
+              {currentStage?.name || 'Select status'}
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="bg-card border shadow-lg">
               {stages.map((stage) => (
                 <SelectItem key={stage.id} value={stage.id}>
                   <div className="flex items-center gap-2">
@@ -871,14 +873,16 @@ function FileCard({
             onValueChange={(value) => onStatusChange?.(file.id, value)}
           >
             <SelectTrigger
-              className="h-7 flex-1 rounded-lg text-xs border-0 bg-transparent p-0 hover:bg-secondary/50"
+              className={cn(
+                'h-8 w-fit rounded-full text-xs border-2 px-3 py-1 text-white [&>svg]:hidden',
+                currentStage?.color,
+                currentStage?.color?.replace('bg-', 'border-')
+              )}
               onClick={(e) => e.stopPropagation()}
             >
-              <span className={cn('rounded px-2 py-1 text-xs text-white', currentStage?.color)}>
-                {currentStage?.name || 'Select status'}
-              </span>
+              {currentStage?.name || 'Select status'}
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="bg-card border shadow-lg">
               {stages.map((stage) => (
                 <SelectItem key={stage.id} value={stage.id}>
                   <div className="flex items-center gap-2">
