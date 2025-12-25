@@ -15,6 +15,7 @@ import {
 import { useFiles } from '@/hooks/useFiles';
 import { useProfile } from '@/hooks/useProfile';
 import { useToast } from '@/hooks/use-toast';
+import LocationSelector from './LocationSelector';
 
 interface ScriptFormProps {
   projectId: string;
@@ -36,7 +37,10 @@ export default function ScriptForm({
   folderId,
   onSuccess,
 }: ScriptFormProps) {
-  const { createFile } = useFiles(projectId, folderId);
+  const [currentProjectId, setCurrentProjectId] = useState(projectId);
+  const [currentFolderId, setCurrentFolderId] = useState(folderId);
+  
+  const { createFile } = useFiles(currentProjectId, currentFolderId);
   const { profile, deductCredits } = useProfile();
   const { toast } = useToast();
 
@@ -49,6 +53,11 @@ export default function ScriptForm({
   const creditCost = 0.5;
   const hasEnoughCredits = (profile?.credits ?? 0) >= creditCost;
   const estimatedCharacters = Math.round(duration * 15);
+
+  const handleLocationChange = (newProjectId: string, newFolderId?: string) => {
+    setCurrentProjectId(newProjectId);
+    setCurrentFolderId(newFolderId);
+  };
 
   const formatDuration = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
@@ -83,8 +92,8 @@ export default function ScriptForm({
       const fileId = crypto.randomUUID();
       await createFile({
         id: fileId,
-        project_id: projectId,
-        folder_id: folderId || null,
+        project_id: currentProjectId,
+        folder_id: currentFolderId || null,
         name: fileName,
         file_type: 'script',
         status: 'processing',
@@ -117,15 +126,22 @@ export default function ScriptForm({
   return (
     <form onSubmit={handleSubmit} className="p-6">
       <div className="space-y-6">
-        {/* File Name */}
+        {/* File Name & Location */}
         <div className="space-y-2">
           <Label htmlFor="fileName">File name</Label>
-          <Input
-            id="fileName"
-            value={fileName}
-            onChange={(e) => setFileName(e.target.value)}
-            className="rounded-xl"
-          />
+          <div className="flex items-center gap-2">
+            <Input
+              id="fileName"
+              value={fileName}
+              onChange={(e) => setFileName(e.target.value)}
+              className="flex-1 rounded-xl"
+            />
+            <LocationSelector
+              projectId={currentProjectId}
+              folderId={currentFolderId}
+              onLocationChange={handleLocationChange}
+            />
+          </div>
         </div>
 
         {/* Duration */}
@@ -183,7 +199,7 @@ export default function ScriptForm({
         <Button
           type="submit"
           disabled={isSubmitting || !hasEnoughCredits || !description.trim()}
-          className="h-12 w-full gap-2 rounded-xl bg-primary font-medium text-primary-foreground transition-apple hover:opacity-90"
+          className="h-12 w-full gap-2 rounded-xl bg-primary font-medium text-primary-foreground transition-all duration-200 hover:opacity-90"
         >
           {isSubmitting ? (
             <div className="h-5 w-5 animate-spin rounded-full border-2 border-primary-foreground border-t-transparent" />
