@@ -697,7 +697,7 @@ function FolderCard({
         <Popover>
           <PopoverTrigger asChild>
             <button
-              className="flex w-full items-center gap-3 rounded-md p-1 -m-1 hover:bg-secondary/50 transition-colors"
+              className="flex w-full items-center gap-3 rounded-md hover:bg-secondary/50 transition-colors"
               onClick={(e) => e.stopPropagation()}
             >
               <span className="text-xs text-muted-foreground w-12">Tags</span>
@@ -994,7 +994,7 @@ function FileCard({
         <Popover>
           <PopoverTrigger asChild>
             <button
-              className="flex w-full items-center gap-3 rounded-md p-1 -m-1 hover:bg-secondary/50 transition-colors"
+              className="flex w-full items-center gap-3 rounded-md hover:bg-secondary/50 transition-colors"
               onClick={(e) => e.stopPropagation()}
             >
               <span className="text-xs text-muted-foreground w-12">Tags</span>
