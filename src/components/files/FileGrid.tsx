@@ -14,6 +14,7 @@ import {
   Check,
   X,
   Search,
+  Paperclip,
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
@@ -264,8 +265,15 @@ export default function FileGrid({
 
         <DragDropContext onDragEnd={handleDragEnd}>
           <div className="flex gap-4 overflow-x-auto pb-4">
-            {stages.map((stage) => {
-              const stageItems = allItems.filter((item) => item.status === stage.id);
+            {stages.map((stage, stageIndex) => {
+              // Default status is first stage - filter items with no status to first stage
+              const stageItems = allItems.filter((item) => {
+                const itemStatus = item.status;
+                if (!itemStatus || itemStatus === 'active') {
+                  return stageIndex === 0; // No status = first stage
+                }
+                return itemStatus === stage.id;
+              });
 
               return (
                 <Droppable key={stage.id} droppableId={stage.id}>
@@ -565,8 +573,9 @@ function FolderCard({
   onTagsChange?: (id: string, tags: string[]) => void;
 }) {
   const navigate = useNavigate();
-  const [tagsExpanded, setTagsExpanded] = useState(false);
-  const currentStage = stages.find((s) => s.id === folder.status) || defaultStatusOptions.find((s) => s.value === folder.status);
+  // Default status to first stage if not set
+  const effectiveStatus = folder.status && folder.status !== 'active' ? folder.status : stages[0]?.id || 'processing';
+  const currentStage = stages.find((s) => s.id === effectiveStatus) || stages[0];
   const folderTags = folder.tags || [];
 
   const toggleTag = (tagId: string) => {
@@ -639,7 +648,7 @@ function FolderCard({
 
         {/* Status Selector */}
         <Select
-          value={folder.status || 'active'}
+          value={effectiveStatus}
           onValueChange={(value) => onStatusChange?.(folder.id, value)}
         >
           <SelectTrigger
@@ -663,41 +672,30 @@ function FolderCard({
           </SelectContent>
         </Select>
 
-        {/* Collapsible Tags */}
-        <div>
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              setTagsExpanded(!tagsExpanded);
-            }}
-            className="flex w-full items-center justify-between rounded-lg px-2 py-1 text-xs text-muted-foreground hover:bg-secondary/50"
-          >
-            <span>{folderTags.length} tags</span>
-            {tagsExpanded ? (
-              <ChevronUp className="h-3 w-3" />
-            ) : (
-              <ChevronDown className="h-3 w-3" />
-            )}
-          </button>
-          {tagsExpanded && (
-            <div className="mt-1 flex flex-wrap gap-1">
-              {folderTags.map((tagId) => {
+        {/* Inline Tags Display */}
+        <div className="flex items-center gap-1.5">
+          <Paperclip className="h-3.5 w-3.5 text-muted-foreground" />
+          {folderTags.length > 0 ? (
+            <>
+              {folderTags.slice(0, 2).map((tagId) => {
                 const tag = tags.find((t) => t.id === tagId);
                 if (!tag) return null;
                 return (
                   <span
                     key={tagId}
-                    className="rounded-full px-2 py-0.5 text-xs text-white"
-                    style={{ backgroundColor: tag.color }}
+                    className="rounded px-1.5 py-0.5 text-xs"
+                    style={{ backgroundColor: `${tag.color}20`, color: tag.color }}
                   >
                     {tag.tag_name}
                   </span>
                 );
               })}
-              {folderTags.length === 0 && (
-                <span className="text-xs text-muted-foreground">No tags</span>
+              {folderTags.length > 2 && (
+                <span className="text-xs text-muted-foreground">+{folderTags.length - 2}</span>
               )}
-            </div>
+            </>
+          ) : (
+            <span className="text-xs text-muted-foreground">No tags</span>
           )}
         </div>
       </div>
@@ -788,10 +786,11 @@ function FileCard({
   onStatusChange?: (id: string, status: string) => void;
   onTagsChange?: (id: string, tags: string[]) => void;
 }) {
-  const [tagsExpanded, setTagsExpanded] = useState(false);
   const isProcessing = file.status === 'processing';
   const isFailed = file.status === 'failed';
-  const currentStage = stages.find((s) => s.id === file.status) || defaultStatusOptions.find((s) => s.value === file.status);
+  // Default status to first stage if not set
+  const effectiveStatus = file.status || stages[0]?.id || 'processing';
+  const currentStage = stages.find((s) => s.id === effectiveStatus) || stages[0];
   const fileTags = file.tags || [];
 
   const toggleTag = (tagId: string) => {
@@ -862,7 +861,7 @@ function FileCard({
 
         {/* Status Selector */}
         <Select
-          value={file.status || 'processing'}
+          value={effectiveStatus}
           onValueChange={(value) => onStatusChange?.(file.id, value)}
         >
           <SelectTrigger
@@ -886,41 +885,30 @@ function FileCard({
           </SelectContent>
         </Select>
 
-        {/* Collapsible Tags */}
-        <div>
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              setTagsExpanded(!tagsExpanded);
-            }}
-            className="flex w-full items-center justify-between rounded-lg px-2 py-1 text-xs text-muted-foreground hover:bg-secondary/50"
-          >
-            <span>{fileTags.length} tags</span>
-            {tagsExpanded ? (
-              <ChevronUp className="h-3 w-3" />
-            ) : (
-              <ChevronDown className="h-3 w-3" />
-            )}
-          </button>
-          {tagsExpanded && (
-            <div className="mt-1 flex flex-wrap gap-1">
-              {fileTags.map((tagId) => {
+        {/* Inline Tags Display */}
+        <div className="flex items-center gap-1.5">
+          <Paperclip className="h-3.5 w-3.5 text-muted-foreground" />
+          {fileTags.length > 0 ? (
+            <>
+              {fileTags.slice(0, 2).map((tagId) => {
                 const tag = tags.find((t) => t.id === tagId);
                 if (!tag) return null;
                 return (
                   <span
                     key={tagId}
-                    className="rounded-full px-2 py-0.5 text-xs text-white"
-                    style={{ backgroundColor: tag.color }}
+                    className="rounded px-1.5 py-0.5 text-xs"
+                    style={{ backgroundColor: `${tag.color}20`, color: tag.color }}
                   >
                     {tag.tag_name}
                   </span>
                 );
               })}
-              {fileTags.length === 0 && (
-                <span className="text-xs text-muted-foreground">No tags</span>
+              {fileTags.length > 2 && (
+                <span className="text-xs text-muted-foreground">+{fileTags.length - 2}</span>
               )}
-            </div>
+            </>
+          ) : (
+            <span className="text-xs text-muted-foreground">No tags</span>
           )}
         </div>
       </div>
@@ -1097,27 +1085,32 @@ function KanbanCard({
             </Badge>
           )}
 
-          {/* Tags (Kanban shows only tags, no status since columns = status) */}
-          {itemTags.length > 0 && (
-            <div className="mt-2 flex flex-wrap gap-1">
-              {itemTags.slice(0, 3).map((tagId) => {
-                const tag = tags.find((t) => t.id === tagId);
-                if (!tag) return null;
-                return (
-                  <span
-                    key={tagId}
-                    className="rounded-full px-2 py-0.5 text-xs text-white"
-                    style={{ backgroundColor: tag.color }}
-                  >
-                    {tag.tag_name}
-                  </span>
-                );
-              })}
-              {itemTags.length > 3 && (
-                <span className="text-xs text-muted-foreground">+{itemTags.length - 3}</span>
-              )}
-            </div>
-          )}
+          {/* Tags (Kanban shows only tags with inline style matching grid view) */}
+          <div className="mt-2 flex items-center gap-1.5">
+            <Paperclip className="h-3.5 w-3.5 text-muted-foreground" />
+            {itemTags.length > 0 ? (
+              <>
+                {itemTags.slice(0, 2).map((tagId) => {
+                  const tag = tags.find((t) => t.id === tagId);
+                  if (!tag) return null;
+                  return (
+                    <span
+                      key={tagId}
+                      className="rounded px-1.5 py-0.5 text-xs"
+                      style={{ backgroundColor: `${tag.color}20`, color: tag.color }}
+                    >
+                      {tag.tag_name}
+                    </span>
+                  );
+                })}
+                {itemTags.length > 2 && (
+                  <span className="text-xs text-muted-foreground">+{itemTags.length - 2}</span>
+                )}
+              </>
+            ) : (
+              <span className="text-xs text-muted-foreground">No tags</span>
+            )}
+          </div>
         </div>
 
         <DropdownMenu>
