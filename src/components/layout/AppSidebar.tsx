@@ -1,10 +1,17 @@
 import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ChevronLeft, ChevronRight, ChevronDown, Plus, Sparkles, Layers } from 'lucide-react';
+import { ChevronLeft, ChevronRight, ChevronDown, Plus, Sparkles, Layers, MoreHorizontal, Trash2, Archive, Pencil } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { useProjects } from '@/hooks/useProjects';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 interface AppSidebarProps {
   collapsed: boolean;
@@ -14,7 +21,7 @@ interface AppSidebarProps {
 export default function AppSidebar({ collapsed, onCollapse }: AppSidebarProps) {
   const navigate = useNavigate();
   const { projectId } = useParams();
-  const { projects, createProject } = useProjects();
+  const { projects, createProject, deleteProject } = useProjects();
   const [projectsOpen, setProjectsOpen] = useState(true);
 
   const handleCreateProject = async () => {
@@ -91,19 +98,54 @@ export default function AppSidebar({ collapsed, onCollapse }: AppSidebarProps) {
 
           <CollapsibleContent className="mt-1 space-y-1">
             {projects?.map((project) => (
-              <button
+              <div
                 key={project.id}
-                onClick={() => navigate(`/projects/${project.id}`)}
                 className={cn(
-                  'flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm transition-all duration-200',
+                  'group flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm transition-all duration-200',
                   projectId === project.id
                     ? 'bg-primary/10 font-medium text-primary'
                     : 'text-sidebar-foreground hover:bg-sidebar-accent'
                 )}
               >
-                <Layers className="h-4 w-4 shrink-0" />
-                <span className="truncate">{project.name}</span>
-              </button>
+                <button
+                  onClick={() => navigate(`/projects/${project.id}`)}
+                  className="flex flex-1 items-center gap-2 truncate"
+                >
+                  <Layers className="h-4 w-4 shrink-0" />
+                  <span className="truncate">{project.name}</span>
+                </button>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <button
+                      className="rounded p-0.5 opacity-0 transition-opacity hover:bg-sidebar-accent group-hover:opacity-100"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <MoreHorizontal className="h-4 w-4 text-muted-foreground" />
+                    </button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-40">
+                    <DropdownMenuItem className="gap-2">
+                      <Pencil className="h-4 w-4" />
+                      Rename
+                    </DropdownMenuItem>
+                    <DropdownMenuItem className="gap-2">
+                      <Archive className="h-4 w-4" />
+                      Archive
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                      className="gap-2 text-destructive"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        deleteProject(project.id);
+                      }}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                      Delete
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
             ))}
 
             <button
