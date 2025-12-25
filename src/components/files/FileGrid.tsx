@@ -1,18 +1,15 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  Image,
-  Video,
-  FileText,
   Download,
   MoreHorizontal,
   Trash2,
   Copy,
   Plus,
   Archive,
-  Folder,
   GripVertical,
-  ChevronDown,
+  Tag,
+  X,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
@@ -20,6 +17,7 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -30,26 +28,40 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
+import { Checkbox } from '@/components/ui/checkbox';
 import type { File, Folder as FolderType } from '@/hooks/useFiles';
+import type { Pipeline, PipelineStage } from '@/hooks/usePipelines';
+import type { Tag as TagType } from '@/hooks/useTags';
 
 interface FileGridProps {
   files: File[];
   folders: FolderType[];
   projectId: string;
   viewMode: 'grid' | 'kanban';
+  pipelines: Pipeline[];
+  tags: TagType[];
+  selectedPipelineId: string | null;
+  onPipelineChange: (id: string | null) => void;
+  onCreatePipeline: () => void;
   onCreateNew?: () => void;
   onDeleteFile?: (id: string) => void;
   onDeleteFolder?: (id: string) => void;
   onUpdateFileStatus?: (id: string, status: string) => void;
+  onUpdateFileTags?: (id: string, tags: string[]) => void;
 }
 
-const fileTypeLabels = {
+const fileTypeLabels: Record<string, string> = {
   first_frame: 'First Frame',
   talking_head: 'Talking Head',
   script: 'Script',
 };
 
-const statusOptions = [
+const defaultStatusOptions = [
   { value: 'processing', label: 'Processing', color: 'bg-amber-500' },
   { value: 'completed', label: 'Completed', color: 'bg-green-500' },
   { value: 'failed', label: 'Failed', color: 'bg-red-500' },
@@ -57,23 +69,30 @@ const statusOptions = [
   { value: 'approved', label: 'Approved', color: 'bg-emerald-500' },
 ];
 
-const pipelines = [
-  { id: 'default', name: 'Default Pipeline', statuses: ['processing', 'completed', 'failed'] },
-  { id: 'review', name: 'Review Pipeline', statuses: ['processing', 'review', 'approved', 'completed'] },
-];
-
 export default function FileGrid({
   files,
   folders,
   projectId,
   viewMode,
+  pipelines,
+  tags,
+  selectedPipelineId,
+  onPipelineChange,
+  onCreatePipeline,
   onCreateNew,
   onDeleteFile,
   onDeleteFolder,
   onUpdateFileStatus,
+  onUpdateFileTags,
 }: FileGridProps) {
   const navigate = useNavigate();
-  const [selectedPipeline, setSelectedPipeline] = useState(pipelines[0]);
+
+  const currentPipeline = pipelines.find((p) => p.id === selectedPipelineId);
+  const stages: PipelineStage[] = currentPipeline?.stages || [
+    { id: 'processing', name: 'Processing', color: 'bg-amber-500' },
+    { id: 'completed', name: 'Completed', color: 'bg-green-500' },
+    { id: 'failed', name: 'Failed', color: 'bg-red-500' },
+  ];
 
   if (viewMode === 'kanban') {
     return (
@@ -81,13 +100,14 @@ export default function FileGrid({
         {/* Pipeline Selector */}
         <div className="flex items-center gap-3">
           <Select
-            value={selectedPipeline.id}
-            onValueChange={(id) => setSelectedPipeline(pipelines.find(p => p.id === id) || pipelines[0])}
+            value={selectedPipelineId || 'default'}
+            onValueChange={(id) => onPipelineChange(id === 'default' ? null : id)}
           >
             <SelectTrigger className="w-48 rounded-lg">
-              <SelectValue />
+              <SelectValue placeholder="Select pipeline" />
             </SelectTrigger>
             <SelectContent>
+              <SelectItem value="default">Default Pipeline</SelectItem>
               {pipelines.map((pipeline) => (
                 <SelectItem key={pipeline.id} value={pipeline.id}>
                   {pipeline.name}
@@ -95,40 +115,44 @@ export default function FileGrid({
               ))}
             </SelectContent>
           </Select>
+          <Button variant="outline" size="sm" onClick={onCreatePipeline} className="gap-2">
+            <Plus className="h-4 w-4" />
+            New Pipeline
+          </Button>
         </div>
 
         <div className="flex gap-4 overflow-x-auto pb-4">
-          {selectedPipeline.statuses.map((status) => {
-            const statusConfig = statusOptions.find(s => s.value === status);
-            const statusFiles = files.filter((f) => f.status === status);
+          {stages.map((stage) => {
+            const stageFiles = files.filter((f) => f.status === stage.id);
 
             return (
               <div
-                key={status}
+                key={stage.id}
                 className="min-w-80 flex-1 rounded-2xl bg-secondary/30 p-4"
               >
                 <div className="mb-4 flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <div className={cn('h-2.5 w-2.5 rounded-full', statusConfig?.color)} />
-                    <h3 className="font-medium text-foreground">
-                      {statusConfig?.label || status}
-                    </h3>
+                    <div className={cn('h-2.5 w-2.5 rounded-full', stage.color)} />
+                    <h3 className="font-medium text-foreground">{stage.name}</h3>
                   </div>
                   <Badge variant="secondary" className="text-xs">
-                    {statusFiles.length}
+                    {stageFiles.length}
                   </Badge>
                 </div>
-                
+
                 <div className="space-y-3">
-                  {statusFiles.map((file) => (
+                  {stageFiles.map((file) => (
                     <KanbanCard
                       key={file.id}
                       file={file}
+                      stages={stages}
+                      tags={tags}
                       onDelete={onDeleteFile}
                       onStatusChange={onUpdateFileStatus}
+                      onTagsChange={onUpdateFileTags}
                     />
                   ))}
-                  
+
                   {/* Add Card Button */}
                   {onCreateNew && (
                     <button
@@ -167,9 +191,9 @@ export default function FileGrid({
 
       {/* Folders */}
       {folders.map((folder) => (
-        <FolderCard 
-          key={folder.id} 
-          folder={folder} 
+        <FolderCard
+          key={folder.id}
+          folder={folder}
           projectId={projectId}
           onDelete={onDeleteFolder}
         />
@@ -177,23 +201,26 @@ export default function FileGrid({
 
       {/* Files */}
       {files.map((file) => (
-        <FileCard 
-          key={file.id} 
+        <FileCard
+          key={file.id}
           file={file}
+          stages={stages}
+          tags={tags}
           onDelete={onDeleteFile}
           onStatusChange={onUpdateFileStatus}
+          onTagsChange={onUpdateFileTags}
         />
       ))}
     </div>
   );
 }
 
-function FolderCard({ 
-  folder, 
+function FolderCard({
+  folder,
   projectId,
   onDelete,
-}: { 
-  folder: FolderType; 
+}: {
+  folder: FolderType;
   projectId: string;
   onDelete?: (id: string) => void;
 }) {
@@ -206,34 +233,34 @@ function FolderCard({
     >
       {/* Apple-inspired Folder Icon */}
       <div className="relative mb-4">
-        <svg 
-          width="80" 
-          height="64" 
-          viewBox="0 0 80 64" 
-          fill="none" 
+        <svg
+          width="80"
+          height="64"
+          viewBox="0 0 80 64"
+          fill="none"
           className="text-amber-400 dark:text-amber-500"
         >
           {/* Folder back */}
-          <path 
-            d="M4 12C4 7.58172 7.58172 4 12 4H28L34 12H68C72.4183 12 76 15.5817 76 20V52C76 56.4183 72.4183 60 68 60H12C7.58172 60 4 56.4183 4 52V12Z" 
+          <path
+            d="M4 12C4 7.58172 7.58172 4 12 4H28L34 12H68C72.4183 12 76 15.5817 76 20V52C76 56.4183 72.4183 60 68 60H12C7.58172 60 4 56.4183 4 52V12Z"
             fill="currentColor"
             opacity="0.3"
           />
           {/* Folder front */}
-          <path 
-            d="M4 20C4 15.5817 7.58172 12 12 12H68C72.4183 12 76 15.5817 76 20V52C76 56.4183 72.4183 60 68 60H12C7.58172 60 4 56.4183 4 52V20Z" 
+          <path
+            d="M4 20C4 15.5817 7.58172 12 12 12H68C72.4183 12 76 15.5817 76 20V52C76 56.4183 72.4183 60 68 60H12C7.58172 60 4 56.4183 4 52V20Z"
             fill="currentColor"
           />
           {/* Folder tab */}
-          <path 
-            d="M4 12C4 7.58172 7.58172 4 12 4H26C28.2091 4 30.2091 5.2 31.2 7.1L34 12H4V12Z" 
+          <path
+            d="M4 12C4 7.58172 7.58172 4 12 4H26C28.2091 4 30.2091 5.2 31.2 7.1L34 12H4V12Z"
             fill="currentColor"
             opacity="0.8"
           />
         </svg>
       </div>
-      
-      <h3 className="text-base font-semibold text-card-foreground text-center px-4">{folder.name}</h3>
+
+      <h3 className="px-4 text-center text-base font-semibold text-card-foreground">{folder.name}</h3>
 
       {/* Actions */}
       <DropdownMenu>
@@ -250,7 +277,7 @@ function FolderCard({
             <Archive className="h-4 w-4" />
             Archive
           </DropdownMenuItem>
-          <DropdownMenuItem 
+          <DropdownMenuItem
             className="gap-2 text-destructive"
             onClick={(e) => {
               e.stopPropagation();
@@ -266,20 +293,35 @@ function FolderCard({
   );
 }
 
-function FileCard({ 
-  file, 
+function FileCard({
+  file,
   compact = false,
+  stages,
+  tags,
   onDelete,
   onStatusChange,
-}: { 
-  file: File; 
+  onTagsChange,
+}: {
+  file: File;
   compact?: boolean;
+  stages: PipelineStage[];
+  tags: TagType[];
   onDelete?: (id: string) => void;
   onStatusChange?: (id: string, status: string) => void;
+  onTagsChange?: (id: string, tags: string[]) => void;
 }) {
   const isProcessing = file.status === 'processing';
   const isFailed = file.status === 'failed';
-  const currentStatus = statusOptions.find(s => s.value === file.status) || statusOptions[0];
+  const currentStage = stages.find((s) => s.id === file.status) || defaultStatusOptions.find((s) => s.value === file.status);
+  const fileTags = file.tags || [];
+
+  const toggleTag = (tagId: string) => {
+    if (fileTags.includes(tagId)) {
+      onTagsChange?.(file.id, fileTags.filter((t) => t !== tagId));
+    } else {
+      onTagsChange?.(file.id, [...fileTags, tagId]);
+    }
+  };
 
   return (
     <div
@@ -311,12 +353,10 @@ function FileCard({
       {/* Info */}
       <div className="flex flex-col gap-2 p-4">
         <div className="flex items-start justify-between">
-          <h3 className="truncate font-medium text-card-foreground">
-            {file.name}
-          </h3>
+          <h3 className="truncate font-medium text-card-foreground">{file.name}</h3>
         </div>
-        
-        <div className="flex items-center gap-2">
+
+        <div className="flex flex-wrap items-center gap-2">
           <Badge
             variant="secondary"
             className={cn(
@@ -326,8 +366,26 @@ function FileCard({
               file.file_type === 'script' && 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
             )}
           >
-            {fileTypeLabels[file.file_type]}
+            {fileTypeLabels[file.file_type] || file.file_type}
           </Badge>
+
+          {/* File Tags */}
+          {fileTags.slice(0, 2).map((tagId) => {
+            const tag = tags.find((t) => t.id === tagId);
+            if (!tag) return null;
+            return (
+              <span
+                key={tagId}
+                className="rounded-full px-2 py-0.5 text-xs text-white"
+                style={{ backgroundColor: tag.color }}
+              >
+                {tag.tag_name}
+              </span>
+            );
+          })}
+          {fileTags.length > 2 && (
+            <span className="text-xs text-muted-foreground">+{fileTags.length - 2}</span>
+          )}
         </div>
 
         {/* Status Selector */}
@@ -335,21 +393,21 @@ function FileCard({
           value={file.status || 'processing'}
           onValueChange={(value) => onStatusChange?.(file.id, value)}
         >
-          <SelectTrigger 
+          <SelectTrigger
             className="h-7 w-full rounded-lg text-xs"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center gap-2">
-              <div className={cn('h-2 w-2 rounded-full', currentStatus.color)} />
+              <div className={cn('h-2 w-2 rounded-full', currentStage?.color || 'bg-gray-500')} />
               <SelectValue />
             </div>
           </SelectTrigger>
           <SelectContent>
-            {statusOptions.map((status) => (
-              <SelectItem key={status.value} value={status.value}>
+            {stages.map((stage) => (
+              <SelectItem key={stage.id} value={stage.id}>
                 <div className="flex items-center gap-2">
-                  <div className={cn('h-2 w-2 rounded-full', status.color)} />
-                  {status.label}
+                  <div className={cn('h-2 w-2 rounded-full', stage.color)} />
+                  {stage.name}
                 </div>
               </SelectItem>
             ))}
@@ -380,6 +438,41 @@ function FileCard({
           </button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
+          {/* Tag Assignment */}
+          <Popover>
+            <PopoverTrigger asChild>
+              <DropdownMenuItem className="gap-2" onSelect={(e) => e.preventDefault()}>
+                <Tag className="h-4 w-4" />
+                Assign Tags
+              </DropdownMenuItem>
+            </PopoverTrigger>
+            <PopoverContent align="start" className="w-48">
+              <div className="space-y-2">
+                <h4 className="text-sm font-medium">Tags</h4>
+                {tags.length === 0 ? (
+                  <p className="text-xs text-muted-foreground">No tags available</p>
+                ) : (
+                  tags.map((tag) => (
+                    <label
+                      key={tag.id}
+                      className="flex cursor-pointer items-center gap-2 rounded-md p-1.5 hover:bg-secondary"
+                    >
+                      <Checkbox
+                        checked={fileTags.includes(tag.id)}
+                        onCheckedChange={() => toggleTag(tag.id)}
+                      />
+                      <span
+                        className="h-2 w-2 rounded-full"
+                        style={{ backgroundColor: tag.color }}
+                      />
+                      <span className="text-sm">{tag.tag_name}</span>
+                    </label>
+                  ))
+                )}
+              </div>
+            </PopoverContent>
+          </Popover>
+          <DropdownMenuSeparator />
           <DropdownMenuItem className="gap-2">
             <Copy className="h-4 w-4" />
             Duplicate
@@ -388,7 +481,7 @@ function FileCard({
             <Archive className="h-4 w-4" />
             Archive
           </DropdownMenuItem>
-          <DropdownMenuItem 
+          <DropdownMenuItem
             className="gap-2 text-destructive"
             onClick={(e) => {
               e.stopPropagation();
@@ -404,16 +497,31 @@ function FileCard({
   );
 }
 
-function KanbanCard({ 
+function KanbanCard({
   file,
+  stages,
+  tags,
   onDelete,
   onStatusChange,
-}: { 
+  onTagsChange,
+}: {
   file: File;
+  stages: PipelineStage[];
+  tags: TagType[];
   onDelete?: (id: string) => void;
   onStatusChange?: (id: string, status: string) => void;
+  onTagsChange?: (id: string, tags: string[]) => void;
 }) {
-  const currentStatus = statusOptions.find(s => s.value === file.status) || statusOptions[0];
+  const currentStage = stages.find((s) => s.id === file.status);
+  const fileTags = file.tags || [];
+
+  const toggleTag = (tagId: string) => {
+    if (fileTags.includes(tagId)) {
+      onTagsChange?.(file.id, fileTags.filter((t) => t !== tagId));
+    } else {
+      onTagsChange?.(file.id, [...fileTags, tagId]);
+    }
+  };
 
   return (
     <div className="group rounded-xl border border-border bg-card p-3 transition-all duration-200 hover:border-primary hover:scale-[1.01]">
@@ -421,7 +529,7 @@ function KanbanCard({
         <GripVertical className="mt-0.5 h-4 w-4 cursor-grab text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100" />
         <div className="min-w-0 flex-1">
           <h4 className="truncate text-sm font-medium text-card-foreground">{file.name}</h4>
-          <div className="mt-2 flex items-center gap-2">
+          <div className="mt-2 flex flex-wrap items-center gap-2">
             <Badge
               variant="secondary"
               className={cn(
@@ -431,10 +539,23 @@ function KanbanCard({
                 file.file_type === 'script' && 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
               )}
             >
-              {fileTypeLabels[file.file_type]}
+              {fileTypeLabels[file.file_type] || file.file_type}
             </Badge>
+            {fileTags.slice(0, 1).map((tagId) => {
+              const tag = tags.find((t) => t.id === tagId);
+              if (!tag) return null;
+              return (
+                <span
+                  key={tagId}
+                  className="rounded-full px-2 py-0.5 text-xs text-white"
+                  style={{ backgroundColor: tag.color }}
+                >
+                  {tag.tag_name}
+                </span>
+              );
+            })}
           </div>
-          
+
           {/* Status Selector */}
           <div className="mt-2">
             <Select
@@ -443,16 +564,16 @@ function KanbanCard({
             >
               <SelectTrigger className="h-6 w-full rounded-md text-xs">
                 <div className="flex items-center gap-2">
-                  <div className={cn('h-2 w-2 rounded-full', currentStatus.color)} />
+                  <div className={cn('h-2 w-2 rounded-full', currentStage?.color || 'bg-gray-500')} />
                   <SelectValue />
                 </div>
               </SelectTrigger>
               <SelectContent>
-                {statusOptions.map((status) => (
-                  <SelectItem key={status.value} value={status.value}>
+                {stages.map((stage) => (
+                  <SelectItem key={stage.id} value={stage.id}>
                     <div className="flex items-center gap-2">
-                      <div className={cn('h-2 w-2 rounded-full', status.color)} />
-                      {status.label}
+                      <div className={cn('h-2 w-2 rounded-full', stage.color)} />
+                      {stage.name}
                     </div>
                   </SelectItem>
                 ))}
@@ -460,7 +581,7 @@ function KanbanCard({
             </Select>
           </div>
         </div>
-        
+
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <button className="rounded p-1 opacity-0 transition-opacity hover:bg-secondary group-hover:opacity-100">
@@ -468,6 +589,40 @@ function KanbanCard({
             </button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
+            <Popover>
+              <PopoverTrigger asChild>
+                <DropdownMenuItem className="gap-2" onSelect={(e) => e.preventDefault()}>
+                  <Tag className="h-4 w-4" />
+                  Assign Tags
+                </DropdownMenuItem>
+              </PopoverTrigger>
+              <PopoverContent align="start" className="w-48">
+                <div className="space-y-2">
+                  <h4 className="text-sm font-medium">Tags</h4>
+                  {tags.length === 0 ? (
+                    <p className="text-xs text-muted-foreground">No tags available</p>
+                  ) : (
+                    tags.map((tag) => (
+                      <label
+                        key={tag.id}
+                        className="flex cursor-pointer items-center gap-2 rounded-md p-1.5 hover:bg-secondary"
+                      >
+                        <Checkbox
+                          checked={fileTags.includes(tag.id)}
+                          onCheckedChange={() => toggleTag(tag.id)}
+                        />
+                        <span
+                          className="h-2 w-2 rounded-full"
+                          style={{ backgroundColor: tag.color }}
+                        />
+                        <span className="text-sm">{tag.tag_name}</span>
+                      </label>
+                    ))
+                  )}
+                </div>
+              </PopoverContent>
+            </Popover>
+            <DropdownMenuSeparator />
             <DropdownMenuItem className="gap-2">
               <Copy className="h-4 w-4" />
               Duplicate
@@ -476,7 +631,7 @@ function KanbanCard({
               <Archive className="h-4 w-4" />
               Archive
             </DropdownMenuItem>
-            <DropdownMenuItem 
+            <DropdownMenuItem
               className="gap-2 text-destructive"
               onClick={() => onDelete?.(file.id)}
             >

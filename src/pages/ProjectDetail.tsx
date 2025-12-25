@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -7,7 +7,11 @@ import AppHeader from '@/components/layout/AppHeader';
 import FileGrid from '@/components/files/FileGrid';
 import CreateNewModal from '@/components/modals/CreateNewModal';
 import CreateFolderDialog from '@/components/modals/CreateFolderDialog';
+import CreatePipelineDialog from '@/components/modals/CreatePipelineDialog';
+import CreateTagDialog from '@/components/modals/CreateTagDialog';
 import { useFiles, Folder } from '@/hooks/useFiles';
+import { usePipelines } from '@/hooks/usePipelines';
+import { useTags } from '@/hooks/useTags';
 import type { Project } from '@/hooks/useProjects';
 
 export default function ProjectDetail() {
@@ -16,6 +20,12 @@ export default function ProjectDetail() {
   const [viewMode, setViewMode] = useState<'grid' | 'kanban'>('grid');
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [createFolderOpen, setCreateFolderOpen] = useState(false);
+  const [createPipelineOpen, setCreatePipelineOpen] = useState(false);
+  const [createTagOpen, setCreateTagOpen] = useState(false);
+  const [selectedPipelineId, setSelectedPipelineId] = useState<string | null>(null);
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
+  const [selectedStatuses, setSelectedStatuses] = useState<string[]>([]);
+  const [selectedFileTypes, setSelectedFileTypes] = useState<string[]>([]);
 
   // Fetch project details
   const { data: project } = useQuery({
@@ -49,10 +59,26 @@ export default function ProjectDetail() {
     enabled: !!folderId,
   });
 
-  const { files, folders, isLoading, createFolder } = useFiles(
-    projectId!,
-    folderId
-  );
+  const { files, folders, isLoading, createFolder, updateFile, deleteFile } = useFiles(projectId!, folderId);
+  const { pipelines, createPipeline } = usePipelines();
+  const { tags, createTag } = useTags();
+
+  // Filter files based on selected filters
+  const filteredFiles = (files || []).filter((file) => {
+    if (selectedStatuses.length > 0 && !selectedStatuses.includes(file.status || '')) {
+      return false;
+    }
+    if (selectedFileTypes.length > 0 && !selectedFileTypes.includes(file.file_type)) {
+      return false;
+    }
+    if (selectedTags.length > 0) {
+      const fileTags = file.tags || [];
+      if (!selectedTags.some((t) => fileTags.includes(t))) {
+        return false;
+      }
+    }
+    return true;
+  });
 
   // Build breadcrumbs
   const buildBreadcrumbs = (): { label: string; href?: string }[] => {
@@ -77,6 +103,35 @@ export default function ProjectDetail() {
     setCreateFolderOpen(false);
   };
 
+  const handleCreatePipeline = async (name: string, stages: any[]) => {
+    await createPipeline({ name, stages });
+    setCreatePipelineOpen(false);
+  };
+
+  const handleCreateTag = async (name: string, color: string) => {
+    await createTag({ name, color });
+    setCreateTagOpen(false);
+  };
+
+  const handleUpdateFileStatus = async (id: string, status: string) => {
+    await updateFile({ id, updates: { status } });
+  };
+
+  const handleUpdateFileTags = async (id: string, newTags: string[]) => {
+    // Tags are stored in the files table, need to update via supabase
+    await supabase.from('files').update({ tags: newTags }).eq('id', id);
+  };
+
+  const handleDeleteFile = async (id: string) => {
+    await deleteFile(id);
+  };
+
+  const handleClearFilters = () => {
+    setSelectedTags([]);
+    setSelectedStatuses([]);
+    setSelectedFileTypes([]);
+  };
+
   if (!projectId) {
     navigate('/projects');
     return null;
@@ -92,6 +147,15 @@ export default function ProjectDetail() {
           onCreateFolder={() => setCreateFolderOpen(true)}
           onCreateNew={() => setCreateModalOpen(true)}
           showCreateButtons
+          tags={tags}
+          selectedTags={selectedTags}
+          selectedStatuses={selectedStatuses}
+          selectedFileTypes={selectedFileTypes}
+          onTagsChange={setSelectedTags}
+          onStatusesChange={setSelectedStatuses}
+          onFileTypesChange={setSelectedFileTypes}
+          onCreateTag={() => setCreateTagOpen(true)}
+          onClearFilters={handleClearFilters}
         />
 
         <div className="flex-1 overflow-y-auto p-6">
@@ -104,7 +168,7 @@ export default function ProjectDetail() {
                 />
               ))}
             </div>
-          ) : files?.length === 0 && folders?.length === 0 ? (
+          ) : filteredFiles?.length === 0 && folders?.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-24">
               <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-secondary">
                 <svg
@@ -136,11 +200,19 @@ export default function ProjectDetail() {
             </div>
           ) : (
             <FileGrid
-              files={files || []}
+              files={filteredFiles}
               folders={folders || []}
               projectId={projectId}
               viewMode={viewMode}
+              pipelines={pipelines}
+              tags={tags}
+              selectedPipelineId={selectedPipelineId}
+              onPipelineChange={setSelectedPipelineId}
+              onCreatePipeline={() => setCreatePipelineOpen(true)}
               onCreateNew={() => setCreateModalOpen(true)}
+              onDeleteFile={handleDeleteFile}
+              onUpdateFileStatus={handleUpdateFileStatus}
+              onUpdateFileTags={handleUpdateFileTags}
             />
           )}
         </div>
@@ -157,6 +229,18 @@ export default function ProjectDetail() {
         open={createFolderOpen}
         onOpenChange={setCreateFolderOpen}
         onSubmit={handleCreateFolder}
+      />
+
+      <CreatePipelineDialog
+        open={createPipelineOpen}
+        onOpenChange={setCreatePipelineOpen}
+        onSubmit={handleCreatePipeline}
+      />
+
+      <CreateTagDialog
+        open={createTagOpen}
+        onOpenChange={setCreateTagOpen}
+        onSubmit={handleCreateTag}
       />
     </MainLayout>
   );

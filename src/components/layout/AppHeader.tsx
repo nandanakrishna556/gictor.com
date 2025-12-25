@@ -1,5 +1,5 @@
 import { Link, useNavigate } from 'react-router-dom';
-import { ChevronRight, Filter, Grid3X3, Kanban, Plus, Coins, LogOut, Settings, Sun, Moon } from 'lucide-react';
+import { ChevronRight, Grid3X3, Kanban, Plus, Coins, LogOut, Settings, Sun, Moon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
@@ -12,6 +12,8 @@ import {
 import { useAuth } from '@/contexts/AuthContext';
 import { useProfile } from '@/hooks/useProfile';
 import { useTheme } from 'next-themes';
+import FilterPopover from '@/components/modals/FilterPopover';
+import type { Tag } from '@/hooks/useTags';
 
 interface BreadcrumbItem {
   label: string;
@@ -25,6 +27,15 @@ interface AppHeaderProps {
   onCreateFolder?: () => void;
   onCreateNew?: () => void;
   showCreateButtons?: boolean;
+  tags?: Tag[];
+  selectedTags?: string[];
+  selectedStatuses?: string[];
+  selectedFileTypes?: string[];
+  onTagsChange?: (tags: string[]) => void;
+  onStatusesChange?: (statuses: string[]) => void;
+  onFileTypesChange?: (types: string[]) => void;
+  onCreateTag?: () => void;
+  onClearFilters?: () => void;
 }
 
 export default function AppHeader({
@@ -34,6 +45,15 @@ export default function AppHeader({
   onCreateFolder,
   onCreateNew,
   showCreateButtons = false,
+  tags = [],
+  selectedTags = [],
+  selectedStatuses = [],
+  selectedFileTypes = [],
+  onTagsChange = () => {},
+  onStatusesChange = () => {},
+  onFileTypesChange = () => {},
+  onCreateTag = () => {},
+  onClearFilters = () => {},
 }: AppHeaderProps) {
   const { user, signOut } = useAuth();
   const { profile } = useProfile();
@@ -78,10 +98,19 @@ export default function AppHeader({
       {/* Actions */}
       <div className="flex items-center gap-3">
         {/* Filter */}
-        <Button variant="ghost" size="sm" className="gap-2 text-muted-foreground">
-          <Filter className="h-4 w-4" />
-          Filters
-        </Button>
+        {showCreateButtons && (
+          <FilterPopover
+            tags={tags}
+            selectedTags={selectedTags}
+            selectedStatuses={selectedStatuses}
+            selectedFileTypes={selectedFileTypes}
+            onTagsChange={onTagsChange}
+            onStatusesChange={onStatusesChange}
+            onFileTypesChange={onFileTypesChange}
+            onCreateTag={onCreateTag}
+            onClearAll={onClearFilters}
+          />
+        )}
 
         {/* View Toggle */}
         {onViewModeChange && (
