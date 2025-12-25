@@ -13,7 +13,9 @@ import {
   ChevronUp,
   Check,
   X,
+  Search,
 } from 'lucide-react';
+import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 import {
   DropdownMenu,
@@ -105,6 +107,7 @@ export default function FileGrid({
   const navigate = useNavigate();
   const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
   const [bulkMode, setBulkMode] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
 
   const currentPipeline = pipelines.find((p) => p.id === selectedPipelineId);
   const stages: PipelineStage[] = currentPipeline?.stages || [
@@ -114,10 +117,15 @@ export default function FileGrid({
   ];
 
   // Combine files and folders into unified items
-  const allItems: GridItem[] = [
+  const allItemsUnfiltered: GridItem[] = [
     ...folders.map((f) => ({ ...f, itemType: 'folder' as const, file_type: 'folder' })),
     ...files.map((f) => ({ ...f, itemType: 'file' as const })),
   ];
+
+  // Filter by search query
+  const allItems = allItemsUnfiltered.filter((item) =>
+    item.name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   const toggleSelection = (id: string) => {
     setSelectedItems((prev) => {
@@ -352,8 +360,18 @@ export default function FileGrid({
         />
       )}
 
-      {/* Select Mode Toggle */}
-      <div className="flex justify-end">
+      {/* Search and Select Mode Toggle */}
+      <div className="flex items-center justify-between gap-4">
+        {/* Search */}
+        <div className="relative max-w-sm flex-1">
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            placeholder="Search by name..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-9"
+          />
+        </div>
         <Button
           variant={bulkMode ? 'secondary' : 'outline'}
           size="sm"
@@ -559,9 +577,18 @@ function FolderCard({
     }
   };
 
+  const handleCardClick = (e: React.MouseEvent) => {
+    if (bulkMode) {
+      e.preventDefault();
+      onSelect();
+    } else {
+      navigate(`/projects/${projectId}/folder/${folder.id}`);
+    }
+  };
+
   return (
     <div
-      onClick={() => !bulkMode && navigate(`/projects/${projectId}/folder/${folder.id}`)}
+      onClick={handleCardClick}
       className={cn(
         'group relative flex aspect-[2/3] cursor-pointer flex-col rounded-2xl border bg-amber-50/50 transition-all duration-200 hover:border-primary hover:scale-[1.02] dark:bg-amber-950/20',
         isSelected && 'border-primary ring-2 ring-primary/20'
@@ -569,16 +596,15 @@ function FolderCard({
     >
       {/* Selection Checkbox */}
       {bulkMode && (
-        <div
-          className="absolute left-3 top-3 z-10"
-          onClick={(e) => {
-            e.stopPropagation();
-            onSelect();
-          }}
-        >
+        <div className="absolute left-3 top-3 z-10">
           <Checkbox checked={isSelected} />
         </div>
       )}
+
+      {/* Card Name at Top */}
+      <div className="p-4 pb-0">
+        <h3 className="text-center text-base font-semibold text-card-foreground">{folder.name}</h3>
+      </div>
 
       {/* Apple-inspired Folder Icon */}
       <div className="flex flex-1 items-center justify-center">
@@ -610,7 +636,6 @@ function FolderCard({
 
       {/* Info Section */}
       <div className="flex flex-col gap-2 p-4">
-        <h3 className="text-center text-base font-semibold text-card-foreground">{folder.name}</h3>
 
         {/* Status Selector */}
         <Select
@@ -777,8 +802,17 @@ function FileCard({
     }
   };
 
+  const handleCardClick = (e: React.MouseEvent) => {
+    if (bulkMode) {
+      e.preventDefault();
+      onSelect();
+    }
+    // Non-bulk click can open file details if needed
+  };
+
   return (
     <div
+      onClick={handleCardClick}
       className={cn(
         'group relative flex aspect-[2/3] cursor-pointer flex-col rounded-2xl border bg-card transition-all duration-200 hover:border-primary hover:scale-[1.02]',
         isProcessing && 'animate-pulse-subtle',
@@ -788,16 +822,15 @@ function FileCard({
     >
       {/* Selection Checkbox */}
       {bulkMode && (
-        <div
-          className="absolute left-3 top-3 z-10"
-          onClick={(e) => {
-            e.stopPropagation();
-            onSelect();
-          }}
-        >
+        <div className="absolute left-3 top-3 z-10">
           <Checkbox checked={isSelected} />
         </div>
       )}
+
+      {/* Card Name at Top */}
+      <div className="p-4 pb-0">
+        <h3 className="truncate font-medium text-card-foreground">{file.name}</h3>
+      </div>
 
       {/* Preview Area */}
       <div className="flex flex-1 items-center justify-center rounded-t-2xl bg-secondary">
@@ -814,9 +847,6 @@ function FileCard({
 
       {/* Info */}
       <div className="flex flex-col gap-2 p-4">
-        <div className="flex items-start justify-between">
-          <h3 className="truncate font-medium text-card-foreground">{file.name}</h3>
-        </div>
 
         <Badge
           variant="secondary"
