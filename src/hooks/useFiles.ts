@@ -174,7 +174,7 @@ export function useFiles(projectId: string, folderId?: string) {
   });
 
   const updateFileMutation = useMutation({
-    mutationFn: async ({ id, updates }: { id: string; updates: { name?: string; status?: string; preview_url?: string; download_url?: string; tags?: string[] } }) => {
+    mutationFn: async ({ id, updates }: { id: string; updates: { name?: string; status?: string; preview_url?: string; download_url?: string } }) => {
       const { data, error } = await supabase
         .from('files')
         .update(updates)
