@@ -27,6 +27,12 @@ import LocationSelector from '@/components/forms/LocationSelector';
 import type { Tag } from '@/hooks/useTags';
 import { cn } from '@/lib/utils';
 
+interface StatusOption {
+  value: string;
+  label: string;
+  color: string;
+}
+
 interface CreateFolderDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -36,9 +42,10 @@ interface CreateFolderDialogProps {
   initialStatus?: string;
   tags?: Tag[];
   onCreateTag?: () => void;
+  statusOptions?: StatusOption[];
 }
 
-const defaultStatusOptions = [
+const defaultStatusOptions: StatusOption[] = [
   { value: 'processing', label: 'Processing', color: 'bg-amber-500' },
   { value: 'completed', label: 'Completed', color: 'bg-green-500' },
   { value: 'failed', label: 'Failed', color: 'bg-red-500' },
@@ -55,22 +62,35 @@ export default function CreateFolderDialog({
   initialStatus,
   tags = [],
   onCreateTag,
+  statusOptions,
 }: CreateFolderDialogProps) {
   const [name, setName] = useState('');
-  const [selectedStatus, setSelectedStatus] = useState(initialStatus || 'processing');
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [currentProjectId, setCurrentProjectId] = useState(projectId);
   const [currentFolderId, setCurrentFolderId] = useState(folderId);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Update selectedStatus when initialStatus prop changes (from Kanban add card)
-  React.useEffect(() => {
-    if (initialStatus) {
-      setSelectedStatus(initialStatus);
+  // Use provided status options or default
+  const availableStatusOptions = statusOptions || defaultStatusOptions;
+  
+  // Get initial status - use initialStatus if valid, otherwise first option
+  const getInitialStatus = () => {
+    if (initialStatus && availableStatusOptions.some(s => s.value === initialStatus)) {
+      return initialStatus;
     }
-  }, [initialStatus]);
+    return availableStatusOptions[0]?.value || 'processing';
+  };
 
-  const currentStatusOption = defaultStatusOptions.find(s => s.value === selectedStatus) || defaultStatusOptions[0];
+  const [selectedStatus, setSelectedStatus] = useState(getInitialStatus);
+
+  // Update selectedStatus when initialStatus or statusOptions change
+  React.useEffect(() => {
+    if (open) {
+      setSelectedStatus(getInitialStatus());
+    }
+  }, [initialStatus, statusOptions, open]);
+
+  const currentStatusOption = availableStatusOptions.find(s => s.value === selectedStatus) || availableStatusOptions[0];
 
   const handleLocationChange = (newProjectId: string, newFolderId?: string) => {
     setCurrentProjectId(newProjectId);
@@ -149,8 +169,8 @@ export default function CreateFolderDialog({
                       <span>{currentStatusOption.label}</span>
                     </div>
                   </SelectTrigger>
-                  <SelectContent>
-                    {defaultStatusOptions.map((status) => (
+              <SelectContent>
+                    {availableStatusOptions.map((status) => (
                       <SelectItem key={status.value} value={status.value}>
                         <div className="flex items-center gap-2">
                           <div className={cn('h-2 w-2 rounded-full', status.color)} />

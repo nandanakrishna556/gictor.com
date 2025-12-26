@@ -30,6 +30,12 @@ import { useToast } from '@/hooks/use-toast';
 import LocationSelector from './LocationSelector';
 import type { Tag } from '@/hooks/useTags';
 
+interface StatusOption {
+  value: string;
+  label: string;
+  color: string;
+}
+
 interface TalkingHeadFormProps {
   projectId: string;
   folderId?: string;
@@ -37,6 +43,7 @@ interface TalkingHeadFormProps {
   initialStatus?: string;
   tags?: Tag[];
   onCreateTag?: () => void;
+  statusOptions?: StatusOption[];
 }
 
 const voices = [
@@ -49,7 +56,7 @@ const voices = [
 const CHARS_PER_BLOCK = 120;
 const SECONDS_PER_BLOCK = 8;
 
-const defaultStatusOptions = [
+const defaultStatusOptions: StatusOption[] = [
   { value: 'processing', label: 'Processing', color: 'bg-amber-500' },
   { value: 'completed', label: 'Completed', color: 'bg-green-500' },
   { value: 'failed', label: 'Failed', color: 'bg-red-500' },
@@ -64,6 +71,7 @@ export default function TalkingHeadForm({
   initialStatus,
   tags = [],
   onCreateTag,
+  statusOptions,
 }: TalkingHeadFormProps) {
   const [currentProjectId, setCurrentProjectId] = useState(projectId);
   const [currentFolderId, setCurrentFolderId] = useState(folderId);
@@ -72,8 +80,19 @@ export default function TalkingHeadForm({
   const { profile, deductCredits } = useProfile();
   const { toast } = useToast();
 
+  // Use provided status options or default
+  const availableStatusOptions = statusOptions || defaultStatusOptions;
+  
+  // Get initial status - use initialStatus if valid, otherwise first option
+  const getInitialStatus = () => {
+    if (initialStatus && availableStatusOptions.some(s => s.value === initialStatus)) {
+      return initialStatus;
+    }
+    return availableStatusOptions[0]?.value || 'processing';
+  };
+
   const [fileName, setFileName] = useState('Untitled');
-  const [selectedStatus, setSelectedStatus] = useState(initialStatus || 'processing');
+  const [selectedStatus, setSelectedStatus] = useState(getInitialStatus);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [firstFrameUrl, setFirstFrameUrl] = useState('');
   const [characterBlocks, setCharacterBlocks] = useState(2);
@@ -87,12 +106,10 @@ export default function TalkingHeadForm({
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Update selectedStatus when initialStatus prop changes (from Kanban add card)
+  // Update selectedStatus when initialStatus or statusOptions change
   React.useEffect(() => {
-    if (initialStatus) {
-      setSelectedStatus(initialStatus);
-    }
-  }, [initialStatus]);
+    setSelectedStatus(getInitialStatus());
+  }, [initialStatus, statusOptions]);
 
   const maxChars = characterBlocks * CHARS_PER_BLOCK;
   const characterCount = script.length;
@@ -102,7 +119,7 @@ export default function TalkingHeadForm({
   const creditCost = Math.max(1, Math.ceil(characterCount / CHARS_PER_BLOCK));
   const hasEnoughCredits = (profile?.credits ?? 0) >= creditCost;
 
-  const currentStatusOption = defaultStatusOptions.find(s => s.value === selectedStatus) || defaultStatusOptions[0];
+  const currentStatusOption = availableStatusOptions.find(s => s.value === selectedStatus) || availableStatusOptions[0];
 
   const handleLocationChange = (newProjectId: string, newFolderId?: string) => {
     setCurrentProjectId(newProjectId);
@@ -249,7 +266,7 @@ export default function TalkingHeadForm({
                 </div>
               </SelectTrigger>
               <SelectContent>
-                {defaultStatusOptions.map((status) => (
+                {availableStatusOptions.map((status) => (
                   <SelectItem key={status.value} value={status.value}>
                     <div className="flex items-center gap-2">
                       <div className={cn('h-2 w-2 rounded-full', status.color)} />

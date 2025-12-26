@@ -25,6 +25,12 @@ import LocationSelector from './LocationSelector';
 import type { Tag } from '@/hooks/useTags';
 import { cn } from '@/lib/utils';
 
+interface StatusOption {
+  value: string;
+  label: string;
+  color: string;
+}
+
 interface ScriptFormProps {
   projectId: string;
   folderId?: string;
@@ -32,6 +38,7 @@ interface ScriptFormProps {
   initialStatus?: string;
   tags?: Tag[];
   onCreateTag?: () => void;
+  statusOptions?: StatusOption[];
 }
 
 const scriptTypes = [
@@ -43,7 +50,7 @@ const scriptTypes = [
   'Other',
 ];
 
-const defaultStatusOptions = [
+const defaultStatusOptions: StatusOption[] = [
   { value: 'processing', label: 'Processing', color: 'bg-amber-500' },
   { value: 'completed', label: 'Completed', color: 'bg-green-500' },
   { value: 'failed', label: 'Failed', color: 'bg-red-500' },
@@ -58,6 +65,7 @@ export default function ScriptForm({
   initialStatus,
   tags = [],
   onCreateTag,
+  statusOptions,
 }: ScriptFormProps) {
   const [currentProjectId, setCurrentProjectId] = useState(projectId);
   const [currentFolderId, setCurrentFolderId] = useState(folderId);
@@ -66,26 +74,35 @@ export default function ScriptForm({
   const { profile, deductCredits } = useProfile();
   const { toast } = useToast();
 
+  // Use provided status options or default
+  const availableStatusOptions = statusOptions || defaultStatusOptions;
+  
+  // Get initial status - use initialStatus if valid, otherwise first option
+  const getInitialStatus = () => {
+    if (initialStatus && availableStatusOptions.some(s => s.value === initialStatus)) {
+      return initialStatus;
+    }
+    return availableStatusOptions[0]?.value || 'processing';
+  };
+
   const [fileName, setFileName] = useState('Untitled');
-  const [selectedStatus, setSelectedStatus] = useState(initialStatus || 'processing');
+  const [selectedStatus, setSelectedStatus] = useState(getInitialStatus);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [duration, setDuration] = useState(60);
   const [scriptType, setScriptType] = useState('Sales');
   const [description, setDescription] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Update selectedStatus when initialStatus prop changes (from Kanban add card)
+  // Update selectedStatus when initialStatus or statusOptions change
   React.useEffect(() => {
-    if (initialStatus) {
-      setSelectedStatus(initialStatus);
-    }
-  }, [initialStatus]);
+    setSelectedStatus(getInitialStatus());
+  }, [initialStatus, statusOptions]);
 
   const creditCost = 0.5;
   const hasEnoughCredits = (profile?.credits ?? 0) >= creditCost;
   const estimatedCharacters = Math.round(duration * 15);
 
-  const currentStatusOption = defaultStatusOptions.find(s => s.value === selectedStatus) || defaultStatusOptions[0];
+  const currentStatusOption = availableStatusOptions.find(s => s.value === selectedStatus) || availableStatusOptions[0];
 
   const handleLocationChange = (newProjectId: string, newFolderId?: string) => {
     setCurrentProjectId(newProjectId);
@@ -199,7 +216,7 @@ export default function ScriptForm({
                 </div>
               </SelectTrigger>
               <SelectContent>
-                {defaultStatusOptions.map((status) => (
+                {availableStatusOptions.map((status) => (
                   <SelectItem key={status.value} value={status.value}>
                     <div className="flex items-center gap-2">
                       <div className={cn('h-2 w-2 rounded-full', status.color)} />

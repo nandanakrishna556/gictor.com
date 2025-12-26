@@ -11,6 +11,12 @@ import TalkingHeadForm from '@/components/forms/TalkingHeadForm';
 import ScriptForm from '@/components/forms/ScriptForm';
 import type { Tag } from '@/hooks/useTags';
 
+interface StatusOption {
+  value: string;
+  label: string;
+  color: string;
+}
+
 interface CreateNewModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -20,6 +26,7 @@ interface CreateNewModalProps {
   initialStatus?: string;
   tags?: Tag[];
   onCreateTag?: () => void;
+  statusOptions?: StatusOption[];
 }
 
 type ContentType = 'first_frame' | 'talking_head' | 'script' | null;
@@ -61,6 +68,7 @@ export default function CreateNewModal({
   initialStatus,
   tags = [],
   onCreateTag,
+  statusOptions,
 }: CreateNewModalProps) {
   const [selectedType, setSelectedType] = useState<ContentType>(null);
 
@@ -136,6 +144,7 @@ export default function CreateNewModal({
             initialStatus={initialStatus}
             tags={tags}
             onCreateTag={onCreateTag}
+            statusOptions={statusOptions}
           />
         ) : selectedType === 'talking_head' ? (
           <TalkingHeadForm
@@ -145,6 +154,7 @@ export default function CreateNewModal({
             initialStatus={initialStatus}
             tags={tags}
             onCreateTag={onCreateTag}
+            statusOptions={statusOptions}
           />
         ) : (
           <ScriptForm
@@ -154,6 +164,7 @@ export default function CreateNewModal({
             initialStatus={initialStatus}
             tags={tags}
             onCreateTag={onCreateTag}
+            statusOptions={statusOptions}
           />
         )}
       </DialogContent>
