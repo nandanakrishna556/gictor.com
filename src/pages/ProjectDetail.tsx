@@ -99,8 +99,8 @@ export default function ProjectDetail() {
     return crumbs;
   };
 
-  const handleCreateFolder = async (name: string) => {
-    await createFolder(name);
+  const handleCreateFolder = async (name: string, status: string, selectedTags: string[]) => {
+    await createFolder({ name, status, tags: selectedTags });
     setCreateFolderOpen(false);
   };
 
@@ -276,6 +276,11 @@ export default function ProjectDetail() {
         open={createFolderOpen}
         onOpenChange={setCreateFolderOpen}
         onSubmit={handleCreateFolder}
+        projectId={projectId}
+        folderId={folderId}
+        initialStatus={createModalInitialStatus}
+        tags={tags}
+        onCreateTag={() => setCreateTagOpen(true)}
       />
 
       <CreatePipelineDialog
