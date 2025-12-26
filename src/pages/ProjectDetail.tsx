@@ -251,6 +251,8 @@ export default function ProjectDetail() {
               onUpdateFileTags={handleUpdateFileTags}
               onUpdateFolderStatus={handleUpdateFolderStatus}
               onUpdateFolderTags={handleUpdateFolderTags}
+              onUpdateFileName={handleUpdateFileName}
+              onUpdateFolderName={handleUpdateFolderName}
               onBulkDelete={handleBulkDelete}
               onBulkUpdateStatus={handleBulkUpdateStatus}
             />
@@ -308,6 +310,8 @@ export default function ProjectDetail() {
               onUpdateFileTags={handleUpdateFileTags}
               onUpdateFolderStatus={handleUpdateFolderStatus}
               onUpdateFolderTags={handleUpdateFolderTags}
+              onUpdateFileName={handleUpdateFileName}
+              onUpdateFolderName={handleUpdateFolderName}
               onBulkDelete={handleBulkDelete}
               onBulkUpdateStatus={handleBulkUpdateStatus}
             />
