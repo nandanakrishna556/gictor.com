@@ -122,11 +122,15 @@ export default function CreateFolderDialog({
                 />
               </div>
 
-              <LocationSelector
-                projectId={currentProjectId}
-                folderId={currentFolderId}
-                onLocationChange={handleLocationChange}
-              />
+              {/* Location */}
+              <div className="space-y-2">
+                <Label>Location</Label>
+                <LocationSelector
+                  projectId={currentProjectId}
+                  folderId={currentFolderId}
+                  onLocationChange={handleLocationChange}
+                />
+              </div>
 
               {/* Status */}
               <div className="space-y-2">
