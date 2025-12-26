@@ -54,7 +54,8 @@ interface FileGridProps {
   selectedPipelineId: string | null;
   onPipelineChange: (id: string | null) => void;
   onCreatePipeline: () => void;
-  onEditPipeline?: (pipeline: Pipeline) => void;
+  onEditPipeline?: (pipeline: Pipeline | null) => void;
+  onEditDefaultPipeline?: () => void;
   onCreateNew?: (initialStatus?: string) => void;
   onCreateTag?: () => void;
   onDeleteTag?: (id: string) => void;
@@ -69,6 +70,7 @@ interface FileGridProps {
   onBulkDelete?: (ids: string[]) => void;
   onBulkUpdateStatus?: (ids: string[], status: string) => void;
   onBulkUpdateTags?: (ids: string[], tags: string[]) => void;
+  defaultStages?: PipelineStage[];
 }
 
 const fileTypeLabels: Record<string, string> = {
@@ -99,6 +101,7 @@ export default function FileGrid({
   onPipelineChange,
   onCreatePipeline,
   onEditPipeline,
+  onEditDefaultPipeline,
   onCreateNew,
   onCreateTag,
   onDeleteTag,
@@ -113,6 +116,7 @@ export default function FileGrid({
   onBulkDelete,
   onBulkUpdateStatus,
   onBulkUpdateTags,
+  defaultStages,
 }: FileGridProps) {
   const navigate = useNavigate();
   const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
@@ -121,7 +125,7 @@ export default function FileGrid({
   const [renamingItemId, setRenamingItemId] = useState<string | null>(null);
 
   const currentPipeline = pipelines.find((p) => p.id === selectedPipelineId);
-  const stages: PipelineStage[] = currentPipeline?.stages || [
+  const stages: PipelineStage[] = currentPipeline?.stages || defaultStages || [
     { id: 'processing', name: 'Processing', color: 'bg-amber-500' },
     { id: 'review', name: 'Review', color: 'bg-blue-500' },
     { id: 'approved', name: 'Approved', color: 'bg-emerald-500' },
@@ -263,18 +267,19 @@ export default function FileGrid({
                   ))}
                 </SelectContent>
               </Select>
-              {onEditPipeline && (
+              {(onEditPipeline || onEditDefaultPipeline) && (
                 <Button
                   variant="ghost"
                   size="icon"
                   onClick={() => {
                     if (currentPipeline) {
-                      onEditPipeline(currentPipeline);
+                      onEditPipeline?.(currentPipeline);
+                    } else {
+                      onEditDefaultPipeline?.();
                     }
                   }}
-                  disabled={!currentPipeline}
                   className="h-8 w-8"
-                  title={currentPipeline ? "Edit pipeline" : "Select a pipeline to edit"}
+                  title="Edit pipeline"
                 >
                   <Pencil className="h-4 w-4" />
                 </Button>

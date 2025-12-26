@@ -19,6 +19,7 @@ interface CreatePipelineDialogProps {
   onSubmit: (name: string, stages: PipelineStage[]) => void;
   onDelete?: (id: string) => void;
   editingPipeline?: Pipeline | null;
+  isEditingDefault?: boolean;
 }
 
 const STAGE_COLORS = [
@@ -44,6 +45,7 @@ export default function CreatePipelineDialog({
   onSubmit,
   onDelete,
   editingPipeline,
+  isEditingDefault = false,
 }: CreatePipelineDialogProps) {
   const [name, setName] = useState('');
   const [stages, setStages] = useState<PipelineStage[]>(DEFAULT_STAGES);
@@ -54,14 +56,14 @@ export default function CreatePipelineDialog({
   useEffect(() => {
     if (open) {
       if (editingPipeline) {
-        setName(editingPipeline.name);
+        setName(isEditingDefault ? 'Default Pipeline' : editingPipeline.name);
         setStages(editingPipeline.stages);
       } else {
         setName('');
         setStages(DEFAULT_STAGES);
       }
     }
-  }, [open, editingPipeline]);
+  }, [open, editingPipeline, isEditingDefault]);
 
   const handleAddStage = () => {
     const newStage: PipelineStage = {
@@ -93,8 +95,9 @@ export default function CreatePipelineDialog({
   };
 
   const handleSubmit = () => {
-    if (name.trim() && stages.length >= 2) {
-      onSubmit(name.trim(), stages);
+    const finalName = isEditingDefault ? 'Default Pipeline' : name.trim();
+    if ((isEditingDefault || finalName) && stages.length >= 2) {
+      onSubmit(finalName, stages);
       onOpenChange(false);
     }
   };
@@ -110,20 +113,24 @@ export default function CreatePipelineDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle>{isEditMode ? 'Edit Pipeline' : 'Create Pipeline'}</DialogTitle>
+          <DialogTitle>
+            {isEditingDefault ? 'Edit Default Pipeline' : isEditMode ? 'Edit Pipeline' : 'Create Pipeline'}
+          </DialogTitle>
         </DialogHeader>
 
         <div className="space-y-4 py-4">
-          <div className="space-y-2">
-            <Label htmlFor="pipeline-name">Pipeline Name</Label>
-            <Input
-              id="pipeline-name"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="e.g., Content Review"
-              className="rounded-lg"
-            />
-          </div>
+          {!isEditingDefault && (
+            <div className="space-y-2">
+              <Label htmlFor="pipeline-name">Pipeline Name</Label>
+              <Input
+                id="pipeline-name"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="e.g., Content Review"
+                className="rounded-lg"
+              />
+            </div>
+          )}
 
           <div className="space-y-2">
             <Label>Stages (drag to reorder)</Label>
@@ -191,7 +198,7 @@ export default function CreatePipelineDialog({
         </div>
 
         <div className="flex justify-between gap-2">
-          {isEditMode && onDelete && (
+          {isEditMode && onDelete && !isEditingDefault && (
             <Button variant="destructive" onClick={handleDelete}>
               Delete Pipeline
             </Button>
@@ -200,8 +207,8 @@ export default function CreatePipelineDialog({
             <Button variant="outline" onClick={() => onOpenChange(false)}>
               Cancel
             </Button>
-            <Button onClick={handleSubmit} disabled={!name.trim() || stages.length < 2}>
-              {isEditMode ? 'Save Changes' : 'Create Pipeline'}
+            <Button onClick={handleSubmit} disabled={(!isEditingDefault && !name.trim()) || stages.length < 2}>
+              {isEditingDefault ? 'Save Changes' : isEditMode ? 'Save Changes' : 'Create Pipeline'}
             </Button>
           </div>
         </div>

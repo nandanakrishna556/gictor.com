@@ -9,8 +9,9 @@ import CreateNewModal from '@/components/modals/CreateNewModal';
 import CreateFolderDialog from '@/components/modals/CreateFolderDialog';
 import CreatePipelineDialog from '@/components/modals/CreatePipelineDialog';
 import CreateTagDialog from '@/components/modals/CreateTagDialog';
-import { useFiles, Folder } from '@/hooks/useFiles';
-import { usePipelines, Pipeline, PipelineStage } from '@/hooks/usePipelines';
+import ConfirmDeleteDialog from '@/components/modals/ConfirmDeleteDialog';
+import { useFiles, Folder, File } from '@/hooks/useFiles';
+import { usePipelines, Pipeline, PipelineStage, DEFAULT_STAGES } from '@/hooks/usePipelines';
 import { useTags } from '@/hooks/useTags';
 import type { Project } from '@/hooks/useProjects';
 
@@ -23,11 +24,17 @@ export default function ProjectDetail() {
   const [createFolderOpen, setCreateFolderOpen] = useState(false);
   const [createPipelineOpen, setCreatePipelineOpen] = useState(false);
   const [editingPipeline, setEditingPipeline] = useState<Pipeline | null>(null);
+  const [editingDefaultPipeline, setEditingDefaultPipeline] = useState(false);
   const [createTagOpen, setCreateTagOpen] = useState(false);
   const [selectedPipelineId, setSelectedPipelineId] = useState<string | null>(null);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [selectedStatuses, setSelectedStatuses] = useState<string[]>([]);
   const [selectedFileTypes, setSelectedFileTypes] = useState<string[]>([]);
+
+  // Confirmation dialog states
+  const [deleteFileConfirm, setDeleteFileConfirm] = useState<{ open: boolean; file: File | null }>({ open: false, file: null });
+  const [deleteFolderConfirm, setDeleteFolderConfirm] = useState<{ open: boolean; folder: Folder | null }>({ open: false, folder: null });
+  const [deletePipelineConfirm, setDeletePipelineConfirm] = useState<{ open: boolean; pipeline: Pipeline | null }>({ open: false, pipeline: null });
 
   // Fetch project details
   const { data: project } = useQuery({
@@ -62,20 +69,12 @@ export default function ProjectDetail() {
   });
 
   const { files, folders, isLoading, createFolder, updateFile, updateFolder, deleteFile, deleteFolder, bulkDeleteFiles, bulkUpdateFiles } = useFiles(projectId!, folderId);
-  const { pipelines, createPipeline, updatePipeline, deletePipeline } = usePipelines();
+  const { pipelines, createPipeline, updatePipeline, deletePipeline, updateDefaultStages, defaultStages } = usePipelines();
   const { tags, createTag, deleteTag } = useTags();
-
-  // Default stages - must match what FileGrid uses for consistency
-  const defaultStagesForForm = [
-    { id: 'processing', name: 'Processing', color: 'bg-amber-500' },
-    { id: 'review', name: 'Review', color: 'bg-blue-500' },
-    { id: 'approved', name: 'Approved', color: 'bg-emerald-500' },
-    { id: 'completed', name: 'Completed', color: 'bg-green-500' },
-  ];
 
   // Get current pipeline stages for status options
   const currentPipeline = pipelines.find((p) => p.id === selectedPipelineId);
-  const currentStatusOptions = (currentPipeline?.stages || defaultStagesForForm).map((stage) => ({
+  const currentStatusOptions = (currentPipeline?.stages || defaultStages).map((stage) => ({
     value: stage.id,
     label: stage.name,
     color: stage.color,
@@ -122,13 +121,19 @@ export default function ProjectDetail() {
   };
 
   const handleCreatePipeline = async (name: string, stages: PipelineStage[]) => {
-    if (editingPipeline) {
+    if (editingDefaultPipeline) {
+      // Update default pipeline stages
+      await updateDefaultStages(stages);
+      setCreatePipelineOpen(false);
+      setEditingDefaultPipeline(false);
+    } else if (editingPipeline) {
       await updatePipeline({ id: editingPipeline.id, name, stages });
+      setCreatePipelineOpen(false);
+      setEditingPipeline(null);
     } else {
       await createPipeline({ name, stages });
+      setCreatePipelineOpen(false);
     }
-    setCreatePipelineOpen(false);
-    setEditingPipeline(null);
   };
 
   const handleDeletePipeline = async (id: string) => {
@@ -138,10 +143,18 @@ export default function ProjectDetail() {
     }
     setCreatePipelineOpen(false);
     setEditingPipeline(null);
+    setDeletePipelineConfirm({ open: false, pipeline: null });
   };
 
-  const handleEditPipeline = (pipeline: Pipeline) => {
-    setEditingPipeline(pipeline);
+  const handleEditPipeline = (pipeline: Pipeline | null) => {
+    if (pipeline === null) {
+      // Edit default pipeline
+      setEditingDefaultPipeline(true);
+      setEditingPipeline(null);
+    } else {
+      setEditingPipeline(pipeline);
+      setEditingDefaultPipeline(false);
+    }
     setCreatePipelineOpen(true);
   };
 
@@ -174,12 +187,32 @@ export default function ProjectDetail() {
     await updateFolder({ id, updates: { name } });
   };
 
-  const handleDeleteFile = async (id: string) => {
-    await deleteFile(id);
+  const handleDeleteFileRequest = (id: string) => {
+    const file = files?.find(f => f.id === id);
+    if (file) {
+      setDeleteFileConfirm({ open: true, file });
+    }
   };
 
-  const handleDeleteFolder = async (id: string) => {
-    await deleteFolder(id);
+  const handleDeleteFileConfirm = async () => {
+    if (deleteFileConfirm.file) {
+      await deleteFile(deleteFileConfirm.file.id);
+      setDeleteFileConfirm({ open: false, file: null });
+    }
+  };
+
+  const handleDeleteFolderRequest = (id: string) => {
+    const folder = folders?.find(f => f.id === id);
+    if (folder) {
+      setDeleteFolderConfirm({ open: true, folder });
+    }
+  };
+
+  const handleDeleteFolderConfirm = async () => {
+    if (deleteFolderConfirm.folder) {
+      await deleteFolder(deleteFolderConfirm.folder.id);
+      setDeleteFolderConfirm({ open: false, folder: null });
+    }
   };
 
   const handleBulkDelete = async (ids: string[]) => {
@@ -206,6 +239,22 @@ export default function ProjectDetail() {
     navigate('/projects');
     return null;
   }
+
+  // Create a virtual "default pipeline" for editing
+  const getEditingPipelineForDialog = () => {
+    if (editingDefaultPipeline) {
+      return {
+        id: '__default__',
+        user_id: '',
+        name: 'Default Pipeline',
+        stages: defaultStages,
+        created_at: '',
+        updated_at: '',
+        is_default: true,
+      } as Pipeline;
+    }
+    return editingPipeline;
+  };
 
   return (
     <MainLayout>
@@ -253,16 +302,17 @@ export default function ProjectDetail() {
               tags={tags}
               selectedPipelineId={selectedPipelineId}
               onPipelineChange={setSelectedPipelineId}
-              onCreatePipeline={() => { setEditingPipeline(null); setCreatePipelineOpen(true); }}
+              onCreatePipeline={() => { setEditingPipeline(null); setEditingDefaultPipeline(false); setCreatePipelineOpen(true); }}
               onEditPipeline={handleEditPipeline}
+              onEditDefaultPipeline={() => handleEditPipeline(null)}
               onCreateNew={(initialStatus) => {
                 setCreateModalInitialStatus(initialStatus);
                 setCreateModalOpen(true);
               }}
               onCreateTag={() => setCreateTagOpen(true)}
               onDeleteTag={handleDeleteTag}
-              onDeleteFile={handleDeleteFile}
-              onDeleteFolder={handleDeleteFolder}
+              onDeleteFile={handleDeleteFileRequest}
+              onDeleteFolder={handleDeleteFolderRequest}
               onUpdateFileStatus={handleUpdateFileStatus}
               onUpdateFileTags={handleUpdateFileTags}
               onUpdateFolderStatus={handleUpdateFolderStatus}
@@ -271,6 +321,7 @@ export default function ProjectDetail() {
               onUpdateFolderName={handleUpdateFolderName}
               onBulkDelete={handleBulkDelete}
               onBulkUpdateStatus={handleBulkUpdateStatus}
+              defaultStages={defaultStages}
             />
           ) : filteredFiles?.length === 0 && folders?.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-24">
@@ -312,16 +363,17 @@ export default function ProjectDetail() {
               tags={tags}
               selectedPipelineId={selectedPipelineId}
               onPipelineChange={setSelectedPipelineId}
-              onCreatePipeline={() => { setEditingPipeline(null); setCreatePipelineOpen(true); }}
+              onCreatePipeline={() => { setEditingPipeline(null); setEditingDefaultPipeline(false); setCreatePipelineOpen(true); }}
               onEditPipeline={handleEditPipeline}
+              onEditDefaultPipeline={() => handleEditPipeline(null)}
               onCreateNew={(initialStatus) => {
                 setCreateModalInitialStatus(initialStatus);
                 setCreateModalOpen(true);
               }}
               onCreateTag={() => setCreateTagOpen(true)}
               onDeleteTag={handleDeleteTag}
-              onDeleteFile={handleDeleteFile}
-              onDeleteFolder={handleDeleteFolder}
+              onDeleteFile={handleDeleteFileRequest}
+              onDeleteFolder={handleDeleteFolderRequest}
               onUpdateFileStatus={handleUpdateFileStatus}
               onUpdateFileTags={handleUpdateFileTags}
               onUpdateFolderStatus={handleUpdateFolderStatus}
@@ -330,6 +382,7 @@ export default function ProjectDetail() {
               onUpdateFolderName={handleUpdateFolderName}
               onBulkDelete={handleBulkDelete}
               onBulkUpdateStatus={handleBulkUpdateStatus}
+              defaultStages={defaultStages}
             />
           )}
         </div>
@@ -366,17 +419,40 @@ export default function ProjectDetail() {
         open={createPipelineOpen}
         onOpenChange={(open) => {
           setCreatePipelineOpen(open);
-          if (!open) setEditingPipeline(null);
+          if (!open) {
+            setEditingPipeline(null);
+            setEditingDefaultPipeline(false);
+          }
         }}
         onSubmit={handleCreatePipeline}
-        onDelete={handleDeletePipeline}
-        editingPipeline={editingPipeline}
+        onDelete={editingDefaultPipeline ? undefined : handleDeletePipeline}
+        editingPipeline={getEditingPipelineForDialog()}
+        isEditingDefault={editingDefaultPipeline}
       />
 
       <CreateTagDialog
         open={createTagOpen}
         onOpenChange={setCreateTagOpen}
         onSubmit={handleCreateTag}
+      />
+
+      {/* Confirmation Dialogs */}
+      <ConfirmDeleteDialog
+        open={deleteFileConfirm.open}
+        onOpenChange={(open) => !open && setDeleteFileConfirm({ open: false, file: null })}
+        onConfirm={handleDeleteFileConfirm}
+        title="Delete file?"
+        description="This action cannot be undone. This will permanently delete the file."
+        itemName={deleteFileConfirm.file?.name}
+      />
+
+      <ConfirmDeleteDialog
+        open={deleteFolderConfirm.open}
+        onOpenChange={(open) => !open && setDeleteFolderConfirm({ open: false, folder: null })}
+        onConfirm={handleDeleteFolderConfirm}
+        title="Delete folder?"
+        description="This action cannot be undone. This will permanently delete the folder and all its contents."
+        itemName={deleteFolderConfirm.folder?.name}
       />
     </MainLayout>
   );
