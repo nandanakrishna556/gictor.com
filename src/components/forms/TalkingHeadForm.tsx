@@ -5,21 +5,38 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Slider } from '@/components/ui/slider';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
 } from '@/components/ui/collapsible';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
 import { useFiles } from '@/hooks/useFiles';
 import { useProfile } from '@/hooks/useProfile';
 import { useToast } from '@/hooks/use-toast';
 import LocationSelector from './LocationSelector';
+import type { Tag } from '@/hooks/useTags';
 
 interface TalkingHeadFormProps {
   projectId: string;
   folderId?: string;
   onSuccess: () => void;
+  initialStatus?: string;
+  tags?: Tag[];
+  onCreateTag?: () => void;
 }
 
 const voices = [
@@ -32,10 +49,21 @@ const voices = [
 const CHARS_PER_BLOCK = 120;
 const SECONDS_PER_BLOCK = 8;
 
+const defaultStatusOptions = [
+  { value: 'processing', label: 'Processing', color: 'bg-amber-500' },
+  { value: 'completed', label: 'Completed', color: 'bg-green-500' },
+  { value: 'failed', label: 'Failed', color: 'bg-red-500' },
+  { value: 'review', label: 'Review', color: 'bg-blue-500' },
+  { value: 'approved', label: 'Approved', color: 'bg-emerald-500' },
+];
+
 export default function TalkingHeadForm({
   projectId,
   folderId,
   onSuccess,
+  initialStatus,
+  tags = [],
+  onCreateTag,
 }: TalkingHeadFormProps) {
   const [currentProjectId, setCurrentProjectId] = useState(projectId);
   const [currentFolderId, setCurrentFolderId] = useState(folderId);
@@ -45,8 +73,10 @@ export default function TalkingHeadForm({
   const { toast } = useToast();
 
   const [fileName, setFileName] = useState('Untitled');
+  const [selectedStatus, setSelectedStatus] = useState(initialStatus || 'processing');
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [firstFrameUrl, setFirstFrameUrl] = useState('');
-  const [characterBlocks, setCharacterBlocks] = useState(2); // 2 blocks = 240 chars
+  const [characterBlocks, setCharacterBlocks] = useState(2);
   const [script, setScript] = useState('');
   const [selectedVoice, setSelectedVoice] = useState(voices[0]);
   const [voiceOpen, setVoiceOpen] = useState(false);
@@ -61,10 +91,11 @@ export default function TalkingHeadForm({
   const characterCount = script.length;
   const isOverLimit = characterCount > maxChars;
   
-  // Dynamic estimated time based on actual character count
   const estimatedDuration = Math.max(SECONDS_PER_BLOCK, Math.ceil(characterCount / CHARS_PER_BLOCK) * SECONDS_PER_BLOCK);
   const creditCost = Math.max(1, Math.ceil(characterCount / CHARS_PER_BLOCK));
   const hasEnoughCredits = (profile?.credits ?? 0) >= creditCost;
+
+  const currentStatusOption = defaultStatusOptions.find(s => s.value === selectedStatus) || defaultStatusOptions[0];
 
   const handleLocationChange = (newProjectId: string, newFolderId?: string) => {
     setCurrentProjectId(newProjectId);
@@ -89,6 +120,12 @@ export default function TalkingHeadForm({
     if (characterBlocks < 10) {
       setCharacterBlocks(characterBlocks + 1);
     }
+  };
+
+  const toggleTag = (tagId: string) => {
+    setSelectedTags((prev) =>
+      prev.includes(tagId) ? prev.filter((t) => t !== tagId) : [...prev, tagId]
+    );
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -140,7 +177,8 @@ export default function TalkingHeadForm({
         folder_id: currentFolderId || null,
         name: fileName,
         file_type: 'talking_head',
-        status: 'processing',
+        status: selectedStatus,
+        tags: selectedTags,
         generation_params: {
           first_frame_url: firstFrameUrl,
           script,
@@ -186,6 +224,104 @@ export default function TalkingHeadForm({
               folderId={currentFolderId}
               onLocationChange={handleLocationChange}
             />
+          </div>
+        </div>
+
+        {/* Status & Tags Row */}
+        <div className="flex gap-4">
+          {/* Status */}
+          <div className="flex-1 space-y-2">
+            <Label>Status</Label>
+            <Select value={selectedStatus} onValueChange={setSelectedStatus}>
+              <SelectTrigger className="rounded-xl">
+                <div className="flex items-center gap-2">
+                  <div className={cn('h-2 w-2 rounded-full', currentStatusOption.color)} />
+                  <SelectValue />
+                </div>
+              </SelectTrigger>
+              <SelectContent>
+                {defaultStatusOptions.map((status) => (
+                  <SelectItem key={status.value} value={status.value}>
+                    <div className="flex items-center gap-2">
+                      <div className={cn('h-2 w-2 rounded-full', status.color)} />
+                      {status.label}
+                    </div>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Tags */}
+          <div className="flex-1 space-y-2">
+            <Label>Tags</Label>
+            <Popover>
+              <PopoverTrigger asChild>
+                <button
+                  type="button"
+                  className="flex h-10 w-full items-center gap-2 rounded-xl border border-input bg-background px-3 text-sm hover:bg-accent hover:text-accent-foreground"
+                >
+                  {selectedTags.length > 0 ? (
+                    <div className="flex flex-1 flex-wrap items-center gap-1">
+                      {selectedTags.slice(0, 2).map((tagId) => {
+                        const tag = tags.find((t) => t.id === tagId);
+                        if (!tag) return null;
+                        return (
+                          <span
+                            key={tagId}
+                            className="rounded px-1.5 py-0.5 text-xs"
+                            style={{ backgroundColor: `${tag.color}20`, color: tag.color }}
+                          >
+                            {tag.tag_name}
+                          </span>
+                        );
+                      })}
+                      {selectedTags.length > 2 && (
+                        <span className="text-xs text-muted-foreground">
+                          +{selectedTags.length - 2}
+                        </span>
+                      )}
+                    </div>
+                  ) : (
+                    <span className="flex-1 text-left text-muted-foreground">Select tags</span>
+                  )}
+                </button>
+              </PopoverTrigger>
+              <PopoverContent align="start" className="w-52 bg-card border shadow-lg">
+                <div className="space-y-1">
+                  <h4 className="text-sm font-medium mb-2">Tags</h4>
+                  {tags.length === 0 ? (
+                    <p className="text-xs text-muted-foreground">No tags available</p>
+                  ) : (
+                    tags.map((tag) => (
+                      <div
+                        key={tag.id}
+                        className="flex items-center gap-2 rounded-md p-1.5 hover:bg-secondary cursor-pointer"
+                        onClick={() => toggleTag(tag.id)}
+                      >
+                        <Checkbox
+                          checked={selectedTags.includes(tag.id)}
+                          onCheckedChange={() => toggleTag(tag.id)}
+                        />
+                        <span
+                          className="h-2 w-2 rounded-full flex-shrink-0"
+                          style={{ backgroundColor: tag.color }}
+                        />
+                        <span className="flex-1 text-sm truncate">{tag.tag_name}</span>
+                      </div>
+                    ))
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => onCreateTag?.()}
+                    className="flex w-full items-center gap-2 rounded-md p-1.5 text-sm text-primary hover:bg-secondary mt-2"
+                  >
+                    <Plus className="h-3.5 w-3.5" />
+                    Create new tag
+                  </button>
+                </div>
+              </PopoverContent>
+            </Popover>
           </div>
         </div>
 

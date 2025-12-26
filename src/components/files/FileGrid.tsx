@@ -54,7 +54,7 @@ interface FileGridProps {
   selectedPipelineId: string | null;
   onPipelineChange: (id: string | null) => void;
   onCreatePipeline: () => void;
-  onCreateNew?: () => void;
+  onCreateNew?: (initialStatus?: string) => void;
   onCreateTag?: () => void;
   onDeleteTag?: (id: string) => void;
   onDeleteFile?: (id: string) => void;
@@ -339,7 +339,7 @@ export default function FileGrid({
                         {/* Add Card Button */}
                         {onCreateNew && (
                           <button
-                            onClick={onCreateNew}
+                            onClick={() => onCreateNew(stage.id)}
                             className="flex w-full items-center justify-center gap-2 rounded-xl border-2 border-dashed border-border p-3 text-sm text-muted-foreground transition-all hover:border-primary hover:text-primary"
                           >
                             <Plus className="h-4 w-4" />
@@ -399,7 +399,7 @@ export default function FileGrid({
         {/* Create New Card - First item */}
         {onCreateNew && (
           <button
-            onClick={onCreateNew}
+            onClick={() => onCreateNew()}
             className="group relative flex aspect-[2/3] cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed border-border bg-card transition-colors duration-200 hover:border-primary hover:bg-primary/5"
           >
             <div className="flex h-14 w-14 items-center justify-center rounded-full bg-primary/10 transition-all duration-200 group-hover:bg-primary/20">
