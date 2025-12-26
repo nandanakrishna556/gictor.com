@@ -80,10 +80,9 @@ const fileTypeLabels: Record<string, string> = {
 
 const defaultStatusOptions = [
   { value: 'processing', label: 'Processing', color: 'bg-amber-500' },
-  { value: 'completed', label: 'Completed', color: 'bg-green-500' },
-  { value: 'failed', label: 'Failed', color: 'bg-red-500' },
   { value: 'review', label: 'Review', color: 'bg-blue-500' },
   { value: 'approved', label: 'Approved', color: 'bg-emerald-500' },
+  { value: 'completed', label: 'Completed', color: 'bg-green-500' },
 ];
 
 // Combined item type for unified handling
@@ -124,8 +123,9 @@ export default function FileGrid({
   const currentPipeline = pipelines.find((p) => p.id === selectedPipelineId);
   const stages: PipelineStage[] = currentPipeline?.stages || [
     { id: 'processing', name: 'Processing', color: 'bg-amber-500' },
+    { id: 'review', name: 'Review', color: 'bg-blue-500' },
+    { id: 'approved', name: 'Approved', color: 'bg-emerald-500' },
     { id: 'completed', name: 'Completed', color: 'bg-green-500' },
-    { id: 'failed', name: 'Failed', color: 'bg-red-500' },
   ];
 
   // Combine files and folders into unified items
@@ -246,32 +246,35 @@ export default function FileGrid({
         {/* Pipeline Selector and Search */}
         <div className="flex items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <div className="flex items-center">
+            <div className="flex items-center gap-2">
               <Select
                 value={selectedPipelineId || 'default'}
                 onValueChange={(id) => onPipelineChange(id === 'default' ? null : id)}
               >
-                <SelectTrigger className="w-48 rounded-lg rounded-r-none border-r-0">
+                <SelectTrigger className="w-48 rounded-lg">
                   <SelectValue placeholder="Select pipeline" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="default">Default Pipeline</SelectItem>
                   {pipelines.map((pipeline) => (
-                    <div key={pipeline.id} className="flex items-center">
-                      <SelectItem value={pipeline.id} className="flex-1">
-                        {pipeline.name}
-                      </SelectItem>
-                    </div>
+                    <SelectItem key={pipeline.id} value={pipeline.id}>
+                      {pipeline.name}
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
-              {currentPipeline && onEditPipeline && (
+              {onEditPipeline && (
                 <Button
-                  variant="outline"
+                  variant="ghost"
                   size="icon"
-                  onClick={() => onEditPipeline(currentPipeline)}
-                  className="h-10 w-10 rounded-lg rounded-l-none border-l-0"
-                  title="Edit pipeline"
+                  onClick={() => {
+                    if (currentPipeline) {
+                      onEditPipeline(currentPipeline);
+                    }
+                  }}
+                  disabled={!currentPipeline}
+                  className="h-8 w-8"
+                  title={currentPipeline ? "Edit pipeline" : "Select a pipeline to edit"}
                 >
                   <Pencil className="h-4 w-4" />
                 </Button>
