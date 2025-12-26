@@ -22,6 +22,7 @@ export default function ProjectDetail() {
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [createModalInitialStatus, setCreateModalInitialStatus] = useState<string | undefined>(undefined);
   const [createFolderOpen, setCreateFolderOpen] = useState(false);
+  const [createFolderInitialStatus, setCreateFolderInitialStatus] = useState<string | undefined>(undefined);
   const [createPipelineOpen, setCreatePipelineOpen] = useState(false);
   const [editingPipeline, setEditingPipeline] = useState<Pipeline | null>(null);
   const [editingDefaultPipeline, setEditingDefaultPipeline] = useState(false);
@@ -416,7 +417,10 @@ export default function ProjectDetail() {
         }}
         projectId={projectId}
         folderId={folderId}
-        onCreateFolder={() => setCreateFolderOpen(true)}
+        onCreateFolder={(status) => {
+          setCreateFolderInitialStatus(status);
+          setCreateFolderOpen(true);
+        }}
         initialStatus={createModalInitialStatus}
         tags={tags}
         onCreateTag={() => setCreateTagOpen(true)}
@@ -425,11 +429,14 @@ export default function ProjectDetail() {
 
       <CreateFolderDialog
         open={createFolderOpen}
-        onOpenChange={setCreateFolderOpen}
+        onOpenChange={(open) => {
+          setCreateFolderOpen(open);
+          if (!open) setCreateFolderInitialStatus(undefined);
+        }}
         onSubmit={handleCreateFolder}
         projectId={projectId}
         folderId={folderId}
-        initialStatus={createModalInitialStatus}
+        initialStatus={createFolderInitialStatus}
         tags={tags}
         onCreateTag={() => setCreateTagOpen(true)}
         statusOptions={currentStatusOptions}

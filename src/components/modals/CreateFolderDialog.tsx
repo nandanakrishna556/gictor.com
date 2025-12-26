@@ -46,11 +46,10 @@ interface CreateFolderDialogProps {
 }
 
 const defaultStatusOptions: StatusOption[] = [
-  { value: 'processing', label: 'Processing', color: 'bg-amber-500' },
-  { value: 'completed', label: 'Completed', color: 'bg-green-500' },
-  { value: 'failed', label: 'Failed', color: 'bg-red-500' },
+  { value: 'draft', label: 'Draft', color: 'bg-slate-500' },
   { value: 'review', label: 'Review', color: 'bg-blue-500' },
   { value: 'approved', label: 'Approved', color: 'bg-emerald-500' },
+  { value: 'rejected', label: 'Rejected', color: 'bg-red-500' },
 ];
 
 export default function CreateFolderDialog({
