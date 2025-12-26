@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ChevronLeft, ChevronRight, ChevronDown, Plus, Sparkles, Layers, MoreHorizontal, Trash2, Archive, Pencil } from 'lucide-react';
+import { ChevronLeft, ChevronRight, ChevronDown, Plus, Sparkles, Layers, MoreHorizontal, Trash2, Pencil, Check, X } from 'lucide-react';
+import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
@@ -21,8 +22,10 @@ interface AppSidebarProps {
 export default function AppSidebar({ collapsed, onCollapse }: AppSidebarProps) {
   const navigate = useNavigate();
   const { projectId } = useParams();
-  const { projects, createProject, deleteProject } = useProjects();
+  const { projects, createProject, deleteProject, updateProject } = useProjects();
   const [projectsOpen, setProjectsOpen] = useState(true);
+  const [renamingProjectId, setRenamingProjectId] = useState<string | null>(null);
+  const [renameValue, setRenameValue] = useState('');
 
   const handleCreateProject = async () => {
     const project = await createProject('Untitled Project');
@@ -107,44 +110,85 @@ export default function AppSidebar({ collapsed, onCollapse }: AppSidebarProps) {
                     : 'text-sidebar-foreground hover:bg-sidebar-accent'
                 )}
               >
-                <button
-                  onClick={() => navigate(`/projects/${project.id}`)}
-                  className="flex flex-1 items-center gap-2 truncate"
-                >
-                  <Layers className="h-4 w-4 shrink-0" />
-                  <span className="truncate">{project.name}</span>
-                </button>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <button
-                      className="rounded p-0.5 opacity-0 transition-opacity hover:bg-sidebar-accent group-hover:opacity-100"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      <MoreHorizontal className="h-4 w-4 text-muted-foreground" />
-                    </button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-40">
-                    <DropdownMenuItem className="gap-2">
-                      <Pencil className="h-4 w-4" />
-                      Rename
-                    </DropdownMenuItem>
-                    <DropdownMenuItem className="gap-2">
-                      <Archive className="h-4 w-4" />
-                      Archive
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem
-                      className="gap-2 text-destructive"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        deleteProject(project.id);
+                {renamingProjectId === project.id ? (
+                  <div className="flex flex-1 items-center gap-1">
+                    <Input
+                      value={renameValue}
+                      onChange={(e) => setRenameValue(e.target.value)}
+                      className="h-7 text-sm"
+                      autoFocus
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' && renameValue.trim()) {
+                          updateProject({ id: project.id, name: renameValue.trim() });
+                          setRenamingProjectId(null);
+                        } else if (e.key === 'Escape') {
+                          setRenamingProjectId(null);
+                        }
                       }}
+                    />
+                    <button
+                      onClick={() => {
+                        if (renameValue.trim()) {
+                          updateProject({ id: project.id, name: renameValue.trim() });
+                        }
+                        setRenamingProjectId(null);
+                      }}
+                      className="rounded p-0.5 hover:bg-sidebar-accent"
                     >
-                      <Trash2 className="h-4 w-4" />
-                      Delete
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
+                      <Check className="h-4 w-4 text-green-500" />
+                    </button>
+                    <button
+                      onClick={() => setRenamingProjectId(null)}
+                      className="rounded p-0.5 hover:bg-sidebar-accent"
+                    >
+                      <X className="h-4 w-4 text-muted-foreground" />
+                    </button>
+                  </div>
+                ) : (
+                  <>
+                    <button
+                      onClick={() => navigate(`/projects/${project.id}`)}
+                      className="flex flex-1 items-center gap-2 truncate"
+                    >
+                      <Layers className="h-4 w-4 shrink-0" />
+                      <span className="truncate">{project.name}</span>
+                    </button>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <button
+                          className="rounded p-0.5 opacity-0 transition-opacity hover:bg-sidebar-accent group-hover:opacity-100"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <MoreHorizontal className="h-4 w-4 text-muted-foreground" />
+                        </button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="w-40">
+                        <DropdownMenuItem
+                          className="gap-2"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setRenameValue(project.name);
+                            setRenamingProjectId(project.id);
+                          }}
+                        >
+                          <Pencil className="h-4 w-4" />
+                          Rename
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem
+                          className="gap-2 text-destructive"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            deleteProject(project.id);
+                          }}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                          Delete
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </>
+                )}
               </div>
             ))}
 
