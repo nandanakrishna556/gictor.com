@@ -236,35 +236,48 @@ export default function FileGrid({
           />
         )}
 
-        {/* Pipeline Selector */}
-        <div className="flex items-center gap-3">
-          <Select
-            value={selectedPipelineId || 'default'}
-            onValueChange={(id) => onPipelineChange(id === 'default' ? null : id)}
-          >
-            <SelectTrigger className="w-48 rounded-lg">
-              <SelectValue placeholder="Select pipeline" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="default">Default Pipeline</SelectItem>
-              {pipelines.map((pipeline) => (
-                <SelectItem key={pipeline.id} value={pipeline.id}>
-                  {pipeline.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Button variant="outline" size="sm" onClick={onCreatePipeline} className="gap-2">
-            <Plus className="h-4 w-4" />
-            New Pipeline
-          </Button>
-          <Button
-            variant={bulkMode ? 'secondary' : 'outline'}
-            size="sm"
-            onClick={() => setBulkMode(!bulkMode)}
-          >
-            {bulkMode ? 'Cancel Selection' : 'Select'}
-          </Button>
+        {/* Pipeline Selector and Search */}
+        <div className="flex items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <Select
+              value={selectedPipelineId || 'default'}
+              onValueChange={(id) => onPipelineChange(id === 'default' ? null : id)}
+            >
+              <SelectTrigger className="w-48 rounded-lg">
+                <SelectValue placeholder="Select pipeline" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="default">Default Pipeline</SelectItem>
+                {pipelines.map((pipeline) => (
+                  <SelectItem key={pipeline.id} value={pipeline.id}>
+                    {pipeline.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Button variant="outline" size="sm" onClick={onCreatePipeline} className="gap-2">
+              <Plus className="h-4 w-4" />
+              New Pipeline
+            </Button>
+            <Button
+              variant={bulkMode ? 'secondary' : 'outline'}
+              size="sm"
+              onClick={() => setBulkMode(!bulkMode)}
+            >
+              {bulkMode ? 'Cancel Selection' : 'Select'}
+            </Button>
+          </div>
+          
+          {/* Search */}
+          <div className="relative max-w-sm flex-1">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              placeholder="Search by name..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-9"
+            />
+          </div>
         </div>
 
         <DragDropContext onDragEnd={handleDragEnd}>

@@ -54,15 +54,14 @@ export default function LocationSelector({
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        <Button
-          variant="outline"
-          size="sm"
-          className="h-8 gap-2 rounded-lg text-xs font-normal"
+        <button
+          type="button"
+          className="flex h-10 min-w-[130px] items-center gap-2 rounded-xl border border-input bg-background px-3 text-sm hover:bg-accent hover:text-accent-foreground"
         >
-          <Layers className="h-3.5 w-3.5 text-muted-foreground" />
-          <span className="max-w-32 truncate">{locationLabel}</span>
-          <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
-        </Button>
+          <Layers className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
+          <span className="flex-1 text-left truncate max-w-32">{locationLabel}</span>
+          <ChevronDown className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
+        </button>
       </PopoverTrigger>
       <PopoverContent className="w-64 p-2" align="start">
         <div className="space-y-1">
@@ -70,6 +69,7 @@ export default function LocationSelector({
           {projects?.map((project) => (
             <div key={project.id}>
               <button
+                type="button"
                 onClick={() => handleProjectSelect(project.id)}
                 className={cn(
                   'flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-sm transition-colors hover:bg-secondary',
@@ -83,6 +83,7 @@ export default function LocationSelector({
               {selectedProjectId === project.id && folders && folders.length > 0 && (
                 <div className="ml-4 mt-1 space-y-1 border-l border-border pl-2">
                   <button
+                    type="button"
                     onClick={() => handleFolderSelect(undefined)}
                     className={cn(
                       'flex w-full items-center gap-2 rounded-lg px-2 py-1 text-xs transition-colors hover:bg-secondary',
@@ -93,6 +94,7 @@ export default function LocationSelector({
                   </button>
                   {folders.map((folder) => (
                     <button
+                      type="button"
                       key={folder.id}
                       onClick={() => handleFolderSelect(folder.id)}
                       className={cn(

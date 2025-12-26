@@ -198,6 +198,33 @@ export default function ProjectDetail() {
                 />
               ))}
             </div>
+          ) : viewMode === 'kanban' ? (
+            // Always show FileGrid for kanban view (so pipeline controls are visible even when empty)
+            <FileGrid
+              files={filteredFiles}
+              folders={folders || []}
+              projectId={projectId}
+              viewMode={viewMode}
+              pipelines={pipelines}
+              tags={tags}
+              selectedPipelineId={selectedPipelineId}
+              onPipelineChange={setSelectedPipelineId}
+              onCreatePipeline={() => setCreatePipelineOpen(true)}
+              onCreateNew={(initialStatus) => {
+                setCreateModalInitialStatus(initialStatus);
+                setCreateModalOpen(true);
+              }}
+              onCreateTag={() => setCreateTagOpen(true)}
+              onDeleteTag={handleDeleteTag}
+              onDeleteFile={handleDeleteFile}
+              onDeleteFolder={handleDeleteFolder}
+              onUpdateFileStatus={handleUpdateFileStatus}
+              onUpdateFileTags={handleUpdateFileTags}
+              onUpdateFolderStatus={handleUpdateFolderStatus}
+              onUpdateFolderTags={handleUpdateFolderTags}
+              onBulkDelete={handleBulkDelete}
+              onBulkUpdateStatus={handleBulkUpdateStatus}
+            />
           ) : filteredFiles?.length === 0 && folders?.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-24">
               <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-secondary">
