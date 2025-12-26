@@ -16,6 +16,7 @@ import {
   Pencil,
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
+import { FileProgress } from '@/components/ui/file-progress';
 import { cn } from '@/lib/utils';
 import {
   DropdownMenu,
@@ -1099,7 +1100,7 @@ function FileCard({
       </div>
 
       {/* Preview Area */}
-      <div className="flex flex-1 items-center justify-center bg-secondary">
+      <div className="relative flex flex-1 items-center justify-center bg-secondary">
         {file.preview_url ? (
           <img
             src={file.preview_url}
@@ -1109,6 +1110,13 @@ function FileCard({
         ) : isProcessing ? (
           <div className="shimmer h-full w-full" />
         ) : null}
+        
+        {/* Progress Overlay */}
+        {isProcessing && (
+          <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-background/90 to-transparent p-3">
+            <FileProgress progress={file.progress || 0} status={file.status} />
+          </div>
+        )}
       </div>
 
       {/* Info */}
@@ -1393,6 +1401,10 @@ function KanbanCard({
       {!isFolder && !(item as File).preview_url && (item as File).status === 'processing' && (
         <div className="relative h-32 w-full bg-secondary">
           <div className="shimmer h-full w-full" />
+          {/* Progress Overlay */}
+          <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-background/90 to-transparent p-3">
+            <FileProgress progress={(item as File).progress || 0} status={(item as File).status} />
+          </div>
         </div>
       )}
 

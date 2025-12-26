@@ -60,6 +60,7 @@ export type Database = {
           metadata: Json | null
           name: string
           preview_url: string | null
+          progress: number | null
           project_id: string
           status: string | null
           tags: string[] | null
@@ -75,6 +76,7 @@ export type Database = {
           metadata?: Json | null
           name: string
           preview_url?: string | null
+          progress?: number | null
           project_id: string
           status?: string | null
           tags?: string[] | null
@@ -90,6 +92,7 @@ export type Database = {
           metadata?: Json | null
           name?: string
           preview_url?: string | null
+          progress?: number | null
           project_id?: string
           status?: string | null
           tags?: string[] | null
