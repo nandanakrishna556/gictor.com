@@ -159,34 +159,32 @@ export default function ScriptForm({
   return (
     <form onSubmit={handleSubmit} className="max-h-[70vh] overflow-y-auto p-6">
       <div className="space-y-6">
-        {/* File Name & Location */}
-        <div className="space-y-2">
-          <Label htmlFor="fileName">File name</Label>
-          <div className="flex items-center gap-2">
+        {/* File Name, Location, Status, Tags - All in one row */}
+        <div className="flex flex-wrap items-end gap-3">
+          <div className="flex-1 min-w-[140px] space-y-2">
+            <Label htmlFor="fileName">File name</Label>
             <Input
               id="fileName"
               value={fileName}
               onChange={(e) => setFileName(e.target.value)}
-              className="flex-1 rounded-xl"
-            />
-            <LocationSelector
-              projectId={currentProjectId}
-              folderId={currentFolderId}
-              onLocationChange={handleLocationChange}
+              className="rounded-xl"
             />
           </div>
-        </div>
 
-        {/* Status & Tags Row */}
-        <div className="flex gap-4">
+          <LocationSelector
+            projectId={currentProjectId}
+            folderId={currentFolderId}
+            onLocationChange={handleLocationChange}
+          />
+
           {/* Status */}
-          <div className="flex-1 space-y-2">
+          <div className="space-y-2">
             <Label>Status</Label>
             <Select value={selectedStatus} onValueChange={setSelectedStatus}>
-              <SelectTrigger className="rounded-xl">
+              <SelectTrigger className="w-[130px] rounded-xl">
                 <div className="flex items-center gap-2">
                   <div className={cn('h-2 w-2 rounded-full', currentStatusOption.color)} />
-                  <SelectValue />
+                  <span>{currentStatusOption.label}</span>
                 </div>
               </SelectTrigger>
               <SelectContent>
@@ -203,13 +201,13 @@ export default function ScriptForm({
           </div>
 
           {/* Tags */}
-          <div className="flex-1 space-y-2">
+          <div className="space-y-2">
             <Label>Tags</Label>
             <Popover>
               <PopoverTrigger asChild>
                 <button
                   type="button"
-                  className="flex h-10 w-full items-center gap-2 rounded-xl border border-input bg-background px-3 text-sm hover:bg-accent hover:text-accent-foreground"
+                  className="flex h-10 min-w-[100px] items-center gap-2 rounded-xl border border-input bg-background px-3 text-sm hover:bg-accent hover:text-accent-foreground"
                 >
                   {selectedTags.length > 0 ? (
                     <div className="flex flex-1 flex-wrap items-center gap-1">
@@ -233,7 +231,7 @@ export default function ScriptForm({
                       )}
                     </div>
                   ) : (
-                    <span className="flex-1 text-left text-muted-foreground">Select tags</span>
+                    <span className="flex-1 text-left text-muted-foreground">Tags</span>
                   )}
                 </button>
               </PopoverTrigger>

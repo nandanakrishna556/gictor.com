@@ -143,13 +143,15 @@ export function useFiles(projectId: string, folderId?: string) {
   });
 
   const createFolderMutation = useMutation({
-    mutationFn: async (name: string) => {
+    mutationFn: async (params: { name: string; status?: string; tags?: string[]; projectId?: string; parentFolderId?: string | null }) => {
       const { data, error } = await supabase
         .from('folders')
         .insert({
-          project_id: projectId,
-          parent_folder_id: folderId || null,
-          name,
+          project_id: params.projectId || projectId,
+          parent_folder_id: params.parentFolderId !== undefined ? params.parentFolderId : (folderId || null),
+          name: params.name,
+          status: params.status || 'processing',
+          tags: params.tags || [],
         })
         .select()
         .single();
