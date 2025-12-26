@@ -62,12 +62,20 @@ export default function ProjectDetail() {
   });
 
   const { files, folders, isLoading, createFolder, updateFile, updateFolder, deleteFile, deleteFolder, bulkDeleteFiles, bulkUpdateFiles } = useFiles(projectId!, folderId);
-  const { pipelines, createPipeline, updatePipeline, deletePipeline, defaultStages } = usePipelines();
+  const { pipelines, createPipeline, updatePipeline, deletePipeline } = usePipelines();
   const { tags, createTag, deleteTag } = useTags();
+
+  // Default stages - must match what FileGrid uses for consistency
+  const defaultStagesForForm = [
+    { id: 'processing', name: 'Processing', color: 'bg-amber-500' },
+    { id: 'review', name: 'Review', color: 'bg-blue-500' },
+    { id: 'approved', name: 'Approved', color: 'bg-emerald-500' },
+    { id: 'completed', name: 'Completed', color: 'bg-green-500' },
+  ];
 
   // Get current pipeline stages for status options
   const currentPipeline = pipelines.find((p) => p.id === selectedPipelineId);
-  const currentStatusOptions = (currentPipeline?.stages || defaultStages).map((stage) => ({
+  const currentStatusOptions = (currentPipeline?.stages || defaultStagesForForm).map((stage) => ({
     value: stage.id,
     label: stage.name,
     color: stage.color,
