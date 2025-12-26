@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Upload, Sparkles, ChevronDown, Play, Star, Minus, Plus } from 'lucide-react';
+import { Sparkles, ChevronDown, Play, Star, Minus, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -28,6 +28,7 @@ import { useFiles } from '@/hooks/useFiles';
 import { useProfile } from '@/hooks/useProfile';
 import { useToast } from '@/hooks/use-toast';
 import LocationSelector from './LocationSelector';
+import { SingleImageUpload } from '@/components/ui/single-image-upload';
 import type { Tag } from '@/hooks/useTags';
 
 interface StatusOption {
@@ -126,12 +127,8 @@ export default function TalkingHeadForm({
     setCurrentFolderId(newFolderId);
   };
 
-  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    
-    const url = URL.createObjectURL(file);
-    setFirstFrameUrl(url);
+  const handleFirstFrameChange = (url: string | undefined) => {
+    setFirstFrameUrl(url || '');
   };
 
   const decrementBlocks = () => {
@@ -354,34 +351,14 @@ export default function TalkingHeadForm({
         {/* First Frame Upload */}
         <div className="space-y-2">
           <Label>First frame</Label>
-          {firstFrameUrl ? (
-            <div className="relative aspect-[9/16] max-h-48 overflow-hidden rounded-xl bg-secondary">
-              <img
-                src={firstFrameUrl}
-                alt="First frame"
-                className="h-full w-full object-contain"
-              />
-              <button
-                type="button"
-                onClick={() => setFirstFrameUrl('')}
-                className="absolute right-2 top-2 rounded-lg bg-background/80 p-1.5 text-foreground backdrop-blur transition-all duration-200 hover:bg-background"
-              >
-                Change
-              </button>
-            </div>
-          ) : (
-            <label className="flex h-40 cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed border-border text-muted-foreground transition-all duration-200 hover:border-primary hover:text-primary">
-              <Upload className="mb-2 h-8 w-8" />
-              <span className="text-sm font-medium">Upload first frame</span>
-              <span className="text-xs">or drag and drop</span>
-              <input
-                type="file"
-                accept="image/*"
-                className="hidden"
-                onChange={handleImageUpload}
-              />
-            </label>
-          )}
+          <SingleImageUpload
+            value={firstFrameUrl}
+            onChange={handleFirstFrameChange}
+            folder="talking-head-frames"
+            aspectRatio="video"
+            placeholder="Upload first frame or"
+            showGenerateLink={false}
+          />
         </div>
 
         {/* Script Section */}

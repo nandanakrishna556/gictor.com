@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Upload, X, Sparkles, Plus, Trash2 } from 'lucide-react';
+import { Sparkles, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -21,6 +21,7 @@ import { useFiles } from '@/hooks/useFiles';
 import { useProfile } from '@/hooks/useProfile';
 import { useToast } from '@/hooks/use-toast';
 import LocationSelector from './LocationSelector';
+import { ImageUpload } from '@/components/ui/image-upload';
 import type { Tag } from '@/hooks/useTags';
 import { cn } from '@/lib/utils';
 
@@ -80,10 +81,10 @@ export default function FirstFrameForm({
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [imageType, setImageType] = useState<'ugc' | 'studio'>('ugc');
   const [aspectRatio, setAspectRatio] = useState('9:16');
-  const [referenceImages, setReferenceImages] = useState<string[]>([]);
+  const [referenceImageUrls, setReferenceImageUrls] = useState<string[]>([]);
   const [prompt, setPrompt] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [uploadingImages, setUploadingImages] = useState(false);
+  
 
   // Update selectedStatus when initialStatus or statusOptions change
   React.useEffect(() => {
@@ -100,33 +101,8 @@ export default function FirstFrameForm({
     setCurrentFolderId(newFolderId);
   };
 
-  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (!files || files.length === 0) return;
-
-    if (referenceImages.length + files.length > 5) {
-      toast({
-        title: 'Too many images',
-        description: 'You can upload up to 5 reference images.',
-        variant: 'destructive',
-      });
-      return;
-    }
-
-    setUploadingImages(true);
-
-    const newImages: string[] = [];
-    for (const file of Array.from(files)) {
-      const url = URL.createObjectURL(file);
-      newImages.push(url);
-    }
-
-    setReferenceImages((prev) => [...prev, ...newImages]);
-    setUploadingImages(false);
-  };
-
-  const removeImage = (index: number) => {
-    setReferenceImages((prev) => prev.filter((_, i) => i !== index));
+  const handleReferenceImagesChange = (urls: string[]) => {
+    setReferenceImageUrls(urls);
   };
 
   const toggleTag = (tagId: string) => {
@@ -171,7 +147,7 @@ export default function FirstFrameForm({
         generation_params: {
           image_type: imageType,
           aspect_ratio: aspectRatio,
-          reference_images: referenceImages,
+          reference_images: referenceImageUrls,
           prompt,
         },
       });
@@ -363,41 +339,12 @@ export default function FirstFrameForm({
         {/* Reference Images */}
         <div className="space-y-2">
           <Label>Reference images (optional)</Label>
-          <div className="flex flex-wrap gap-3">
-            {referenceImages.map((url, index) => (
-              <div key={index} className="group relative">
-                <img
-                  src={url}
-                  alt={`Reference ${index + 1}`}
-                  className="h-20 w-20 rounded-xl object-cover"
-                />
-                <button
-                  type="button"
-                  onClick={() => removeImage(index)}
-                  className="absolute -right-2 -top-2 rounded-full bg-destructive p-1 text-destructive-foreground opacity-0 transition-all duration-200 group-hover:opacity-100"
-                >
-                  <X className="h-3 w-3" />
-                </button>
-              </div>
-            ))}
-            {referenceImages.length < 5 && (
-              <label className="flex h-20 w-20 cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed border-border text-muted-foreground transition-all duration-200 hover:border-primary hover:text-primary">
-                <Upload className="h-5 w-5" />
-                <span className="mt-1 text-xs">Upload</span>
-                <input
-                  type="file"
-                  accept="image/*"
-                  multiple
-                  className="hidden"
-                  onChange={handleImageUpload}
-                  disabled={uploadingImages}
-                />
-              </label>
-            )}
-          </div>
-          <p className="text-xs text-muted-foreground">
-            Upload up to 5 reference images
-          </p>
+          <ImageUpload
+            maxFiles={5}
+            folder="first-frame-references"
+            onImagesChange={handleReferenceImagesChange}
+            placeholder="Drag & drop reference images or"
+          />
         </div>
 
         {/* Prompt */}
