@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Plus, Trash2, GripVertical } from 'lucide-react';
 import {
   Dialog,
@@ -9,12 +9,14 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import type { PipelineStage } from '@/hooks/usePipelines';
+import type { PipelineStage, Pipeline } from '@/hooks/usePipelines';
 
 interface CreatePipelineDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSubmit: (name: string, stages: PipelineStage[]) => void;
+  onDelete?: (id: string) => void;
+  editingPipeline?: Pipeline | null;
 }
 
 const STAGE_COLORS = [
@@ -28,17 +30,36 @@ const STAGE_COLORS = [
   'bg-emerald-500',
 ];
 
+const DEFAULT_STAGES: PipelineStage[] = [
+  { id: 'stage-1', name: 'To Do', color: 'bg-amber-500' },
+  { id: 'stage-2', name: 'In Progress', color: 'bg-blue-500' },
+  { id: 'stage-3', name: 'Done', color: 'bg-green-500' },
+];
+
 export default function CreatePipelineDialog({
   open,
   onOpenChange,
   onSubmit,
+  onDelete,
+  editingPipeline,
 }: CreatePipelineDialogProps) {
   const [name, setName] = useState('');
-  const [stages, setStages] = useState<PipelineStage[]>([
-    { id: 'stage-1', name: 'To Do', color: 'bg-amber-500' },
-    { id: 'stage-2', name: 'In Progress', color: 'bg-blue-500' },
-    { id: 'stage-3', name: 'Done', color: 'bg-green-500' },
-  ]);
+  const [stages, setStages] = useState<PipelineStage[]>(DEFAULT_STAGES);
+
+  const isEditMode = !!editingPipeline;
+
+  // Reset form when dialog opens/closes or editingPipeline changes
+  useEffect(() => {
+    if (open) {
+      if (editingPipeline) {
+        setName(editingPipeline.name);
+        setStages(editingPipeline.stages);
+      } else {
+        setName('');
+        setStages(DEFAULT_STAGES);
+      }
+    }
+  }, [open, editingPipeline]);
 
   const handleAddStage = () => {
     const newStage: PipelineStage = {
@@ -62,12 +83,13 @@ export default function CreatePipelineDialog({
   const handleSubmit = () => {
     if (name.trim() && stages.length >= 2) {
       onSubmit(name.trim(), stages);
-      setName('');
-      setStages([
-        { id: 'stage-1', name: 'To Do', color: 'bg-amber-500' },
-        { id: 'stage-2', name: 'In Progress', color: 'bg-blue-500' },
-        { id: 'stage-3', name: 'Done', color: 'bg-green-500' },
-      ]);
+      onOpenChange(false);
+    }
+  };
+
+  const handleDelete = () => {
+    if (editingPipeline && onDelete) {
+      onDelete(editingPipeline.id);
       onOpenChange(false);
     }
   };
@@ -76,7 +98,7 @@ export default function CreatePipelineDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle>Create Pipeline</DialogTitle>
+          <DialogTitle>{isEditMode ? 'Edit Pipeline' : 'Create Pipeline'}</DialogTitle>
         </DialogHeader>
 
         <div className="space-y-4 py-4">
@@ -98,7 +120,7 @@ export default function CreatePipelineDialog({
                 <div key={stage.id} className="flex items-center gap-2">
                   <GripVertical className="h-4 w-4 cursor-grab text-muted-foreground" />
                   <div
-                    className={`h-3 w-3 rounded-full ${stage.color}`}
+                    className={`h-3 w-3 rounded-full cursor-pointer ${stage.color}`}
                     onClick={() => {
                       const nextColor = STAGE_COLORS[(STAGE_COLORS.indexOf(stage.color) + 1) % STAGE_COLORS.length];
                       handleUpdateStage(stage.id, 'color', nextColor);
@@ -129,13 +151,20 @@ export default function CreatePipelineDialog({
           </div>
         </div>
 
-        <div className="flex justify-end gap-2">
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Cancel
-          </Button>
-          <Button onClick={handleSubmit} disabled={!name.trim() || stages.length < 2}>
-            Create Pipeline
-          </Button>
+        <div className="flex justify-between gap-2">
+          {isEditMode && onDelete && (
+            <Button variant="destructive" onClick={handleDelete}>
+              Delete Pipeline
+            </Button>
+          )}
+          <div className="flex flex-1 justify-end gap-2">
+            <Button variant="outline" onClick={() => onOpenChange(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleSubmit} disabled={!name.trim() || stages.length < 2}>
+              {isEditMode ? 'Save Changes' : 'Create Pipeline'}
+            </Button>
+          </div>
         </div>
       </DialogContent>
     </Dialog>

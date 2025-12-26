@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { Sparkles, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -73,6 +73,13 @@ export default function ScriptForm({
   const [scriptType, setScriptType] = useState('Sales');
   const [description, setDescription] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Update selectedStatus when initialStatus prop changes (from Kanban add card)
+  React.useEffect(() => {
+    if (initialStatus) {
+      setSelectedStatus(initialStatus);
+    }
+  }, [initialStatus]);
 
   const creditCost = 0.5;
   const hasEnoughCredits = (profile?.credits ?? 0) >= creditCost;

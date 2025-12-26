@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { Upload, Sparkles, ChevronDown, Play, Star, Minus, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -86,6 +86,13 @@ export default function TalkingHeadForm({
     similarity: 0.75,
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Update selectedStatus when initialStatus prop changes (from Kanban add card)
+  React.useEffect(() => {
+    if (initialStatus) {
+      setSelectedStatus(initialStatus);
+    }
+  }, [initialStatus]);
 
   const maxChars = characterBlocks * CHARS_PER_BLOCK;
   const characterCount = script.length;
