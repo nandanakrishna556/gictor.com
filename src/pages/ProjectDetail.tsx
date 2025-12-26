@@ -10,7 +10,7 @@ import CreateFolderDialog from '@/components/modals/CreateFolderDialog';
 import CreatePipelineDialog from '@/components/modals/CreatePipelineDialog';
 import CreateTagDialog from '@/components/modals/CreateTagDialog';
 import { useFiles, Folder } from '@/hooks/useFiles';
-import { usePipelines } from '@/hooks/usePipelines';
+import { usePipelines, Pipeline, PipelineStage } from '@/hooks/usePipelines';
 import { useTags } from '@/hooks/useTags';
 import type { Project } from '@/hooks/useProjects';
 
@@ -22,6 +22,7 @@ export default function ProjectDetail() {
   const [createModalInitialStatus, setCreateModalInitialStatus] = useState<string | undefined>(undefined);
   const [createFolderOpen, setCreateFolderOpen] = useState(false);
   const [createPipelineOpen, setCreatePipelineOpen] = useState(false);
+  const [editingPipeline, setEditingPipeline] = useState<Pipeline | null>(null);
   const [createTagOpen, setCreateTagOpen] = useState(false);
   const [selectedPipelineId, setSelectedPipelineId] = useState<string | null>(null);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
@@ -61,7 +62,7 @@ export default function ProjectDetail() {
   });
 
   const { files, folders, isLoading, createFolder, updateFile, updateFolder, deleteFile, deleteFolder, bulkDeleteFiles, bulkUpdateFiles } = useFiles(projectId!, folderId);
-  const { pipelines, createPipeline } = usePipelines();
+  const { pipelines, createPipeline, updatePipeline, deletePipeline } = usePipelines();
   const { tags, createTag, deleteTag } = useTags();
 
   // Filter files based on selected filters
@@ -104,9 +105,28 @@ export default function ProjectDetail() {
     setCreateFolderOpen(false);
   };
 
-  const handleCreatePipeline = async (name: string, stages: any[]) => {
-    await createPipeline({ name, stages });
+  const handleCreatePipeline = async (name: string, stages: PipelineStage[]) => {
+    if (editingPipeline) {
+      await updatePipeline({ id: editingPipeline.id, name, stages });
+    } else {
+      await createPipeline({ name, stages });
+    }
     setCreatePipelineOpen(false);
+    setEditingPipeline(null);
+  };
+
+  const handleDeletePipeline = async (id: string) => {
+    await deletePipeline(id);
+    if (selectedPipelineId === id) {
+      setSelectedPipelineId(null);
+    }
+    setCreatePipelineOpen(false);
+    setEditingPipeline(null);
+  };
+
+  const handleEditPipeline = (pipeline: Pipeline) => {
+    setEditingPipeline(pipeline);
+    setCreatePipelineOpen(true);
   };
 
   const handleCreateTag = async (name: string, color: string) => {
@@ -209,7 +229,8 @@ export default function ProjectDetail() {
               tags={tags}
               selectedPipelineId={selectedPipelineId}
               onPipelineChange={setSelectedPipelineId}
-              onCreatePipeline={() => setCreatePipelineOpen(true)}
+              onCreatePipeline={() => { setEditingPipeline(null); setCreatePipelineOpen(true); }}
+              onEditPipeline={handleEditPipeline}
               onCreateNew={(initialStatus) => {
                 setCreateModalInitialStatus(initialStatus);
                 setCreateModalOpen(true);
@@ -265,7 +286,8 @@ export default function ProjectDetail() {
               tags={tags}
               selectedPipelineId={selectedPipelineId}
               onPipelineChange={setSelectedPipelineId}
-              onCreatePipeline={() => setCreatePipelineOpen(true)}
+              onCreatePipeline={() => { setEditingPipeline(null); setCreatePipelineOpen(true); }}
+              onEditPipeline={handleEditPipeline}
               onCreateNew={(initialStatus) => {
                 setCreateModalInitialStatus(initialStatus);
                 setCreateModalOpen(true);
@@ -312,8 +334,13 @@ export default function ProjectDetail() {
 
       <CreatePipelineDialog
         open={createPipelineOpen}
-        onOpenChange={setCreatePipelineOpen}
+        onOpenChange={(open) => {
+          setCreatePipelineOpen(open);
+          if (!open) setEditingPipeline(null);
+        }}
         onSubmit={handleCreatePipeline}
+        onDelete={handleDeletePipeline}
+        editingPipeline={editingPipeline}
       />
 
       <CreateTagDialog

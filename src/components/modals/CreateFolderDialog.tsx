@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { Plus, Trash2 } from 'lucide-react';
 import {
   Dialog,
@@ -62,6 +62,13 @@ export default function CreateFolderDialog({
   const [currentProjectId, setCurrentProjectId] = useState(projectId);
   const [currentFolderId, setCurrentFolderId] = useState(folderId);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Update selectedStatus when initialStatus prop changes (from Kanban add card)
+  React.useEffect(() => {
+    if (initialStatus) {
+      setSelectedStatus(initialStatus);
+    }
+  }, [initialStatus]);
 
   const currentStatusOption = defaultStatusOptions.find(s => s.value === selectedStatus) || defaultStatusOptions[0];
 
