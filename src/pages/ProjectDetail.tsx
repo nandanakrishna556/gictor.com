@@ -19,6 +19,7 @@ export default function ProjectDetail() {
   const navigate = useNavigate();
   const [viewMode, setViewMode] = useState<'grid' | 'kanban'>('grid');
   const [createModalOpen, setCreateModalOpen] = useState(false);
+  const [createModalInitialStatus, setCreateModalInitialStatus] = useState<string | undefined>(undefined);
   const [createFolderOpen, setCreateFolderOpen] = useState(false);
   const [createPipelineOpen, setCreatePipelineOpen] = useState(false);
   const [createTagOpen, setCreateTagOpen] = useState(false);
@@ -170,7 +171,10 @@ export default function ProjectDetail() {
           viewMode={viewMode}
           onViewModeChange={setViewMode}
           onCreateFolder={() => setCreateFolderOpen(true)}
-          onCreateNew={() => setCreateModalOpen(true)}
+          onCreateNew={() => {
+            setCreateModalInitialStatus(undefined);
+            setCreateModalOpen(true);
+          }}
           showCreateButtons
           tags={tags}
           selectedTags={selectedTags}
@@ -235,7 +239,10 @@ export default function ProjectDetail() {
               selectedPipelineId={selectedPipelineId}
               onPipelineChange={setSelectedPipelineId}
               onCreatePipeline={() => setCreatePipelineOpen(true)}
-              onCreateNew={() => setCreateModalOpen(true)}
+              onCreateNew={(initialStatus) => {
+                setCreateModalInitialStatus(initialStatus);
+                setCreateModalOpen(true);
+              }}
               onCreateTag={() => setCreateTagOpen(true)}
               onDeleteTag={handleDeleteTag}
               onDeleteFile={handleDeleteFile}
@@ -253,10 +260,16 @@ export default function ProjectDetail() {
 
       <CreateNewModal
         open={createModalOpen}
-        onOpenChange={setCreateModalOpen}
+        onOpenChange={(open) => {
+          setCreateModalOpen(open);
+          if (!open) setCreateModalInitialStatus(undefined);
+        }}
         projectId={projectId}
         folderId={folderId}
         onCreateFolder={() => setCreateFolderOpen(true)}
+        initialStatus={createModalInitialStatus}
+        tags={tags}
+        onCreateTag={() => setCreateTagOpen(true)}
       />
 
       <CreateFolderDialog

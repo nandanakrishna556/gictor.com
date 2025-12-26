@@ -9,6 +9,7 @@ import {
 import FirstFrameForm from '@/components/forms/FirstFrameForm';
 import TalkingHeadForm from '@/components/forms/TalkingHeadForm';
 import ScriptForm from '@/components/forms/ScriptForm';
+import type { Tag } from '@/hooks/useTags';
 
 interface CreateNewModalProps {
   open: boolean;
@@ -16,6 +17,9 @@ interface CreateNewModalProps {
   projectId: string;
   folderId?: string;
   onCreateFolder?: () => void;
+  initialStatus?: string;
+  tags?: Tag[];
+  onCreateTag?: () => void;
 }
 
 type ContentType = 'first_frame' | 'talking_head' | 'script' | null;
@@ -54,6 +58,9 @@ export default function CreateNewModal({
   projectId,
   folderId,
   onCreateFolder,
+  initialStatus,
+  tags = [],
+  onCreateTag,
 }: CreateNewModalProps) {
   const [selectedType, setSelectedType] = useState<ContentType>(null);
 
@@ -126,18 +133,27 @@ export default function CreateNewModal({
             projectId={projectId}
             folderId={folderId}
             onSuccess={handleSuccess}
+            initialStatus={initialStatus}
+            tags={tags}
+            onCreateTag={onCreateTag}
           />
         ) : selectedType === 'talking_head' ? (
           <TalkingHeadForm
             projectId={projectId}
             folderId={folderId}
             onSuccess={handleSuccess}
+            initialStatus={initialStatus}
+            tags={tags}
+            onCreateTag={onCreateTag}
           />
         ) : (
           <ScriptForm
             projectId={projectId}
             folderId={folderId}
             onSuccess={handleSuccess}
+            initialStatus={initialStatus}
+            tags={tags}
+            onCreateTag={onCreateTag}
           />
         )}
       </DialogContent>
