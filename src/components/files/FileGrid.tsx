@@ -81,10 +81,10 @@ const fileTypeLabels: Record<string, string> = {
 };
 
 const defaultStatusOptions = [
-  { value: 'processing', label: 'Processing', color: 'bg-amber-500' },
+  { value: 'draft', label: 'Draft', color: 'bg-slate-500' },
   { value: 'review', label: 'Review', color: 'bg-blue-500' },
   { value: 'approved', label: 'Approved', color: 'bg-emerald-500' },
-  { value: 'completed', label: 'Completed', color: 'bg-green-500' },
+  { value: 'rejected', label: 'Rejected', color: 'bg-red-500' },
 ];
 
 // Combined item type for unified handling
@@ -149,10 +149,10 @@ export default function FileGrid({
 
   const currentPipeline = pipelines.find((p) => p.id === selectedPipelineId);
   const stages: PipelineStage[] = currentPipeline?.stages || defaultStages || [
-    { id: 'processing', name: 'Processing', color: 'bg-amber-500' },
+    { id: 'draft', name: 'Draft', color: 'bg-slate-500' },
     { id: 'review', name: 'Review', color: 'bg-blue-500' },
     { id: 'approved', name: 'Approved', color: 'bg-emerald-500' },
-    { id: 'completed', name: 'Completed', color: 'bg-green-500' },
+    { id: 'rejected', name: 'Rejected', color: 'bg-red-500' },
   ];
 
   // Combine files and folders into unified items
@@ -1099,15 +1099,15 @@ function FileCard({
       </div>
 
       {/* Preview Area */}
-      <div className="flex flex-1 items-center justify-center rounded-t-2xl bg-secondary">
+      <div className="flex flex-1 items-center justify-center bg-secondary">
         {file.preview_url ? (
           <img
             src={file.preview_url}
             alt={file.name}
-            className="h-full w-full rounded-t-2xl object-cover"
+            className="h-full w-full object-cover"
           />
         ) : isProcessing ? (
-          <div className="shimmer h-full w-full rounded-t-2xl" />
+          <div className="shimmer h-full w-full" />
         ) : null}
       </div>
 
@@ -1374,13 +1374,30 @@ function KanbanCard({
     <div
       onClick={handleClick}
       className={cn(
-        'group rounded-xl border bg-card p-3 transition-all duration-200 hover:border-primary',
+        'group relative flex flex-col rounded-xl border bg-card overflow-hidden transition-all duration-200 hover:border-primary',
         isDragging && 'rotate-2 scale-105 shadow-lg',
         isFolder && 'bg-amber-50/50 dark:bg-card dark:border-border/50',
         isSelected && 'border-primary ring-2 ring-primary/20'
       )}
     >
-      <div className="flex items-start gap-2">
+      {/* Thumbnail Preview - Show for files with preview_url */}
+      {!isFolder && (item as File).preview_url && (
+        <div className="relative h-32 w-full bg-secondary">
+          <img
+            src={(item as File).preview_url!}
+            alt={item.name}
+            className="h-full w-full object-cover"
+          />
+        </div>
+      )}
+      {!isFolder && !(item as File).preview_url && (item as File).status === 'processing' && (
+        <div className="relative h-32 w-full bg-secondary">
+          <div className="shimmer h-full w-full" />
+        </div>
+      )}
+
+      <div className="p-3">
+        <div className="flex items-start gap-2">
         {/* Selection Checkbox */}
         {bulkMode && (
           <Checkbox checked={isSelected} onClick={(e) => e.stopPropagation()} />
@@ -1543,6 +1560,7 @@ function KanbanCard({
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
+        </div>
       </div>
     </div>
   );

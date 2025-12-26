@@ -21,10 +21,10 @@ export interface Pipeline {
 }
 
 export const DEFAULT_STAGES: PipelineStage[] = [
-  { id: 'processing', name: 'Processing', color: 'bg-amber-500' },
+  { id: 'draft', name: 'Draft', color: 'bg-slate-500' },
   { id: 'review', name: 'Review', color: 'bg-blue-500' },
   { id: 'approved', name: 'Approved', color: 'bg-emerald-500' },
-  { id: 'completed', name: 'Completed', color: 'bg-green-500' },
+  { id: 'rejected', name: 'Rejected', color: 'bg-red-500' },
 ];
 
 const DEFAULT_PIPELINE_NAME = '__default__';

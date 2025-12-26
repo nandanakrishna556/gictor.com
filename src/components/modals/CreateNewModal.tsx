@@ -22,7 +22,7 @@ interface CreateNewModalProps {
   onOpenChange: (open: boolean) => void;
   projectId: string;
   folderId?: string;
-  onCreateFolder?: () => void;
+  onCreateFolder?: (initialStatus?: string) => void;
   initialStatus?: string;
   tags?: Tag[];
   onCreateTag?: () => void;
@@ -85,7 +85,7 @@ export default function CreateNewModal({
   const handleTypeSelect = (type: typeof contentTypes[0]) => {
     if (type.id === 'folder') {
       onOpenChange(false);
-      onCreateFolder?.();
+      onCreateFolder?.(initialStatus);
     } else {
       setSelectedType(type.id as ContentType);
     }
