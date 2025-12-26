@@ -76,25 +76,27 @@ export default function AppHeader({
 
   return (
     <header className="flex h-16 items-center justify-between border-b border-border bg-background px-6">
-      {/* Breadcrumbs */}
-      <nav className="flex items-center gap-1 text-sm">
-        {breadcrumbs.map((item, index) => (
-          <div key={index} className="flex items-center gap-1">
-            {item.href ? (
-              <Link
-                to={item.href}
-                className="text-muted-foreground transition-apple hover:text-foreground"
-              >
-                {item.label}
-              </Link>
-            ) : (
-              <span className="font-medium text-foreground">{item.label}</span>
-            )}
-            {index < breadcrumbs.length - 1 && (
-              <ChevronRight className="h-4 w-4 text-muted-foreground" />
-            )}
-          </div>
-        ))}
+      {/* Breadcrumbs - scrollable container */}
+      <nav className="flex min-w-0 flex-1 items-center overflow-x-auto pr-4">
+        <div className="flex items-center gap-1 text-sm whitespace-nowrap">
+          {breadcrumbs.map((item, index) => (
+            <div key={index} className="flex items-center gap-1">
+              {item.href ? (
+                <Link
+                  to={item.href}
+                  className="text-muted-foreground transition-apple hover:text-foreground"
+                >
+                  {item.label}
+                </Link>
+              ) : (
+                <span className="font-medium text-foreground">{item.label}</span>
+              )}
+              {index < breadcrumbs.length - 1 && (
+                <ChevronRight className="h-4 w-4 flex-shrink-0 text-muted-foreground" />
+              )}
+            </div>
+          ))}
+        </div>
       </nav>
 
       {/* Actions */}
