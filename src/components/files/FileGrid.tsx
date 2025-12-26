@@ -6,7 +6,6 @@ import {
   MoreHorizontal,
   Trash2,
   Plus,
-  Archive,
   Tag,
   ChevronDown,
   ChevronUp,
@@ -967,11 +966,6 @@ function FolderCard({
             <Pencil className="h-4 w-4" />
             Rename
           </DropdownMenuItem>
-          <DropdownMenuSeparator />
-          <DropdownMenuItem className="gap-2">
-            <Archive className="h-4 w-4" />
-            Archive
-          </DropdownMenuItem>
           <DropdownMenuItem
             className="gap-2 text-destructive"
             onClick={(e) => {
@@ -1282,11 +1276,6 @@ function FileCard({
             <Pencil className="h-4 w-4" />
             Rename
           </DropdownMenuItem>
-          <DropdownMenuSeparator />
-          <DropdownMenuItem className="gap-2">
-            <Archive className="h-4 w-4" />
-            Archive
-          </DropdownMenuItem>
           <DropdownMenuItem
             className="gap-2 text-destructive"
             onClick={(e) => {
@@ -1544,11 +1533,6 @@ function KanbanCard({
             >
               <Pencil className="h-4 w-4" />
               Rename
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem className="gap-2">
-              <Archive className="h-4 w-4" />
-              Archive
             </DropdownMenuItem>
             <DropdownMenuItem
               className="gap-2 text-destructive"

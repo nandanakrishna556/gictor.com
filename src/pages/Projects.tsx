@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, MoreHorizontal, Trash2, Pencil, Archive, Layers } from 'lucide-react';
+import { Plus, MoreHorizontal, Trash2, Pencil, Layers, Check, X } from 'lucide-react';
+import { Input } from '@/components/ui/input';
 import MainLayout from '@/components/layout/MainLayout';
 import AppHeader from '@/components/layout/AppHeader';
 import { Button } from '@/components/ui/button';
@@ -24,9 +25,11 @@ import { useProjects } from '@/hooks/useProjects';
 
 export default function Projects() {
   const navigate = useNavigate();
-  const { projects, isLoading, createProject, deleteProject } = useProjects();
+  const { projects, isLoading, createProject, deleteProject, updateProject } = useProjects();
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [projectToDelete, setProjectToDelete] = useState<string | null>(null);
+  const [renamingProjectId, setRenamingProjectId] = useState<string | null>(null);
+  const [renameValue, setRenameValue] = useState('');
 
   const handleCreateProject = async () => {
     const project = await createProject('Untitled Project');
@@ -96,7 +99,11 @@ export default function Projects() {
                 <div
                   key={project.id}
                   className="group relative flex aspect-[2/3] cursor-pointer flex-col items-center justify-center rounded-2xl border border-border bg-card transition-all duration-200 hover:border-primary hover:scale-[1.02]"
-                  onClick={() => navigate(`/projects/${project.id}`)}
+                  onClick={() => {
+                    if (renamingProjectId !== project.id) {
+                      navigate(`/projects/${project.id}`);
+                    }
+                  }}
                 >
                   {/* Project Icon - Stacked layers */}
                   <div className="relative mb-4">
@@ -146,9 +153,45 @@ export default function Projects() {
                     </svg>
                   </div>
 
-                  <h3 className="text-base font-semibold text-card-foreground text-center px-4">
-                    {project.name}
-                  </h3>
+                  {renamingProjectId === project.id ? (
+                    <div className="flex items-center gap-1 px-4" onClick={(e) => e.stopPropagation()}>
+                      <Input
+                        value={renameValue}
+                        onChange={(e) => setRenameValue(e.target.value)}
+                        className="h-8 text-sm text-center"
+                        autoFocus
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' && renameValue.trim()) {
+                            updateProject({ id: project.id, name: renameValue.trim() });
+                            setRenamingProjectId(null);
+                          } else if (e.key === 'Escape') {
+                            setRenamingProjectId(null);
+                          }
+                        }}
+                      />
+                      <button
+                        onClick={() => {
+                          if (renameValue.trim()) {
+                            updateProject({ id: project.id, name: renameValue.trim() });
+                          }
+                          setRenamingProjectId(null);
+                        }}
+                        className="rounded p-1 hover:bg-secondary"
+                      >
+                        <Check className="h-4 w-4 text-green-500" />
+                      </button>
+                      <button
+                        onClick={() => setRenamingProjectId(null)}
+                        className="rounded p-1 hover:bg-secondary"
+                      >
+                        <X className="h-4 w-4 text-muted-foreground" />
+                      </button>
+                    </div>
+                  ) : (
+                    <h3 className="text-base font-semibold text-card-foreground text-center px-4">
+                      {project.name}
+                    </h3>
+                  )}
 
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
@@ -160,13 +203,16 @@ export default function Projects() {
                       </button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
-                      <DropdownMenuItem className="gap-2">
+                      <DropdownMenuItem
+                        className="gap-2"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setRenameValue(project.name);
+                          setRenamingProjectId(project.id);
+                        }}
+                      >
                         <Pencil className="h-4 w-4" />
                         Rename
-                      </DropdownMenuItem>
-                      <DropdownMenuItem className="gap-2">
-                        <Archive className="h-4 w-4" />
-                        Archive
                       </DropdownMenuItem>
                       <DropdownMenuItem
                         className="gap-2 text-destructive"
