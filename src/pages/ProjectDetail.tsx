@@ -52,21 +52,33 @@ export default function ProjectDetail() {
     enabled: !!projectId,
   });
 
-  // Fetch current folder if in a folder
-  const { data: currentFolder } = useQuery({
-    queryKey: ['folder', folderId],
+  // Fetch folder ancestry for breadcrumbs
+  const { data: folderAncestry } = useQuery({
+    queryKey: ['folder-ancestry', folderId],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('folders')
-        .select('*')
-        .eq('id', folderId!)
-        .single();
-
-      if (error) throw error;
-      return data as Folder;
+      if (!folderId) return [];
+      
+      const ancestry: Folder[] = [];
+      let currentId: string | null = folderId;
+      
+      while (currentId) {
+        const { data, error } = await supabase
+          .from('folders')
+          .select('*')
+          .eq('id', currentId)
+          .single();
+        
+        if (error || !data) break;
+        ancestry.unshift(data as Folder);
+        currentId = data.parent_folder_id;
+      }
+      
+      return ancestry;
     },
     enabled: !!folderId,
   });
+
+  const currentFolder = folderAncestry?.[folderAncestry.length - 1];
 
   const { files, folders, isLoading, createFolder, updateFile, updateFolder, deleteFile, deleteFolder, bulkDeleteFiles, bulkUpdateFiles } = useFiles(projectId!, folderId);
   const { pipelines, createPipeline, updatePipeline, deletePipeline, updateDefaultStages, defaultStages } = usePipelines();
@@ -97,19 +109,27 @@ export default function ProjectDetail() {
     return true;
   });
 
-  // Build breadcrumbs
+  // Build breadcrumbs with full folder path (starting with project, not "Projects" page)
   const buildBreadcrumbs = (): { label: string; href?: string }[] => {
-    const crumbs: { label: string; href?: string }[] = [{ label: 'Projects', href: '/projects' }];
+    const crumbs: { label: string; href?: string }[] = [];
 
     if (project) {
+      // Project is first item, clickable if we're in a folder
       crumbs.push({
         label: project.name,
         href: folderId ? `/projects/${projectId}` : undefined,
       });
     }
 
-    if (currentFolder) {
-      crumbs.push({ label: currentFolder.name });
+    // Add all folder ancestors
+    if (folderAncestry) {
+      folderAncestry.forEach((folder, index) => {
+        const isLast = index === folderAncestry.length - 1;
+        crumbs.push({
+          label: folder.name,
+          href: isLast ? undefined : `/projects/${projectId}/folder/${folder.id}`,
+        });
+      });
     }
 
     return crumbs;
