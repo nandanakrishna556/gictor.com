@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
 import {
@@ -43,6 +43,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import type { File, Folder as FolderType } from '@/hooks/useFiles';
 import type { Pipeline, PipelineStage } from '@/hooks/usePipelines';
 import type { Tag as TagType } from '@/hooks/useTags';
+import ConfirmDeleteDialog from '@/components/modals/ConfirmDeleteDialog';
 
 interface FileGridProps {
   files: File[];
@@ -123,6 +124,29 @@ export default function FileGrid({
   const [bulkMode, setBulkMode] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [renamingItemId, setRenamingItemId] = useState<string | null>(null);
+  const [showBulkDeleteDialog, setShowBulkDeleteDialog] = useState(false);
+
+  // Keyboard shortcuts
+  const handleKeyDown = useCallback((e: KeyboardEvent) => {
+    // Don't trigger if user is typing in an input
+    if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
+      return;
+    }
+
+    if (e.key === 'Escape' && bulkMode) {
+      clearSelection();
+    }
+
+    if (e.key === 'Delete' && bulkMode && selectedItems.size > 0) {
+      e.preventDefault();
+      setShowBulkDeleteDialog(true);
+    }
+  }, [bulkMode, selectedItems.size]);
+
+  useEffect(() => {
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [handleKeyDown]);
 
   const currentPipeline = pipelines.find((p) => p.id === selectedPipelineId);
   const stages: PipelineStage[] = currentPipeline?.stages || defaultStages || [
@@ -233,6 +257,18 @@ export default function FileGrid({
   if (viewMode === 'kanban') {
     return (
       <div className="space-y-4">
+        {/* Bulk Delete Confirmation Dialog */}
+        <ConfirmDeleteDialog
+          open={showBulkDeleteDialog}
+          onOpenChange={setShowBulkDeleteDialog}
+          onConfirm={() => {
+            handleBulkDelete();
+            setShowBulkDeleteDialog(false);
+          }}
+          title="Delete Selected Items"
+          description={`Are you sure you want to delete ${selectedItems.size} selected item${selectedItems.size === 1 ? '' : 's'}? This action cannot be undone.`}
+        />
+
         {/* Bulk Actions Bar */}
         {bulkMode && (
           <BulkActionsBar
@@ -241,7 +277,7 @@ export default function FileGrid({
             tags={tags}
             onSelectAll={selectAll}
             onClear={clearSelection}
-            onDelete={handleBulkDelete}
+            onDeleteRequest={() => setShowBulkDeleteDialog(true)}
             onStatusChange={handleBulkStatusChange}
             onTagToggle={handleBulkTagToggle}
           />
@@ -289,13 +325,15 @@ export default function FileGrid({
               <Plus className="h-4 w-4" />
               New Pipeline
             </Button>
-            <Button
-              variant={bulkMode ? 'secondary' : 'outline'}
-              size="sm"
-              onClick={() => setBulkMode(!bulkMode)}
-            >
-              {bulkMode ? 'Cancel Selection' : 'Select'}
-            </Button>
+            {!bulkMode && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setBulkMode(true)}
+              >
+                Select
+              </Button>
+            )}
           </div>
           
           {/* Search */}
@@ -414,6 +452,18 @@ export default function FileGrid({
 
   return (
     <div className="space-y-4">
+      {/* Bulk Delete Confirmation Dialog */}
+      <ConfirmDeleteDialog
+        open={showBulkDeleteDialog}
+        onOpenChange={setShowBulkDeleteDialog}
+        onConfirm={() => {
+          handleBulkDelete();
+          setShowBulkDeleteDialog(false);
+        }}
+        title="Delete Selected Items"
+        description={`Are you sure you want to delete ${selectedItems.size} selected item${selectedItems.size === 1 ? '' : 's'}? This action cannot be undone.`}
+      />
+
       {/* Bulk Actions Bar */}
       {bulkMode && (
         <BulkActionsBar
@@ -422,7 +472,7 @@ export default function FileGrid({
           tags={tags}
           onSelectAll={selectAll}
           onClear={clearSelection}
-          onDelete={handleBulkDelete}
+          onDeleteRequest={() => setShowBulkDeleteDialog(true)}
           onStatusChange={handleBulkStatusChange}
           onTagToggle={handleBulkTagToggle}
         />
@@ -440,13 +490,15 @@ export default function FileGrid({
             className="pl-9"
           />
         </div>
-        <Button
-          variant={bulkMode ? 'secondary' : 'outline'}
-          size="sm"
-          onClick={() => setBulkMode(!bulkMode)}
-        >
-          {bulkMode ? 'Cancel Selection' : 'Select'}
-        </Button>
+        {!bulkMode && (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setBulkMode(true)}
+          >
+            Select
+          </Button>
+        )}
       </div>
 
       <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
@@ -527,7 +579,7 @@ function BulkActionsBar({
   tags,
   onSelectAll,
   onClear,
-  onDelete,
+  onDeleteRequest,
   onStatusChange,
   onTagToggle,
 }: {
@@ -536,7 +588,7 @@ function BulkActionsBar({
   tags: TagType[];
   onSelectAll: () => void;
   onClear: () => void;
-  onDelete: () => void;
+  onDeleteRequest: () => void;
   onStatusChange: (status: string) => void;
   onTagToggle: (tagId: string, add: boolean) => void;
 }) {
@@ -615,7 +667,7 @@ function BulkActionsBar({
       <Button
         variant="destructive"
         size="sm"
-        onClick={onDelete}
+        onClick={onDeleteRequest}
         disabled={selectedCount === 0}
       >
         <Trash2 className="mr-2 h-4 w-4" />
