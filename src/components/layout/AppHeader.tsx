@@ -196,7 +196,7 @@ export default function AppHeader({
               <Coins className="h-4 w-4" />
               Billing
             </DropdownMenuItem>
-            <DropdownMenuItem className="gap-2">
+            <DropdownMenuItem onClick={() => navigate('/settings')} className="gap-2">
               <Settings className="h-4 w-4" />
               Settings
             </DropdownMenuItem>
