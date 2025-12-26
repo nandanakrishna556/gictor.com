@@ -62,8 +62,10 @@ interface FileGridProps {
   onDeleteFolder?: (id: string) => void;
   onUpdateFileStatus?: (id: string, status: string) => void;
   onUpdateFileTags?: (id: string, tags: string[]) => void;
+  onUpdateFileName?: (id: string, name: string) => void;
   onUpdateFolderStatus?: (id: string, status: string) => void;
   onUpdateFolderTags?: (id: string, tags: string[]) => void;
+  onUpdateFolderName?: (id: string, name: string) => void;
   onBulkDelete?: (ids: string[]) => void;
   onBulkUpdateStatus?: (ids: string[], status: string) => void;
   onBulkUpdateTags?: (ids: string[], tags: string[]) => void;
@@ -105,8 +107,10 @@ export default function FileGrid({
   onDeleteFolder,
   onUpdateFileStatus,
   onUpdateFileTags,
+  onUpdateFileName,
   onUpdateFolderStatus,
   onUpdateFolderTags,
+  onUpdateFolderName,
   onBulkDelete,
   onBulkUpdateStatus,
   onBulkUpdateTags,
@@ -115,6 +119,7 @@ export default function FileGrid({
   const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
   const [bulkMode, setBulkMode] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [renamingItemId, setRenamingItemId] = useState<string | null>(null);
 
   const currentPipeline = pipelines.find((p) => p.id === selectedPipelineId);
   const stages: PipelineStage[] = currentPipeline?.stages || [
@@ -342,6 +347,17 @@ export default function FileGrid({
                                   isDragging={snapshot.isDragging}
                                   isSelected={selectedItems.has(item.id)}
                                   bulkMode={bulkMode}
+                                  isRenaming={renamingItemId === item.id}
+                                  onStartRename={() => setRenamingItemId(item.id)}
+                                  onCancelRename={() => setRenamingItemId(null)}
+                                  onSaveRename={(newName) => {
+                                    if (item.itemType === 'file') {
+                                      onUpdateFileName?.(item.id, newName);
+                                    } else {
+                                      onUpdateFolderName?.(item.id, newName);
+                                    }
+                                    setRenamingItemId(null);
+                                  }}
                                   onSelect={() => toggleSelection(item.id)}
                                   onDelete={
                                     item.itemType === 'file'
@@ -448,6 +464,13 @@ export default function FileGrid({
               tags={tags}
               isSelected={selectedItems.has(item.id)}
               bulkMode={bulkMode}
+              isRenaming={renamingItemId === item.id}
+              onStartRename={() => setRenamingItemId(item.id)}
+              onCancelRename={() => setRenamingItemId(null)}
+              onSaveRename={(newName) => {
+                onUpdateFolderName?.(item.id, newName);
+                setRenamingItemId(null);
+              }}
               onSelect={() => toggleSelection(item.id)}
               onDelete={onDeleteFolder}
               onStatusChange={onUpdateFolderStatus}
@@ -464,6 +487,13 @@ export default function FileGrid({
               tags={tags}
               isSelected={selectedItems.has(item.id)}
               bulkMode={bulkMode}
+              isRenaming={renamingItemId === item.id}
+              onStartRename={() => setRenamingItemId(item.id)}
+              onCancelRename={() => setRenamingItemId(null)}
+              onSaveRename={(newName) => {
+                onUpdateFileName?.(item.id, newName);
+                setRenamingItemId(null);
+              }}
               onSelect={() => toggleSelection(item.id)}
               onDelete={onDeleteFile}
               onStatusChange={onUpdateFileStatus}
@@ -594,6 +624,10 @@ function FolderCard({
   tags,
   isSelected,
   bulkMode,
+  isRenaming,
+  onStartRename,
+  onCancelRename,
+  onSaveRename,
   onSelect,
   onDelete,
   onStatusChange,
@@ -608,6 +642,10 @@ function FolderCard({
   tags: TagType[];
   isSelected: boolean;
   bulkMode: boolean;
+  isRenaming: boolean;
+  onStartRename: () => void;
+  onCancelRename: () => void;
+  onSaveRename: (name: string) => void;
   onSelect: () => void;
   onDelete?: (id: string) => void;
   onStatusChange?: (id: string, status: string) => void;
@@ -617,6 +655,8 @@ function FolderCard({
   onCreateNew?: () => void;
 }) {
   const navigate = useNavigate();
+  const [renameValue, setRenameValue] = useState(folder.name);
+  
   // Default status to first stage if not set
   const effectiveStatus = folder.status && folder.status !== 'active' ? folder.status : stages[0]?.id || 'processing';
   const currentStage = stages.find((s) => s.id === effectiveStatus) || stages[0];
@@ -631,11 +671,35 @@ function FolderCard({
   };
 
   const handleCardClick = (e: React.MouseEvent) => {
+    if (isRenaming) return;
     if (bulkMode) {
       e.preventDefault();
       onSelect();
     } else {
       navigate(`/projects/${projectId}/folder/${folder.id}`);
+    }
+  };
+
+  const handleRenameKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      if (renameValue.trim()) {
+        onSaveRename(renameValue.trim());
+      } else {
+        onCancelRename();
+      }
+    } else if (e.key === 'Escape') {
+      setRenameValue(folder.name);
+      onCancelRename();
+    }
+  };
+
+  const handleRenameBlur = () => {
+    if (renameValue.trim() && renameValue !== folder.name) {
+      onSaveRename(renameValue.trim());
+    } else {
+      setRenameValue(folder.name);
+      onCancelRename();
     }
   };
 
@@ -655,8 +719,19 @@ function FolderCard({
       )}
 
       {/* Card Name at Top */}
-      <div className="p-4 pb-0">
-        <h3 className="text-center text-base font-semibold text-card-foreground">{folder.name}</h3>
+      <div className="p-4 pb-0" onClick={(e) => e.stopPropagation()}>
+        {isRenaming ? (
+          <Input
+            value={renameValue}
+            onChange={(e) => setRenameValue(e.target.value)}
+            onKeyDown={handleRenameKeyDown}
+            onBlur={handleRenameBlur}
+            className="h-8 text-center text-base font-semibold"
+            autoFocus
+          />
+        ) : (
+          <h3 className="text-center text-base font-semibold text-card-foreground">{folder.name}</h3>
+        )}
       </div>
 
       {/* Apple-inspired Folder Icon */}
@@ -818,7 +893,13 @@ function FolderCard({
           </button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="bg-card border shadow-lg">
-          <DropdownMenuItem className="gap-2">
+          <DropdownMenuItem 
+            className="gap-2"
+            onClick={(e) => {
+              e.stopPropagation();
+              onStartRename();
+            }}
+          >
             <Pencil className="h-4 w-4" />
             Rename
           </DropdownMenuItem>
@@ -849,6 +930,10 @@ function FileCard({
   tags,
   isSelected,
   bulkMode,
+  isRenaming,
+  onStartRename,
+  onCancelRename,
+  onSaveRename,
   onSelect,
   onDelete,
   onStatusChange,
@@ -862,6 +947,10 @@ function FileCard({
   tags: TagType[];
   isSelected: boolean;
   bulkMode: boolean;
+  isRenaming: boolean;
+  onStartRename: () => void;
+  onCancelRename: () => void;
+  onSaveRename: (name: string) => void;
   onSelect: () => void;
   onDelete?: (id: string) => void;
   onStatusChange?: (id: string, status: string) => void;
@@ -870,6 +959,7 @@ function FileCard({
   onDeleteTag?: (id: string) => void;
   onCreateNew?: () => void;
 }) {
+  const [renameValue, setRenameValue] = useState(file.name);
   const isProcessing = file.status === 'processing';
   const isFailed = file.status === 'failed';
   // Default status to first stage if not set
@@ -886,11 +976,35 @@ function FileCard({
   };
 
   const handleCardClick = (e: React.MouseEvent) => {
+    if (isRenaming) return;
     if (bulkMode) {
       e.preventDefault();
       onSelect();
     }
     // Non-bulk click can open file details if needed
+  };
+
+  const handleRenameKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      if (renameValue.trim()) {
+        onSaveRename(renameValue.trim());
+      } else {
+        onCancelRename();
+      }
+    } else if (e.key === 'Escape') {
+      setRenameValue(file.name);
+      onCancelRename();
+    }
+  };
+
+  const handleRenameBlur = () => {
+    if (renameValue.trim() && renameValue !== file.name) {
+      onSaveRename(renameValue.trim());
+    } else {
+      setRenameValue(file.name);
+      onCancelRename();
+    }
   };
 
   return (
@@ -911,8 +1025,19 @@ function FileCard({
       )}
 
       {/* Card Name at Top */}
-      <div className="p-4 pb-0">
-        <h3 className="truncate font-medium text-card-foreground">{file.name}</h3>
+      <div className="p-4 pb-0" onClick={(e) => e.stopPropagation()}>
+        {isRenaming ? (
+          <Input
+            value={renameValue}
+            onChange={(e) => setRenameValue(e.target.value)}
+            onKeyDown={handleRenameKeyDown}
+            onBlur={handleRenameBlur}
+            className="h-8 text-sm font-medium"
+            autoFocus
+          />
+        ) : (
+          <h3 className="truncate font-medium text-card-foreground">{file.name}</h3>
+        )}
       </div>
 
       {/* Preview Area */}
@@ -1083,7 +1208,13 @@ function FileCard({
           </button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="bg-card border shadow-lg">
-          <DropdownMenuItem className="gap-2">
+          <DropdownMenuItem 
+            className="gap-2"
+            onClick={(e) => {
+              e.stopPropagation();
+              onStartRename();
+            }}
+          >
             <Pencil className="h-4 w-4" />
             Rename
           </DropdownMenuItem>
@@ -1115,6 +1246,10 @@ function KanbanCard({
   isDragging,
   isSelected,
   bulkMode,
+  isRenaming,
+  onStartRename,
+  onCancelRename,
+  onSaveRename,
   onSelect,
   onDelete,
   onTagsChange,
@@ -1127,6 +1262,10 @@ function KanbanCard({
   isDragging: boolean;
   isSelected: boolean;
   bulkMode: boolean;
+  isRenaming: boolean;
+  onStartRename: () => void;
+  onCancelRename: () => void;
+  onSaveRename: (name: string) => void;
   onSelect: () => void;
   onDelete?: (id: string) => void;
   onTagsChange?: (id: string, tags: string[]) => void;
@@ -1134,6 +1273,7 @@ function KanbanCard({
   onCreateTag?: () => void;
 }) {
   const navigate = useNavigate();
+  const [renameValue, setRenameValue] = useState(item.name);
   const itemTags = item.tags || [];
   const isFolder = item.itemType === 'folder';
 
@@ -1146,10 +1286,34 @@ function KanbanCard({
   };
 
   const handleClick = () => {
+    if (isRenaming) return;
     if (bulkMode) {
       onSelect();
     } else if (isFolder) {
       navigate(`/projects/${projectId}/folder/${item.id}`);
+    }
+  };
+
+  const handleRenameKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      if (renameValue.trim()) {
+        onSaveRename(renameValue.trim());
+      } else {
+        onCancelRename();
+      }
+    } else if (e.key === 'Escape') {
+      setRenameValue(item.name);
+      onCancelRename();
+    }
+  };
+
+  const handleRenameBlur = () => {
+    if (renameValue.trim() && renameValue !== item.name) {
+      onSaveRename(renameValue.trim());
+    } else {
+      setRenameValue(item.name);
+      onCancelRename();
     }
   };
 
@@ -1185,8 +1349,19 @@ function KanbanCard({
           </svg>
         )}
         
-        <div className="min-w-0 flex-1">
-          <h4 className="truncate text-sm font-medium text-card-foreground">{item.name}</h4>
+        <div className="min-w-0 flex-1" onClick={(e) => e.stopPropagation()}>
+          {isRenaming ? (
+            <Input
+              value={renameValue}
+              onChange={(e) => setRenameValue(e.target.value)}
+              onKeyDown={handleRenameKeyDown}
+              onBlur={handleRenameBlur}
+              className="h-7 text-sm font-medium"
+              autoFocus
+            />
+          ) : (
+            <h4 className="truncate text-sm font-medium text-card-foreground">{item.name}</h4>
+          )}
           
           {/* File type badge */}
           {!isFolder && (
@@ -1299,7 +1474,10 @@ function KanbanCard({
             </button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            <DropdownMenuItem className="gap-2">
+            <DropdownMenuItem 
+              className="gap-2"
+              onClick={() => onStartRename()}
+            >
               <Pencil className="h-4 w-4" />
               Rename
             </DropdownMenuItem>

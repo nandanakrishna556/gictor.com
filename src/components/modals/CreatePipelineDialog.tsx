@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
 import { Plus, Trash2, GripVertical } from 'lucide-react';
 import {
   Dialog,
@@ -9,6 +10,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { cn } from '@/lib/utils';
 import type { PipelineStage, Pipeline } from '@/hooks/usePipelines';
 
 interface CreatePipelineDialogProps {
@@ -80,6 +82,16 @@ export default function CreatePipelineDialog({
     setStages(stages.map((s) => (s.id === id ? { ...s, [field]: value } : s)));
   };
 
+  const handleDragEnd = (result: DropResult) => {
+    if (!result.destination) return;
+
+    const items = Array.from(stages);
+    const [reorderedItem] = items.splice(result.source.index, 1);
+    items.splice(result.destination.index, 0, reorderedItem);
+
+    setStages(items);
+  };
+
   const handleSubmit = () => {
     if (name.trim() && stages.length >= 2) {
       onSubmit(name.trim(), stages);
@@ -114,40 +126,67 @@ export default function CreatePipelineDialog({
           </div>
 
           <div className="space-y-2">
-            <Label>Stages</Label>
-            <div className="space-y-2 rounded-lg border border-border p-3">
-              {stages.map((stage, index) => (
-                <div key={stage.id} className="flex items-center gap-2">
-                  <GripVertical className="h-4 w-4 cursor-grab text-muted-foreground" />
+            <Label>Stages (drag to reorder)</Label>
+            <DragDropContext onDragEnd={handleDragEnd}>
+              <Droppable droppableId="stages">
+                {(provided) => (
                   <div
-                    className={`h-3 w-3 rounded-full cursor-pointer ${stage.color}`}
-                    onClick={() => {
-                      const nextColor = STAGE_COLORS[(STAGE_COLORS.indexOf(stage.color) + 1) % STAGE_COLORS.length];
-                      handleUpdateStage(stage.id, 'color', nextColor);
-                    }}
-                  />
-                  <Input
-                    value={stage.name}
-                    onChange={(e) => handleUpdateStage(stage.id, 'name', e.target.value)}
-                    className="h-8 flex-1 rounded-md text-sm"
-                  />
-                  <button
-                    onClick={() => handleRemoveStage(stage.id)}
-                    disabled={stages.length <= 2}
-                    className="rounded p-1 text-muted-foreground hover:bg-secondary hover:text-destructive disabled:opacity-30"
+                    {...provided.droppableProps}
+                    ref={provided.innerRef}
+                    className="space-y-2 rounded-lg border border-border p-3"
                   >
-                    <Trash2 className="h-4 w-4" />
-                  </button>
-                </div>
-              ))}
-              <button
-                onClick={handleAddStage}
-                className="flex w-full items-center justify-center gap-2 rounded-lg border-2 border-dashed border-border p-2 text-sm text-muted-foreground transition-colors hover:border-primary hover:text-primary"
-              >
-                <Plus className="h-4 w-4" />
-                Add Stage
-              </button>
-            </div>
+                    {stages.map((stage, index) => (
+                      <Draggable key={stage.id} draggableId={stage.id} index={index}>
+                        {(provided, snapshot) => (
+                          <div
+                            ref={provided.innerRef}
+                            {...provided.draggableProps}
+                            className={cn(
+                              'flex items-center gap-2 rounded-lg bg-background p-1 transition-shadow',
+                              snapshot.isDragging && 'shadow-lg ring-2 ring-primary/20'
+                            )}
+                          >
+                            <div
+                              {...provided.dragHandleProps}
+                              className="cursor-grab rounded p-1 hover:bg-secondary active:cursor-grabbing"
+                            >
+                              <GripVertical className="h-4 w-4 text-muted-foreground" />
+                            </div>
+                            <div
+                              className={`h-3 w-3 rounded-full cursor-pointer transition-transform hover:scale-110 ${stage.color}`}
+                              onClick={() => {
+                                const nextColor = STAGE_COLORS[(STAGE_COLORS.indexOf(stage.color) + 1) % STAGE_COLORS.length];
+                                handleUpdateStage(stage.id, 'color', nextColor);
+                              }}
+                            />
+                            <Input
+                              value={stage.name}
+                              onChange={(e) => handleUpdateStage(stage.id, 'name', e.target.value)}
+                              className="h-8 flex-1 rounded-md text-sm"
+                            />
+                            <button
+                              onClick={() => handleRemoveStage(stage.id)}
+                              disabled={stages.length <= 2}
+                              className="rounded p-1 text-muted-foreground hover:bg-secondary hover:text-destructive disabled:opacity-30"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </button>
+                          </div>
+                        )}
+                      </Draggable>
+                    ))}
+                    {provided.placeholder}
+                    <button
+                      onClick={handleAddStage}
+                      className="flex w-full items-center justify-center gap-2 rounded-lg border-2 border-dashed border-border p-2 text-sm text-muted-foreground transition-colors hover:border-primary hover:text-primary"
+                    >
+                      <Plus className="h-4 w-4" />
+                      Add Stage
+                    </button>
+                  </div>
+                )}
+              </Droppable>
+            </DragDropContext>
           </div>
         </div>
 

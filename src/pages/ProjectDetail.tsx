@@ -150,6 +150,14 @@ export default function ProjectDetail() {
     await updateFolder({ id, updates: { tags: newTags } });
   };
 
+  const handleUpdateFileName = async (id: string, name: string) => {
+    await updateFile({ id, updates: { name } });
+  };
+
+  const handleUpdateFolderName = async (id: string, name: string) => {
+    await updateFolder({ id, updates: { name } });
+  };
+
   const handleDeleteFile = async (id: string) => {
     await deleteFile(id);
   };
