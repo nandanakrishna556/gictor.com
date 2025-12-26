@@ -12,6 +12,7 @@ export interface File {
   file_type: string;
   tags: string[];
   status: string;
+  progress: number;
   preview_url: string | null;
   download_url: string | null;
   metadata: Json;
