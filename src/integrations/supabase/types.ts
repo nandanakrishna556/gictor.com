@@ -53,6 +53,7 @@ export type Database = {
         Row: {
           created_at: string | null
           download_url: string | null
+          error_message: string | null
           file_type: string
           folder_id: string | null
           generation_params: Json | null
@@ -69,6 +70,7 @@ export type Database = {
         Insert: {
           created_at?: string | null
           download_url?: string | null
+          error_message?: string | null
           file_type: string
           folder_id?: string | null
           generation_params?: Json | null
@@ -85,6 +87,7 @@ export type Database = {
         Update: {
           created_at?: string | null
           download_url?: string | null
+          error_message?: string | null
           file_type?: string
           folder_id?: string | null
           generation_params?: Json | null
@@ -335,7 +338,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      refund_credits: {
+        Args: { p_amount: number; p_description?: string; p_user_id: string }
+        Returns: undefined
+      }
     }
     Enums: {
       [_ in never]: never
