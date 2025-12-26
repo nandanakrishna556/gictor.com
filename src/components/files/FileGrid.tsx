@@ -246,37 +246,41 @@ export default function FileGrid({
         {/* Pipeline Selector and Search */}
         <div className="flex items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <Select
-              value={selectedPipelineId || 'default'}
-              onValueChange={(id) => onPipelineChange(id === 'default' ? null : id)}
-            >
-              <SelectTrigger className="w-48 rounded-lg">
-                <SelectValue placeholder="Select pipeline" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="default">Default Pipeline</SelectItem>
-                {pipelines.map((pipeline) => (
-                  <SelectItem key={pipeline.id} value={pipeline.id}>
-                    {pipeline.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <div className="flex items-center">
+              <Select
+                value={selectedPipelineId || 'default'}
+                onValueChange={(id) => onPipelineChange(id === 'default' ? null : id)}
+              >
+                <SelectTrigger className="w-48 rounded-lg rounded-r-none border-r-0">
+                  <SelectValue placeholder="Select pipeline" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="default">Default Pipeline</SelectItem>
+                  {pipelines.map((pipeline) => (
+                    <div key={pipeline.id} className="flex items-center">
+                      <SelectItem value={pipeline.id} className="flex-1">
+                        {pipeline.name}
+                      </SelectItem>
+                    </div>
+                  ))}
+                </SelectContent>
+              </Select>
+              {currentPipeline && onEditPipeline && (
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => onEditPipeline(currentPipeline)}
+                  className="h-10 w-10 rounded-lg rounded-l-none border-l-0"
+                  title="Edit pipeline"
+                >
+                  <Pencil className="h-4 w-4" />
+                </Button>
+              )}
+            </div>
             <Button variant="outline" size="sm" onClick={onCreatePipeline} className="gap-2">
               <Plus className="h-4 w-4" />
               New Pipeline
             </Button>
-            {currentPipeline && onEditPipeline && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => onEditPipeline(currentPipeline)}
-                className="gap-2"
-              >
-                <Pencil className="h-4 w-4" />
-                Edit
-              </Button>
-            )}
             <Button
               variant={bulkMode ? 'secondary' : 'outline'}
               size="sm"

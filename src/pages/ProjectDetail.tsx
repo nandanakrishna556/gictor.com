@@ -62,8 +62,16 @@ export default function ProjectDetail() {
   });
 
   const { files, folders, isLoading, createFolder, updateFile, updateFolder, deleteFile, deleteFolder, bulkDeleteFiles, bulkUpdateFiles } = useFiles(projectId!, folderId);
-  const { pipelines, createPipeline, updatePipeline, deletePipeline } = usePipelines();
+  const { pipelines, createPipeline, updatePipeline, deletePipeline, defaultStages } = usePipelines();
   const { tags, createTag, deleteTag } = useTags();
+
+  // Get current pipeline stages for status options
+  const currentPipeline = pipelines.find((p) => p.id === selectedPipelineId);
+  const currentStatusOptions = (currentPipeline?.stages || defaultStages).map((stage) => ({
+    value: stage.id,
+    label: stage.name,
+    color: stage.color,
+  }));
 
   // Filter files based on selected filters
   const filteredFiles = (files || []).filter((file) => {
@@ -331,6 +339,7 @@ export default function ProjectDetail() {
         initialStatus={createModalInitialStatus}
         tags={tags}
         onCreateTag={() => setCreateTagOpen(true)}
+        statusOptions={currentStatusOptions}
       />
 
       <CreateFolderDialog
@@ -342,6 +351,7 @@ export default function ProjectDetail() {
         initialStatus={createModalInitialStatus}
         tags={tags}
         onCreateTag={() => setCreateTagOpen(true)}
+        statusOptions={currentStatusOptions}
       />
 
       <CreatePipelineDialog
