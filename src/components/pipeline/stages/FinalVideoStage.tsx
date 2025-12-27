@@ -79,9 +79,12 @@ export default function FinalVideoStage({ pipelineId, onComplete, stageNavigatio
         <div className="flex-1 overflow-auto p-6 space-y-6">
           {/* Stage Navigation */}
           {stageNavigation && (
-            <div className="mb-2">
-              {stageNavigation}
-            </div>
+            <>
+              <div className="mb-2">
+                {stageNavigation}
+              </div>
+              <div className="h-px bg-border" />
+            </>
           )}
           
           <h3 className="font-medium text-lg">Summary</h3>
