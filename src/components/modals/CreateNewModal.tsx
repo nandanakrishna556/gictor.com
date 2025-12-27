@@ -179,6 +179,7 @@ export default function CreateNewModal({
         pipelineId={null}
         projectId={projectId}
         folderId={folderId}
+        initialStatus={initialStatus}
         onSuccess={handlePipelineSuccess}
       />
     </>
