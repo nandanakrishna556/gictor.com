@@ -50,25 +50,33 @@ export default function PipelineModal({
   initialStatus,
   onSuccess,
 }: PipelineModalProps) {
-  const [currentPipelineId, setCurrentPipelineId] = useState<string | null>(pipelineId);
+  const queryClient = useQueryClient();
+  const { profile } = useProfile();
+  const { tags } = useTags();
+  const { createFile } = useFiles(projectId);
+  
+  // Core state - use refs to avoid race conditions
+  const [currentPipelineId, setCurrentPipelineId] = useState<string | null>(null);
   const [isCreatingPipeline, setIsCreatingPipeline] = useState(false);
+  const creationAttemptedRef = useRef(false);
+  const initialStatusRef = useRef(initialStatus);
   
-  // Use the effective pipeline ID (currentPipelineId is set after creation)
-  const effectivePipelineId = currentPipelineId || pipelineId;
+  // Capture initialStatus in ref immediately on mount
+  initialStatusRef.current = initialStatus;
   
+  // Compute effective pipeline ID
+  const effectivePipelineId = pipelineId || currentPipelineId;
+  
+  // Only fetch pipeline data when we have an ID
   const {
     pipeline,
     isLoading,
     canProceedToFinalVideo,
     createPipeline,
     updatePipeline,
-    isCreating,
   } = usePipeline(effectivePipelineId);
 
-  const { profile } = useProfile();
-  const { tags } = useTags();
-  const { createFile } = useFiles(projectId);
-  const queryClient = useQueryClient();
+  // UI state
   const [activeStage, setActiveStage] = useState<PipelineStage>('first_frame');
   const [name, setName] = useState('Untitled');
   const [currentProjectId, setCurrentProjectId] = useState(projectId);
@@ -77,8 +85,7 @@ export default function PipelineModal({
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [showUnsavedWarning, setShowUnsavedWarning] = useState(false);
-  const initialLoadDone = useRef(false);
-  const hasCreatedPipeline = useRef(false);
+  const pipelineLoadedRef = useRef(false);
 
   const statusOptions = [
     { value: 'draft', label: 'Draft', color: 'bg-slate-500' },
@@ -97,99 +104,71 @@ export default function PipelineModal({
     return uuidRegex.test(id);
   };
 
-  // Reset state when modal closes
-  useEffect(() => {
-    if (!open) {
-      // Reset creation tracking when modal closes
-      hasCreatedPipeline.current = false;
-      setIsCreatingPipeline(false);
-      setCurrentPipelineId(null);
-    }
-  }, [open]);
+  // Subscribe to realtime updates
+  usePipelineRealtime(effectivePipelineId);
 
-  // Reset state when modal opens with a new pipelineId prop
+  // Create pipeline on mount if needed (only once)
   useEffect(() => {
-    if (open && pipelineId) {
-      setCurrentPipelineId(pipelineId);
-      hasCreatedPipeline.current = true; // Already have a pipeline
-    } else if (open && pipelineId === null) {
-      setName('Untitled');
-      setStatus(initialStatus || 'draft');
-      setSelectedTags([]);
-      setHasUnsavedChanges(false);
-      initialLoadDone.current = false;
+    const needsCreation = open && !pipelineId && !currentPipelineId && !creationAttemptedRef.current;
+    
+    if (needsCreation && isValidUUID(projectId)) {
+      creationAttemptedRef.current = true;
+      setIsCreatingPipeline(true);
+      
+      const statusToUse = initialStatusRef.current || 'draft';
+      console.log('Creating pipeline with status:', statusToUse);
+      
+      createPipeline({
+        projectId: projectId,
+        folderId: folderId,
+        name: 'Untitled',
+        status: statusToUse,
+      })
+        .then((newPipeline) => {
+          console.log('Pipeline created:', newPipeline.id, 'with status:', newPipeline.status);
+          setCurrentPipelineId(newPipeline.id);
+          setStatus(newPipeline.status || statusToUse);
+          setIsCreatingPipeline(false);
+        })
+        .catch((error) => {
+          console.error('Failed to create pipeline:', error);
+          toast.error('Failed to create pipeline');
+          setIsCreatingPipeline(false);
+          onClose();
+        });
     }
-  }, [open, pipelineId, initialStatus]);
+  }, [open, pipelineId, currentPipelineId, projectId, folderId, createPipeline, onClose]);
 
-  // Sync projectId from props when it changes
+  // Sync pipeline data when loaded
+  useEffect(() => {
+    if (pipeline && !pipelineLoadedRef.current) {
+      pipelineLoadedRef.current = true;
+      setActiveStage(pipeline.current_stage);
+      setName(pipeline.name);
+      setStatus(pipeline.status || initialStatusRef.current || 'draft');
+      setSelectedTags(pipeline.tags || []);
+    }
+  }, [pipeline]);
+
+  // Sync projectId/folderId from props
   useEffect(() => {
     if (projectId && isValidUUID(projectId)) {
       setCurrentProjectId(projectId);
     }
   }, [projectId]);
 
-  // Sync folderId from props when it changes
   useEffect(() => {
     setCurrentFolderId(folderId);
   }, [folderId]);
-
-  // Subscribe to realtime updates for this pipeline
-  usePipelineRealtime(effectivePipelineId);
-
-  // Initialize state when pipeline loads
-  useEffect(() => {
-    if (pipeline) {
-      setActiveStage(pipeline.current_stage);
-      setName(pipeline.name);
-      setStatus(pipeline.status || initialStatus || 'draft');
-      setSelectedTags(pipeline.tags || []);
-      // Mark initial load as done after first pipeline load
-      if (!initialLoadDone.current) {
-        initialLoadDone.current = true;
-      }
-    }
-  }, [pipeline, initialStatus]);
-
-  // Create pipeline if not exists - only when we have a valid projectId and haven't created yet
-  useEffect(() => {
-    const shouldCreate = open && 
-      !pipelineId && 
-      !currentPipelineId && 
-      !isCreatingPipeline && 
-      !hasCreatedPipeline.current && 
-      isValidUUID(currentProjectId);
-    
-    if (shouldCreate) {
-      setIsCreatingPipeline(true);
-      hasCreatedPipeline.current = true;
-      
-      createPipeline({
-        projectId: currentProjectId,
-        folderId: currentFolderId,
-        name: 'Untitled',
-        status: initialStatus || 'draft',
-      }).then((newPipeline) => {
-        setCurrentPipelineId(newPipeline.id);
-        setIsCreatingPipeline(false);
-      }).catch(() => {
-        toast.error('Failed to create pipeline');
-        setIsCreatingPipeline(false);
-        hasCreatedPipeline.current = false;
-        onClose();
-      });
-    }
-  }, [open, pipelineId, currentPipelineId, isCreatingPipeline, createPipeline, currentProjectId, currentFolderId, onClose, initialStatus]);
 
   // Auto-save functionality
   const triggerAutoSave = useCallback(() => {
     if (!effectivePipelineId || !hasUnsavedChanges) return;
     
-    // Clear any existing timeout
     if (autoSaveTimeoutRef.current) {
       clearTimeout(autoSaveTimeoutRef.current);
     }
     
-    // Set new timeout for auto-save after 2 seconds of inactivity
     autoSaveTimeoutRef.current = setTimeout(async () => {
       try {
         setSaveStatus('saving');
@@ -212,7 +191,7 @@ export default function PipelineModal({
 
   // Trigger auto-save when unsaved changes occur
   useEffect(() => {
-    if (hasUnsavedChanges && initialLoadDone.current) {
+    if (hasUnsavedChanges && pipelineLoadedRef.current) {
       triggerAutoSave();
     }
     
@@ -222,6 +201,7 @@ export default function PipelineModal({
       }
     };
   }, [hasUnsavedChanges, name, status, selectedTags, triggerAutoSave]);
+
 
   const handleStageClick = (stage: PipelineStage) => {
     // Can freely switch between first 3 stages
