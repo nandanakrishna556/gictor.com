@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
@@ -83,6 +83,37 @@ export default function PipelineModal({
   
   // Auto-save indicator states
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
+  const autoSaveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Helper to check if projectId is a valid UUID
+  const isValidUUID = (id: string) => {
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    return uuidRegex.test(id);
+  };
+
+  // Reset state when modal opens with no pipelineId (new pipeline)
+  useEffect(() => {
+    if (open && pipelineId === null) {
+      setCurrentPipelineId(null);
+      setName('Untitled');
+      setStatus(initialStatus || 'draft');
+      setSelectedTags([]);
+      setHasUnsavedChanges(false);
+      initialLoadDone.current = false;
+    }
+  }, [open, pipelineId, initialStatus]);
+
+  // Sync projectId from props when it changes
+  useEffect(() => {
+    if (projectId && isValidUUID(projectId)) {
+      setCurrentProjectId(projectId);
+    }
+  }, [projectId]);
+
+  // Sync folderId from props when it changes
+  useEffect(() => {
+    setCurrentFolderId(folderId);
+  }, [folderId]);
 
   // Subscribe to realtime updates for this pipeline
   const effectivePipelineId = currentPipelineId || pipelineId;
@@ -102,9 +133,9 @@ export default function PipelineModal({
     }
   }, [pipeline, initialStatus]);
 
-  // Create pipeline if not exists
+  // Create pipeline if not exists - only when we have a valid projectId
   useEffect(() => {
-    if (open && !pipelineId && !currentPipelineId && !isCreating) {
+    if (open && !pipelineId && !currentPipelineId && !isCreating && isValidUUID(currentProjectId)) {
       createPipeline({
         projectId: currentProjectId,
         folderId: currentFolderId,
@@ -118,6 +149,49 @@ export default function PipelineModal({
       });
     }
   }, [open, pipelineId, currentPipelineId, isCreating, createPipeline, currentProjectId, currentFolderId, onClose, initialStatus]);
+
+  // Auto-save functionality
+  const triggerAutoSave = useCallback(() => {
+    if (!effectivePipelineId || !hasUnsavedChanges) return;
+    
+    // Clear any existing timeout
+    if (autoSaveTimeoutRef.current) {
+      clearTimeout(autoSaveTimeoutRef.current);
+    }
+    
+    // Set new timeout for auto-save after 2 seconds of inactivity
+    autoSaveTimeoutRef.current = setTimeout(async () => {
+      try {
+        setSaveStatus('saving');
+        await updatePipeline({ 
+          name, 
+          status: status as any,
+          tags: selectedTags 
+        });
+        setHasUnsavedChanges(false);
+        setSaveStatus('saved');
+        setTimeout(() => setSaveStatus('idle'), 2000);
+        
+        queryClient.invalidateQueries({ queryKey: ['files', currentProjectId] });
+        queryClient.invalidateQueries({ queryKey: ['pipelines', currentProjectId] });
+      } catch (error) {
+        setSaveStatus('idle');
+      }
+    }, 2000);
+  }, [effectivePipelineId, hasUnsavedChanges, name, status, selectedTags, updatePipeline, queryClient, currentProjectId]);
+
+  // Trigger auto-save when unsaved changes occur
+  useEffect(() => {
+    if (hasUnsavedChanges && initialLoadDone.current) {
+      triggerAutoSave();
+    }
+    
+    return () => {
+      if (autoSaveTimeoutRef.current) {
+        clearTimeout(autoSaveTimeoutRef.current);
+      }
+    };
+  }, [hasUnsavedChanges, name, status, selectedTags, triggerAutoSave]);
 
   const handleStageClick = (stage: PipelineStage) => {
     // Can freely switch between first 3 stages
