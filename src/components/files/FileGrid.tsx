@@ -73,9 +73,6 @@ interface FileGridProps {
   onBulkUpdateStatus?: (ids: string[], status: string) => void;
   onBulkUpdateTags?: (ids: string[], tags: string[]) => void;
   defaultStages?: PipelineStage[];
-  searchQuery?: string;
-  bulkMode?: boolean;
-  onBulkModeChange?: (mode: boolean) => void;
 }
 
 const fileTypeLabels: Record<string, string> = {
@@ -123,21 +120,13 @@ export default function FileGrid({
   onBulkUpdateStatus,
   onBulkUpdateTags,
   defaultStages,
-  searchQuery: externalSearchQuery = '',
-  bulkMode: externalBulkMode,
-  onBulkModeChange,
 }: FileGridProps) {
   const navigate = useNavigate();
   const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
-  const [internalBulkMode, setInternalBulkMode] = useState(false);
-  const [internalSearchQuery, setInternalSearchQuery] = useState('');
+  const [bulkMode, setBulkMode] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
   const [renamingItemId, setRenamingItemId] = useState<string | null>(null);
   const [showBulkDeleteDialog, setShowBulkDeleteDialog] = useState(false);
-
-  // Use external state if provided, otherwise internal
-  const bulkMode = externalBulkMode !== undefined ? externalBulkMode : internalBulkMode;
-  const setBulkMode = onBulkModeChange || setInternalBulkMode;
-  const searchQuery = externalSearchQuery || internalSearchQuery;
 
   // Keyboard shortcuts
   const handleKeyDown = useCallback((e: KeyboardEvent) => {
@@ -296,51 +285,73 @@ export default function FileGrid({
           />
         )}
 
-        {/* Pipeline Selector */}
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2">
-            <Select
-              value={selectedPipelineId || 'default'}
-              onValueChange={(id) => onPipelineChange(id === 'default' ? null : id)}
-            >
-              <SelectTrigger className="w-48 rounded-lg">
-                <SelectValue placeholder="Select pipeline" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="default">Default Pipeline</SelectItem>
-                {pipelines.map((pipeline) => (
-                  <SelectItem key={pipeline.id} value={pipeline.id}>
-                    {pipeline.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            {(onEditPipeline || onEditDefaultPipeline) && (
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => {
-                  if (currentPipeline) {
-                    onEditPipeline?.(currentPipeline);
-                  } else {
-                    onEditDefaultPipeline?.();
-                  }
-                }}
-                className="h-8 w-8"
-                title="Edit pipeline"
+        {/* Pipeline Selector and Search */}
+        <div className="flex items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2">
+              <Select
+                value={selectedPipelineId || 'default'}
+                onValueChange={(id) => onPipelineChange(id === 'default' ? null : id)}
               >
-                <Pencil className="h-4 w-4" />
+                <SelectTrigger className="w-48 rounded-lg">
+                  <SelectValue placeholder="Select pipeline" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="default">Default Pipeline</SelectItem>
+                  {pipelines.map((pipeline) => (
+                    <SelectItem key={pipeline.id} value={pipeline.id}>
+                      {pipeline.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {(onEditPipeline || onEditDefaultPipeline) && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => {
+                    if (currentPipeline) {
+                      onEditPipeline?.(currentPipeline);
+                    } else {
+                      onEditDefaultPipeline?.();
+                    }
+                  }}
+                  className="h-8 w-8"
+                  title="Edit pipeline"
+                >
+                  <Pencil className="h-4 w-4" />
+                </Button>
+              )}
+            </div>
+            <Button variant="outline" size="sm" onClick={onCreatePipeline} className="gap-2">
+              <Plus className="h-4 w-4" />
+              New Pipeline
+            </Button>
+            {!bulkMode && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setBulkMode(true)}
+              >
+                Select
               </Button>
             )}
           </div>
-          <Button variant="outline" size="sm" onClick={onCreatePipeline} className="gap-2">
-            <Plus className="h-4 w-4" />
-            New Pipeline
-          </Button>
+          
+          {/* Search */}
+          <div className="relative max-w-sm flex-1">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              placeholder="Search by name..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-9"
+            />
+          </div>
         </div>
 
         <DragDropContext onDragEnd={handleDragEnd}>
-          <div className="grid grid-cols-7 gap-2 pb-4">
+          <div className="flex gap-4 overflow-x-auto pb-4">
             {stages.map((stage, stageIndex) => {
               // Default status is first stage - filter items with no status to first stage
               const stageItems = allItems.filter((item) => {
@@ -358,21 +369,21 @@ export default function FileGrid({
                       ref={provided.innerRef}
                       {...provided.droppableProps}
                       className={cn(
-                        'flex flex-col rounded-xl bg-secondary/30 p-2 transition-colors min-h-[400px]',
+                        'min-w-80 flex-1 rounded-2xl bg-secondary/30 p-4 transition-colors',
                         snapshot.isDraggingOver && 'bg-primary/10'
                       )}
                     >
-                      <div className="mb-3 flex items-center justify-between">
-                        <div className="flex items-center gap-1.5">
-                          <div className={cn('h-2 w-2 rounded-full', stage.color)} />
-                          <h3 className="text-sm font-medium text-foreground truncate">{stage.name}</h3>
+                      <div className="mb-4 flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <div className={cn('h-2.5 w-2.5 rounded-full', stage.color)} />
+                          <h3 className="font-medium text-foreground">{stage.name}</h3>
                         </div>
-                        <Badge variant="secondary" className="text-xs h-5 px-1.5">
+                        <Badge variant="secondary" className="text-xs">
                           {stageItems.length}
                         </Badge>
                       </div>
 
-                      <div className="flex-1 space-y-2 overflow-y-auto">
+                      <div className="space-y-3">
                         {stageItems.map((item, index) => (
                           <Draggable key={item.id} draggableId={item.id} index={index}>
                             {(provided, snapshot) => (
@@ -423,10 +434,10 @@ export default function FileGrid({
                         {onCreateNew && (
                           <button
                             onClick={() => onCreateNew(stage.id)}
-                            className="flex w-full items-center justify-center gap-1 rounded-xl border-2 border-dashed border-border p-2 text-xs text-muted-foreground transition-all hover:border-primary hover:text-primary"
+                            className="flex w-full items-center justify-center gap-2 rounded-xl border-2 border-dashed border-border p-3 text-sm text-muted-foreground transition-all hover:border-primary hover:text-primary"
                           >
-                            <Plus className="h-3 w-3" />
-                            Add
+                            <Plus className="h-4 w-4" />
+                            Add card
                           </button>
                         )}
                       </div>
@@ -435,21 +446,6 @@ export default function FileGrid({
                 </Droppable>
               );
             })}
-
-            {/* Add Stage Column */}
-            <div
-              onClick={() => {
-                if (currentPipeline) {
-                  onEditPipeline?.(currentPipeline);
-                } else {
-                  onEditDefaultPipeline?.();
-                }
-              }}
-              className="flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-border bg-secondary/10 p-4 min-h-[400px] cursor-pointer transition-all hover:border-primary hover:bg-primary/5"
-            >
-              <Plus className="h-6 w-6 text-muted-foreground mb-2" />
-              <span className="text-sm font-medium text-muted-foreground text-center">Add Stage</span>
-            </div>
           </div>
         </DragDropContext>
       </div>
@@ -484,17 +480,40 @@ export default function FileGrid({
         />
       )}
 
-      <div className="grid gap-4 grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6">
+      {/* Search and Select Mode Toggle */}
+      <div className="flex items-center justify-between gap-4">
+        {/* Search */}
+        <div className="relative max-w-sm flex-1">
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            placeholder="Search by name..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-9"
+          />
+        </div>
+        {!bulkMode && (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setBulkMode(true)}
+          >
+            Select
+          </Button>
+        )}
+      </div>
+
+      <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         {/* Create New Card - First item */}
         {onCreateNew && (
           <button
             onClick={() => onCreateNew()}
-            className="group relative flex aspect-[2/3] cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed border-border bg-card transition-all duration-200 hover:border-primary hover:bg-primary/5"
+            className="group relative flex aspect-[2/3] cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed border-border bg-card transition-colors duration-200 hover:border-primary hover:bg-primary/5"
           >
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 transition-all duration-200 group-hover:bg-primary/20">
-              <Plus className="h-5 w-5 text-primary" />
+            <div className="flex h-14 w-14 items-center justify-center rounded-full bg-primary/10 transition-all duration-200 group-hover:bg-primary/20">
+              <Plus className="h-7 w-7 text-primary" />
             </div>
-            <span className="mt-3 text-sm font-medium text-muted-foreground transition-all duration-200 group-hover:text-primary">
+            <span className="mt-4 text-base font-medium text-muted-foreground transition-all duration-200 group-hover:text-primary">
               Create new
             </span>
           </button>
@@ -754,7 +773,7 @@ function FolderCard({
     <div
       onClick={handleCardClick}
       className={cn(
-        'group relative flex aspect-[2/3] cursor-pointer flex-col rounded-2xl border bg-amber-50/50 transition-all duration-200 hover:border-primary dark:bg-card dark:border-border/50',
+        'group relative flex aspect-[2/3] cursor-pointer flex-col rounded-2xl border bg-amber-50/50 transition-colors duration-200 hover:border-primary dark:bg-card dark:border-border/50',
         isSelected && 'border-primary ring-2 ring-primary/20'
       )}
     >
@@ -766,18 +785,18 @@ function FolderCard({
       )}
 
       {/* Card Name at Top */}
-      <div className="p-3 pb-0" onClick={(e) => e.stopPropagation()}>
+      <div className="p-4 pb-0" onClick={(e) => e.stopPropagation()}>
         {isRenaming ? (
           <Input
             value={renameValue}
             onChange={(e) => setRenameValue(e.target.value)}
             onKeyDown={handleRenameKeyDown}
             onBlur={handleRenameBlur}
-            className="h-7 text-sm font-medium"
+            className="h-8 text-center text-base font-semibold"
             autoFocus
           />
         ) : (
-          <h3 className="text-sm font-medium text-card-foreground line-clamp-2 leading-tight">{folder.name}</h3>
+          <h3 className="text-center text-base font-semibold text-card-foreground">{folder.name}</h3>
         )}
       </div>
 
@@ -810,10 +829,10 @@ function FolderCard({
       </div>
 
       {/* Info Section */}
-      <div className="flex flex-col gap-1.5 p-3 pt-0">
+      <div className="flex flex-col gap-2 p-4">
 
         {/* Status Row - Two Column Layout */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
           <span className="text-xs text-muted-foreground w-10 shrink-0">Status</span>
           <Select
             value={effectiveStatus}
@@ -821,14 +840,14 @@ function FolderCard({
           >
             <SelectTrigger
               className={cn(
-                'h-6 w-fit rounded-lg text-xs border-0 px-2 py-0.5 text-white gap-1',
+                'h-7 w-fit rounded-md text-xs border-0 px-3 py-1 text-white gap-1',
                 currentStage?.color
               )}
               onClick={(e) => e.stopPropagation()}
             >
               {currentStage?.name || 'Select status'}
             </SelectTrigger>
-            <SelectContent className="bg-card border shadow-lg rounded-xl">
+            <SelectContent className="bg-card border shadow-lg">
               {stages.map((stage) => (
                 <SelectItem key={stage.id} value={stage.id}>
                   <div className="flex items-center gap-2">
@@ -1053,7 +1072,7 @@ function FileCard({
     <div
       onClick={handleCardClick}
       className={cn(
-        'group relative flex aspect-[2/3] cursor-pointer flex-col rounded-2xl border bg-card transition-all duration-200 hover:border-primary',
+        'group relative flex aspect-[2/3] cursor-pointer flex-col rounded-2xl border bg-card transition-colors duration-200 hover:border-primary',
         isProcessing && 'animate-pulse-subtle',
         isFailed && 'border-destructive/50',
         isSelected && 'border-primary ring-2 ring-primary/20'
@@ -1067,18 +1086,18 @@ function FileCard({
       )}
 
       {/* Card Name at Top */}
-      <div className="p-3 pb-0" onClick={(e) => e.stopPropagation()}>
+      <div className="p-4 pb-0" onClick={(e) => e.stopPropagation()}>
         {isRenaming ? (
           <Input
             value={renameValue}
             onChange={(e) => setRenameValue(e.target.value)}
             onKeyDown={handleRenameKeyDown}
             onBlur={handleRenameBlur}
-            className="h-7 text-sm font-medium"
+            className="h-8 text-sm font-medium"
             autoFocus
           />
         ) : (
-          <h3 className="text-sm font-medium text-card-foreground line-clamp-2 leading-tight">{file.name}</h3>
+          <h3 className="truncate font-medium text-card-foreground">{file.name}</h3>
         )}
       </div>
 
@@ -1103,12 +1122,12 @@ function FileCard({
       </div>
 
       {/* Info */}
-      <div className="flex flex-col gap-1.5 p-3 pt-0">
+      <div className="flex flex-col gap-2 p-4">
 
         <Badge
           variant="secondary"
           className={cn(
-            'w-fit text-xs rounded-lg',
+            'w-fit text-xs',
             file.file_type === 'first_frame' && 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
             file.file_type === 'talking_head' && 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400',
             file.file_type === 'script' && 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
@@ -1118,7 +1137,7 @@ function FileCard({
         </Badge>
 
         {/* Status Row - Two Column Layout */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
           <span className="text-xs text-muted-foreground w-10 shrink-0">Status</span>
           <Select
             value={effectiveStatus}
@@ -1126,14 +1145,14 @@ function FileCard({
           >
             <SelectTrigger
               className={cn(
-                'h-6 w-fit rounded-lg text-xs border-0 px-2 py-0.5 text-white gap-1',
+                'h-7 w-fit rounded-md text-xs border-0 px-3 py-1 text-white gap-1',
                 currentStage?.color
               )}
               onClick={(e) => e.stopPropagation()}
             >
               {currentStage?.name || 'Select status'}
             </SelectTrigger>
-            <SelectContent className="bg-card border shadow-lg rounded-xl">
+            <SelectContent className="bg-card border shadow-lg">
               {stages.map((stage) => (
                 <SelectItem key={stage.id} value={stage.id}>
                   <div className="flex items-center gap-2">
@@ -1365,200 +1384,198 @@ function KanbanCard({
     <div
       onClick={handleClick}
       className={cn(
-        'group relative flex aspect-[2/3] flex-col rounded-2xl border bg-card overflow-hidden transition-all duration-200 hover:border-primary',
+        'group relative flex flex-col rounded-xl border bg-card overflow-hidden transition-all duration-200 hover:border-primary',
         isDragging && 'rotate-2 scale-105 shadow-lg',
         isFolder && 'bg-amber-50/50 dark:bg-card dark:border-border/50',
         isSelected && 'border-primary ring-2 ring-primary/20'
       )}
     >
-      {/* Card Name at Top */}
-      <div className="p-3 pb-0" onClick={(e) => e.stopPropagation()}>
-        {isRenaming ? (
-          <Input
-            value={renameValue}
-            onChange={(e) => setRenameValue(e.target.value)}
-            onKeyDown={handleRenameKeyDown}
-            onBlur={handleRenameBlur}
-            className="h-7 text-sm font-medium"
-            autoFocus
+      {/* Thumbnail Preview - Show for files with preview_url */}
+      {!isFolder && (item as File).preview_url && (
+        <div className="relative h-32 w-full bg-secondary">
+          <img
+            src={(item as File).preview_url!}
+            alt={item.name}
+            className="h-full w-full object-cover"
           />
-        ) : (
-          <h4 className="text-sm font-medium text-card-foreground line-clamp-2 leading-tight">{item.name}</h4>
-        )}
-      </div>
+        </div>
+      )}
+      {!isFolder && !(item as File).preview_url && (item as File).status === 'processing' && (
+        <div className="relative h-32 w-full bg-secondary">
+          <div className="shimmer h-full w-full" />
+          {/* Progress Overlay */}
+          <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-background/90 to-transparent p-3">
+            <FileProgress progress={(item as File).progress || 0} status={(item as File).status} />
+          </div>
+        </div>
+      )}
 
-      {/* Thumbnail Preview or Folder Icon */}
-      <div className="flex-1 flex items-center justify-center p-3">
-        {isFolder ? (
+      <div className="p-3">
+        <div className="flex items-start gap-2">
+        {/* Selection Checkbox */}
+        {bulkMode && (
+          <Checkbox checked={isSelected} onClick={(e) => e.stopPropagation()} />
+        )}
+        
+        {/* Folder Icon for folders */}
+        {isFolder && (
           <svg
-            width="64"
-            height="52"
+            width="24"
+            height="20"
             viewBox="0 0 80 64"
             fill="none"
-            className="text-amber-400"
+            className="mt-0.5 flex-shrink-0 text-amber-400"
           >
-            <path
-              d="M4 12C4 7.58172 7.58172 4 12 4H28L34 12H68C72.4183 12 76 15.5817 76 20V52C76 56.4183 72.4183 60 68 60H12C7.58172 60 4 56.4183 4 52V12Z"
-              fill="currentColor"
-              opacity="0.3"
-            />
             <path
               d="M4 20C4 15.5817 7.58172 12 12 12H68C72.4183 12 76 15.5817 76 20V52C76 56.4183 72.4183 60 68 60H12C7.58172 60 4 56.4183 4 52V20Z"
               fill="currentColor"
             />
           </svg>
-        ) : (item as File).preview_url ? (
-          <img
-            src={(item as File).preview_url!}
-            alt={item.name}
-            className="h-full w-full object-cover rounded-lg"
-          />
-        ) : (item as File).status === 'processing' ? (
-          <div className="relative h-full w-full bg-secondary rounded-lg">
-            <div className="shimmer h-full w-full rounded-lg" />
-            <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-background/90 to-transparent p-2">
-              <FileProgress progress={(item as File).progress || 0} status={(item as File).status} />
-            </div>
-          </div>
-        ) : null}
-      </div>
-
-      {/* Selection Checkbox */}
-      {bulkMode && (
-        <div className="absolute left-3 top-3 z-10">
-          <Checkbox checked={isSelected} onClick={(e) => e.stopPropagation()} />
-        </div>
-      )}
-
-      <div className="p-3 pt-0 space-y-1.5" onClick={(e) => e.stopPropagation()}>
-        {/* File type badge */}
-        {!isFolder && (
-          <Badge
-            variant="secondary"
-            className={cn(
-              'w-fit text-xs rounded-lg',
-              (item as File).file_type === 'first_frame' && 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
-              (item as File).file_type === 'talking_head' && 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400',
-              (item as File).file_type === 'script' && 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
-            )}
-          >
-            {fileTypeLabels[(item as File).file_type] || (item as File).file_type}
-          </Badge>
         )}
-
-        {/* Tags - Clickable with Popover */}
-        <Popover>
-          <PopoverTrigger asChild>
-            <button
-              className="flex w-full items-center gap-2 rounded-md p-1 -m-1 hover:bg-secondary/50 transition-colors text-left"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <span className="text-xs text-muted-foreground w-8">Tags</span>
-              {itemTags.length > 0 ? (
-                <div className="flex flex-wrap items-center gap-1">
-                  {itemTags.slice(0, 2).map((tagId) => {
-                    const tag = tags.find((t) => t.id === tagId);
-                    if (!tag) return null;
-                    return (
-                      <span
-                        key={tagId}
-                        className="rounded px-1.5 py-0.5 text-xs"
-                        style={{ backgroundColor: `${tag.color}20`, color: tag.color }}
-                      >
-                        {tag.tag_name}
-                      </span>
-                    );
-                  })}
-                  {itemTags.length > 2 && (
-                    <span className="text-xs text-muted-foreground">+{itemTags.length - 2}</span>
-                  )}
-                </div>
-              ) : (
-                <span className="text-xs text-muted-foreground">+ Add tag</span>
+        
+        <div className="min-w-0 flex-1" onClick={(e) => e.stopPropagation()}>
+          {isRenaming ? (
+            <Input
+              value={renameValue}
+              onChange={(e) => setRenameValue(e.target.value)}
+              onKeyDown={handleRenameKeyDown}
+              onBlur={handleRenameBlur}
+              className="h-7 text-sm font-medium"
+              autoFocus
+            />
+          ) : (
+            <h4 className="truncate text-sm font-medium text-card-foreground">{item.name}</h4>
+          )}
+          
+          {/* File type badge */}
+          {!isFolder && (
+            <Badge
+              variant="secondary"
+              className={cn(
+                'mt-1.5 text-xs',
+                (item as File).file_type === 'first_frame' && 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
+                (item as File).file_type === 'talking_head' && 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400',
+                (item as File).file_type === 'script' && 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
               )}
-            </button>
-          </PopoverTrigger>
-          <PopoverContent align="start" className="w-52 bg-card border shadow-lg" onClick={(e) => e.stopPropagation()}>
-            <div className="space-y-1">
-              <h4 className="text-sm font-medium mb-2">Tags</h4>
-              {tags.length === 0 ? (
-                <p className="text-xs text-muted-foreground">No tags available</p>
-              ) : (
-                tags.map((tag) => (
-                  <div
-                    key={tag.id}
-                    className="flex items-center gap-2 rounded-md p-1.5 hover:bg-secondary cursor-pointer"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      toggleTag(tag.id);
-                    }}
-                  >
-                    <Checkbox
-                      checked={itemTags.includes(tag.id)}
-                      onCheckedChange={() => toggleTag(tag.id)}
-                      onClick={(e) => e.stopPropagation()}
-                    />
-                    <span
-                      className="h-2 w-2 rounded-full flex-shrink-0"
-                      style={{ backgroundColor: tag.color }}
-                    />
-                    <span className="flex-1 text-sm truncate">{tag.tag_name}</span>
-                    <button
+            >
+              {fileTypeLabels[(item as File).file_type] || (item as File).file_type}
+            </Badge>
+          )}
+
+          {/* Tags - Clickable with Popover */}
+          <Popover>
+            <PopoverTrigger asChild>
+              <button
+                className="mt-2 flex w-full items-center gap-3 rounded-md p-1 -m-1 hover:bg-secondary/50 transition-colors text-left"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <span className="text-xs text-muted-foreground w-8">Tags</span>
+                {itemTags.length > 0 ? (
+                  <div className="flex flex-wrap items-center gap-1">
+                    {itemTags.slice(0, 2).map((tagId) => {
+                      const tag = tags.find((t) => t.id === tagId);
+                      if (!tag) return null;
+                      return (
+                        <span
+                          key={tagId}
+                          className="rounded px-1.5 py-0.5 text-xs"
+                          style={{ backgroundColor: `${tag.color}20`, color: tag.color }}
+                        >
+                          {tag.tag_name}
+                        </span>
+                      );
+                    })}
+                    {itemTags.length > 2 && (
+                      <span className="text-xs text-muted-foreground">+{itemTags.length - 2}</span>
+                    )}
+                  </div>
+                ) : (
+                  <span className="text-xs text-muted-foreground">+ Add tag</span>
+                )}
+              </button>
+            </PopoverTrigger>
+            <PopoverContent align="start" className="w-52 bg-card border shadow-lg" onClick={(e) => e.stopPropagation()}>
+              <div className="space-y-1">
+                <h4 className="text-sm font-medium mb-2">Tags</h4>
+                {tags.length === 0 ? (
+                  <p className="text-xs text-muted-foreground">No tags available</p>
+                ) : (
+                  tags.map((tag) => (
+                    <div
+                      key={tag.id}
+                      className="flex items-center gap-2 rounded-md p-1.5 hover:bg-secondary cursor-pointer"
                       onClick={(e) => {
                         e.stopPropagation();
-                        e.preventDefault();
-                        onDeleteTag?.(tag.id);
+                        toggleTag(tag.id);
                       }}
-                      className="rounded p-0.5 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
-                      title="Delete tag"
                     >
-                      <Trash2 className="h-3.5 w-3.5" />
-                    </button>
-                  </div>
-                ))
-              )}
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onCreateTag?.();
-                }}
-                className="flex w-full items-center gap-2 rounded-md p-1.5 text-sm text-primary hover:bg-secondary mt-2"
-              >
-                <Plus className="h-3.5 w-3.5" />
-                Create new tag
-              </button>
-            </div>
-          </PopoverContent>
-        </Popover>
-      </div>
+                      <Checkbox
+                        checked={itemTags.includes(tag.id)}
+                        onCheckedChange={() => toggleTag(tag.id)}
+                        onClick={(e) => e.stopPropagation()}
+                      />
+                      <span
+                        className="h-2 w-2 rounded-full flex-shrink-0"
+                        style={{ backgroundColor: tag.color }}
+                      />
+                      <span className="flex-1 text-sm truncate">{tag.tag_name}</span>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          e.preventDefault();
+                          onDeleteTag?.(tag.id);
+                        }}
+                        className="rounded p-0.5 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+                        title="Delete tag"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                  ))
+                )}
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onCreateTag?.();
+                  }}
+                  className="flex w-full items-center gap-2 rounded-md p-1.5 text-sm text-primary hover:bg-secondary mt-2"
+                >
+                  <Plus className="h-3.5 w-3.5" />
+                  Create new tag
+                </button>
+              </div>
+            </PopoverContent>
+          </Popover>
+        </div>
 
-      {/* Actions */}
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <button
-            className="absolute right-2 top-2 rounded-lg p-1 opacity-0 transition-opacity hover:bg-secondary group-hover:opacity-100"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <MoreHorizontal className="h-4 w-4 text-muted-foreground" />
-          </button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end">
-          <DropdownMenuItem 
-            className="gap-2"
-            onClick={() => onStartRename()}
-          >
-            <Pencil className="h-4 w-4" />
-            Rename
-          </DropdownMenuItem>
-          <DropdownMenuItem
-            className="gap-2 text-destructive"
-            onClick={() => onDelete?.(item.id)}
-          >
-            <Trash2 className="h-4 w-4" />
-            Delete
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button
+              className="rounded p-1 opacity-0 transition-opacity hover:bg-secondary group-hover:opacity-100"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <MoreHorizontal className="h-4 w-4 text-muted-foreground" />
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem 
+              className="gap-2"
+              onClick={() => onStartRename()}
+            >
+              <Pencil className="h-4 w-4" />
+              Rename
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              className="gap-2 text-destructive"
+              onClick={() => onDelete?.(item.id)}
+            >
+              <Trash2 className="h-4 w-4" />
+              Delete
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+        </div>
+      </div>
     </div>
   );
 }

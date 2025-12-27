@@ -33,8 +33,6 @@ export default function ProjectDetail() {
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [selectedStatuses, setSelectedStatuses] = useState<string[]>([]);
   const [selectedFileTypes, setSelectedFileTypes] = useState<string[]>([]);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [bulkMode, setBulkMode] = useState(false);
 
   // Confirmation dialog states
   const [deleteFileConfirm, setDeleteFileConfirm] = useState<{ open: boolean; file: File | null }>({ open: false, file: null });
@@ -316,10 +314,6 @@ export default function ProjectDetail() {
           onCreateTag={() => setCreateTagOpen(true)}
           onDeleteTag={handleDeleteTag}
           onClearFilters={handleClearFilters}
-          searchQuery={searchQuery}
-          onSearchChange={setSearchQuery}
-          onSelectMode={() => setBulkMode(true)}
-          bulkMode={bulkMode}
         />
 
         <div className="flex-1 overflow-y-auto p-6">
@@ -364,9 +358,6 @@ export default function ProjectDetail() {
               onBulkDelete={handleBulkDelete}
               onBulkUpdateStatus={handleBulkUpdateStatus}
               defaultStages={defaultStages}
-              searchQuery={searchQuery}
-              bulkMode={bulkMode}
-              onBulkModeChange={setBulkMode}
             />
           ) : filteredFiles?.length === 0 && folders?.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-24">
@@ -429,9 +420,6 @@ export default function ProjectDetail() {
               onBulkDelete={handleBulkDelete}
               onBulkUpdateStatus={handleBulkUpdateStatus}
               defaultStages={defaultStages}
-              searchQuery={searchQuery}
-              bulkMode={bulkMode}
-              onBulkModeChange={setBulkMode}
             />
           )}
         </div>
