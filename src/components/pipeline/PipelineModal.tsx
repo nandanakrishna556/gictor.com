@@ -273,77 +273,29 @@ export default function PipelineModal({
           </Popover>
         </div>
 
-        {/* Stage Navigation */}
-        <div className="flex items-center justify-center gap-4 py-4 border-b bg-background">
-          {STAGES.map((stage, index) => {
-            const isComplete = isStageComplete(stage.key);
-            const isAccessible = isStageAccessible(stage.key);
-            const isActive = activeStage === stage.key;
-
-            return (
-              <React.Fragment key={stage.key}>
-                {index > 0 && (
-                  <div className={cn(
-                    "w-12 h-0.5",
-                    isComplete || isStageComplete(STAGES[index - 1].key) ? "bg-primary" : "bg-border"
-                  )} />
-                )}
-                <button
-                  onClick={() => handleStageClick(stage.key)}
-                  disabled={!isAccessible}
-                  className={cn(
-                    "flex flex-col items-center gap-2 transition-all",
-                    isAccessible ? "cursor-pointer" : "cursor-not-allowed opacity-50"
-                  )}
-                >
-                  <div className={cn(
-                    "w-10 h-10 rounded-full flex items-center justify-center text-sm font-medium transition-colors",
-                    isComplete 
-                      ? "bg-primary text-primary-foreground" 
-                      : isActive 
-                        ? "bg-primary/20 text-primary border-2 border-primary" 
-                        : "bg-muted text-muted-foreground"
-                  )}>
-                    {isComplete ? (
-                      <Check className="h-5 w-5" />
-                    ) : !isAccessible ? (
-                      <Lock className="h-4 w-4" />
-                    ) : (
-                      <span>{index + 1}</span>
-                    )}
-                  </div>
-                  <span className={cn(
-                    "text-sm font-medium",
-                    isActive ? "text-primary" : "text-muted-foreground"
-                  )}>
-                    {stage.label}
-                  </span>
-                </button>
-              </React.Fragment>
-            );
-          })}
-        </div>
-
         {/* Stage Content */}
-        <div className="flex-1 overflow-auto">
+        <div className="flex-1 overflow-hidden">
           {effectivePipelineId && (
             <>
               {activeStage === 'first_frame' && (
                 <FirstFrameStage
                   pipelineId={effectivePipelineId}
                   onContinue={() => setActiveStage('script')}
+                  stageNavigation={renderStageNavigation()}
                 />
               )}
               {activeStage === 'script' && (
                 <ScriptStage
                   pipelineId={effectivePipelineId}
                   onContinue={() => setActiveStage('voice')}
+                  stageNavigation={renderStageNavigation()}
                 />
               )}
               {activeStage === 'voice' && (
                 <VoiceStage
                   pipelineId={effectivePipelineId}
                   onContinue={() => setActiveStage('final_video')}
+                  stageNavigation={renderStageNavigation()}
                 />
               )}
               {activeStage === 'final_video' && (
@@ -354,6 +306,7 @@ export default function PipelineModal({
                     onSuccess?.();
                     onClose();
                   }}
+                  stageNavigation={renderStageNavigation()}
                 />
               )}
             </>
@@ -363,4 +316,58 @@ export default function PipelineModal({
       </DialogContent>
     </Dialog>
   );
+
+  function renderStageNavigation() {
+    return (
+      <div className="flex items-center gap-3">
+        {STAGES.map((stage, index) => {
+          const isComplete = isStageComplete(stage.key);
+          const isAccessible = isStageAccessible(stage.key);
+          const isActive = activeStage === stage.key;
+
+          return (
+            <React.Fragment key={stage.key}>
+              {index > 0 && (
+                <div className={cn(
+                  "w-8 h-0.5",
+                  isComplete || isStageComplete(STAGES[index - 1].key) ? "bg-primary" : "bg-border"
+                )} />
+              )}
+              <button
+                onClick={() => handleStageClick(stage.key)}
+                disabled={!isAccessible}
+                className={cn(
+                  "flex items-center gap-2 transition-all",
+                  isAccessible ? "cursor-pointer" : "cursor-not-allowed opacity-50"
+                )}
+              >
+                <div className={cn(
+                  "w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium transition-colors",
+                  isComplete 
+                    ? "bg-primary text-primary-foreground" 
+                    : isActive 
+                      ? "bg-primary/20 text-primary border-2 border-primary" 
+                      : "bg-muted text-muted-foreground"
+                )}>
+                  {isComplete ? (
+                    <Check className="h-4 w-4" />
+                  ) : !isAccessible ? (
+                    <Lock className="h-3.5 w-3.5" />
+                  ) : (
+                    <span>{index + 1}</span>
+                  )}
+                </div>
+                <span className={cn(
+                  "text-sm font-medium",
+                  isActive ? "text-primary" : "text-muted-foreground"
+                )}>
+                  {stage.label}
+                </span>
+              </button>
+            </React.Fragment>
+          );
+        })}
+      </div>
+    );
+  }
 }

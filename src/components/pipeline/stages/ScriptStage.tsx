@@ -15,6 +15,7 @@ import StageLayout from './StageLayout';
 interface ScriptStageProps {
   pipelineId: string;
   onContinue: () => void;
+  stageNavigation?: React.ReactNode;
 }
 
 type InputMode = 'generate' | 'paste';
@@ -23,7 +24,7 @@ const scriptTypes = [
   'Sales', 'Educational', 'Entertainment', 'Tutorial', 'Story', 'Other'
 ];
 
-export default function ScriptStage({ pipelineId, onContinue }: ScriptStageProps) {
+export default function ScriptStage({ pipelineId, onContinue, stageNavigation }: ScriptStageProps) {
   const { pipeline, updateScript, isUpdating } = usePipeline(pipelineId);
   
   // Input state
@@ -294,6 +295,7 @@ export default function ScriptStage({ pipelineId, onContinue }: ScriptStageProps
       creditsCost={mode === 'paste' ? 'Free' : `${PIPELINE_CREDITS.script} Credits`}
       isAIGenerated={wasAIGenerated}
       outputActions={hasOutput ? outputActions : undefined}
+      stageNavigation={stageNavigation}
     />
   );
 }

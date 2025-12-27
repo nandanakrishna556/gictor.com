@@ -15,6 +15,7 @@ import { uploadToR2 } from '@/lib/cloudflare-upload';
 interface VoiceStageProps {
   pipelineId: string;
   onContinue: () => void;
+  stageNavigation?: React.ReactNode;
 }
 
 type InputMode = 'generate' | 'upload';
@@ -31,7 +32,7 @@ const VOICES = [
   { id: 'pNInz6obpgDQGcFmaJgB', name: 'Adam', gender: 'male', accent: 'American' },
 ];
 
-export default function VoiceStage({ pipelineId, onContinue }: VoiceStageProps) {
+export default function VoiceStage({ pipelineId, onContinue, stageNavigation }: VoiceStageProps) {
   const { pipeline, updateVoice, isUpdating } = usePipeline(pipelineId);
   
   // Input state
@@ -421,6 +422,7 @@ export default function VoiceStage({ pipelineId, onContinue }: VoiceStageProps) 
       creditsCost={mode === 'upload' ? 'Free' : `${estimatedCost.toFixed(2)} Credits`}
       isAIGenerated={wasAIGenerated}
       outputActions={hasOutput ? outputActions : undefined}
+      stageNavigation={stageNavigation}
     />
   );
 }

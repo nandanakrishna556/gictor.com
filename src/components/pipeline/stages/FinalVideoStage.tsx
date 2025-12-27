@@ -11,9 +11,10 @@ import { toast } from 'sonner';
 interface FinalVideoStageProps {
   pipelineId: string;
   onComplete: () => void;
+  stageNavigation?: React.ReactNode;
 }
 
-export default function FinalVideoStage({ pipelineId, onComplete }: FinalVideoStageProps) {
+export default function FinalVideoStage({ pipelineId, onComplete, stageNavigation }: FinalVideoStageProps) {
   const { pipeline, updateFinalVideo, isUpdating } = usePipeline(pipelineId);
   
   const [resolution, setResolution] = useState<string>(pipeline?.final_video_input?.resolution || '720p');
@@ -75,11 +76,16 @@ export default function FinalVideoStage({ pipelineId, onComplete }: FinalVideoSt
     <div className="flex h-full">
       {/* Input Summary */}
       <div className="flex-1 flex flex-col border-r">
-        <div className="flex items-center justify-between px-6 py-3 border-b bg-muted/20">
-          <h3 className="font-medium">Summary</h3>
-        </div>
-        
         <div className="flex-1 overflow-auto p-6 space-y-6">
+          {/* Stage Navigation */}
+          {stageNavigation && (
+            <div className="mb-2">
+              {stageNavigation}
+            </div>
+          )}
+          
+          <h3 className="font-medium text-lg">Summary</h3>
+
           {/* First Frame Preview */}
           <div className="space-y-2">
             <div className="flex items-center gap-2 text-sm font-medium">
@@ -167,50 +173,52 @@ export default function FinalVideoStage({ pipelineId, onComplete }: FinalVideoSt
 
       {/* Output */}
       <div className="flex-1 flex flex-col bg-muted/10">
-        <div className="flex items-center justify-between px-6 py-3 border-b bg-muted/20">
-          <h3 className="font-medium">Final Video</h3>
-        </div>
-        
-        <div className="flex-1 overflow-auto p-6 flex items-center justify-center">
-          {hasOutput && outputVideo ? (
-            <div className="w-full max-w-lg space-y-4">
-              <video 
-                src={outputVideo.url} 
-                controls 
-                className="w-full aspect-video rounded-xl bg-black"
-              />
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">
+        <div className="flex-1 overflow-auto p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="font-medium text-lg">Final Video</h3>
+            {hasOutput && outputVideo && (
+              <Button variant="ghost" size="sm" asChild>
+                <a href={outputVideo.url} download>
+                  <Download className="h-4 w-4 mr-1.5" />
+                  Download
+                </a>
+              </Button>
+            )}
+          </div>
+          
+          <div className="flex items-center justify-center min-h-[300px]">
+            {hasOutput && outputVideo ? (
+              <div className="w-full max-w-lg space-y-4">
+                <video 
+                  src={outputVideo.url} 
+                  controls 
+                  className="w-full aspect-video rounded-xl bg-black"
+                />
+                <span className="text-sm text-muted-foreground block text-center">
                   Duration: {formatDuration(outputVideo.duration_seconds)}
                 </span>
-                <Button variant="outline" size="sm" asChild>
-                  <a href={outputVideo.url} download>
-                    <Download className="h-4 w-4 mr-2" />
-                    Download
-                  </a>
-                </Button>
               </div>
-            </div>
-          ) : pipeline?.status === 'processing' ? (
-            <div className="flex flex-col items-center justify-center text-center gap-4">
-              <Loader2 className="h-12 w-12 animate-spin text-primary" />
-              <div>
-                <p className="text-lg font-medium">Generating your video...</p>
-                <p className="text-sm text-muted-foreground">This may take a few minutes</p>
+            ) : pipeline?.status === 'processing' ? (
+              <div className="flex flex-col items-center justify-center text-center gap-4">
+                <Loader2 className="h-12 w-12 animate-spin text-primary" />
+                <div>
+                  <p className="text-lg font-medium">Generating your video...</p>
+                  <p className="text-sm text-muted-foreground">This may take a few minutes</p>
+                </div>
               </div>
-            </div>
-          ) : pipeline?.status === 'failed' ? (
-            <div className="flex flex-col items-center justify-center text-center gap-2">
-              <p className="text-lg font-medium text-destructive">Generation failed</p>
-              <p className="text-sm text-muted-foreground">Please try again</p>
-            </div>
-          ) : (
-            <div className="flex flex-col items-center justify-center text-center gap-2">
-              <Video className="h-16 w-16 text-muted-foreground/50" />
-              <p className="text-lg font-medium">No video generated yet</p>
-              <p className="text-sm text-muted-foreground">Complete all stages and generate your final video</p>
-            </div>
-          )}
+            ) : pipeline?.status === 'failed' ? (
+              <div className="flex flex-col items-center justify-center text-center gap-2">
+                <p className="text-lg font-medium text-destructive">Generation failed</p>
+                <p className="text-sm text-muted-foreground">Please try again</p>
+              </div>
+            ) : (
+              <div className="flex flex-col items-center justify-center text-center gap-2">
+                <Video className="h-16 w-16 text-muted-foreground/50" />
+                <p className="text-lg font-medium">No video generated yet</p>
+                <p className="text-sm text-muted-foreground">Complete all stages and generate your final video</p>
+              </div>
+            )}
+          </div>
         </div>
 
         {hasOutput && (
