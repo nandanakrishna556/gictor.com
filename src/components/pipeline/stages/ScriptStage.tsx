@@ -255,9 +255,9 @@ export default function ScriptStage({ pipelineId, onContinue, stageNavigation }:
   };
 
   const outputContent = outputScript ? (
-    <div className="w-full max-w-lg mx-auto space-y-4">
-      <div className="bg-muted/50 rounded-xl p-4 max-h-96 overflow-y-auto">
-        <p className="whitespace-pre-wrap text-sm leading-relaxed">{outputScript.text}</p>
+    <div className="w-full space-y-4">
+      <div className="bg-muted/50 rounded-xl p-4 overflow-x-auto">
+        <p className="whitespace-pre-wrap text-sm leading-relaxed break-words">{outputScript.text}</p>
       </div>
       <div className="flex justify-between text-sm text-muted-foreground">
         <span>{outputScript.char_count?.toLocaleString()} characters</span>

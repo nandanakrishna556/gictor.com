@@ -238,8 +238,8 @@ export default function VoiceStage({ pipelineId, onContinue, stageNavigation }: 
               </button>
             </CollapsibleTrigger>
             <CollapsibleContent className="mt-2">
-              <div className="bg-muted/50 rounded-xl p-4 max-h-32 overflow-y-auto">
-                <p className="text-sm text-muted-foreground whitespace-pre-wrap">
+              <div className="bg-muted/50 rounded-xl p-4 max-h-32 overflow-auto">
+                <p className="text-sm text-muted-foreground whitespace-pre-wrap break-words">
                   {scriptText || 'No script available'}
                 </p>
               </div>
