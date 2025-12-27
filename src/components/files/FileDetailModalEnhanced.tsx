@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Download, Loader2, RefreshCw, ExternalLink, AlertCircle, Copy, Image, Video, FileText } from 'lucide-react';
+import { X, Download, Loader2, RefreshCw, AlertCircle, Copy, Image, Video, FileText, Link2 } from 'lucide-react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -97,22 +97,31 @@ export const FileDetailModalEnhanced: React.FC<FileDetailModalEnhancedProps> = (
         description: 'Image copied to clipboard',
       });
     } catch (error) {
-      // Fallback: copy URL
-      try {
-        await navigator.clipboard.writeText(file.preview_url);
-        toast({
-          title: 'URL Copied',
-          description: 'Image URL copied to clipboard',
-        });
-      } catch {
-        toast({
-          title: 'Copy failed',
-          description: 'Failed to copy the image',
-          variant: 'destructive',
-        });
-      }
+      toast({
+        title: 'Copy failed',
+        description: 'Could not copy image. Try Copy URL instead.',
+        variant: 'destructive',
+      });
     } finally {
       setIsCopying(false);
+    }
+  };
+
+  const handleCopyUrl = async () => {
+    const url = file.preview_url || file.download_url;
+    if (!url) return;
+    try {
+      await navigator.clipboard.writeText(url);
+      toast({
+        title: 'URL Copied',
+        description: 'Image URL copied to clipboard',
+      });
+    } catch {
+      toast({
+        title: 'Copy failed',
+        description: 'Failed to copy URL',
+        variant: 'destructive',
+      });
     }
   };
 
@@ -126,9 +135,6 @@ export const FileDetailModalEnhanced: React.FC<FileDetailModalEnhancedProps> = (
           <div className="w-full md:w-80 border-b md:border-b-0 md:border-r border-border bg-secondary/30 p-4 md:p-6 overflow-y-auto">
             <div className="flex items-center justify-between mb-4">
               <h3 className="font-semibold text-foreground">Generation Details</h3>
-              <Button variant="ghost" size="icon" onClick={onClose} className="md:hidden">
-                <X className="h-5 w-5" />
-              </Button>
             </div>
 
             <div className="space-y-4">
@@ -221,8 +227,8 @@ export const FileDetailModalEnhanced: React.FC<FileDetailModalEnhancedProps> = (
 
           {/* Right Panel - Preview */}
           <div className="flex-1 flex flex-col min-h-0">
-            {/* Header */}
-            <div className="hidden md:flex items-center justify-between p-4 border-b border-border">
+            {/* Header - Single close button */}
+            <div className="flex items-center justify-between p-4 border-b border-border">
               <h2 className="text-lg font-semibold">Preview</h2>
               <Button variant="ghost" size="icon" onClick={onClose}>
                 <X className="h-5 w-5" />
@@ -296,17 +302,17 @@ export const FileDetailModalEnhanced: React.FC<FileDetailModalEnhancedProps> = (
                   Download
                 </Button>
                 {file.file_type === 'first_frame' && (
-                  <Button variant="outline" onClick={handleCopy} disabled={isCopying} className="gap-2">
-                    {isCopying ? <Loader2 className="h-4 w-4 animate-spin" /> : <Copy className="h-4 w-4" />}
-                    Copy Image
-                  </Button>
+                  <>
+                    <Button variant="outline" onClick={handleCopy} disabled={isCopying} className="gap-2">
+                      {isCopying ? <Loader2 className="h-4 w-4 animate-spin" /> : <Copy className="h-4 w-4" />}
+                      Copy Image
+                    </Button>
+                    <Button variant="outline" onClick={handleCopyUrl} className="gap-2">
+                      <Link2 className="h-4 w-4" />
+                      Copy URL
+                    </Button>
+                  </>
                 )}
-                <Button variant="outline" asChild>
-                  <a href={file.preview_url || file.download_url || '#'} target="_blank" rel="noopener noreferrer" className="gap-2">
-                    <ExternalLink className="h-4 w-4" />
-                    Open in New Tab
-                  </a>
-                </Button>
               </div>
             )}
           </div>
