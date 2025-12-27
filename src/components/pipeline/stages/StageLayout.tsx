@@ -56,8 +56,8 @@ export default function StageLayout({
         <div className="flex-1 overflow-auto p-6">
           {/* Stage Navigation */}
           {stageNavigation && (
-            <div className="mb-6 pb-5 border-b-2 border-primary/20">
-              <div className="bg-muted/40 rounded-lg p-4">
+            <div className="mb-6 pb-5 border-b border-border">
+              <div className="bg-gradient-to-r from-primary/5 via-primary/10 to-primary/5 rounded-xl p-5 border border-primary/20 shadow-sm">
                 {stageNavigation}
               </div>
             </div>
