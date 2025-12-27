@@ -173,6 +173,7 @@ export type Database = {
         Row: {
           created_at: string | null
           current_stage: string
+          display_status: string | null
           final_video_input: Json | null
           final_video_output: Json | null
           first_frame_complete: boolean | null
@@ -197,6 +198,7 @@ export type Database = {
         Insert: {
           created_at?: string | null
           current_stage?: string
+          display_status?: string | null
           final_video_input?: Json | null
           final_video_output?: Json | null
           first_frame_complete?: boolean | null
@@ -221,6 +223,7 @@ export type Database = {
         Update: {
           created_at?: string | null
           current_stage?: string
+          display_status?: string | null
           final_video_input?: Json | null
           final_video_output?: Json | null
           first_frame_complete?: boolean | null

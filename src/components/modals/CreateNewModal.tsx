@@ -12,6 +12,7 @@ import ScriptForm from '@/components/forms/ScriptForm';
 import PipelineModal from '@/components/pipeline/PipelineModal';
 import { usePipeline } from '@/hooks/usePipeline';
 import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import type { Tag } from '@/hooks/useTags';
 
@@ -103,26 +104,47 @@ export default function CreateNewModal({
       onOpenChange(false);
       onCreateFolder?.(initialStatus);
     } else if ('isPipeline' in type && type.isPipeline) {
-      // Create the pipeline FIRST, then open the modal with the ID
-      // IMPORTANT: pipelines.status MUST be one of: 'draft', 'processing', 'completed', 'failed'
-      // The Kanban column name (initialStatus) is NOT the same as pipeline status
-      // We always use 'draft' for new pipelines
+      // Create the pipeline AND a placeholder file for Kanban display
       setIsCreatingPipeline(true);
       
+      // Store the Kanban status in ref for the pipeline modal
+      pipelineInitialStatusRef.current = initialStatus;
+      
       try {
+        // Create pipeline with 'draft' status (DB constraint)
         const newPipeline = await createPipeline({
           projectId,
           folderId,
           name: 'Untitled',
-          status: 'draft', // Always 'draft' - DB constraint only allows specific values
+          status: 'draft',
+          displayStatus: initialStatus, // Store Kanban column in display_status
         });
         
+        // Create a placeholder file for Kanban display
+        // This file links to the pipeline and shows in the correct Kanban column
+        const { error: fileError } = await supabase
+          .from('files')
+          .insert({
+            project_id: projectId,
+            folder_id: folderId || null,
+            name: 'Untitled',
+            file_type: 'talking_head',
+            status: initialStatus || 'draft', // Use Kanban column status
+            generation_params: { pipeline_id: newPipeline.id },
+          });
+        
+        if (fileError) {
+          console.error('Failed to create file entry:', fileError);
+        }
+        
         // Store the created pipeline ID and open modal immediately
-        const pipelineId = newPipeline.id;
-        setCreatedPipelineId(pipelineId);
+        setCreatedPipelineId(newPipeline.id);
         onOpenChange(false);
         setIsCreatingPipeline(false);
         setPipelineModalOpen(true);
+        
+        // Invalidate files query to show the new file in Kanban
+        queryClient.invalidateQueries({ queryKey: ['files', projectId] });
       } catch (error) {
         console.error('Failed to create pipeline:', error);
         toast.error('Failed to create pipeline');
