@@ -1,5 +1,6 @@
+import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ChevronRight, Grid3X3, Kanban, Plus, LogOut, Settings, Search, Zap } from 'lucide-react';
+import { ChevronRight, Grid3X3, Kanban, Plus, LogOut, Settings, Search, Zap, CheckSquare } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -37,6 +38,10 @@ interface AppHeaderProps {
   onCreateTag?: () => void;
   onDeleteTag?: (id: string) => void;
   onClearFilters?: () => void;
+  searchQuery?: string;
+  onSearchChange?: (query: string) => void;
+  selectMode?: boolean;
+  onSelectModeChange?: (mode: boolean) => void;
 }
 
 export default function AppHeader({
@@ -56,6 +61,10 @@ export default function AppHeader({
   onCreateTag = () => {},
   onDeleteTag,
   onClearFilters = () => {},
+  searchQuery = '',
+  onSearchChange,
+  selectMode = false,
+  onSelectModeChange,
 }: AppHeaderProps) {
   const { user, signOut } = useAuth();
   const { profile } = useProfile();
@@ -103,13 +112,21 @@ export default function AppHeader({
         {/* Select, Search, Filter - Inline */}
         {showCreateButtons && (
           <>
-            <Button variant="outline" size="sm" className="hidden sm:flex">
+            <Button
+              variant={selectMode ? 'default' : 'outline'}
+              size="sm"
+              className="hidden sm:flex gap-1.5"
+              onClick={() => onSelectModeChange?.(!selectMode)}
+            >
+              <CheckSquare className="h-4 w-4" />
               Select
             </Button>
             <div className="relative w-28 sm:w-48 hidden xs:block">
               <Search className="absolute left-2 sm:left-2.5 top-1/2 h-3.5 w-3.5 sm:h-4 sm:w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
                 placeholder="Search..."
+                value={searchQuery}
+                onChange={(e) => onSearchChange?.(e.target.value)}
                 className="h-7 sm:h-8 pl-7 sm:pl-8 text-xs sm:text-sm"
               />
             </div>
@@ -159,7 +176,7 @@ export default function AppHeader({
           <Button
             size="sm"
             onClick={onCreateNew}
-            className="gap-1.5 sm:gap-2 rounded-lg bg-primary font-medium text-primary-foreground transition-apple hover:opacity-90 text-xs sm:text-sm px-2.5 sm:px-3"
+            className="gap-1.5 sm:gap-2 rounded-lg bg-primary font-medium text-primary-foreground transition-apple hover:opacity-90 text-xs sm:text-sm px-3 sm:px-4"
           >
             <Plus className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
             <span className="hidden sm:inline">Create new</span>
@@ -189,7 +206,7 @@ export default function AppHeader({
               <Zap className="h-4 w-4" />
               Billing
             </DropdownMenuItem>
-            <DropdownMenuItem className="gap-2">
+            <DropdownMenuItem onClick={() => navigate('/settings')} className="gap-2">
               <Settings className="h-4 w-4" />
               Settings
             </DropdownMenuItem>

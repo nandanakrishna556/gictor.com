@@ -9,14 +9,13 @@ interface MainLayoutProps {
 }
 
 export default function MainLayout({ children }: MainLayoutProps) {
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
     <div className="flex min-h-screen w-full bg-background">
       {/* Desktop Sidebar */}
       <div className="hidden md:block">
-        <AppSidebar collapsed={sidebarCollapsed} onCollapse={setSidebarCollapsed} />
+        <AppSidebar />
       </div>
 
       {/* Mobile Sidebar */}
@@ -30,8 +29,8 @@ export default function MainLayout({ children }: MainLayoutProps) {
             <Menu className="h-5 w-5" />
           </Button>
         </SheetTrigger>
-        <SheetContent side="left" className="w-80 p-0">
-          <AppSidebar collapsed={false} onCollapse={() => setMobileOpen(false)} />
+        <SheetContent side="left" className="w-64 p-0">
+          <AppSidebar />
         </SheetContent>
       </Sheet>
 
