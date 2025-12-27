@@ -74,6 +74,7 @@ export interface Pipeline {
   user_id: string;
   name: string;
   status: 'draft' | 'processing' | 'completed' | 'failed';
+  display_status: string | null; // Kanban column status
   tags: string[];
   
   current_stage: PipelineStage;

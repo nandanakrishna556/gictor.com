@@ -27,6 +27,7 @@ function parsePipeline(data: any): Pipeline {
     final_video_input: (data.final_video_input || {}) as FinalVideoInput,
     final_video_output: data.final_video_output as FinalVideoOutput | null,
     tags: data.tags || [],
+    display_status: data.display_status || null,
   } as Pipeline;
 }
 
@@ -57,6 +58,7 @@ export function usePipeline(pipelineId: string | null) {
       folderId?: string; 
       name?: string;
       status?: string;
+      displayStatus?: string;
     }) => {
       if (!user) throw new Error('Not authenticated');
       
@@ -68,6 +70,7 @@ export function usePipeline(pipelineId: string | null) {
           user_id: user.id,
           name: params.name || 'Untitled',
           status: params.status || 'draft',
+          display_status: params.displayStatus || null,
           current_stage: 'first_frame',
         })
         .select()

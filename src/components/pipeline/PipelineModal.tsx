@@ -10,6 +10,7 @@ import { useProfile } from '@/hooks/useProfile';
 import { usePipelineRealtime } from '@/hooks/usePipelineRealtime';
 import { useTags } from '@/hooks/useTags';
 import { useFiles } from '@/hooks/useFiles';
+import { supabase } from '@/integrations/supabase/client';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -139,6 +140,21 @@ export default function PipelineModal({
           status: status as any,
           tags: selectedTags 
         });
+        
+        // Sync the linked file's name and status
+        const { data: linkedFile } = await supabase
+          .from('files')
+          .select('id')
+          .eq('generation_params->>pipeline_id', pipelineId)
+          .single();
+        
+        if (linkedFile) {
+          await supabase
+            .from('files')
+            .update({ name, status })
+            .eq('id', linkedFile.id);
+        }
+        
         setHasUnsavedChanges(false);
         setSaveStatus('saved');
         setTimeout(() => setSaveStatus('idle'), 2000);
@@ -236,6 +252,21 @@ export default function PipelineModal({
         status: status as any,
         tags: selectedTags 
       });
+      
+      // Also update the linked file's name and status to keep them in sync
+      // Find the file linked to this pipeline and update it
+      const { data: linkedFile } = await supabase
+        .from('files')
+        .select('id')
+        .eq('generation_params->>pipeline_id', pipelineId)
+        .single();
+      
+      if (linkedFile) {
+        await supabase
+          .from('files')
+          .update({ name, status })
+          .eq('id', linkedFile.id);
+      }
       
       setHasUnsavedChanges(false);
       setSaveStatus('saved');
