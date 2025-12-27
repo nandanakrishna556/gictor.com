@@ -258,6 +258,10 @@ export default function ProjectDetail() {
     await bulkUpdateFiles({ ids, updates: { status } });
   };
 
+  const handleMoveFile = async (id: string, folderId: string | null) => {
+    await updateFile({ id, updates: { folder_id: folderId } });
+  };
+
   const handleClearFilters = () => {
     setSelectedTags([]);
     setSelectedStatuses([]);
@@ -342,6 +346,7 @@ export default function ProjectDetail() {
               files={filteredFiles}
               folders={folders || []}
               projectId={projectId}
+              currentFolderId={folderId || null}
               viewMode={viewMode}
               pipelines={pipelines}
               tags={tags}
@@ -365,6 +370,7 @@ export default function ProjectDetail() {
               onUpdateFolderTags={handleUpdateFolderTags}
               onUpdateFileName={handleUpdateFileName}
               onUpdateFolderName={handleUpdateFolderName}
+              onMoveFile={handleMoveFile}
               onBulkDelete={handleBulkDelete}
               onBulkUpdateStatus={handleBulkUpdateStatus}
               defaultStages={defaultStages}
@@ -406,6 +412,7 @@ export default function ProjectDetail() {
               files={filteredFiles}
               folders={folders || []}
               projectId={projectId}
+              currentFolderId={folderId || null}
               viewMode={viewMode}
               pipelines={pipelines}
               tags={tags}
@@ -429,6 +436,7 @@ export default function ProjectDetail() {
               onUpdateFolderTags={handleUpdateFolderTags}
               onUpdateFileName={handleUpdateFileName}
               onUpdateFolderName={handleUpdateFolderName}
+              onMoveFile={handleMoveFile}
               onBulkDelete={handleBulkDelete}
               onBulkUpdateStatus={handleBulkUpdateStatus}
               defaultStages={defaultStages}

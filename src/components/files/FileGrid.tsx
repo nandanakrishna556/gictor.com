@@ -18,6 +18,7 @@ import {
   Video,
   FileText,
   MousePointer2,
+  FolderInput,
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { FileProgress } from '@/components/ui/file-progress';
@@ -44,15 +45,18 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover';
 import { Checkbox } from '@/components/ui/checkbox';
+import { toast } from 'sonner';
 import type { File, Folder as FolderType } from '@/hooks/useFiles';
 import type { Pipeline, PipelineStage } from '@/hooks/usePipelines';
 import type { Tag as TagType } from '@/hooks/useTags';
 import ConfirmDeleteDialog from '@/components/modals/ConfirmDeleteDialog';
+import MoveToFolderDialog from '@/components/modals/MoveToFolderDialog';
 
 interface FileGridProps {
   files: File[];
   folders: FolderType[];
   projectId: string;
+  currentFolderId?: string | null;
   viewMode: 'grid' | 'kanban';
   pipelines: Pipeline[];
   tags: TagType[];
@@ -73,6 +77,7 @@ interface FileGridProps {
   onUpdateFolderStatus?: (id: string, status: string) => void;
   onUpdateFolderTags?: (id: string, tags: string[]) => void;
   onUpdateFolderName?: (id: string, name: string) => void;
+  onMoveFile?: (id: string, folderId: string | null) => void;
   onBulkDelete?: (ids: string[]) => void;
   onBulkUpdateStatus?: (ids: string[], status: string) => void;
   onBulkUpdateTags?: (ids: string[], tags: string[]) => void;
@@ -108,6 +113,7 @@ export default function FileGrid({
   files,
   folders,
   projectId,
+  currentFolderId,
   viewMode,
   pipelines,
   tags,
@@ -128,6 +134,7 @@ export default function FileGrid({
   onUpdateFolderStatus,
   onUpdateFolderTags,
   onUpdateFolderName,
+  onMoveFile,
   onBulkDelete,
   onBulkUpdateStatus,
   onBulkUpdateTags,
@@ -138,9 +145,10 @@ export default function FileGrid({
   const navigate = useNavigate();
   const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
   const bulkMode = selectMode;
-  const [searchQuery, setSearchQuery] = useState('');
   const [renamingItemId, setRenamingItemId] = useState<string | null>(null);
   const [showBulkDeleteDialog, setShowBulkDeleteDialog] = useState(false);
+  const [moveDialogOpen, setMoveDialogOpen] = useState(false);
+  const [fileToMove, setFileToMove] = useState<File | null>(null);
 
   // Keyboard shortcuts
   const handleKeyDown = useCallback((e: KeyboardEvent) => {
@@ -172,16 +180,11 @@ export default function FileGrid({
     { id: 'rejected', name: 'Rejected', color: 'bg-red-500' },
   ];
 
-  // Combine files and folders into unified items
-  const allItemsUnfiltered: GridItem[] = [
+  // Combine files and folders into unified items - files are already filtered from ProjectDetail
+  const allItems: GridItem[] = [
     ...folders.map((f) => ({ ...f, itemType: 'folder' as const, file_type: 'folder' })),
     ...files.map((f) => ({ ...f, itemType: 'file' as const })),
   ];
-
-  // Filter by search query
-  const allItems = allItemsUnfiltered.filter((item) =>
-    item.name.toLowerCase().includes(searchQuery.toLowerCase())
-  );
 
   const toggleSelection = (id: string) => {
     setSelectedItems((prev) => {
@@ -256,17 +259,39 @@ export default function FileGrid({
   const handleDragEnd = (result: DropResult) => {
     if (!result.destination) return;
     
-    const { draggableId, destination } = result;
-    const newStatus = destination.droppableId;
+    const { draggableId, source, destination } = result;
     
-    // Check if it's a file or folder
-    const file = files.find((f) => f.id === draggableId);
-    const folder = folders.find((f) => f.id === draggableId);
+    // In kanban view, droppable is the status column
+    if (viewMode === 'kanban') {
+      const newStatus = destination.droppableId;
+      const file = files.find((f) => f.id === draggableId);
+      const folder = folders.find((f) => f.id === draggableId);
+      
+      if (file) {
+        onUpdateFileStatus?.(draggableId, newStatus);
+      } else if (folder) {
+        onUpdateFolderStatus?.(draggableId, newStatus);
+      }
+      return;
+    }
     
-    if (file) {
-      onUpdateFileStatus?.(draggableId, newStatus);
-    } else if (folder) {
-      onUpdateFolderStatus?.(draggableId, newStatus);
+    // In grid view, check if dropped on a folder
+    if (destination.droppableId.startsWith('folder-')) {
+      const targetFolderId = destination.droppableId.replace('folder-', '');
+      const file = files.find((f) => f.id === draggableId);
+      
+      if (file && file.id !== targetFolderId) {
+        onMoveFile?.(draggableId, targetFolderId);
+        toast.success(`Moved "${file.name}" to folder`);
+      }
+    }
+  };
+
+  const handleMoveToFolder = (folderId: string | null) => {
+    if (fileToMove) {
+      onMoveFile?.(fileToMove.id, folderId);
+      toast.success(`Moved "${fileToMove.name}"`);
+      setFileToMove(null);
     }
   };
 
@@ -458,6 +483,16 @@ export default function FileGrid({
         description={`Are you sure you want to delete ${selectedItems.size} selected item${selectedItems.size === 1 ? '' : 's'}? This action cannot be undone.`}
       />
 
+      {/* Move to Folder Dialog */}
+      <MoveToFolderDialog
+        open={moveDialogOpen}
+        onOpenChange={setMoveDialogOpen}
+        projectId={projectId}
+        currentFolderId={currentFolderId}
+        onMove={handleMoveToFolder}
+        itemName={fileToMove?.name || ''}
+      />
+
       {/* Bulk Actions Bar */}
       {bulkMode && (
         <BulkActionsBar
@@ -472,74 +507,105 @@ export default function FileGrid({
         />
       )}
 
-      <div className="grid gap-3 grid-cols-1 xs:grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 3xl:grid-cols-7">
-        {/* Create New Card - First item */}
-        {onCreateNew && (
-          <button
-            onClick={() => onCreateNew()}
-            className="group relative flex aspect-[2/3] cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed border-border bg-card transition-colors duration-200 hover:border-primary hover:bg-primary/5"
-          >
-            <div className="flex h-10 w-10 sm:h-14 sm:w-14 items-center justify-center rounded-full bg-primary/10 transition-all duration-200 group-hover:bg-primary/20">
-              <Plus className="h-5 w-5 sm:h-7 sm:w-7 text-primary" />
-            </div>
-            <span className="mt-3 sm:mt-4 text-sm sm:text-base font-medium text-muted-foreground transition-all duration-200 group-hover:text-primary">
-              Create new
-            </span>
-          </button>
-        )}
+      <DragDropContext onDragEnd={handleDragEnd}>
+        <div className="grid gap-3 grid-cols-1 xs:grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 3xl:grid-cols-7">
+          {/* Create New Card - First item */}
+          {onCreateNew && (
+            <button
+              onClick={() => onCreateNew()}
+              className="group relative flex aspect-[2/3] cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed border-border bg-card transition-colors duration-200 hover:border-primary hover:bg-primary/5"
+            >
+              <div className="flex h-10 w-10 sm:h-14 sm:w-14 items-center justify-center rounded-full bg-primary/10 transition-all duration-200 group-hover:bg-primary/20">
+                <Plus className="h-5 w-5 sm:h-7 sm:w-7 text-primary" />
+              </div>
+              <span className="mt-3 sm:mt-4 text-sm sm:text-base font-medium text-muted-foreground transition-all duration-200 group-hover:text-primary">
+                Create new
+              </span>
+            </button>
+          )}
 
-        {/* All Items (Folders first, then Files) */}
-        {allItems.map((item) =>
-          item.itemType === 'folder' ? (
-            <FolderCard
-              key={item.id}
-              folder={item}
-              projectId={projectId}
-              stages={stages}
-              tags={tags}
-              isSelected={selectedItems.has(item.id)}
-              bulkMode={bulkMode}
-              isRenaming={renamingItemId === item.id}
-              onStartRename={() => setRenamingItemId(item.id)}
-              onCancelRename={() => setRenamingItemId(null)}
-              onSaveRename={(newName) => {
-                onUpdateFolderName?.(item.id, newName);
-                setRenamingItemId(null);
-              }}
-              onSelect={() => toggleSelection(item.id)}
-              onDelete={onDeleteFolder}
-              onStatusChange={onUpdateFolderStatus}
-              onTagsChange={onUpdateFolderTags}
-              onCreateTag={onCreateTag}
-              onDeleteTag={onDeleteTag}
-              onCreateNew={onCreateNew}
-            />
-          ) : (
-            <FileCard
-              key={item.id}
-              file={item}
-              stages={stages}
-              tags={tags}
-              isSelected={selectedItems.has(item.id)}
-              bulkMode={bulkMode}
-              isRenaming={renamingItemId === item.id}
-              onStartRename={() => setRenamingItemId(item.id)}
-              onCancelRename={() => setRenamingItemId(null)}
-              onSaveRename={(newName) => {
-                onUpdateFileName?.(item.id, newName);
-                setRenamingItemId(null);
-              }}
-              onSelect={() => toggleSelection(item.id)}
-              onDelete={onDeleteFile}
-              onStatusChange={onUpdateFileStatus}
-              onTagsChange={onUpdateFileTags}
-              onCreateTag={onCreateTag}
-              onDeleteTag={onDeleteTag}
-              onCreateNew={onCreateNew}
-            />
-          )
-        )}
-      </div>
+          {/* All Items (Folders first, then Files) */}
+          {allItems.map((item, index) =>
+            item.itemType === 'folder' ? (
+              <Droppable key={item.id} droppableId={`folder-${item.id}`}>
+                {(provided, snapshot) => (
+                  <div
+                    ref={provided.innerRef}
+                    {...provided.droppableProps}
+                    className={cn(
+                      'transition-all duration-200',
+                      snapshot.isDraggingOver && 'ring-2 ring-primary ring-offset-2 rounded-2xl'
+                    )}
+                  >
+                    <FolderCard
+                      folder={item}
+                      projectId={projectId}
+                      stages={stages}
+                      tags={tags}
+                      isSelected={selectedItems.has(item.id)}
+                      bulkMode={bulkMode}
+                      isRenaming={renamingItemId === item.id}
+                      onStartRename={() => setRenamingItemId(item.id)}
+                      onCancelRename={() => setRenamingItemId(null)}
+                      onSaveRename={(newName) => {
+                        onUpdateFolderName?.(item.id, newName);
+                        setRenamingItemId(null);
+                      }}
+                      onSelect={() => toggleSelection(item.id)}
+                      onDelete={onDeleteFolder}
+                      onStatusChange={onUpdateFolderStatus}
+                      onTagsChange={onUpdateFolderTags}
+                      onCreateTag={onCreateTag}
+                      onDeleteTag={onDeleteTag}
+                      onCreateNew={onCreateNew}
+                      isDragOver={snapshot.isDraggingOver}
+                    />
+                    <div className="hidden">{provided.placeholder}</div>
+                  </div>
+                )}
+              </Droppable>
+            ) : (
+              <Draggable key={item.id} draggableId={item.id} index={index}>
+                {(provided, snapshot) => (
+                  <div
+                    ref={provided.innerRef}
+                    {...provided.draggableProps}
+                    {...provided.dragHandleProps}
+                    className={cn(snapshot.isDragging && 'opacity-80 z-50')}
+                  >
+                    <FileCard
+                      file={item}
+                      stages={stages}
+                      tags={tags}
+                      isSelected={selectedItems.has(item.id)}
+                      bulkMode={bulkMode}
+                      isRenaming={renamingItemId === item.id}
+                      onStartRename={() => setRenamingItemId(item.id)}
+                      onCancelRename={() => setRenamingItemId(null)}
+                      onSaveRename={(newName) => {
+                        onUpdateFileName?.(item.id, newName);
+                        setRenamingItemId(null);
+                      }}
+                      onSelect={() => toggleSelection(item.id)}
+                      onDelete={onDeleteFile}
+                      onStatusChange={onUpdateFileStatus}
+                      onTagsChange={onUpdateFileTags}
+                      onCreateTag={onCreateTag}
+                      onDeleteTag={onDeleteTag}
+                      onCreateNew={onCreateNew}
+                      onFileClick={onFileClick}
+                      onMove={() => {
+                        setFileToMove(item);
+                        setMoveDialogOpen(true);
+                      }}
+                    />
+                  </div>
+                )}
+              </Draggable>
+            )
+          )}
+        </div>
+      </DragDropContext>
     </div>
   );
 }
@@ -670,6 +736,7 @@ function FolderCard({
   onCreateTag,
   onDeleteTag,
   onCreateNew,
+  isDragOver = false,
 }: {
   folder: FolderType;
   projectId: string;
@@ -688,6 +755,7 @@ function FolderCard({
   onCreateTag?: () => void;
   onDeleteTag?: (id: string) => void;
   onCreateNew?: () => void;
+  isDragOver?: boolean;
 }) {
   const navigate = useNavigate();
   const [renameValue, setRenameValue] = useState(folder.name);
@@ -971,6 +1039,8 @@ function FileCard({
   onCreateTag,
   onDeleteTag,
   onCreateNew,
+  onFileClick,
+  onMove,
 }: {
   file: File;
   stages: PipelineStage[];
@@ -988,6 +1058,8 @@ function FileCard({
   onCreateTag?: () => void;
   onDeleteTag?: (id: string) => void;
   onCreateNew?: () => void;
+  onFileClick?: (file: File) => void;
+  onMove?: () => void;
 }) {
   const [renameValue, setRenameValue] = useState(file.name);
   const isProcessing = file.status === 'processing';
@@ -1010,8 +1082,9 @@ function FileCard({
     if (bulkMode) {
       e.preventDefault();
       onSelect();
+    } else {
+      onFileClick?.(file);
     }
-    // Non-bulk click can open file details if needed
   };
 
   const handleRenameKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
