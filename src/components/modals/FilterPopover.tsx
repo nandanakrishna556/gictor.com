@@ -60,9 +60,9 @@ export default function FilterPopover({
   onClearAll,
 }: FilterPopoverProps) {
   const [open, setOpen] = useState(false);
-  const [statusOpen, setStatusOpen] = useState(true);
-  const [fileTypeOpen, setFileTypeOpen] = useState(true);
-  const [tagsOpen, setTagsOpen] = useState(true);
+  const [statusOpen, setStatusOpen] = useState(false);
+  const [fileTypeOpen, setFileTypeOpen] = useState(false);
+  const [tagsOpen, setTagsOpen] = useState(false);
 
   const activeFiltersCount = selectedTags.length + selectedStatuses.length + selectedFileTypes.length;
 
