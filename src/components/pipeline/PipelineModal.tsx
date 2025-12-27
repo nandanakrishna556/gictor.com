@@ -6,6 +6,7 @@ import { ArrowLeft, X, Check, Lock, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { usePipeline } from '@/hooks/usePipeline';
 import { useProfile } from '@/hooks/useProfile';
+import { usePipelineRealtime } from '@/hooks/usePipelineRealtime';
 import type { PipelineStage } from '@/types/pipeline';
 import { toast } from 'sonner';
 
@@ -54,6 +55,10 @@ export default function PipelineModal({
   const [name, setName] = useState('Untitled');
   const [currentProjectId, setCurrentProjectId] = useState(projectId);
   const [currentFolderId, setCurrentFolderId] = useState(folderId);
+
+  // Subscribe to realtime updates for this pipeline
+  const effectivePipelineId = currentPipelineId || pipelineId;
+  usePipelineRealtime(effectivePipelineId);
 
   // Initialize state when pipeline loads
   useEffect(() => {
@@ -126,7 +131,6 @@ export default function PipelineModal({
     }
   };
 
-  const effectivePipelineId = currentPipelineId || pipelineId;
 
   if (isLoading || isCreating) {
     return (
