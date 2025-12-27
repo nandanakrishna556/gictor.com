@@ -261,6 +261,7 @@ export default function CreateNewModal({
           folderId={folderId}
           initialStatus={pipelineInitialStatusRef.current}
           onSuccess={handlePipelineSuccess}
+          statusOptions={statusOptions}
         />
       )}
     </>
