@@ -50,6 +50,12 @@ export default function PipelineModal({
   initialStatus,
   onSuccess,
 }: PipelineModalProps) {
+  const [currentPipelineId, setCurrentPipelineId] = useState<string | null>(pipelineId);
+  const [isCreatingPipeline, setIsCreatingPipeline] = useState(false);
+  
+  // Use the effective pipeline ID (currentPipelineId is set after creation)
+  const effectivePipelineId = currentPipelineId || pipelineId;
+  
   const {
     pipeline,
     isLoading,
@@ -57,13 +63,12 @@ export default function PipelineModal({
     createPipeline,
     updatePipeline,
     isCreating,
-  } = usePipeline(pipelineId);
+  } = usePipeline(effectivePipelineId);
 
   const { profile } = useProfile();
   const { tags } = useTags();
   const { createFile } = useFiles(projectId);
   const queryClient = useQueryClient();
-  const [currentPipelineId, setCurrentPipelineId] = useState<string | null>(pipelineId);
   const [activeStage, setActiveStage] = useState<PipelineStage>('first_frame');
   const [name, setName] = useState('Untitled');
   const [currentProjectId, setCurrentProjectId] = useState(projectId);
@@ -73,6 +78,7 @@ export default function PipelineModal({
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [showUnsavedWarning, setShowUnsavedWarning] = useState(false);
   const initialLoadDone = useRef(false);
+  const hasCreatedPipeline = useRef(false);
 
   const statusOptions = [
     { value: 'draft', label: 'Draft', color: 'bg-slate-500' },
@@ -91,10 +97,22 @@ export default function PipelineModal({
     return uuidRegex.test(id);
   };
 
-  // Reset state when modal opens with no pipelineId (new pipeline)
+  // Reset state when modal closes
   useEffect(() => {
-    if (open && pipelineId === null) {
+    if (!open) {
+      // Reset creation tracking when modal closes
+      hasCreatedPipeline.current = false;
+      setIsCreatingPipeline(false);
       setCurrentPipelineId(null);
+    }
+  }, [open]);
+
+  // Reset state when modal opens with a new pipelineId prop
+  useEffect(() => {
+    if (open && pipelineId) {
+      setCurrentPipelineId(pipelineId);
+      hasCreatedPipeline.current = true; // Already have a pipeline
+    } else if (open && pipelineId === null) {
       setName('Untitled');
       setStatus(initialStatus || 'draft');
       setSelectedTags([]);
@@ -116,7 +134,6 @@ export default function PipelineModal({
   }, [folderId]);
 
   // Subscribe to realtime updates for this pipeline
-  const effectivePipelineId = currentPipelineId || pipelineId;
   usePipelineRealtime(effectivePipelineId);
 
   // Initialize state when pipeline loads
@@ -133,9 +150,19 @@ export default function PipelineModal({
     }
   }, [pipeline, initialStatus]);
 
-  // Create pipeline if not exists - only when we have a valid projectId
+  // Create pipeline if not exists - only when we have a valid projectId and haven't created yet
   useEffect(() => {
-    if (open && !pipelineId && !currentPipelineId && !isCreating && isValidUUID(currentProjectId)) {
+    const shouldCreate = open && 
+      !pipelineId && 
+      !currentPipelineId && 
+      !isCreatingPipeline && 
+      !hasCreatedPipeline.current && 
+      isValidUUID(currentProjectId);
+    
+    if (shouldCreate) {
+      setIsCreatingPipeline(true);
+      hasCreatedPipeline.current = true;
+      
       createPipeline({
         projectId: currentProjectId,
         folderId: currentFolderId,
@@ -143,12 +170,15 @@ export default function PipelineModal({
         status: initialStatus || 'draft',
       }).then((newPipeline) => {
         setCurrentPipelineId(newPipeline.id);
+        setIsCreatingPipeline(false);
       }).catch(() => {
         toast.error('Failed to create pipeline');
+        setIsCreatingPipeline(false);
+        hasCreatedPipeline.current = false;
         onClose();
       });
     }
-  }, [open, pipelineId, currentPipelineId, isCreating, createPipeline, currentProjectId, currentFolderId, onClose, initialStatus]);
+  }, [open, pipelineId, currentPipelineId, isCreatingPipeline, createPipeline, currentProjectId, currentFolderId, onClose, initialStatus]);
 
   // Auto-save functionality
   const triggerAutoSave = useCallback(() => {
@@ -302,7 +332,7 @@ export default function PipelineModal({
   };
 
 
-  if (isLoading || isCreating) {
+  if (isLoading || isCreatingPipeline) {
     return (
       <Dialog open={open} onOpenChange={handleClose}>
         <DialogContent className="max-w-[1400px] h-[90vh] flex items-center justify-center">
