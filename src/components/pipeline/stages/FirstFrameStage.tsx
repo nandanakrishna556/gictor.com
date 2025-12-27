@@ -16,11 +16,12 @@ import StageLayout from './StageLayout';
 interface FirstFrameStageProps {
   pipelineId: string;
   onContinue: () => void;
+  stageNavigation?: React.ReactNode;
 }
 
 type InputMode = 'generate' | 'upload';
 
-export default function FirstFrameStage({ pipelineId, onContinue }: FirstFrameStageProps) {
+export default function FirstFrameStage({ pipelineId, onContinue, stageNavigation }: FirstFrameStageProps) {
   const { pipeline, updateFirstFrame, isUpdating } = usePipeline(pipelineId);
   
   // Input state
@@ -333,6 +334,7 @@ export default function FirstFrameStage({ pipelineId, onContinue }: FirstFrameSt
       creditsCost={mode === 'upload' ? 'Free' : `${PIPELINE_CREDITS.first_frame} Credits`}
       isAIGenerated={wasAIGenerated}
       outputActions={hasOutput ? outputActions : undefined}
+      stageNavigation={stageNavigation}
     />
   );
 }
