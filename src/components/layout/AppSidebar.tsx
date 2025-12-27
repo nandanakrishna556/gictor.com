@@ -51,7 +51,7 @@ export default function AppSidebar() {
   const isActive = (path: string) => location.pathname === path;
 
   return (
-    <aside className="flex h-screen w-64 shrink-0 flex-col border-r border-border bg-sidebar">
+    <aside className="flex h-screen w-64 shrink-0 flex-col border-r border-border bg-sidebar overflow-hidden">
       {/* Logo */}
       <div className="flex h-16 items-center gap-3 border-b border-border px-4">
         <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary">
@@ -200,7 +200,7 @@ export default function AppSidebar() {
       </div>
 
       {/* Bottom Section - Settings, Credits, Dark Mode Toggle */}
-      <div className="border-t border-border p-4 space-y-1">
+      <div className="shrink-0 border-t border-border p-4 space-y-1">
         {/* Settings */}
         <Link
           to="/settings"
