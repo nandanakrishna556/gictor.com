@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { Image, Video, FileText, ArrowLeft, FolderPlus, X } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
 import {
@@ -75,8 +75,10 @@ export default function CreateNewModal({
   const queryClient = useQueryClient();
   const [selectedType, setSelectedType] = useState<ContentType>(null);
   const [pipelineModalOpen, setPipelineModalOpen] = useState(false);
-  // Store the initialStatus when pipeline is selected (before parent clears it)
-  const [pipelineInitialStatus, setPipelineInitialStatus] = useState<string | undefined>(undefined);
+  // Use a ref to store the status synchronously (avoids race conditions with state)
+  const pipelineInitialStatusRef = useRef<string | undefined>(undefined);
+  // Also use state to trigger re-render when modal opens
+  const [pipelineKey, setPipelineKey] = useState(0);
 
   const handleClose = () => {
     setSelectedType(null);
@@ -93,13 +95,22 @@ export default function CreateNewModal({
       onOpenChange(false);
       onCreateFolder?.(initialStatus);
     } else if ('isPipeline' in type && type.isPipeline) {
-      // Store the status BEFORE closing the modal (which clears parent's initialStatus)
-      setPipelineInitialStatus(initialStatus);
+      // Store the status in ref SYNCHRONOUSLY before any state changes
+      pipelineInitialStatusRef.current = initialStatus;
+      // Increment key to force fresh mount of PipelineModal
+      setPipelineKey(prev => prev + 1);
+      // Close this modal first
       onOpenChange(false);
+      // Then open pipeline modal
       setPipelineModalOpen(true);
     } else {
       setSelectedType(type.id as ContentType);
     }
+  };
+
+  const handlePipelineClose = () => {
+    setPipelineModalOpen(false);
+    pipelineInitialStatusRef.current = undefined;
   };
 
   const handlePipelineSuccess = () => {
@@ -185,16 +196,15 @@ export default function CreateNewModal({
         </DialogContent>
       </Dialog>
 
+      {/* Use key to force fresh mount each time */}
       <PipelineModal
+        key={pipelineKey}
         open={pipelineModalOpen}
-        onClose={() => {
-          setPipelineModalOpen(false);
-          setPipelineInitialStatus(undefined);
-        }}
+        onClose={handlePipelineClose}
         pipelineId={null}
         projectId={projectId}
         folderId={folderId}
-        initialStatus={pipelineInitialStatus}
+        initialStatus={pipelineInitialStatusRef.current}
         onSuccess={handlePipelineSuccess}
       />
     </>
