@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { ChevronRight, Grid3X3, Kanban, Plus, FolderOpen, Search, Filter } from 'lucide-react';
+import { ChevronRight, Grid3X3, Kanban, Plus, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import FilterPopover from '@/components/modals/FilterPopover';
@@ -57,31 +57,30 @@ export default function AppHeader({
 }: AppHeaderProps) {
 
   return (
-    <header className="sticky top-0 z-10 flex h-14 items-center justify-between border-b border-border bg-background px-6">
-      {/* Breadcrumbs - styled like reference image */}
-      <nav className="flex items-center gap-2 min-w-0">
-        {breadcrumbs.map((item, index) => (
-          <div key={index} className="flex items-center gap-2">
-            {index === 0 && (
-              <FolderOpen className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-            )}
-            {item.href ? (
-              <Link
-                to={item.href}
-                className="text-sm text-muted-foreground transition-colors hover:text-foreground whitespace-nowrap"
-              >
-                {item.label}
-              </Link>
-            ) : (
-              <span className="text-sm font-medium text-foreground whitespace-nowrap">
-                {item.label}
-              </span>
-            )}
-            {index < breadcrumbs.length - 1 && (
-              <ChevronRight className="h-4 w-4 flex-shrink-0 text-muted-foreground" />
-            )}
-          </div>
-        ))}
+    <header className="sticky top-0 z-10 flex h-14 items-center justify-between gap-4 border-b border-border bg-background px-6">
+      {/* Breadcrumbs - scrollable without affecting layout */}
+      <nav className="flex-1 min-w-0 overflow-x-auto scrollbar-none">
+        <div className="flex items-center gap-2">
+          {breadcrumbs.map((item, index) => (
+            <div key={index} className="flex items-center gap-2 flex-shrink-0">
+              {item.href ? (
+                <Link
+                  to={item.href}
+                  className="text-sm text-muted-foreground transition-colors hover:text-foreground"
+                >
+                  {item.label}
+                </Link>
+              ) : (
+                <span className="text-sm font-medium text-foreground">
+                  {item.label}
+                </span>
+              )}
+              {index < breadcrumbs.length - 1 && (
+                <ChevronRight className="h-4 w-4 text-muted-foreground" />
+              )}
+            </div>
+          ))}
+        </div>
       </nav>
 
       {/* Right Side Actions */}

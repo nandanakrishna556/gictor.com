@@ -53,11 +53,11 @@ export default function Projects() {
 
         <div className="flex-1 overflow-y-auto p-6">
           {isLoading ? (
-            <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-              {[...Array(4)].map((_, i) => (
+            <div className="grid gap-4 grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6">
+              {[...Array(6)].map((_, i) => (
                 <div
                   key={i}
-                  className="aspect-[2/3] animate-pulse rounded-2xl bg-secondary"
+                  className="aspect-[3/4] animate-pulse rounded-xl bg-secondary"
                 />
               ))}
             </div>
@@ -81,16 +81,16 @@ export default function Projects() {
               </Button>
             </div>
           ) : (
-            <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            <div className="grid gap-4 grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6">
               {/* Create New Project Card */}
               <button
                 onClick={handleCreateProject}
-                className="group relative flex aspect-[2/3] cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed border-border bg-card transition-all duration-200 hover:border-primary hover:bg-primary/5 hover:scale-[1.02]"
+                className="group relative flex aspect-[3/4] cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed border-border bg-card transition-all duration-200 hover:border-primary hover:bg-primary/5 hover:scale-[1.02]"
               >
-                <div className="flex h-14 w-14 items-center justify-center rounded-full bg-primary/10 transition-all duration-200 group-hover:bg-primary/20">
-                  <Plus className="h-7 w-7 text-primary" />
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 transition-all duration-200 group-hover:bg-primary/20">
+                  <Plus className="h-5 w-5 text-primary" />
                 </div>
-                <span className="mt-4 text-base font-medium text-muted-foreground transition-all duration-200 group-hover:text-primary">
+                <span className="mt-3 text-sm font-medium text-muted-foreground transition-all duration-200 group-hover:text-primary">
                   New project
                 </span>
               </button>
@@ -98,7 +98,7 @@ export default function Projects() {
               {projects?.map((project) => (
                 <div
                   key={project.id}
-                  className="group relative flex aspect-[2/3] cursor-pointer flex-col items-center justify-center rounded-2xl border border-border bg-card transition-all duration-200 hover:border-primary hover:scale-[1.02]"
+                  className="group relative flex aspect-[3/4] cursor-pointer flex-col items-center justify-center rounded-xl border border-border bg-card transition-all duration-200 hover:border-primary hover:scale-[1.02]"
                   onClick={() => {
                     if (renamingProjectId !== project.id) {
                       navigate(`/projects/${project.id}`);
