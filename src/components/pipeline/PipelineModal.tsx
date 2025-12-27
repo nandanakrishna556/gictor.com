@@ -10,6 +10,7 @@ import { useProfile } from '@/hooks/useProfile';
 import { usePipelineRealtime } from '@/hooks/usePipelineRealtime';
 import { useTags } from '@/hooks/useTags';
 import { useFiles } from '@/hooks/useFiles';
+import { usePipelines, DEFAULT_STAGES } from '@/hooks/usePipelines';
 import { supabase } from '@/integrations/supabase/client';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -55,6 +56,7 @@ export default function PipelineModal({
   const { profile } = useProfile();
   const { tags } = useTags();
   const { createFile } = useFiles(projectId);
+  const { defaultStages } = usePipelines();
   
   // Core state
   const initialStatusRef = useRef(initialStatus);
@@ -75,19 +77,18 @@ export default function PipelineModal({
   const [name, setName] = useState('Untitled');
   const [currentProjectId, setCurrentProjectId] = useState(projectId);
   const [currentFolderId, setCurrentFolderId] = useState(folderId);
-  const [status, setStatus] = useState<string>('draft');
+  const [displayStatus, setDisplayStatus] = useState<string>('draft');
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [showUnsavedWarning, setShowUnsavedWarning] = useState(false);
   const pipelineLoadedRef = useRef(false);
 
-  // These are the ONLY allowed values for pipelines.status (DB constraint)
-  const statusOptions = [
-    { value: 'draft', label: 'Draft', color: 'bg-slate-500' },
-    { value: 'processing', label: 'Processing', color: 'bg-amber-500' },
-    { value: 'completed', label: 'Completed', color: 'bg-emerald-500' },
-    { value: 'failed', label: 'Failed', color: 'bg-red-500' },
-  ];
+  // Use the Kanban stage options from the user's pipeline configuration
+  const statusOptions = defaultStages.map(stage => ({
+    value: stage.id,
+    label: stage.name,
+    color: stage.color,
+  }));
   
   // Auto-save indicator states
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
@@ -108,7 +109,8 @@ export default function PipelineModal({
       pipelineLoadedRef.current = true;
       setActiveStage(pipeline.current_stage);
       setName(pipeline.name);
-      setStatus(pipeline.status || initialStatusRef.current || 'draft');
+      // Use display_status for Kanban column, fall back to initialStatus or 'draft'
+      setDisplayStatus(pipeline.display_status || initialStatusRef.current || 'draft');
       setSelectedTags(pipeline.tags || []);
     }
   }, [pipeline]);
@@ -135,13 +137,14 @@ export default function PipelineModal({
     autoSaveTimeoutRef.current = setTimeout(async () => {
       try {
         setSaveStatus('saving');
+        // Note: We don't update pipeline.status here - that's for processing state
+        // We only update name and tags on the pipeline
         await updatePipeline({ 
           name, 
-          status: status as any,
           tags: selectedTags 
         });
         
-        // Sync the linked file's name and status
+        // Sync the linked file's name and displayStatus (for Kanban column)
         const { data: linkedFile } = await supabase
           .from('files')
           .select('id')
@@ -151,9 +154,15 @@ export default function PipelineModal({
         if (linkedFile) {
           await supabase
             .from('files')
-            .update({ name, status })
+            .update({ name, status: displayStatus })
             .eq('id', linkedFile.id);
         }
+        
+        // Also update pipeline's display_status
+        await supabase
+          .from('pipelines')
+          .update({ display_status: displayStatus })
+          .eq('id', pipelineId);
         
         setHasUnsavedChanges(false);
         setSaveStatus('saved');
@@ -165,7 +174,7 @@ export default function PipelineModal({
         setSaveStatus('idle');
       }
     }, 2000);
-  }, [pipelineId, hasUnsavedChanges, name, status, selectedTags, updatePipeline, queryClient, currentProjectId]);
+  }, [pipelineId, hasUnsavedChanges, name, displayStatus, selectedTags, updatePipeline, queryClient, currentProjectId]);
 
   // Trigger auto-save when unsaved changes occur
   useEffect(() => {
@@ -178,7 +187,7 @@ export default function PipelineModal({
         clearTimeout(autoSaveTimeoutRef.current);
       }
     };
-  }, [hasUnsavedChanges, name, status, selectedTags, triggerAutoSave]);
+  }, [hasUnsavedChanges, name, displayStatus, selectedTags, triggerAutoSave]);
 
 
   const handleStageClick = (stage: PipelineStage) => {
@@ -223,7 +232,7 @@ export default function PipelineModal({
   };
 
   const handleStatusChange = (newStatus: string) => {
-    setStatus(newStatus);
+    setDisplayStatus(newStatus);
     setHasUnsavedChanges(true);
   };
 
@@ -235,7 +244,7 @@ export default function PipelineModal({
     setHasUnsavedChanges(true);
   };
 
-  const currentStatusOption = statusOptions.find(s => s.value === status) || statusOptions[0];
+  const currentStatusOption = statusOptions.find(s => s.value === displayStatus) || statusOptions[0];
 
   const handleSave = async () => {
     if (!pipelineId) {
@@ -246,12 +255,17 @@ export default function PipelineModal({
     try {
       setSaveStatus('saving');
       
-      // Update the pipeline with current values - status is stored as-is
+      // Update the pipeline with name and tags (not status - that's processing state)
       await updatePipeline({ 
         name, 
-        status: status as any,
         tags: selectedTags 
       });
+      
+      // Update the pipeline's display_status for Kanban column
+      await supabase
+        .from('pipelines')
+        .update({ display_status: displayStatus })
+        .eq('id', pipelineId);
       
       // Also update the linked file's name and status to keep them in sync
       // Find the file linked to this pipeline and update it
@@ -264,7 +278,7 @@ export default function PipelineModal({
       if (linkedFile) {
         await supabase
           .from('files')
-          .update({ name, status })
+          .update({ name, status: displayStatus })
           .eq('id', linkedFile.id);
       }
       
@@ -351,7 +365,7 @@ export default function PipelineModal({
             onLocationChange={handleLocationChange}
           />
           
-          <Select value={status} onValueChange={handleStatusChange}>
+          <Select value={displayStatus} onValueChange={handleStatusChange}>
             <SelectTrigger className={cn(
               "h-8 w-fit rounded-md text-xs border-0 px-3 py-1 text-white gap-1",
               currentStatusOption.color
