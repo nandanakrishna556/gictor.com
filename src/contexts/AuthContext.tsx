@@ -1,7 +1,7 @@
-import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import { createContext, useContext, useEffect, useState, useRef, ReactNode } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 
 interface AuthContextType {
   user: User | null;
@@ -21,6 +21,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
+  const location = useLocation();
+  const hasInitialSession = useRef(false);
 
   useEffect(() => {
     // Set up auth state listener FIRST
@@ -30,11 +32,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setUser(session?.user ?? null);
         setLoading(false);
 
-        if (event === 'SIGNED_IN' && session) {
-          // Defer navigation to avoid blocking
-          setTimeout(() => {
-            navigate('/projects');
-          }, 0);
+        // Only navigate on fresh sign-in from login page, not on token refresh
+        if (event === 'SIGNED_IN' && session && !hasInitialSession.current) {
+          // Only redirect if user is on the login page
+          if (location.pathname === '/login' || location.pathname === '/') {
+            setTimeout(() => {
+              navigate('/projects');
+            }, 0);
+          }
+        }
+        
+        // Mark that we've handled the initial session
+        if (session) {
+          hasInitialSession.current = true;
         }
       }
     );
@@ -44,10 +54,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setSession(session);
       setUser(session?.user ?? null);
       setLoading(false);
+      // If there's already a session, mark it so we don't redirect on refresh
+      if (session) {
+        hasInitialSession.current = true;
+      }
     });
 
     return () => subscription.unsubscribe();
-  }, [navigate]);
+  }, [navigate, location.pathname]);
 
   const signInWithGoogle = async () => {
     const { error } = await supabase.auth.signInWithOAuth({
