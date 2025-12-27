@@ -364,7 +364,7 @@ export default function PipelineModal({
 
   function renderStageNavigation() {
     return (
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-4">
         {STAGES.map((stage, index) => {
           const isComplete = isStageComplete(stage.key);
           const isAccessible = isStageAccessible(stage.key);
@@ -374,7 +374,7 @@ export default function PipelineModal({
             <React.Fragment key={stage.key}>
               {index > 0 && (
                 <div className={cn(
-                  "w-8 h-0.5",
+                  "w-10 h-0.5 rounded-full",
                   isComplete || isStageComplete(STAGES[index - 1].key) ? "bg-primary" : "bg-border"
                 )} />
               )}
@@ -382,17 +382,17 @@ export default function PipelineModal({
                 onClick={() => handleStageClick(stage.key)}
                 disabled={!isAccessible}
                 className={cn(
-                  "flex items-center gap-2 transition-all",
-                  isAccessible ? "cursor-pointer" : "cursor-not-allowed opacity-50"
+                  "flex items-center gap-2.5 transition-all group",
+                  isAccessible ? "cursor-pointer hover:scale-105" : "cursor-not-allowed opacity-50"
                 )}
               >
                 <div className={cn(
-                  "w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium transition-colors",
+                  "w-9 h-9 rounded-full flex items-center justify-center text-sm font-semibold transition-all shadow-sm",
                   isComplete 
-                    ? "bg-primary text-primary-foreground" 
+                    ? "bg-primary text-primary-foreground shadow-primary/30" 
                     : isActive 
-                      ? "bg-primary/20 text-primary border-2 border-primary" 
-                      : "bg-muted text-muted-foreground"
+                      ? "bg-primary/15 text-primary border-2 border-primary shadow-primary/20" 
+                      : "bg-secondary text-muted-foreground border border-border"
                 )}>
                   {isComplete ? (
                     <Check className="h-4 w-4" />
@@ -403,8 +403,9 @@ export default function PipelineModal({
                   )}
                 </div>
                 <span className={cn(
-                  "text-sm font-medium",
-                  isActive ? "text-primary" : "text-muted-foreground"
+                  "text-sm font-semibold transition-colors",
+                  isComplete ? "text-primary" : isActive ? "text-primary" : "text-muted-foreground",
+                  isAccessible && "group-hover:text-primary"
                 )}>
                   {stage.label}
                 </span>
