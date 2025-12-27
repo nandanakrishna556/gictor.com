@@ -458,17 +458,17 @@ export default function FileGrid({
         />
       )}
 
-      <div className="grid gap-4 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7">
+      <div className="grid gap-3 grid-cols-1 xs:grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 3xl:grid-cols-7">
         {/* Create New Card - First item */}
         {onCreateNew && (
           <button
             onClick={() => onCreateNew()}
             className="group relative flex aspect-[2/3] cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed border-border bg-card transition-colors duration-200 hover:border-primary hover:bg-primary/5"
           >
-            <div className="flex h-14 w-14 items-center justify-center rounded-full bg-primary/10 transition-all duration-200 group-hover:bg-primary/20">
-              <Plus className="h-7 w-7 text-primary" />
+            <div className="flex h-10 w-10 sm:h-14 sm:w-14 items-center justify-center rounded-full bg-primary/10 transition-all duration-200 group-hover:bg-primary/20">
+              <Plus className="h-5 w-5 sm:h-7 sm:w-7 text-primary" />
             </div>
-            <span className="mt-4 text-base font-medium text-muted-foreground transition-all duration-200 group-hover:text-primary">
+            <span className="mt-3 sm:mt-4 text-sm sm:text-base font-medium text-muted-foreground transition-all duration-200 group-hover:text-primary">
               Create new
             </span>
           </button>
@@ -728,7 +728,7 @@ function FolderCard({
     <div
       onClick={handleCardClick}
       className={cn(
-        'group relative flex aspect-[2/3] cursor-pointer flex-col rounded-2xl border bg-amber-50/50 transition-colors duration-200 hover:border-primary dark:bg-card dark:border-border/50',
+        'group relative flex aspect-[2/3] cursor-pointer flex-col rounded-2xl border bg-amber-50/50 transition-colors duration-200 hover:border-primary dark:bg-card dark:border-border/50 overflow-hidden',
         isSelected && 'border-primary ring-2 ring-primary/20'
       )}
     >
@@ -740,18 +740,18 @@ function FolderCard({
       )}
 
       {/* Card Name at Top */}
-      <div className="p-4 pb-0" onClick={(e) => e.stopPropagation()}>
+      <div className="p-3 sm:p-4 pb-0" onClick={(e) => e.stopPropagation()}>
         {isRenaming ? (
           <Input
             value={renameValue}
             onChange={(e) => setRenameValue(e.target.value)}
             onKeyDown={handleRenameKeyDown}
             onBlur={handleRenameBlur}
-            className="h-8 text-center text-base font-semibold"
+            className="h-8 text-sm font-semibold"
             autoFocus
           />
         ) : (
-          <h3 className="text-center text-base font-semibold text-card-foreground">{folder.name}</h3>
+          <h3 className="truncate text-sm sm:text-base font-semibold text-card-foreground">{folder.name}</h3>
         )}
       </div>
 
@@ -784,23 +784,23 @@ function FolderCard({
       </div>
 
       {/* Info Section */}
-      <div className="flex flex-col gap-2 p-4">
+      <div className="flex flex-col gap-1.5 sm:gap-2 p-3 sm:p-4 min-w-0">
 
         {/* Status Row - Two Column Layout */}
-        <div className="flex items-center gap-3">
-          <span className="text-xs text-muted-foreground w-10 shrink-0">Status</span>
+        <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+          <span className="text-xs text-muted-foreground w-9 sm:w-10 shrink-0">Status</span>
           <Select
             value={effectiveStatus}
             onValueChange={(value) => onStatusChange?.(folder.id, value)}
           >
             <SelectTrigger
               className={cn(
-                'h-7 w-fit rounded-md text-xs border-0 px-3 py-1 text-white gap-1',
+                'h-6 sm:h-7 w-fit max-w-[calc(100%-3rem)] rounded-md text-xs border-0 px-2 sm:px-3 py-1 text-white gap-1',
                 currentStage?.color
               )}
               onClick={(e) => e.stopPropagation()}
             >
-              {currentStage?.name || 'Select status'}
+              <span className="truncate">{currentStage?.name || 'Select status'}</span>
             </SelectTrigger>
             <SelectContent className="bg-card border shadow-lg">
               {stages.map((stage) => (
@@ -819,28 +819,28 @@ function FolderCard({
         <Popover>
           <PopoverTrigger asChild>
             <div
-              className="flex items-center gap-3 rounded-md hover:bg-secondary/50 transition-colors cursor-pointer"
+              className="flex items-center gap-2 sm:gap-3 rounded-md hover:bg-secondary/50 transition-colors cursor-pointer min-w-0"
               onClick={(e) => e.stopPropagation()}
             >
-              <span className="text-xs text-muted-foreground w-10 shrink-0">Tags</span>
-              <div className="flex flex-1 items-center gap-1.5">
+              <span className="text-xs text-muted-foreground w-9 sm:w-10 shrink-0">Tags</span>
+              <div className="flex flex-1 items-center gap-1 min-w-0 overflow-hidden">
                 {folderTags.length > 0 ? (
                   <>
-                    {folderTags.slice(0, 2).map((tagId) => {
+                    {folderTags.slice(0, 1).map((tagId) => {
                       const tag = tags.find((t) => t.id === tagId);
                       if (!tag) return null;
                       return (
                         <span
                           key={tagId}
-                          className="rounded px-1.5 py-0.5 text-xs"
+                          className="rounded px-1.5 py-0.5 text-xs truncate max-w-[60px] sm:max-w-[80px]"
                           style={{ backgroundColor: `${tag.color}20`, color: tag.color }}
                         >
                           {tag.tag_name}
                         </span>
                       );
                     })}
-                    {folderTags.length > 2 && (
-                      <span className="text-xs text-muted-foreground">+{folderTags.length - 2}</span>
+                    {folderTags.length > 1 && (
+                      <span className="text-xs text-muted-foreground shrink-0">+{folderTags.length - 1}</span>
                     )}
                   </>
                 ) : (
@@ -1027,7 +1027,7 @@ function FileCard({
     <div
       onClick={handleCardClick}
       className={cn(
-        'group relative flex aspect-[2/3] cursor-pointer flex-col rounded-2xl border bg-card transition-colors duration-200 hover:border-primary',
+        'group relative flex aspect-[2/3] cursor-pointer flex-col rounded-2xl border bg-card transition-colors duration-200 hover:border-primary overflow-hidden',
         isProcessing && 'animate-pulse-subtle',
         isFailed && 'border-destructive/50',
         isSelected && 'border-primary ring-2 ring-primary/20'
@@ -1041,7 +1041,7 @@ function FileCard({
       )}
 
       {/* Card Name at Top */}
-      <div className="p-4 pb-0" onClick={(e) => e.stopPropagation()}>
+      <div className="p-3 sm:p-4 pb-0" onClick={(e) => e.stopPropagation()}>
         {isRenaming ? (
           <Input
             value={renameValue}
@@ -1052,7 +1052,7 @@ function FileCard({
             autoFocus
           />
         ) : (
-          <h3 className="truncate font-medium text-card-foreground">{file.name}</h3>
+          <h3 className="truncate text-sm sm:text-base font-medium text-card-foreground">{file.name}</h3>
         )}
       </div>
 
@@ -1077,7 +1077,7 @@ function FileCard({
       </div>
 
       {/* Info */}
-      <div className="flex flex-col gap-2 p-4">
+      <div className="flex flex-col gap-1.5 sm:gap-2 p-3 sm:p-4 min-w-0">
 
         <Badge
           variant="secondary"
@@ -1092,20 +1092,20 @@ function FileCard({
         </Badge>
 
         {/* Status Row - Two Column Layout */}
-        <div className="flex items-center gap-3">
-          <span className="text-xs text-muted-foreground w-10 shrink-0">Status</span>
+        <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+          <span className="text-xs text-muted-foreground w-9 sm:w-10 shrink-0">Status</span>
           <Select
             value={effectiveStatus}
             onValueChange={(value) => onStatusChange?.(file.id, value)}
           >
             <SelectTrigger
               className={cn(
-                'h-7 w-fit rounded-md text-xs border-0 px-3 py-1 text-white gap-1',
+                'h-6 sm:h-7 w-fit max-w-[calc(100%-3rem)] rounded-md text-xs border-0 px-2 sm:px-3 py-1 text-white gap-1',
                 currentStage?.color
               )}
               onClick={(e) => e.stopPropagation()}
             >
-              {currentStage?.name || 'Select status'}
+              <span className="truncate">{currentStage?.name || 'Select status'}</span>
             </SelectTrigger>
             <SelectContent className="bg-card border shadow-lg">
               {stages.map((stage) => (
@@ -1124,28 +1124,28 @@ function FileCard({
         <Popover>
           <PopoverTrigger asChild>
             <div
-              className="flex items-center gap-3 rounded-md hover:bg-secondary/50 transition-colors cursor-pointer"
+              className="flex items-center gap-2 sm:gap-3 rounded-md hover:bg-secondary/50 transition-colors cursor-pointer min-w-0"
               onClick={(e) => e.stopPropagation()}
             >
-              <span className="text-xs text-muted-foreground w-10 shrink-0">Tags</span>
-              <div className="flex flex-1 items-center gap-1.5">
+              <span className="text-xs text-muted-foreground w-9 sm:w-10 shrink-0">Tags</span>
+              <div className="flex flex-1 items-center gap-1 min-w-0 overflow-hidden">
                 {fileTags.length > 0 ? (
                   <>
-                    {fileTags.slice(0, 2).map((tagId) => {
+                    {fileTags.slice(0, 1).map((tagId) => {
                       const tag = tags.find((t) => t.id === tagId);
                       if (!tag) return null;
                       return (
                         <span
                           key={tagId}
-                          className="rounded px-1.5 py-0.5 text-xs"
+                          className="rounded px-1.5 py-0.5 text-xs truncate max-w-[60px] sm:max-w-[80px]"
                           style={{ backgroundColor: `${tag.color}20`, color: tag.color }}
                         >
                           {tag.tag_name}
                         </span>
                       );
                     })}
-                    {fileTags.length > 2 && (
-                      <span className="text-xs text-muted-foreground">+{fileTags.length - 2}</span>
+                    {fileTags.length > 1 && (
+                      <span className="text-xs text-muted-foreground shrink-0">+{fileTags.length - 1}</span>
                     )}
                   </>
                 ) : (
