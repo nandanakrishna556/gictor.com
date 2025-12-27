@@ -62,6 +62,7 @@ interface FileGridProps {
   onDeleteTag?: (id: string) => void;
   onDeleteFile?: (id: string) => void;
   onDeleteFolder?: (id: string) => void;
+  onFileClick?: (file: File) => void;
   onUpdateFileStatus?: (id: string, status: string) => void;
   onUpdateFileTags?: (id: string, tags: string[]) => void;
   onUpdateFileName?: (id: string, name: string) => void;
@@ -108,6 +109,7 @@ export default function FileGrid({
   onDeleteTag,
   onDeleteFile,
   onDeleteFolder,
+  onFileClick,
   onUpdateFileStatus,
   onUpdateFileTags,
   onUpdateFileName,

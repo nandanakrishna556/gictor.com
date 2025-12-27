@@ -15,6 +15,7 @@ export interface File {
   progress: number;
   preview_url: string | null;
   download_url: string | null;
+  error_message: string | null;
   metadata: Json;
   generation_params: Json;
   created_at: string;
