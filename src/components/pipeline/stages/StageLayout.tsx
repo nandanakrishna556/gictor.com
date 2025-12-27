@@ -50,10 +50,10 @@ export default function StageLayout({
   stageNavigation,
 }: StageLayoutProps) {
   return (
-    <div className="flex h-full">
+    <div className="flex h-full overflow-hidden">
       {/* Input Section */}
-      <div className="flex-1 flex flex-col border-r">
-        <div className="flex-1 overflow-auto p-6">
+      <div className="flex-1 flex flex-col border-r min-h-0">
+        <div className="flex-1 overflow-y-auto p-6 min-h-0">
           {/* Stage Navigation */}
           {stageNavigation && (
             <div className="mb-6 pb-5 border-b border-border">
