@@ -24,12 +24,14 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
-import { useFiles } from '@/hooks/useFiles';
 import { useProfile } from '@/hooks/useProfile';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 import LocationSelector from './LocationSelector';
 import { SingleImageUpload } from '@/components/ui/single-image-upload';
 import type { Tag } from '@/hooks/useTags';
+import { startGeneration, CREDIT_COSTS } from '@/lib/generation-service';
+import { useAuth } from '@/contexts/AuthContext';
+import { v4 as uuidv4 } from 'uuid';
 
 interface StatusOption {
   value: string;
@@ -77,9 +79,8 @@ export default function TalkingHeadForm({
   const [currentProjectId, setCurrentProjectId] = useState(projectId);
   const [currentFolderId, setCurrentFolderId] = useState(folderId);
   
-  const { createFile } = useFiles(currentProjectId, currentFolderId);
-  const { profile, deductCredits } = useProfile();
-  const { toast } = useToast();
+  const { user } = useAuth();
+  const { profile } = useProfile();
 
   // Use provided status options or default
   const availableStatusOptions = statusOptions || defaultStatusOptions;
@@ -117,7 +118,7 @@ export default function TalkingHeadForm({
   const isOverLimit = characterCount > maxChars;
   
   const estimatedDuration = Math.max(SECONDS_PER_BLOCK, Math.ceil(characterCount / CHARS_PER_BLOCK) * SECONDS_PER_BLOCK);
-  const creditCost = Math.max(1, Math.ceil(characterCount / CHARS_PER_BLOCK));
+  const creditCost = CREDIT_COSTS.talking_head;
   const hasEnoughCredits = (profile?.credits ?? 0) >= creditCost;
 
   const currentStatusOption = availableStatusOptions.find(s => s.value === selectedStatus) || availableStatusOptions[0];
@@ -153,75 +154,55 @@ export default function TalkingHeadForm({
     e.preventDefault();
 
     if (!firstFrameUrl) {
-      toast({
-        title: 'Missing first frame',
-        description: 'Please upload a first frame image.',
-        variant: 'destructive',
-      });
+      toast.error('Missing first frame', { description: 'Please upload a first frame image.' });
       return;
     }
 
     if (!script.trim()) {
-      toast({
-        title: 'Missing script',
-        description: 'Please enter a script for the talking head.',
-        variant: 'destructive',
-      });
+      toast.error('Missing script', { description: 'Please enter a script for the talking head.' });
       return;
     }
 
     if (isOverLimit) {
-      toast({
-        title: 'Script too long',
-        description: 'Please increase the character limit or shorten your script.',
-        variant: 'destructive',
-      });
+      toast.error('Script too long', { description: 'Please increase the character limit or shorten your script.' });
       return;
     }
 
     if (!hasEnoughCredits) {
-      toast({
-        title: 'Insufficient credits',
-        description: 'Please purchase more credits to continue.',
-        variant: 'destructive',
-      });
+      toast.error('Insufficient credits', { description: 'Please purchase more credits to continue.' });
+      return;
+    }
+
+    if (!user) {
+      toast.error('Not authenticated', { description: 'Please log in to continue.' });
       return;
     }
 
     setIsSubmitting(true);
 
     try {
-      const fileId = crypto.randomUUID();
-      await createFile({
-        id: fileId,
+      const result = await startGeneration('talking_head', {
+        file_id: uuidv4(),
+        user_id: user.id,
         project_id: currentProjectId,
-        folder_id: currentFolderId || null,
-        name: fileName,
-        file_type: 'talking_head',
-        status: selectedStatus,
+        folder_id: currentFolderId,
+        file_name: fileName,
+        credits_cost: creditCost,
+        script,
+        voice_id: selectedVoice.id,
+        image_url: firstFrameUrl,
+        resolution: '720p',
         tags: selectedTags,
-        generation_params: {
-          first_frame_url: firstFrameUrl,
-          script,
-          voice_id: selectedVoice.id,
-          voice_settings: voiceSettings,
-        },
       });
 
-      await deductCredits(creditCost);
-
-      toast({
-        title: 'Generation started',
-        description: 'Your talking head video is being generated.',
-      });
-
-      onSuccess();
+      if (result.success) {
+        toast.success('Generation started', { description: 'Your talking head video is being generated.' });
+        onSuccess();
+      } else {
+        toast.error('Error', { description: result.error || 'Failed to start generation. Please try again.' });
+      }
     } catch (error) {
-      toast({
-        title: 'Error',
-        description: 'Failed to start generation. Please try again.',
-        variant: 'destructive',
-      });
+      toast.error('Error', { description: 'Failed to start generation. Please try again.' });
     } finally {
       setIsSubmitting(false);
     }
