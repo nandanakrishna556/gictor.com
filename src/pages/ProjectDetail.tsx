@@ -10,7 +10,9 @@ import CreateFolderDialog from '@/components/modals/CreateFolderDialog';
 import CreatePipelineDialog from '@/components/modals/CreatePipelineDialog';
 import CreateTagDialog from '@/components/modals/CreateTagDialog';
 import ConfirmDeleteDialog from '@/components/modals/ConfirmDeleteDialog';
+import { FileDetailModal } from '@/components/files/FileDetailModal';
 import { useFiles, Folder, File } from '@/hooks/useFiles';
+import { useFileRealtime } from '@/hooks/useFileRealtime';
 import { usePipelines, Pipeline, PipelineStage, DEFAULT_STAGES } from '@/hooks/usePipelines';
 import { useTags } from '@/hooks/useTags';
 import type { Project } from '@/hooks/useProjects';
@@ -36,6 +38,9 @@ export default function ProjectDetail() {
   const [deleteFileConfirm, setDeleteFileConfirm] = useState<{ open: boolean; file: File | null }>({ open: false, file: null });
   const [deleteFolderConfirm, setDeleteFolderConfirm] = useState<{ open: boolean; folder: Folder | null }>({ open: false, folder: null });
   const [deletePipelineConfirm, setDeletePipelineConfirm] = useState<{ open: boolean; pipeline: Pipeline | null }>({ open: false, pipeline: null });
+  
+  // File detail modal state
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
   // Fetch project details
   const { data: project } = useQuery({
@@ -84,6 +89,9 @@ export default function ProjectDetail() {
   const { files, folders, isLoading, createFolder, updateFile, updateFolder, deleteFile, deleteFolder, bulkDeleteFiles, bulkUpdateFiles } = useFiles(projectId!, folderId);
   const { pipelines, createPipeline, updatePipeline, deletePipeline, updateDefaultStages, defaultStages } = usePipelines();
   const { tags, createTag, deleteTag } = useTags();
+  
+  // Enable real-time updates for file status changes
+  useFileRealtime(projectId);
 
   // Get current pipeline stages for status options
   const currentPipeline = pipelines.find((p) => p.id === selectedPipelineId);
@@ -334,6 +342,7 @@ export default function ProjectDetail() {
               onDeleteTag={handleDeleteTag}
               onDeleteFile={handleDeleteFileRequest}
               onDeleteFolder={handleDeleteFolderRequest}
+              onFileClick={(file) => setSelectedFile(file)}
               onUpdateFileStatus={handleUpdateFileStatus}
               onUpdateFileTags={handleUpdateFileTags}
               onUpdateFolderStatus={handleUpdateFolderStatus}
@@ -395,6 +404,7 @@ export default function ProjectDetail() {
               onDeleteTag={handleDeleteTag}
               onDeleteFile={handleDeleteFileRequest}
               onDeleteFolder={handleDeleteFolderRequest}
+              onFileClick={(file) => setSelectedFile(file)}
               onUpdateFileStatus={handleUpdateFileStatus}
               onUpdateFileTags={handleUpdateFileTags}
               onUpdateFolderStatus={handleUpdateFolderStatus}
@@ -481,6 +491,24 @@ export default function ProjectDetail() {
         description="This action cannot be undone. This will permanently delete the folder and all its contents."
         itemName={deleteFolderConfirm.folder?.name}
       />
+
+      {/* File Detail Modal */}
+      {selectedFile && (
+        <FileDetailModal
+          file={{
+            id: selectedFile.id,
+            name: selectedFile.name,
+            file_type: selectedFile.file_type as 'first_frame' | 'talking_head' | 'script',
+            status: (selectedFile.status || 'processing') as 'processing' | 'completed' | 'failed',
+            preview_url: selectedFile.preview_url,
+            download_url: selectedFile.download_url,
+            error_message: selectedFile.error_message,
+            metadata: selectedFile.metadata as Record<string, any> || {},
+          }}
+          isOpen={!!selectedFile}
+          onClose={() => setSelectedFile(null)}
+        />
+      )}
     </MainLayout>
   );
 }
