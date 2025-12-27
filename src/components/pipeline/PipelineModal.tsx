@@ -76,10 +76,13 @@ export default function PipelineModal({
 
   const statusOptions = [
     { value: 'draft', label: 'Draft', color: 'bg-slate-500' },
-    { value: 'review', label: 'Review', color: 'bg-blue-500' },
+    { value: 'review', label: 'Review', color: 'bg-amber-500' },
     { value: 'approved', label: 'Approved', color: 'bg-emerald-500' },
     { value: 'rejected', label: 'Rejected', color: 'bg-red-500' },
   ];
+  
+  // Auto-save indicator states
+  const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
 
   // Subscribe to realtime updates for this pipeline
   const effectivePipelineId = currentPipelineId || pipelineId;
@@ -106,6 +109,7 @@ export default function PipelineModal({
         projectId: currentProjectId,
         folderId: currentFolderId,
         name: 'Untitled',
+        status: initialStatus || 'draft',
       }).then((newPipeline) => {
         setCurrentPipelineId(newPipeline.id);
       }).catch(() => {
@@ -113,7 +117,7 @@ export default function PipelineModal({
         onClose();
       });
     }
-  }, [open, pipelineId, currentPipelineId, isCreating, createPipeline, currentProjectId, currentFolderId, onClose]);
+  }, [open, pipelineId, currentPipelineId, isCreating, createPipeline, currentProjectId, currentFolderId, onClose, initialStatus]);
 
   const handleStageClick = (stage: PipelineStage) => {
     // Can freely switch between first 3 stages
@@ -172,23 +176,34 @@ export default function PipelineModal({
   const currentStatusOption = statusOptions.find(s => s.value === status) || statusOptions[0];
 
   const handleSave = async () => {
+    if (!effectivePipelineId) {
+      toast.error('No pipeline to save');
+      return;
+    }
+    
     try {
-      // Update the pipeline with current values
+      setSaveStatus('saving');
+      
+      // Update the pipeline with current values - status is stored as-is
       await updatePipeline({ 
         name, 
-        status: status as 'draft' | 'processing' | 'completed' | 'failed',
+        status: status as any,
         tags: selectedTags 
       });
       
       setHasUnsavedChanges(false);
+      setSaveStatus('saved');
+      
+      // Reset to idle after 2 seconds
+      setTimeout(() => setSaveStatus('idle'), 2000);
       
       // Invalidate queries to refresh the grid/kanban
       queryClient.invalidateQueries({ queryKey: ['files', currentProjectId] });
       queryClient.invalidateQueries({ queryKey: ['pipelines', currentProjectId] });
       
-      toast.success('Changes saved');
       onSuccess?.();
     } catch (error) {
+      setSaveStatus('idle');
       toast.error('Failed to save changes');
     }
   };
@@ -338,9 +353,24 @@ export default function PipelineModal({
           {/* Spacer to push save/close to right */}
           <div className="flex-1" />
           
-          {/* Save and Close buttons */}
-          <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" onClick={handleSave} className="h-8">
+          {/* Auto-save indicator and Save/Close buttons */}
+          <div className="flex items-center gap-3">
+            {saveStatus !== 'idle' && (
+              <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                {saveStatus === 'saving' ? (
+                  <>
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    <span>Saving...</span>
+                  </>
+                ) : (
+                  <>
+                    <Check className="h-3.5 w-3.5 text-emerald-500" />
+                    <span className="text-emerald-500">Saved</span>
+                  </>
+                )}
+              </div>
+            )}
+            <Button variant="outline" size="sm" onClick={handleSave} className="h-8" disabled={saveStatus === 'saving'}>
               <Save className="h-4 w-4 mr-1.5" />
               Save
             </Button>

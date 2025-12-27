@@ -56,6 +56,7 @@ export function usePipeline(pipelineId: string | null) {
       projectId: string; 
       folderId?: string; 
       name?: string;
+      status?: string;
     }) => {
       if (!user) throw new Error('Not authenticated');
       
@@ -66,7 +67,7 @@ export function usePipeline(pipelineId: string | null) {
           folder_id: params.folderId || null,
           user_id: user.id,
           name: params.name || 'Untitled',
-          status: 'draft',
+          status: params.status || 'draft',
           current_stage: 'first_frame',
         })
         .select()
