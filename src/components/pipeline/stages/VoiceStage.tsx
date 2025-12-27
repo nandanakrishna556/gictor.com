@@ -1,50 +1,143 @@
-import React, { useState } from 'react';
-import { usePipeline } from '@/hooks/usePipeline';
-import { generateVoice } from '@/lib/pipeline-service';
-import { calculateVoiceCost } from '@/types/pipeline';
-import StageLayout from './StageLayout';
+import React, { useState, useEffect, useRef } from 'react';
 import { Label } from '@/components/ui/label';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Slider } from '@/components/ui/slider';
-import { SingleImageUpload } from '@/components/ui/single-image-upload';
-import { toast } from 'sonner';
-import { Play, Pause } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Slider } from '@/components/ui/slider';
+import { Upload, Sparkles, Play, Pause, Star, ChevronDown } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { usePipeline } from '@/hooks/usePipeline';
+import { generateVoice, getAudioDuration } from '@/lib/pipeline-service';
+import { calculateVoiceCost } from '@/types/pipeline';
+import { toast } from 'sonner';
+import StageLayout from './StageLayout';
+import { uploadToR2 } from '@/lib/cloudflare-upload';
 
 interface VoiceStageProps {
   pipelineId: string;
   onContinue: () => void;
 }
 
+type InputMode = 'generate' | 'upload';
+
+// ElevenLabs voices
 const VOICES = [
-  { id: 'rachel', name: 'Rachel', description: 'Calm and natural' },
-  { id: 'drew', name: 'Drew', description: 'Well-rounded and versatile' },
-  { id: 'clyde', name: 'Clyde', description: 'War veteran, gruff' },
-  { id: 'paul', name: 'Paul', description: 'Ground reporter, authoritative' },
-  { id: 'domi', name: 'Domi', description: 'Strong and confident' },
-  { id: 'dave', name: 'Dave', description: 'Conversational, video essays' },
+  { id: 'EXAVITQu4vr4xnSDxMaL', name: 'Sarah', gender: 'female', accent: 'American' },
+  { id: '21m00Tcm4TlvDq8ikWAM', name: 'Rachel', gender: 'female', accent: 'American' },
+  { id: 'AZnzlk1XvdvUeBnXmlld', name: 'Domi', gender: 'female', accent: 'American' },
+  { id: 'ErXwobaYiN019PkySvjV', name: 'Antoni', gender: 'male', accent: 'American' },
+  { id: 'MF3mGyEYCl7XYWbV9V6O', name: 'Elli', gender: 'female', accent: 'American' },
+  { id: 'TxGEqnHWrfWFTfGW9XjX', name: 'Josh', gender: 'male', accent: 'American' },
+  { id: 'VR6AewLTigWG4xSOukaG', name: 'Arnold', gender: 'male', accent: 'American' },
+  { id: 'pNInz6obpgDQGcFmaJgB', name: 'Adam', gender: 'male', accent: 'American' },
 ];
 
 export default function VoiceStage({ pipelineId, onContinue }: VoiceStageProps) {
   const { pipeline, updateVoice, isUpdating } = usePipeline(pipelineId);
   
-  const [mode, setMode] = useState<'generate' | 'upload'>(pipeline?.voice_input?.mode || 'generate');
-  const [voiceId, setVoiceId] = useState(pipeline?.voice_input?.voice_id || 'rachel');
-  const [stability, setStability] = useState(pipeline?.voice_input?.voice_settings?.stability || 0.5);
-  const [similarity, setSimilarity] = useState(pipeline?.voice_input?.voice_settings?.similarity || 0.75);
-  const [speed, setSpeed] = useState(pipeline?.voice_input?.voice_settings?.speed || 1.0);
-  const [uploadedUrl, setUploadedUrl] = useState(pipeline?.voice_input?.uploaded_url || '');
-  const [isGenerating, setIsGenerating] = useState(false);
+  // Input state
+  const [mode, setMode] = useState<InputMode>('generate');
+  const [selectedVoice, setSelectedVoice] = useState(VOICES[0]);
+  const [voiceSettings, setVoiceSettings] = useState({
+    stability: 0.5,
+    similarity: 0.75,
+    speed: 1.0,
+  });
+  const [uploadedUrl, setUploadedUrl] = useState('');
+  const [voiceOpen, setVoiceOpen] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+  
+  // Playback state
   const [isPlaying, setIsPlaying] = useState(false);
-  const [audioRef, setAudioRef] = useState<HTMLAudioElement | null>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  
+  // Generation state
+  const [isGenerating, setIsGenerating] = useState(false);
 
-  const hasOutput = !!pipeline?.voice_output?.url;
-  const outputUrl = pipeline?.voice_output?.url;
-  const duration = pipeline?.voice_output?.duration_seconds || 0;
+  // Get script from previous stage
   const scriptText = pipeline?.script_output?.text || '';
   const charCount = scriptText.length;
-  const creditsCost = mode === 'upload' ? 0 : calculateVoiceCost(charCount);
+  const estimatedCost = calculateVoiceCost(charCount);
+
+  // Load existing data
+  useEffect(() => {
+    if (pipeline?.voice_input) {
+      const input = pipeline.voice_input;
+      setMode(input.mode || 'generate');
+      if (input.voice_id) {
+        const voice = VOICES.find(v => v.id === input.voice_id);
+        if (voice) setSelectedVoice(voice);
+      }
+      if (input.voice_settings) {
+        setVoiceSettings(input.voice_settings);
+      }
+      setUploadedUrl(input.uploaded_url || '');
+    }
+  }, [pipeline?.voice_input]);
+
+  // Save input changes
+  const saveInput = async () => {
+    await updateVoice({
+      input: {
+        mode,
+        voice_id: selectedVoice.id,
+        voice_settings: voiceSettings,
+        uploaded_url: uploadedUrl,
+      },
+    });
+  };
+
+  useEffect(() => {
+    const timer = setTimeout(saveInput, 500);
+    return () => clearTimeout(timer);
+  }, [mode, selectedVoice, voiceSettings, uploadedUrl]);
+
+  const togglePlayback = () => {
+    const outputUrl = pipeline?.voice_output?.url;
+    if (!outputUrl) return;
+
+    if (!audioRef.current) {
+      audioRef.current = new Audio(outputUrl);
+      audioRef.current.onended = () => setIsPlaying(false);
+    }
+
+    if (isPlaying) {
+      audioRef.current.pause();
+      setIsPlaying(false);
+    } else {
+      audioRef.current.play();
+      setIsPlaying(true);
+    }
+  };
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('audio/')) {
+      toast.error('Please upload an audio file');
+      return;
+    }
+
+    setIsUploading(true);
+    try {
+      const url = await uploadToR2(file, { folder: 'pipeline-voices' });
+      setUploadedUrl(url);
+      
+      const duration = await getAudioDuration(url);
+      
+      await updateVoice({
+        input: { mode: 'upload', uploaded_url: url },
+        output: { url, duration_seconds: duration, generated_at: new Date().toISOString() },
+        complete: true,
+      });
+      
+      toast.success('Voice uploaded successfully!');
+    } catch (error) {
+      toast.error('Failed to upload audio');
+    } finally {
+      setIsUploading(false);
+    }
+  };
 
   const handleGenerate = async () => {
     if (mode === 'upload') {
@@ -52,48 +145,28 @@ export default function VoiceStage({ pipelineId, onContinue }: VoiceStageProps) 
         toast.error('Please upload an audio file first');
         return;
       }
-      // Get duration from uploaded audio
-      const audio = new Audio(uploadedUrl);
-      await new Promise((resolve) => {
-        audio.addEventListener('loadedmetadata', resolve);
-        audio.src = uploadedUrl;
-      });
-      
-      await updateVoice({
-        input: { mode: 'upload', uploaded_url: uploadedUrl },
-        output: { url: uploadedUrl, duration_seconds: audio.duration, generated_at: new Date().toISOString() },
-        complete: true,
-      });
-      toast.success('Audio saved');
       return;
     }
 
     if (!scriptText) {
-      toast.error('No script available. Please complete the Script stage first.');
+      toast.error('No script available', { description: 'Please complete the Script stage first' });
       return;
     }
 
     setIsGenerating(true);
     try {
-      await updateVoice({
-        input: { 
-          mode: 'generate', 
-          voice_id: voiceId, 
-          voice_settings: { stability, similarity, speed } 
-        },
-      });
-
       const result = await generateVoice(pipelineId, {
         script_text: scriptText,
-        voice_id: voiceId,
-        voice_settings: { stability, similarity, speed },
+        voice_id: selectedVoice.id,
+        voice_settings: voiceSettings,
       });
 
       if (!result.success) {
         toast.error(result.error || 'Generation failed');
-      } else {
-        toast.success('Generation started');
+        return;
       }
+
+      toast.success('Voice generation started!');
     } catch (error) {
       toast.error('Failed to start generation');
     } finally {
@@ -101,35 +174,15 @@ export default function VoiceStage({ pipelineId, onContinue }: VoiceStageProps) 
     }
   };
 
-  const handleRegenerate = () => {
-    handleGenerate();
-  };
-
   const handleContinue = () => {
-    if (hasOutput) {
+    if (pipeline?.voice_output?.url) {
       updateVoice({ complete: true });
       onContinue();
     }
   };
 
-  const togglePlayback = () => {
-    if (!outputUrl) return;
-    
-    if (audioRef) {
-      if (isPlaying) {
-        audioRef.pause();
-      } else {
-        audioRef.play();
-      }
-      setIsPlaying(!isPlaying);
-    } else {
-      const audio = new Audio(outputUrl);
-      audio.onended = () => setIsPlaying(false);
-      audio.play();
-      setAudioRef(audio);
-      setIsPlaying(true);
-    }
-  };
+  const hasOutput = !!pipeline?.voice_output?.url;
+  const outputAudio = pipeline?.voice_output;
 
   const formatDuration = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
@@ -139,111 +192,165 @@ export default function VoiceStage({ pipelineId, onContinue }: VoiceStageProps) 
 
   const inputContent = (
     <div className="space-y-6">
-      {/* Mode Selection */}
-      <div className="space-y-2">
-        <Label>Mode</Label>
-        <RadioGroup value={mode} onValueChange={(v) => setMode(v as 'generate' | 'upload')} className="flex gap-4">
-          <div className="flex items-center space-x-2">
-            <RadioGroupItem value="generate" id="generate-voice" />
-            <Label htmlFor="generate-voice" className="font-normal cursor-pointer">Generate</Label>
-          </div>
-          <div className="flex items-center space-x-2">
-            <RadioGroupItem value="upload" id="upload-voice" />
-            <Label htmlFor="upload-voice" className="font-normal cursor-pointer">Upload</Label>
-          </div>
-        </RadioGroup>
+      {/* Mode Toggle */}
+      <div className="flex gap-1 p-1 bg-muted rounded-lg">
+        <button
+          type="button"
+          onClick={() => setMode('generate')}
+          className={cn(
+            "flex-1 flex items-center justify-center gap-2 rounded-lg py-2.5 text-sm font-medium transition-all",
+            mode === 'generate'
+              ? "bg-background text-foreground shadow-sm"
+              : "text-muted-foreground hover:text-foreground"
+          )}
+        >
+          <Sparkles className="h-4 w-4" />
+          Generate
+        </button>
+        <button
+          type="button"
+          onClick={() => setMode('upload')}
+          className={cn(
+            "flex-1 flex items-center justify-center gap-2 rounded-lg py-2.5 text-sm font-medium transition-all",
+            mode === 'upload'
+              ? "bg-background text-foreground shadow-sm"
+              : "text-muted-foreground hover:text-foreground"
+          )}
+        >
+          <Upload className="h-4 w-4" />
+          Upload
+        </button>
       </div>
 
       {mode === 'generate' ? (
         <>
           {/* Script Preview */}
           <div className="space-y-2">
-            <Label>Script ({charCount} characters)</Label>
-            <div className="bg-muted/50 rounded-lg p-3 max-h-24 overflow-auto text-sm">
-              {scriptText || <span className="text-muted-foreground">No script available</span>}
+            <Label>Script to voice ({charCount.toLocaleString()} characters)</Label>
+            <div className="bg-muted/50 rounded-xl p-4 max-h-32 overflow-y-auto">
+              <p className="text-sm text-muted-foreground whitespace-pre-wrap">
+                {scriptText || 'No script available'}
+              </p>
             </div>
           </div>
 
-          {/* Voice Selection */}
-          <div className="space-y-2">
-            <Label>Voice</Label>
-            <Select value={voiceId} onValueChange={setVoiceId}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
+          {/* Voice Selector */}
+          <Collapsible open={voiceOpen} onOpenChange={setVoiceOpen}>
+            <CollapsibleTrigger asChild>
+              <button 
+                type="button"
+                className="flex w-full items-center justify-between rounded-xl border bg-background p-4 hover:bg-secondary/50 transition-colors"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-lg">
+                    🎙️
+                  </div>
+                  <div className="text-left">
+                    <p className="font-medium">{selectedVoice.name}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {selectedVoice.gender} • {selectedVoice.accent}
+                    </p>
+                  </div>
+                </div>
+                <ChevronDown className={cn("h-4 w-4 transition-transform", voiceOpen && "rotate-180")} />
+              </button>
+            </CollapsibleTrigger>
+
+            <CollapsibleContent className="mt-2 space-y-4">
+              <div className="grid grid-cols-2 gap-2">
                 {VOICES.map((voice) => (
-                  <SelectItem key={voice.id} value={voice.id}>
-                    <div className="flex flex-col">
-                      <span>{voice.name}</span>
-                      <span className="text-xs text-muted-foreground">{voice.description}</span>
+                  <button
+                    key={voice.id}
+                    type="button"
+                    onClick={() => setSelectedVoice(voice)}
+                    className={cn(
+                      "flex items-center gap-3 rounded-lg p-3 text-left transition-all",
+                      selectedVoice.id === voice.id 
+                        ? "bg-primary/10 text-primary ring-1 ring-primary" 
+                        : "bg-muted/50 hover:bg-secondary"
+                    )}
+                  >
+                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-secondary">
+                      <Play className="h-3 w-3" />
                     </div>
-                  </SelectItem>
+                    <div>
+                      <p className="font-medium text-sm">{voice.name}</p>
+                      <p className="text-xs text-muted-foreground">{voice.gender}</p>
+                    </div>
+                    {selectedVoice.id === voice.id && (
+                      <Star className="h-4 w-4 ml-auto fill-primary text-primary" />
+                    )}
+                  </button>
                 ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* Voice Settings */}
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <Label>Stability</Label>
-                <span className="text-sm text-muted-foreground">{stability.toFixed(2)}</span>
               </div>
-              <Slider
-                value={[stability]}
-                onValueChange={([v]) => setStability(v)}
-                min={0}
-                max={1}
-                step={0.05}
-              />
-            </div>
 
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <Label>Similarity</Label>
-                <span className="text-sm text-muted-foreground">{similarity.toFixed(2)}</span>
-              </div>
-              <Slider
-                value={[similarity]}
-                onValueChange={([v]) => setSimilarity(v)}
-                min={0}
-                max={1}
-                step={0.05}
-              />
-            </div>
+              {/* Voice Settings */}
+              <div className="space-y-4 pt-4 border-t">
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <Label className="text-sm">Stability</Label>
+                    <span className="text-sm text-muted-foreground">{voiceSettings.stability.toFixed(2)}</span>
+                  </div>
+                  <Slider
+                    value={[voiceSettings.stability]}
+                    onValueChange={([v]) => setVoiceSettings(s => ({ ...s, stability: v }))}
+                    min={0} max={1} step={0.05}
+                  />
+                </div>
 
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <Label>Speed</Label>
-                <span className="text-sm text-muted-foreground">{speed.toFixed(2)}x</span>
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <Label className="text-sm">Similarity</Label>
+                    <span className="text-sm text-muted-foreground">{voiceSettings.similarity.toFixed(2)}</span>
+                  </div>
+                  <Slider
+                    value={[voiceSettings.similarity]}
+                    onValueChange={([v]) => setVoiceSettings(s => ({ ...s, similarity: v }))}
+                    min={0} max={1} step={0.05}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <Label className="text-sm">Speed</Label>
+                    <span className="text-sm text-muted-foreground">{voiceSettings.speed.toFixed(1)}x</span>
+                  </div>
+                  <Slider
+                    value={[voiceSettings.speed]}
+                    onValueChange={([v]) => setVoiceSettings(s => ({ ...s, speed: v }))}
+                    min={0.5} max={2} step={0.1}
+                  />
+                </div>
               </div>
-              <Slider
-                value={[speed]}
-                onValueChange={([v]) => setSpeed(v)}
-                min={0.5}
-                max={2}
-                step={0.1}
-              />
-            </div>
-          </div>
+            </CollapsibleContent>
+          </Collapsible>
         </>
       ) : (
-        <div className="space-y-2">
-          <Label>Upload Audio</Label>
-          <SingleImageUpload
-            value={uploadedUrl}
-            onChange={setUploadedUrl}
-            className="h-32"
-          />
-          <p className="text-xs text-muted-foreground">Supported formats: MP3, WAV, M4A</p>
+        <div className="space-y-4">
+          <Label>Upload voice audio</Label>
+          <label className="flex flex-col items-center justify-center rounded-xl border-2 border-dashed p-8 cursor-pointer hover:border-primary/50 hover:bg-secondary/50 transition-colors">
+            <input
+              type="file"
+              accept="audio/*"
+              onChange={handleFileUpload}
+              className="hidden"
+              disabled={isUploading}
+            />
+            <Upload className="h-8 w-8 text-muted-foreground mb-2" />
+            <p className="text-sm text-muted-foreground">
+              {isUploading ? 'Uploading...' : 'Drag & drop or browse'}
+            </p>
+            <p className="text-xs text-muted-foreground mt-1">MP3, WAV, M4A • Max 50MB</p>
+          </label>
+          {uploadedUrl && (
+            <audio src={uploadedUrl} controls className="w-full" />
+          )}
         </div>
       )}
     </div>
   );
 
-  const outputContent = outputUrl ? (
+  const outputContent = outputAudio ? (
     <div className="flex flex-col items-center justify-center h-full gap-6">
       <div className="w-32 h-32 rounded-full bg-primary/10 flex items-center justify-center">
         <Button
@@ -260,27 +367,26 @@ export default function VoiceStage({ pipelineId, onContinue }: VoiceStageProps) 
         </Button>
       </div>
       <div className="text-center">
-        <p className="text-lg font-medium">{formatDuration(duration)}</p>
+        <p className="text-lg font-medium">{formatDuration(outputAudio.duration_seconds)}</p>
         <p className="text-sm text-muted-foreground">Duration</p>
       </div>
-      <audio src={outputUrl} className="hidden" />
     </div>
   ) : null;
 
   return (
     <StageLayout
-      inputTitle="Voice Input"
+      inputTitle="Input"
       inputContent={inputContent}
-      outputTitle="Voice Output"
+      outputTitle="Generated Voice"
       outputContent={outputContent}
       hasOutput={hasOutput}
       onGenerate={handleGenerate}
-      onRegenerate={handleRegenerate}
+      onRegenerate={handleGenerate}
       onContinue={handleContinue}
-      isGenerating={isGenerating || isUpdating}
+      isGenerating={isGenerating || isUploading || isUpdating}
       canContinue={hasOutput}
-      generateLabel={mode === 'upload' ? 'Save Audio' : 'Generate Voice'}
-      creditsCost={mode === 'upload' ? 'Free' : `${creditsCost.toFixed(2)} credits`}
+      generateLabel={mode === 'upload' ? 'Use Uploaded Audio' : 'Generate Voice'}
+      creditsCost={mode === 'upload' ? 'Free' : `${estimatedCost.toFixed(2)} Credits`}
       showEditButton={false}
     />
   );
