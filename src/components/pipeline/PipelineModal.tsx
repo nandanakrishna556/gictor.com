@@ -74,17 +74,18 @@ export default function PipelineModal({
   const [name, setName] = useState('Untitled');
   const [currentProjectId, setCurrentProjectId] = useState(projectId);
   const [currentFolderId, setCurrentFolderId] = useState(folderId);
-  const [status, setStatus] = useState<string>(initialStatus || 'draft');
+  const [status, setStatus] = useState<string>('draft');
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [showUnsavedWarning, setShowUnsavedWarning] = useState(false);
   const pipelineLoadedRef = useRef(false);
 
+  // These are the ONLY allowed values for pipelines.status (DB constraint)
   const statusOptions = [
     { value: 'draft', label: 'Draft', color: 'bg-slate-500' },
-    { value: 'review', label: 'Review', color: 'bg-amber-500' },
-    { value: 'approved', label: 'Approved', color: 'bg-emerald-500' },
-    { value: 'rejected', label: 'Rejected', color: 'bg-red-500' },
+    { value: 'processing', label: 'Processing', color: 'bg-amber-500' },
+    { value: 'completed', label: 'Completed', color: 'bg-emerald-500' },
+    { value: 'failed', label: 'Failed', color: 'bg-red-500' },
   ];
   
   // Auto-save indicator states
@@ -273,18 +274,10 @@ export default function PipelineModal({
   };
 
 
-  // Show loading only when actually fetching existing pipeline data
-  if (isLoading && pipelineId) {
-    return (
-      <Dialog open={open} onOpenChange={handleClose}>
-        <DialogContent className="max-w-[1400px] h-[90vh] flex items-center justify-center">
-          <div className="flex flex-col items-center gap-4">
-            <Loader2 className="h-8 w-8 animate-spin text-primary" />
-            <p className="text-muted-foreground">Loading pipeline...</p>
-          </div>
-        </DialogContent>
-      </Dialog>
-    );
+  // Show nothing until pipeline data is loaded - no loading flash
+  // The pipeline is created before this modal opens, so data should be available quickly
+  if (!pipeline && pipelineId) {
+    return null; // Return nothing to prevent loading flash
   }
 
   return (

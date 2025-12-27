@@ -104,22 +104,24 @@ export default function CreateNewModal({
       onCreateFolder?.(initialStatus);
     } else if ('isPipeline' in type && type.isPipeline) {
       // Create the pipeline FIRST, then open the modal with the ID
+      // IMPORTANT: pipelines.status MUST be one of: 'draft', 'processing', 'completed', 'failed'
+      // The Kanban column name (initialStatus) is NOT the same as pipeline status
+      // We always use 'draft' for new pipelines
       setIsCreatingPipeline(true);
-      
-      const statusToUse = initialStatus || 'draft';
-      pipelineInitialStatusRef.current = statusToUse;
       
       try {
         const newPipeline = await createPipeline({
           projectId,
           folderId,
           name: 'Untitled',
-          status: statusToUse,
+          status: 'draft', // Always 'draft' - DB constraint only allows specific values
         });
         
-        setCreatedPipelineId(newPipeline.id);
-        setIsCreatingPipeline(false);
+        // Store the created pipeline ID and open modal immediately
+        const pipelineId = newPipeline.id;
+        setCreatedPipelineId(pipelineId);
         onOpenChange(false);
+        setIsCreatingPipeline(false);
         setPipelineModalOpen(true);
       } catch (error) {
         console.error('Failed to create pipeline:', error);
