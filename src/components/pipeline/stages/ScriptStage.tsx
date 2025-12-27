@@ -1,61 +1,93 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Slider } from '@/components/ui/slider';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Sparkles, FileText } from 'lucide-react';
+import { cn } from '@/lib/utils';
 import { usePipeline } from '@/hooks/usePipeline';
 import { generateScript } from '@/lib/pipeline-service';
 import { PIPELINE_CREDITS } from '@/types/pipeline';
-import StageLayout from './StageLayout';
-import { Textarea } from '@/components/ui/textarea';
-import { Label } from '@/components/ui/label';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Slider } from '@/components/ui/slider';
 import { toast } from 'sonner';
+import StageLayout from './StageLayout';
 
 interface ScriptStageProps {
   pipelineId: string;
   onContinue: () => void;
 }
 
-const SCRIPT_TYPES = [
-  { value: 'sales', label: 'Sales' },
-  { value: 'educational', label: 'Educational' },
-  { value: 'entertainment', label: 'Entertainment' },
-  { value: 'tutorial', label: 'Tutorial' },
-  { value: 'story', label: 'Story' },
-  { value: 'other', label: 'Other' },
+type InputMode = 'generate' | 'paste';
+
+const scriptTypes = [
+  'Sales', 'Educational', 'Entertainment', 'Tutorial', 'Story', 'Other'
 ];
 
 export default function ScriptStage({ pipelineId, onContinue }: ScriptStageProps) {
   const { pipeline, updateScript, isUpdating } = usePipeline(pipelineId);
   
-  const [mode, setMode] = useState<'generate' | 'paste'>(pipeline?.script_input?.mode || 'generate');
-  const [description, setDescription] = useState(pipeline?.script_input?.description || '');
-  const [scriptType, setScriptType] = useState<string>(pipeline?.script_input?.script_type || 'sales');
-  const [durationSeconds, setDurationSeconds] = useState(pipeline?.script_input?.duration_seconds || 30);
-  const [pastedText, setPastedText] = useState(pipeline?.script_input?.pasted_text || '');
+  // Input state
+  const [mode, setMode] = useState<InputMode>('generate');
+  const [description, setDescription] = useState('');
+  const [scriptType, setScriptType] = useState('Sales');
+  const [duration, setDuration] = useState(60);
+  const [pastedText, setPastedText] = useState('');
+  
+  // Generation state
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
 
-  const hasOutput = !!pipeline?.script_output?.text;
-  const outputText = pipeline?.script_output?.text;
-  const charCount = pipeline?.script_output?.char_count || 0;
-  const estimatedDuration = pipeline?.script_output?.estimated_duration || 0;
+  // Load existing data
+  useEffect(() => {
+    if (pipeline?.script_input) {
+      const input = pipeline.script_input;
+      setMode(input.mode || 'generate');
+      setDescription(input.description || '');
+      setScriptType(input.script_type ? input.script_type.charAt(0).toUpperCase() + input.script_type.slice(1) : 'Sales');
+      setDuration(input.duration_seconds || 60);
+      setPastedText(input.pasted_text || '');
+    }
+  }, [pipeline?.script_input]);
+
+  // Save input changes
+  const saveInput = async () => {
+    await updateScript({
+      input: {
+        mode,
+        description,
+        script_type: scriptType.toLowerCase() as any,
+        duration_seconds: duration,
+        pasted_text: pastedText,
+      },
+    });
+  };
+
+  // Auto-save on changes
+  useEffect(() => {
+    const timer = setTimeout(saveInput, 500);
+    return () => clearTimeout(timer);
+  }, [mode, description, scriptType, duration, pastedText]);
+
+  const formatDuration = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
 
   const handleGenerate = async () => {
     if (mode === 'paste') {
       if (!pastedText.trim()) {
-        toast.error('Please paste a script');
+        toast.error('Please paste a script first');
         return;
       }
-      const text = pastedText.trim();
       await updateScript({
-        input: { mode: 'paste', pasted_text: text },
-        output: { 
-          text, 
-          char_count: text.length, 
-          estimated_duration: Math.ceil(text.length / 15) // ~15 chars per second
+        output: {
+          text: pastedText,
+          char_count: pastedText.length,
+          estimated_duration: Math.ceil(pastedText.length / 15),
         },
         complete: true,
       });
-      toast.success('Script saved');
+      toast.success('Script saved!');
       return;
     }
 
@@ -66,158 +98,178 @@ export default function ScriptStage({ pipelineId, onContinue }: ScriptStageProps
 
     setIsGenerating(true);
     try {
-      await updateScript({
-        input: { mode: 'generate', description, script_type: scriptType as any, duration_seconds: durationSeconds },
-      });
-
-      const result = await generateScript(pipelineId, {
-        description,
-        script_type: scriptType,
-        duration_seconds: durationSeconds,
-      });
+      const previousScript = isEditing ? pipeline?.script_output?.text : undefined;
+      
+      const result = await generateScript(
+        pipelineId,
+        { 
+          description, 
+          script_type: scriptType.toLowerCase(), 
+          duration_seconds: duration 
+        },
+        isEditing,
+        previousScript
+      );
 
       if (!result.success) {
         toast.error(result.error || 'Generation failed');
-      } else {
-        toast.success('Generation started');
+        return;
       }
+
+      toast.success('Script generation started!');
     } catch (error) {
       toast.error('Failed to start generation');
     } finally {
       setIsGenerating(false);
+      setIsEditing(false);
     }
   };
 
-  const handleRegenerate = () => {
-    handleGenerate();
+  const handleRegenerate = async () => {
+    setIsEditing(false);
+    await handleGenerate();
+  };
+
+  const handleEdit = () => {
+    setIsEditing(true);
+    setDescription('');
   };
 
   const handleContinue = () => {
-    if (hasOutput) {
+    if (pipeline?.script_output?.text) {
       updateScript({ complete: true });
       onContinue();
     }
   };
 
-  const formatDuration = (seconds: number) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
-  };
+  const hasOutput = !!pipeline?.script_output?.text;
+  const outputScript = pipeline?.script_output;
 
   const inputContent = (
     <div className="space-y-6">
-      {/* Mode Selection */}
-      <div className="space-y-2">
-        <Label>Mode</Label>
-        <RadioGroup value={mode} onValueChange={(v) => setMode(v as 'generate' | 'paste')} className="flex gap-4">
-          <div className="flex items-center space-x-2">
-            <RadioGroupItem value="generate" id="generate-script" />
-            <Label htmlFor="generate-script" className="font-normal cursor-pointer">Generate</Label>
-          </div>
-          <div className="flex items-center space-x-2">
-            <RadioGroupItem value="paste" id="paste-script" />
-            <Label htmlFor="paste-script" className="font-normal cursor-pointer">Paste</Label>
-          </div>
-        </RadioGroup>
+      {/* Mode Toggle */}
+      <div className="flex gap-1 p-1 bg-muted rounded-lg">
+        <button
+          type="button"
+          onClick={() => setMode('generate')}
+          className={cn(
+            "flex-1 flex items-center justify-center gap-2 rounded-lg py-2.5 text-sm font-medium transition-all",
+            mode === 'generate'
+              ? "bg-background text-foreground shadow-sm"
+              : "text-muted-foreground hover:text-foreground"
+          )}
+        >
+          <Sparkles className="h-4 w-4" />
+          Generate
+        </button>
+        <button
+          type="button"
+          onClick={() => setMode('paste')}
+          className={cn(
+            "flex-1 flex items-center justify-center gap-2 rounded-lg py-2.5 text-sm font-medium transition-all",
+            mode === 'paste'
+              ? "bg-background text-foreground shadow-sm"
+              : "text-muted-foreground hover:text-foreground"
+          )}
+        >
+          <FileText className="h-4 w-4" />
+          Paste Script
+        </button>
       </div>
 
       {mode === 'generate' ? (
         <>
+          {/* Duration */}
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <Label>Estimated duration</Label>
+              <span className="text-sm font-medium">{formatDuration(duration)}</span>
+            </div>
+            <Slider
+              value={[duration]}
+              onValueChange={([v]) => setDuration(v)}
+              min={30}
+              max={300}
+              step={15}
+            />
+            <p className="text-xs text-muted-foreground">
+              ~{Math.round(duration * 15).toLocaleString()} characters
+            </p>
+          </div>
+
           {/* Script Type */}
           <div className="space-y-2">
-            <Label>Script Type</Label>
+            <Label>Script type</Label>
             <Select value={scriptType} onValueChange={setScriptType}>
-              <SelectTrigger>
+              <SelectTrigger className="rounded-xl">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {SCRIPT_TYPES.map((type) => (
-                  <SelectItem key={type.value} value={type.value}>
-                    {type.label}
-                  </SelectItem>
+                {scriptTypes.map((type) => (
+                  <SelectItem key={type} value={type}>{type}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
           </div>
 
-          {/* Duration */}
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <Label>Duration</Label>
-              <span className="text-sm text-muted-foreground">{formatDuration(durationSeconds)}</span>
-            </div>
-            <Slider
-              value={[durationSeconds]}
-              onValueChange={([v]) => setDurationSeconds(v)}
-              min={15}
-              max={120}
-              step={5}
-            />
-          </div>
-
           {/* Description */}
           <div className="space-y-2">
-            <Label>Description</Label>
+            <Label>
+              Description {isEditing && <span className="text-primary text-xs ml-2">(Edit Mode)</span>}
+            </Label>
             <Textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              placeholder="Describe what the script should be about..."
-              rows={6}
+              placeholder={isEditing ? "Describe the changes you want..." : "Describe what the script should be about..."}
+              className="min-h-32 rounded-xl resize-none"
             />
           </div>
         </>
       ) : (
         <div className="space-y-2">
-          <Label>Paste Script</Label>
+          <Label>Paste your script</Label>
           <Textarea
             value={pastedText}
             onChange={(e) => setPastedText(e.target.value)}
             placeholder="Paste your script here..."
-            rows={12}
+            className="min-h-64 rounded-xl resize-none"
           />
-          <p className="text-xs text-muted-foreground">
-            {pastedText.length} characters • ~{formatDuration(Math.ceil(pastedText.length / 15))} estimated
+          <p className="text-sm text-muted-foreground">
+            {pastedText.length.toLocaleString()} characters • ~{Math.ceil(pastedText.length / 15)} seconds
           </p>
         </div>
       )}
     </div>
   );
 
-  const outputContent = outputText ? (
-    <div className="space-y-4">
-      <div className="bg-background rounded-lg border p-4 max-h-96 overflow-auto">
-        <p className="whitespace-pre-wrap">{outputText}</p>
+  const outputContent = outputScript ? (
+    <div className="w-full max-w-lg mx-auto space-y-4">
+      <div className="bg-muted/50 rounded-xl p-4 max-h-96 overflow-y-auto">
+        <p className="whitespace-pre-wrap text-sm leading-relaxed">{outputScript.text}</p>
       </div>
-      <div className="flex items-center gap-4 text-sm text-muted-foreground">
-        <span>{charCount} characters</span>
-        <span>•</span>
-        <span>~{formatDuration(estimatedDuration)} estimated</span>
+      <div className="flex justify-between text-sm text-muted-foreground">
+        <span>{outputScript.char_count?.toLocaleString()} characters</span>
+        <span>~{outputScript.estimated_duration} seconds</span>
       </div>
     </div>
   ) : null;
 
   return (
     <StageLayout
-      inputTitle="Script Input"
+      inputTitle="Input"
       inputContent={inputContent}
-      outputTitle="Script Output"
+      outputTitle="Generated Script"
       outputContent={outputContent}
       hasOutput={hasOutput}
       onGenerate={handleGenerate}
       onRegenerate={handleRegenerate}
+      onEdit={handleEdit}
       onContinue={handleContinue}
       isGenerating={isGenerating || isUpdating}
       canContinue={hasOutput}
-      generateLabel={mode === 'paste' ? 'Save Script' : 'Generate'}
-      creditsCost={mode === 'paste' ? 'Free' : `${PIPELINE_CREDITS.script} credits`}
-      showEditButton={true}
-      onEdit={() => {
-        if (outputText) {
-          setMode('paste');
-          setPastedText(outputText);
-        }
-      }}
+      generateLabel={mode === 'paste' ? 'Use Pasted Script' : (isEditing ? 'Edit Script' : 'Generate Script')}
+      creditsCost={mode === 'paste' ? 'Free' : `${PIPELINE_CREDITS.script} Credits`}
+      showEditButton={mode === 'generate' && hasOutput}
     />
   );
 }
