@@ -1,4 +1,7 @@
 import { useState, ReactNode } from 'react';
+import { Menu } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import AppSidebar from './AppSidebar';
 
 interface MainLayoutProps {
@@ -7,10 +10,31 @@ interface MainLayoutProps {
 
 export default function MainLayout({ children }: MainLayoutProps) {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
     <div className="flex min-h-screen w-full bg-background">
-      <AppSidebar collapsed={sidebarCollapsed} onCollapse={setSidebarCollapsed} />
+      {/* Desktop Sidebar */}
+      <div className="hidden md:block">
+        <AppSidebar collapsed={sidebarCollapsed} onCollapse={setSidebarCollapsed} />
+      </div>
+
+      {/* Mobile Sidebar */}
+      <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
+        <SheetTrigger asChild>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="fixed left-4 top-4 z-50 md:hidden"
+          >
+            <Menu className="h-5 w-5" />
+          </Button>
+        </SheetTrigger>
+        <SheetContent side="left" className="w-80 p-0">
+          <AppSidebar collapsed={false} onCollapse={() => setMobileOpen(false)} />
+        </SheetContent>
+      </Sheet>
+
       <main className="flex-1 overflow-hidden">{children}</main>
     </div>
   );

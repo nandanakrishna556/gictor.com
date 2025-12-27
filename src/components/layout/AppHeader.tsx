@@ -74,10 +74,10 @@ export default function AppHeader({
   };
 
   return (
-    <header className="flex h-16 items-center justify-between border-b border-border bg-background px-6">
+    <header className="flex h-14 sm:h-16 items-center justify-between border-b border-border bg-background px-4 sm:px-6">
       {/* Breadcrumbs - scrollable container */}
-      <nav className="flex min-w-0 flex-1 items-center overflow-x-auto pr-4">
-        <div className="flex items-center gap-1 text-sm whitespace-nowrap">
+      <nav className="flex min-w-0 flex-1 items-center overflow-x-auto pr-2 sm:pr-4 ml-10 md:ml-0">
+        <div className="flex items-center gap-1 text-xs sm:text-sm whitespace-nowrap">
           {breadcrumbs.map((item, index) => (
             <div key={index} className="flex items-center gap-1">
               {item.href ? (
@@ -91,7 +91,7 @@ export default function AppHeader({
                 <span className="font-medium text-foreground">{item.label}</span>
               )}
               {index < breadcrumbs.length - 1 && (
-                <ChevronRight className="h-4 w-4 flex-shrink-0 text-muted-foreground" />
+                <ChevronRight className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0 text-muted-foreground" />
               )}
             </div>
           ))}
@@ -99,18 +99,18 @@ export default function AppHeader({
       </nav>
 
       {/* Actions */}
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-1.5 sm:gap-2">
         {/* Select, Search, Filter - Inline */}
         {showCreateButtons && (
           <>
-            <Button variant="outline" size="sm">
+            <Button variant="outline" size="sm" className="hidden sm:flex">
               Select
             </Button>
-            <div className="relative w-48">
-              <Search className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <div className="relative w-28 sm:w-48 hidden xs:block">
+              <Search className="absolute left-2 sm:left-2.5 top-1/2 h-3.5 w-3.5 sm:h-4 sm:w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
                 placeholder="Search..."
-                className="h-8 pl-8 text-sm"
+                className="h-7 sm:h-8 pl-7 sm:pl-8 text-xs sm:text-sm"
               />
             </div>
             <FilterPopover
@@ -133,23 +133,23 @@ export default function AppHeader({
           <div className="flex rounded-lg border border-border bg-secondary/50 p-0.5">
             <button
               onClick={() => onViewModeChange('grid')}
-              className={`rounded-md px-3 py-1.5 text-sm transition-apple ${
+              className={`rounded-md px-2 sm:px-3 py-1 sm:py-1.5 text-sm transition-apple ${
                 viewMode === 'grid'
                   ? 'bg-background font-medium text-foreground shadow-sm'
                   : 'text-muted-foreground hover:text-foreground'
               }`}
             >
-              <Grid3X3 className="h-4 w-4" />
+              <Grid3X3 className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
             </button>
             <button
               onClick={() => onViewModeChange('kanban')}
-              className={`rounded-md px-3 py-1.5 text-sm transition-apple ${
+              className={`rounded-md px-2 sm:px-3 py-1 sm:py-1.5 text-sm transition-apple ${
                 viewMode === 'kanban'
                   ? 'bg-background font-medium text-foreground shadow-sm'
                   : 'text-muted-foreground hover:text-foreground'
               }`}
             >
-              <Kanban className="h-4 w-4" />
+              <Kanban className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
             </button>
           </div>
         )}
@@ -159,10 +159,11 @@ export default function AppHeader({
           <Button
             size="sm"
             onClick={onCreateNew}
-            className="gap-2 rounded-lg bg-primary font-medium text-primary-foreground transition-apple hover:opacity-90"
+            className="gap-1.5 sm:gap-2 rounded-lg bg-primary font-medium text-primary-foreground transition-apple hover:opacity-90 text-xs sm:text-sm px-2.5 sm:px-3"
           >
-            <Plus className="h-4 w-4" />
-            Create new
+            <Plus className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+            <span className="hidden sm:inline">Create new</span>
+            <span className="sm:hidden">New</span>
           </Button>
         )}
 
@@ -170,9 +171,9 @@ export default function AppHeader({
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <button className="rounded-full outline-none ring-offset-2 transition-apple focus-visible:ring-2 focus-visible:ring-ring">
-              <Avatar className="h-9 w-9 border border-border">
+              <Avatar className="h-8 w-8 sm:h-9 sm:w-9 border border-border">
                 <AvatarImage src={profile?.avatar_url || undefined} />
-                <AvatarFallback className="bg-primary/10 text-sm font-medium text-primary">
+                <AvatarFallback className="bg-primary/10 text-xs sm:text-sm font-medium text-primary">
                   {getInitials(profile?.full_name, user?.email)}
                 </AvatarFallback>
               </Avatar>
