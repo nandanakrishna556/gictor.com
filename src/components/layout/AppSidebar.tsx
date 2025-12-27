@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { ChevronLeft, ChevronRight, ChevronDown, Plus, Sparkles, Layers, MoreHorizontal, Trash2, Pencil, Check, X, Zap, Sun, Moon, Briefcase } from 'lucide-react';
+import { ChevronLeft, ChevronRight, ChevronDown, Plus, Sparkles, Layers, MoreHorizontal, Trash2, Pencil, Check, X, Zap, Sun, Moon } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -17,6 +17,13 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from '@/components/ui/dialog';
 
 interface AppSidebarProps {
   collapsed: boolean;
@@ -33,17 +40,17 @@ export default function AppSidebar({ collapsed, onCollapse }: AppSidebarProps) {
   const [projectsOpen, setProjectsOpen] = useState(true);
   const [renamingProjectId, setRenamingProjectId] = useState<string | null>(null);
   const [renameValue, setRenameValue] = useState('');
+  const [newProjectDialogOpen, setNewProjectDialogOpen] = useState(false);
+  const [newProjectName, setNewProjectName] = useState('');
 
   const handleCreateProject = async () => {
-    const project = await createProject('Untitled Project');
+    if (!newProjectName.trim()) return;
+    const project = await createProject(newProjectName.trim());
     if (project) {
       navigate(`/projects/${project.id}`);
     }
-  };
-
-  const handleToggleProjects = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    setProjectsOpen(!projectsOpen);
+    setNewProjectDialogOpen(false);
+    setNewProjectName('');
   };
 
   const getInitials = (name?: string | null, email?: string | null) => {
@@ -75,83 +82,47 @@ export default function AppSidebar({ collapsed, onCollapse }: AppSidebarProps) {
         )}
       </div>
 
-      {/* Workspace Section */}
+      {/* Projects Section */}
       <div className="flex-1 overflow-y-auto p-4">
-        {/* Workspace Header */}
-        {!collapsed && (
-          <div className="mb-4 flex items-center gap-3 rounded-xl bg-sidebar-accent/50 p-3">
-            <Avatar className="h-10 w-10 border border-border">
-              <AvatarImage src={profile?.avatar_url || undefined} />
-              <AvatarFallback className="bg-primary/10 text-sm font-medium text-primary">
-                {getInitials(profile?.full_name, user?.email)}
-              </AvatarFallback>
-            </Avatar>
-            <div className="flex-1 min-w-0">
-              <p className="truncate text-sm font-semibold text-foreground">
-                {profile?.full_name || 'Workspace'}
-              </p>
-              <p className="truncate text-xs text-muted-foreground">Workspace</p>
-            </div>
-          </div>
-        )}
-
         {/* Projects Collapsible */}
         <Collapsible open={projectsOpen && !collapsed} onOpenChange={setProjectsOpen}>
-          <div
-            className={cn(
-              'flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium text-muted-foreground transition-all duration-200 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground cursor-pointer',
-              collapsed && 'justify-center px-2'
-            )}
-          >
-            {!collapsed && (
-              <>
-                <CollapsibleTrigger asChild>
-                  <button
-                    onClick={handleToggleProjects}
-                    className="p-0.5 rounded hover:bg-sidebar-accent"
-                  >
-                    <ChevronDown
-                      className={cn(
-                        'h-4 w-4 transition-transform',
-                        !projectsOpen && '-rotate-90'
-                      )}
-                    />
-                  </button>
-                </CollapsibleTrigger>
-                <Layers className="h-4 w-4" />
-                <span className="flex-1 text-left">Projects</span>
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleCreateProject();
-                  }}
-                  className="rounded p-1 hover:bg-sidebar-accent"
-                  title="New project"
-                >
-                  <Plus className="h-4 w-4" />
-                </button>
-              </>
-            )}
-            {collapsed && (
-              <button onClick={handleToggleProjects}>
-                <Layers className="h-5 w-5" />
-              </button>
-            )}
-          </div>
+          <CollapsibleTrigger asChild>
+            <button
+              className={cn(
+                'flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium text-muted-foreground transition-all duration-200 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground cursor-pointer',
+                collapsed && 'justify-center px-2'
+              )}
+            >
+              {!collapsed && (
+                <>
+                  <ChevronDown
+                    className={cn(
+                      'h-4 w-4 transition-transform',
+                      !projectsOpen && '-rotate-90'
+                    )}
+                  />
+                  <Layers className="h-4 w-4" />
+                  <span className="flex-1 text-left">Projects</span>
+                </>
+              )}
+              {collapsed && <Layers className="h-5 w-5" />}
+            </button>
+          </CollapsibleTrigger>
 
           <CollapsibleContent className="mt-1 space-y-1 pl-3">
             {projects?.map((project) => (
               <div
                 key={project.id}
+                onClick={() => navigate(`/projects/${project.id}`)}
                 className={cn(
-                  'group flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm transition-all duration-200',
+                  'group flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm transition-all duration-200 cursor-pointer',
                   projectId === project.id
                     ? 'bg-primary/10 font-medium text-primary'
                     : 'text-sidebar-foreground hover:bg-sidebar-accent'
                 )}
               >
                 {renamingProjectId === project.id ? (
-                  <div className="flex flex-1 items-center gap-1">
+                  <div className="flex flex-1 items-center gap-1" onClick={(e) => e.stopPropagation()}>
                     <Input
                       value={renameValue}
                       onChange={(e) => setRenameValue(e.target.value)}
@@ -186,13 +157,8 @@ export default function AppSidebar({ collapsed, onCollapse }: AppSidebarProps) {
                   </div>
                 ) : (
                   <>
-                    <button
-                      onClick={() => navigate(`/projects/${project.id}`)}
-                      className="flex flex-1 items-center gap-2 truncate"
-                    >
-                      <Layers className="h-4 w-4 shrink-0" />
-                      <span className="truncate">{project.name}</span>
-                    </button>
+                    <Layers className="h-4 w-4 shrink-0" />
+                    <span className="flex-1 truncate text-left">{project.name}</span>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <button
@@ -231,12 +197,51 @@ export default function AppSidebar({ collapsed, onCollapse }: AppSidebarProps) {
                 )}
               </div>
             ))}
+
+            {/* New Project Button */}
+            {!collapsed && (
+              <button
+                onClick={() => setNewProjectDialogOpen(true)}
+                className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-muted-foreground transition-all duration-200 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+              >
+                <Plus className="h-4 w-4" />
+                <span>New project</span>
+              </button>
+            )}
           </CollapsibleContent>
         </Collapsible>
       </div>
 
-      {/* Bottom Section - Credits, Dark Mode, Collapse */}
+      {/* Bottom Section - Workspace, Credits, Dark Mode, Collapse */}
       <div className="border-t border-border p-4 space-y-2">
+        {/* Workspace */}
+        {!collapsed && (
+          <div className="flex items-center gap-3 rounded-lg px-3 py-2.5">
+            <Avatar className="h-8 w-8 border border-border">
+              <AvatarImage src={profile?.avatar_url || undefined} />
+              <AvatarFallback className="bg-primary/10 text-xs font-medium text-primary">
+                {getInitials(profile?.full_name, user?.email)}
+              </AvatarFallback>
+            </Avatar>
+            <div className="flex-1 min-w-0">
+              <p className="truncate text-sm font-medium text-foreground">
+                {profile?.full_name || 'Workspace'}
+              </p>
+              <p className="truncate text-xs text-muted-foreground">Workspace</p>
+            </div>
+          </div>
+        )}
+        {collapsed && (
+          <div className="flex items-center justify-center rounded-lg p-2">
+            <Avatar className="h-8 w-8 border border-border">
+              <AvatarImage src={profile?.avatar_url || undefined} />
+              <AvatarFallback className="bg-primary/10 text-xs font-medium text-primary">
+                {getInitials(profile?.full_name, user?.email)}
+              </AvatarFallback>
+            </Avatar>
+          </div>
+        )}
+
         {/* Credits */}
         {!collapsed && (
           <Link
@@ -304,6 +309,36 @@ export default function AppSidebar({ collapsed, onCollapse }: AppSidebarProps) {
           )}
         </Button>
       </div>
+
+      {/* New Project Dialog */}
+      <Dialog open={newProjectDialogOpen} onOpenChange={setNewProjectDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Create New Project</DialogTitle>
+          </DialogHeader>
+          <div className="py-4">
+            <Input
+              placeholder="Project name"
+              value={newProjectName}
+              onChange={(e) => setNewProjectName(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && newProjectName.trim()) {
+                  handleCreateProject();
+                }
+              }}
+              autoFocus
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setNewProjectDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleCreateProject} disabled={!newProjectName.trim()}>
+              Create
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </aside>
   );
 }
