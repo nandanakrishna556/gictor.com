@@ -323,7 +323,7 @@ export default function FirstFrameStage({ pipelineId, onContinue, stageNavigatio
       outputContent={outputContent}
       hasOutput={hasOutput}
       onGenerate={handleGenerate}
-      onRegenerate={handleRegenerate}
+      onRemix={handleRegenerate}
       onEdit={handleEdit}
       onContinue={handleContinue}
       isGenerating={isGenerating || isUpdating}

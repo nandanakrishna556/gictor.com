@@ -1,6 +1,6 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { RefreshCw, Edit, ArrowRight, Loader2 } from 'lucide-react';
+import { Shuffle, Edit, ArrowRight, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface StageLayoutProps {
@@ -13,7 +13,7 @@ interface StageLayoutProps {
   
   // Actions
   onGenerate: () => void;
-  onRegenerate?: () => void;
+  onRemix?: () => void;
   onEdit?: () => void;
   onContinue: () => void;
   
@@ -23,7 +23,7 @@ interface StageLayoutProps {
   generateLabel: string;
   creditsCost: string;
   
-  // Optional - only show edit/regenerate for AI-generated content
+  // Optional - only show edit/remix for AI-generated content
   isAIGenerated?: boolean;
   
   // Output actions (download, copy, etc.)
@@ -38,7 +38,7 @@ export default function StageLayout({
   outputContent,
   hasOutput,
   onGenerate,
-  onRegenerate,
+  onRemix,
   onEdit,
   onContinue,
   isGenerating,
@@ -102,10 +102,10 @@ export default function StageLayout({
                         Edit
                       </Button>
                     )}
-                    {onRegenerate && (
-                      <Button variant="ghost" size="sm" onClick={onRegenerate} disabled={isGenerating}>
-                        <RefreshCw className={cn("h-4 w-4 mr-1.5", isGenerating && "animate-spin")} />
-                        Regenerate
+                    {onRemix && (
+                      <Button variant="ghost" size="sm" onClick={onRemix} disabled={isGenerating}>
+                        <Shuffle className={cn("h-4 w-4 mr-1.5", isGenerating && "animate-spin")} />
+                        Remix
                       </Button>
                     )}
                   </>

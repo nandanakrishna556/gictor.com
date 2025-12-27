@@ -11,6 +11,7 @@ import CreatePipelineDialog from '@/components/modals/CreatePipelineDialog';
 import CreateTagDialog from '@/components/modals/CreateTagDialog';
 import ConfirmDeleteDialog from '@/components/modals/ConfirmDeleteDialog';
 import { FileDetailModalEnhanced } from '@/components/files/FileDetailModalEnhanced';
+import PipelineModal from '@/components/pipeline/PipelineModal';
 import { useFiles, Folder, File } from '@/hooks/useFiles';
 import { useFileRealtime } from '@/hooks/useFileRealtime';
 import { usePipelines, Pipeline, PipelineStage, DEFAULT_STAGES } from '@/hooks/usePipelines';
@@ -43,6 +44,10 @@ export default function ProjectDetail() {
   
   // File detail modal state
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  
+  // Pipeline modal state for talking head files
+  const [pipelineModalOpen, setPipelineModalOpen] = useState(false);
+  const [openPipelineId, setOpenPipelineId] = useState<string | null>(null);
 
   // Fetch project details
   const { data: project } = useQuery({
@@ -274,6 +279,23 @@ export default function ProjectDetail() {
     setSelectedTags((prev) => prev.filter((t) => t !== id));
   };
 
+  // Handle file click - open pipeline modal for talking_head files, otherwise file detail modal
+  const handleFileClick = (file: File) => {
+    if (file.file_type === 'talking_head') {
+      // Extract pipeline_id from generation_params
+      const params = file.generation_params as { pipeline_id?: string } | null;
+      if (params?.pipeline_id) {
+        setOpenPipelineId(params.pipeline_id);
+        setPipelineModalOpen(true);
+      } else {
+        // Fallback to file detail modal if no pipeline_id
+        setSelectedFile(file);
+      }
+    } else {
+      setSelectedFile(file);
+    }
+  };
+
   // Only show loading state if projectId is missing, don't navigate away
   if (!projectId) {
     return (
@@ -363,7 +385,7 @@ export default function ProjectDetail() {
               onDeleteTag={handleDeleteTag}
               onDeleteFile={handleDeleteFileRequest}
               onDeleteFolder={handleDeleteFolderRequest}
-              onFileClick={(file) => setSelectedFile(file)}
+              onFileClick={handleFileClick}
               onUpdateFileStatus={handleUpdateFileStatus}
               onUpdateFileTags={handleUpdateFileTags}
               onUpdateFolderStatus={handleUpdateFolderStatus}
@@ -429,7 +451,7 @@ export default function ProjectDetail() {
               onDeleteTag={handleDeleteTag}
               onDeleteFile={handleDeleteFileRequest}
               onDeleteFolder={handleDeleteFolderRequest}
-              onFileClick={(file) => setSelectedFile(file)}
+              onFileClick={handleFileClick}
               onUpdateFileStatus={handleUpdateFileStatus}
               onUpdateFileTags={handleUpdateFileTags}
               onUpdateFolderStatus={handleUpdateFolderStatus}
@@ -535,6 +557,21 @@ export default function ProjectDetail() {
         } : null}
         isOpen={!!selectedFile}
         onClose={() => setSelectedFile(null)}
+      />
+
+      {/* Pipeline Modal for Talking Head files */}
+      <PipelineModal
+        open={pipelineModalOpen}
+        onClose={() => {
+          setPipelineModalOpen(false);
+          setOpenPipelineId(null);
+        }}
+        pipelineId={openPipelineId}
+        projectId={projectId}
+        folderId={folderId}
+        onSuccess={() => {
+          // Refresh files after save
+        }}
       />
     </MainLayout>
   );

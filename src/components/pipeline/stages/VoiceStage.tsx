@@ -412,7 +412,7 @@ export default function VoiceStage({ pipelineId, onContinue, stageNavigation }: 
       outputContent={outputContent}
       hasOutput={hasOutput}
       onGenerate={handleGenerate}
-      onRegenerate={handleGenerate}
+      onRemix={handleGenerate}
       onContinue={handleContinue}
       isGenerating={isGenerating || isUploading || isUpdating}
       canContinue={hasOutput}
