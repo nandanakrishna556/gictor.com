@@ -50,7 +50,7 @@ export default function AppSidebar({ collapsed, onCollapse }: AppSidebarProps) {
   };
 
   const handleProjectsClick = () => {
-    navigate('/projects');
+    setProjectsOpen(!projectsOpen);
   };
 
   const handleToggleProjects = (e: React.MouseEvent) => {
