@@ -1,33 +1,71 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { ImageUpload } from '@/components/ui/image-upload';
+import { SingleImageUpload } from '@/components/ui/single-image-upload';
+import { Upload, Sparkles } from 'lucide-react';
+import { cn } from '@/lib/utils';
 import { usePipeline } from '@/hooks/usePipeline';
 import { generateFirstFrame } from '@/lib/pipeline-service';
 import { PIPELINE_CREDITS } from '@/types/pipeline';
-import StageLayout from './StageLayout';
-import { Textarea } from '@/components/ui/textarea';
-import { Label } from '@/components/ui/label';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { SingleImageUpload } from '@/components/ui/single-image-upload';
 import { toast } from 'sonner';
+import StageLayout from './StageLayout';
 
 interface FirstFrameStageProps {
   pipelineId: string;
   onContinue: () => void;
 }
 
+type InputMode = 'generate' | 'upload';
+
 export default function FirstFrameStage({ pipelineId, onContinue }: FirstFrameStageProps) {
   const { pipeline, updateFirstFrame, isUpdating } = usePipeline(pipelineId);
   
-  const [mode, setMode] = useState<'generate' | 'upload'>(pipeline?.first_frame_input?.mode || 'generate');
-  const [prompt, setPrompt] = useState(pipeline?.first_frame_input?.prompt || '');
-  const [imageType, setImageType] = useState<'ugc' | 'studio'>(pipeline?.first_frame_input?.image_type || 'ugc');
-  const [aspectRatio, setAspectRatio] = useState<string>(pipeline?.first_frame_input?.aspect_ratio || '9:16');
-  const [referenceImages, setReferenceImages] = useState<string[]>(pipeline?.first_frame_input?.reference_images || []);
-  const [uploadedUrl, setUploadedUrl] = useState(pipeline?.first_frame_input?.uploaded_url || '');
+  // Input state
+  const [mode, setMode] = useState<InputMode>('generate');
+  const [prompt, setPrompt] = useState('');
+  const [imageType, setImageType] = useState<'ugc' | 'studio'>('ugc');
+  const [aspectRatio, setAspectRatio] = useState<'1:1' | '9:16' | '16:9'>('9:16');
+  const [referenceImages, setReferenceImages] = useState<string[]>([]);
+  const [uploadedUrl, setUploadedUrl] = useState('');
+  
+  // Generation state
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
 
-  const hasOutput = !!pipeline?.first_frame_output?.url;
-  const outputUrl = pipeline?.first_frame_output?.url;
+  // Load existing data
+  useEffect(() => {
+    if (pipeline?.first_frame_input) {
+      const input = pipeline.first_frame_input;
+      setMode(input.mode || 'generate');
+      setPrompt(input.prompt || '');
+      setImageType(input.image_type || 'ugc');
+      setAspectRatio(input.aspect_ratio || '9:16');
+      setReferenceImages(input.reference_images || []);
+      setUploadedUrl(input.uploaded_url || '');
+    }
+  }, [pipeline?.first_frame_input]);
+
+  // Save input changes
+  const saveInput = async () => {
+    await updateFirstFrame({
+      input: {
+        mode,
+        prompt,
+        image_type: imageType,
+        aspect_ratio: aspectRatio,
+        reference_images: referenceImages,
+        uploaded_url: uploadedUrl,
+      },
+    });
+  };
+
+  // Auto-save on changes
+  useEffect(() => {
+    const timer = setTimeout(saveInput, 500);
+    return () => clearTimeout(timer);
+  }, [mode, prompt, imageType, aspectRatio, referenceImages, uploadedUrl]);
 
   const handleGenerate = async () => {
     if (mode === 'upload') {
@@ -36,11 +74,13 @@ export default function FirstFrameStage({ pipelineId, onContinue }: FirstFrameSt
         return;
       }
       await updateFirstFrame({
-        input: { mode: 'upload', uploaded_url: uploadedUrl },
-        output: { url: uploadedUrl, generated_at: new Date().toISOString() },
+        output: {
+          url: uploadedUrl,
+          generated_at: new Date().toISOString(),
+        },
         complete: true,
       });
-      toast.success('Image saved');
+      toast.success('First frame saved!');
       return;
     }
 
@@ -51,79 +91,130 @@ export default function FirstFrameStage({ pipelineId, onContinue }: FirstFrameSt
 
     setIsGenerating(true);
     try {
-      await updateFirstFrame({
-        input: { mode: 'generate', prompt, image_type: imageType, aspect_ratio: aspectRatio as '1:1' | '9:16' | '16:9', reference_images: referenceImages },
-      });
-
-      const result = await generateFirstFrame(pipelineId, {
-        prompt,
-        image_type: imageType,
-        aspect_ratio: aspectRatio,
-        reference_images: referenceImages,
-      });
+      const previousImageUrl = isEditing ? pipeline?.first_frame_output?.url : undefined;
+      
+      const result = await generateFirstFrame(
+        pipelineId,
+        { prompt, image_type: imageType, aspect_ratio: aspectRatio, reference_images: referenceImages },
+        isEditing,
+        previousImageUrl
+      );
 
       if (!result.success) {
         toast.error(result.error || 'Generation failed');
-      } else {
-        toast.success('Generation started');
+        return;
       }
+
+      toast.success('First frame generation started!');
     } catch (error) {
       toast.error('Failed to start generation');
     } finally {
       setIsGenerating(false);
+      setIsEditing(false);
     }
   };
 
-  const handleRegenerate = () => {
-    handleGenerate();
+  const handleRegenerate = async () => {
+    setIsEditing(false);
+    await handleGenerate();
+  };
+
+  const handleEdit = () => {
+    setIsEditing(true);
+    setPrompt('');
+  };
+
+  const handleUploadComplete = async (url: string | undefined) => {
+    if (url) {
+      setUploadedUrl(url);
+      await updateFirstFrame({
+        input: { mode: 'upload', uploaded_url: url },
+        output: { url, generated_at: new Date().toISOString() },
+        complete: true,
+      });
+    }
   };
 
   const handleContinue = () => {
-    if (hasOutput) {
+    if (pipeline?.first_frame_output?.url) {
       updateFirstFrame({ complete: true });
       onContinue();
     }
   };
 
+  const hasOutput = !!pipeline?.first_frame_output?.url;
+  const outputUrl = pipeline?.first_frame_output?.url;
+
   const inputContent = (
     <div className="space-y-6">
-      {/* Mode Selection */}
-      <div className="space-y-2">
-        <Label>Mode</Label>
-        <RadioGroup value={mode} onValueChange={(v) => setMode(v as 'generate' | 'upload')} className="flex gap-4">
-          <div className="flex items-center space-x-2">
-            <RadioGroupItem value="generate" id="generate" />
-            <Label htmlFor="generate" className="font-normal cursor-pointer">Generate</Label>
-          </div>
-          <div className="flex items-center space-x-2">
-            <RadioGroupItem value="upload" id="upload" />
-            <Label htmlFor="upload" className="font-normal cursor-pointer">Upload</Label>
-          </div>
-        </RadioGroup>
+      {/* Mode Toggle */}
+      <div className="flex gap-1 p-1 bg-muted rounded-lg">
+        <button
+          type="button"
+          onClick={() => setMode('generate')}
+          className={cn(
+            "flex-1 flex items-center justify-center gap-2 rounded-lg py-2.5 text-sm font-medium transition-all",
+            mode === 'generate'
+              ? "bg-background text-foreground shadow-sm"
+              : "text-muted-foreground hover:text-foreground"
+          )}
+        >
+          <Sparkles className="h-4 w-4" />
+          Generate
+        </button>
+        <button
+          type="button"
+          onClick={() => setMode('upload')}
+          className={cn(
+            "flex-1 flex items-center justify-center gap-2 rounded-lg py-2.5 text-sm font-medium transition-all",
+            mode === 'upload'
+              ? "bg-background text-foreground shadow-sm"
+              : "text-muted-foreground hover:text-foreground"
+          )}
+        >
+          <Upload className="h-4 w-4" />
+          Upload
+        </button>
       </div>
 
       {mode === 'generate' ? (
         <>
           {/* Image Type */}
           <div className="space-y-2">
-            <Label>Image Type</Label>
-            <RadioGroup value={imageType} onValueChange={(v) => setImageType(v as 'ugc' | 'studio')} className="flex gap-4">
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="ugc" id="ugc" />
-                <Label htmlFor="ugc" className="font-normal cursor-pointer">UGC Style</Label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="studio" id="studio" />
-                <Label htmlFor="studio" className="font-normal cursor-pointer">Studio</Label>
-              </div>
-            </RadioGroup>
+            <Label>Image type</Label>
+            <div className="flex gap-1 p-1 bg-muted rounded-lg">
+              <button
+                type="button"
+                onClick={() => setImageType('ugc')}
+                className={cn(
+                  "flex-1 rounded-lg py-2 text-sm font-medium transition-all",
+                  imageType === 'ugc'
+                    ? "bg-background text-foreground shadow-sm"
+                    : "text-muted-foreground hover:text-foreground"
+                )}
+              >
+                UGC
+              </button>
+              <button
+                type="button"
+                onClick={() => setImageType('studio')}
+                className={cn(
+                  "flex-1 rounded-lg py-2 text-sm font-medium transition-all",
+                  imageType === 'studio'
+                    ? "bg-background text-foreground shadow-sm"
+                    : "text-muted-foreground hover:text-foreground"
+                )}
+              >
+                Studio
+              </button>
+            </div>
           </div>
 
           {/* Aspect Ratio */}
           <div className="space-y-2">
-            <Label>Aspect Ratio</Label>
-            <Select value={aspectRatio} onValueChange={setAspectRatio}>
-              <SelectTrigger>
+            <Label>Aspect ratio</Label>
+            <Select value={aspectRatio} onValueChange={(v) => setAspectRatio(v as '1:1' | '9:16' | '16:9')}>
+              <SelectTrigger className="rounded-xl">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -134,34 +225,31 @@ export default function FirstFrameStage({ pipelineId, onContinue }: FirstFrameSt
             </Select>
           </div>
 
+          {/* Reference Images */}
+          <div className="space-y-2">
+            <Label>Reference images (optional)</Label>
+            <ImageUpload onImagesChange={setReferenceImages} maxFiles={3} />
+          </div>
+
           {/* Prompt */}
           <div className="space-y-2">
-            <Label>Prompt</Label>
+            <Label>
+              Prompt {isEditing && <span className="text-primary text-xs ml-2">(Edit Mode)</span>}
+            </Label>
             <Textarea
               value={prompt}
               onChange={(e) => setPrompt(e.target.value)}
-              placeholder="Describe the image you want to generate..."
-              rows={4}
-            />
-          </div>
-
-          {/* Reference Images */}
-          <div className="space-y-2">
-            <Label>Reference Images (optional)</Label>
-            <SingleImageUpload
-              value={referenceImages[0] || ''}
-              onChange={(url) => setReferenceImages(url ? [url] : [])}
-              className="h-32"
+              placeholder={isEditing ? "Describe the changes you want..." : "Describe the image you want to generate..."}
+              className="min-h-32 rounded-xl resize-none"
             />
           </div>
         </>
       ) : (
         <div className="space-y-2">
-          <Label>Upload Image</Label>
+          <Label>Upload first frame image</Label>
           <SingleImageUpload
             value={uploadedUrl}
-            onChange={setUploadedUrl}
-            className="h-48"
+            onChange={handleUploadComplete}
           />
         </div>
       )}
@@ -169,30 +257,31 @@ export default function FirstFrameStage({ pipelineId, onContinue }: FirstFrameSt
   );
 
   const outputContent = outputUrl ? (
-    <div className="flex items-center justify-center h-full">
-      <img 
-        src={outputUrl} 
-        alt="Generated first frame" 
-        className="max-w-full max-h-full object-contain rounded-lg shadow-lg"
+    <div className="w-full max-w-md mx-auto">
+      <img
+        src={outputUrl}
+        alt="Generated first frame"
+        className="w-full rounded-xl shadow-lg"
       />
     </div>
   ) : null;
 
   return (
     <StageLayout
-      inputTitle="First Frame Input"
+      inputTitle="Input"
       inputContent={inputContent}
-      outputTitle="First Frame Output"
+      outputTitle="Output"
       outputContent={outputContent}
       hasOutput={hasOutput}
       onGenerate={handleGenerate}
       onRegenerate={handleRegenerate}
+      onEdit={handleEdit}
       onContinue={handleContinue}
       isGenerating={isGenerating || isUpdating}
       canContinue={hasOutput}
-      generateLabel={mode === 'upload' ? 'Save Image' : 'Generate'}
-      creditsCost={mode === 'upload' ? 'Free' : `${PIPELINE_CREDITS.first_frame} credits`}
-      showEditButton={false}
+      generateLabel={mode === 'upload' ? 'Use Uploaded Image' : (isEditing ? 'Edit Image' : 'Generate First Frame')}
+      creditsCost={mode === 'upload' ? 'Free' : `${PIPELINE_CREDITS.first_frame} Credits`}
+      showEditButton={mode === 'generate' && hasOutput}
     />
   );
 }
