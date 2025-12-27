@@ -1,11 +1,15 @@
 import { useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
-import { ChevronLeft, ChevronRight, ChevronDown, Plus, Sparkles, Layers, MoreHorizontal, Trash2, Pencil, Check, X } from 'lucide-react';
+import { Link, useNavigate, useParams } from 'react-router-dom';
+import { ChevronLeft, ChevronRight, ChevronDown, Plus, Sparkles, Layers, MoreHorizontal, Trash2, Pencil, Check, X, Zap, Sun, Moon, Briefcase } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { useProjects } from '@/hooks/useProjects';
+import { useProfile } from '@/hooks/useProfile';
+import { useTheme } from 'next-themes';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { useAuth } from '@/contexts/AuthContext';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -23,6 +27,9 @@ export default function AppSidebar({ collapsed, onCollapse }: AppSidebarProps) {
   const navigate = useNavigate();
   const { projectId } = useParams();
   const { projects, createProject, deleteProject, updateProject } = useProjects();
+  const { profile } = useProfile();
+  const { user } = useAuth();
+  const { theme, setTheme } = useTheme();
   const [projectsOpen, setProjectsOpen] = useState(true);
   const [renamingProjectId, setRenamingProjectId] = useState<string | null>(null);
   const [renameValue, setRenameValue] = useState('');
@@ -34,20 +41,28 @@ export default function AppSidebar({ collapsed, onCollapse }: AppSidebarProps) {
     }
   };
 
-  const handleProjectsClick = () => {
-    navigate('/projects');
-  };
-
   const handleToggleProjects = (e: React.MouseEvent) => {
     e.stopPropagation();
     setProjectsOpen(!projectsOpen);
+  };
+
+  const getInitials = (name?: string | null, email?: string | null) => {
+    if (name) {
+      return name
+        .split(' ')
+        .map((n) => n[0])
+        .join('')
+        .toUpperCase()
+        .slice(0, 2);
+    }
+    return email?.charAt(0).toUpperCase() || 'U';
   };
 
   return (
     <aside
       className={cn(
         'flex h-screen flex-col border-r border-border bg-sidebar transition-all duration-200 ease-out',
-        collapsed ? 'w-16' : 'w-72'
+        collapsed ? 'w-16' : 'w-80'
       )}
     >
       {/* Logo */}
@@ -60,12 +75,31 @@ export default function AppSidebar({ collapsed, onCollapse }: AppSidebarProps) {
         )}
       </div>
 
-      {/* Projects Section */}
-      <div className="flex-1 overflow-y-auto p-3">
+      {/* Workspace Section */}
+      <div className="flex-1 overflow-y-auto p-4">
+        {/* Workspace Header */}
+        {!collapsed && (
+          <div className="mb-4 flex items-center gap-3 rounded-xl bg-sidebar-accent/50 p-3">
+            <Avatar className="h-10 w-10 border border-border">
+              <AvatarImage src={profile?.avatar_url || undefined} />
+              <AvatarFallback className="bg-primary/10 text-sm font-medium text-primary">
+                {getInitials(profile?.full_name, user?.email)}
+              </AvatarFallback>
+            </Avatar>
+            <div className="flex-1 min-w-0">
+              <p className="truncate text-sm font-semibold text-foreground">
+                {profile?.full_name || 'Workspace'}
+              </p>
+              <p className="truncate text-xs text-muted-foreground">Workspace</p>
+            </div>
+          </div>
+        )}
+
+        {/* Projects Collapsible */}
         <Collapsible open={projectsOpen && !collapsed} onOpenChange={setProjectsOpen}>
           <div
             className={cn(
-              'flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground transition-all duration-200 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground cursor-pointer',
+              'flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium text-muted-foreground transition-all duration-200 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground cursor-pointer',
               collapsed && 'justify-center px-2'
             )}
           >
@@ -84,22 +118,28 @@ export default function AppSidebar({ collapsed, onCollapse }: AppSidebarProps) {
                     />
                   </button>
                 </CollapsibleTrigger>
-                <button 
-                  onClick={handleProjectsClick}
-                  className="flex-1 text-left"
+                <Layers className="h-4 w-4" />
+                <span className="flex-1 text-left">Projects</span>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleCreateProject();
+                  }}
+                  className="rounded p-1 hover:bg-sidebar-accent"
+                  title="New project"
                 >
-                  Projects
+                  <Plus className="h-4 w-4" />
                 </button>
               </>
             )}
             {collapsed && (
-              <button onClick={handleProjectsClick}>
+              <button onClick={handleToggleProjects}>
                 <Layers className="h-5 w-5" />
               </button>
             )}
           </div>
 
-          <CollapsibleContent className="mt-1 space-y-1">
+          <CollapsibleContent className="mt-1 space-y-1 pl-3">
             {projects?.map((project) => (
               <div
                 key={project.id}
@@ -191,27 +231,67 @@ export default function AppSidebar({ collapsed, onCollapse }: AppSidebarProps) {
                 )}
               </div>
             ))}
-
-            <button
-              onClick={handleCreateProject}
-              className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-muted-foreground transition-all duration-200 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
-            >
-              <Plus className="h-4 w-4" />
-              <span>New project</span>
-            </button>
           </CollapsibleContent>
         </Collapsible>
       </div>
 
-      {/* Collapse Button */}
-      <div className="border-t border-border p-3">
+      {/* Bottom Section - Credits, Dark Mode, Collapse */}
+      <div className="border-t border-border p-4 space-y-2">
+        {/* Credits */}
+        {!collapsed && (
+          <Link
+            to="/billing"
+            className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-sidebar-foreground transition-all duration-200 hover:bg-sidebar-accent"
+          >
+            <Zap className="h-4 w-4 text-primary" />
+            <span className="flex-1">{profile?.credits ?? 0} Credits</span>
+            <Plus className="h-3.5 w-3.5 text-muted-foreground" />
+          </Link>
+        )}
+        {collapsed && (
+          <Link
+            to="/billing"
+            className="flex items-center justify-center rounded-lg p-2 text-sidebar-foreground transition-all duration-200 hover:bg-sidebar-accent"
+          >
+            <Zap className="h-5 w-5 text-primary" />
+          </Link>
+        )}
+
+        {/* Dark Mode Toggle */}
+        {!collapsed && (
+          <button
+            onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+            className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-sidebar-foreground transition-all duration-200 hover:bg-sidebar-accent"
+          >
+            {theme === 'dark' ? (
+              <Moon className="h-4 w-4" />
+            ) : (
+              <Sun className="h-4 w-4" />
+            )}
+            <span>{theme === 'dark' ? 'Dark Mode' : 'Light Mode'}</span>
+          </button>
+        )}
+        {collapsed && (
+          <button
+            onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+            className="flex w-full items-center justify-center rounded-lg p-2 text-sidebar-foreground transition-all duration-200 hover:bg-sidebar-accent"
+          >
+            {theme === 'dark' ? (
+              <Moon className="h-5 w-5" />
+            ) : (
+              <Sun className="h-5 w-5" />
+            )}
+          </button>
+        )}
+
+        {/* Collapse Button */}
         <Button
           variant="ghost"
           size="sm"
           onClick={() => onCollapse(!collapsed)}
           className={cn(
-            'w-full justify-center text-muted-foreground transition-all duration-200 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground',
-            collapsed && 'px-2'
+            'w-full justify-start text-muted-foreground transition-all duration-200 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground',
+            collapsed && 'justify-center px-2'
           )}
         >
           {collapsed ? (

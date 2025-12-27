@@ -7,7 +7,6 @@ import { ThemeProvider } from "next-themes";
 import { AuthProvider } from "@/contexts/AuthContext";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import Login from "./pages/Login";
-import Projects from "./pages/Projects";
 import ProjectDetail from "./pages/ProjectDetail";
 import Billing from "./pages/Billing";
 import NotFound from "./pages/NotFound";
@@ -27,11 +26,7 @@ const App = () => (
               <Route path="/" element={<Navigate to="/projects" replace />} />
               <Route
                 path="/projects"
-                element={
-                  <ProtectedRoute>
-                    <Projects />
-                  </ProtectedRoute>
-                }
+                element={<Navigate to="/" replace />}
               />
               <Route
                 path="/projects/:projectId"
