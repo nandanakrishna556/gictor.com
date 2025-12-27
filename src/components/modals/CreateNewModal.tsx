@@ -75,6 +75,8 @@ export default function CreateNewModal({
   const queryClient = useQueryClient();
   const [selectedType, setSelectedType] = useState<ContentType>(null);
   const [pipelineModalOpen, setPipelineModalOpen] = useState(false);
+  // Store the initialStatus when pipeline is selected (before parent clears it)
+  const [pipelineInitialStatus, setPipelineInitialStatus] = useState<string | undefined>(undefined);
 
   const handleClose = () => {
     setSelectedType(null);
@@ -91,6 +93,8 @@ export default function CreateNewModal({
       onOpenChange(false);
       onCreateFolder?.(initialStatus);
     } else if ('isPipeline' in type && type.isPipeline) {
+      // Store the status BEFORE closing the modal (which clears parent's initialStatus)
+      setPipelineInitialStatus(initialStatus);
       onOpenChange(false);
       setPipelineModalOpen(true);
     } else {
@@ -183,11 +187,14 @@ export default function CreateNewModal({
 
       <PipelineModal
         open={pipelineModalOpen}
-        onClose={() => setPipelineModalOpen(false)}
+        onClose={() => {
+          setPipelineModalOpen(false);
+          setPipelineInitialStatus(undefined);
+        }}
         pipelineId={null}
         projectId={projectId}
         folderId={folderId}
-        initialStatus={initialStatus}
+        initialStatus={pipelineInitialStatus}
         onSuccess={handlePipelineSuccess}
       />
     </>
