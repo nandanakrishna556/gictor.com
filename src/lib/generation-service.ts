@@ -49,7 +49,7 @@ export async function startGeneration(
 ): Promise<{ success: boolean; file_id?: string; error?: string }> {
   try {
     // Create file record in database
-    const { error: dbError } = await supabase.from('files').insert({
+    const { error: dbError } = await supabase.from('files').insert([{
       id: payload.file_id,
       name: payload.file_name,
       file_type: type,
@@ -57,23 +57,39 @@ export async function startGeneration(
       project_id: payload.project_id,
       folder_id: payload.folder_id || null,
       tags: payload.tags || [],
-      metadata: {},
-      generation_params: payload,
-    });
+      metadata: {} as any,
+      generation_params: payload as any,
+    }]);
 
     if (dbError) {
       console.error('Failed to create file record:', dbError);
       return { success: false, error: 'Failed to start generation' };
     }
 
-    // Deduct credits
+    // Deduct credits using direct update (deduct_credits function may not be in types yet)
     const { data: { user } } = await supabase.auth.getUser();
     if (user) {
-      await supabase.rpc('deduct_credits', {
-        p_user_id: user.id,
-        p_amount: payload.credits_cost,
-        p_description: `${type} generation`
-      });
+      // Get current credits and deduct
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('credits')
+        .eq('id', user.id)
+        .single();
+      
+      if (profile) {
+        await supabase
+          .from('profiles')
+          .update({ credits: (profile.credits || 0) - payload.credits_cost })
+          .eq('id', user.id);
+        
+        // Log transaction
+        await supabase.from('credit_transactions').insert([{
+          user_id: user.id,
+          amount: -payload.credits_cost,
+          transaction_type: 'usage',
+          description: `${type} generation`
+        }]);
+      }
     }
 
     // Send to n8n webhook
