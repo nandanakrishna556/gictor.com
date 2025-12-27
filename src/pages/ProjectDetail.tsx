@@ -10,7 +10,7 @@ import CreateFolderDialog from '@/components/modals/CreateFolderDialog';
 import CreatePipelineDialog from '@/components/modals/CreatePipelineDialog';
 import CreateTagDialog from '@/components/modals/CreateTagDialog';
 import ConfirmDeleteDialog from '@/components/modals/ConfirmDeleteDialog';
-import { FileDetailModal } from '@/components/files/FileDetailModal';
+import { FileDetailModalEnhanced } from '@/components/files/FileDetailModalEnhanced';
 import { useFiles, Folder, File } from '@/hooks/useFiles';
 import { useFileRealtime } from '@/hooks/useFileRealtime';
 import { usePipelines, Pipeline, PipelineStage, DEFAULT_STAGES } from '@/hooks/usePipelines';
@@ -368,6 +368,8 @@ export default function ProjectDetail() {
               onBulkDelete={handleBulkDelete}
               onBulkUpdateStatus={handleBulkUpdateStatus}
               defaultStages={defaultStages}
+              selectMode={selectMode}
+              onSelectModeChange={setSelectMode}
             />
           ) : filteredFiles?.length === 0 && folders?.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-24">
@@ -430,6 +432,8 @@ export default function ProjectDetail() {
               onBulkDelete={handleBulkDelete}
               onBulkUpdateStatus={handleBulkUpdateStatus}
               defaultStages={defaultStages}
+              selectMode={selectMode}
+              onSelectModeChange={setSelectMode}
             />
           )}
         </div>
@@ -509,22 +513,21 @@ export default function ProjectDetail() {
       />
 
       {/* File Detail Modal */}
-      {selectedFile && (
-        <FileDetailModal
-          file={{
-            id: selectedFile.id,
-            name: selectedFile.name,
-            file_type: selectedFile.file_type as 'first_frame' | 'talking_head' | 'script',
-            status: (selectedFile.status || 'processing') as 'processing' | 'completed' | 'failed',
-            preview_url: selectedFile.preview_url,
-            download_url: selectedFile.download_url,
-            error_message: selectedFile.error_message,
-            metadata: selectedFile.metadata as Record<string, any> || {},
-          }}
-          isOpen={!!selectedFile}
-          onClose={() => setSelectedFile(null)}
-        />
-      )}
+      <FileDetailModalEnhanced
+        file={selectedFile ? {
+          id: selectedFile.id,
+          name: selectedFile.name,
+          file_type: selectedFile.file_type,
+          status: selectedFile.status || 'processing',
+          preview_url: selectedFile.preview_url,
+          download_url: selectedFile.download_url,
+          error_message: selectedFile.error_message,
+          metadata: selectedFile.metadata,
+          generation_params: selectedFile.generation_params,
+        } : null}
+        isOpen={!!selectedFile}
+        onClose={() => setSelectedFile(null)}
+      />
     </MainLayout>
   );
 }
