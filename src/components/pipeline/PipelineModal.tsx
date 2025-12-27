@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { ArrowLeft, X, Check, Lock, Loader2, Plus, Save } from 'lucide-react';
+import { ArrowLeft, X, Check, Lock, Loader2, Save } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { usePipeline } from '@/hooks/usePipeline';
 import { useProfile } from '@/hooks/useProfile';
@@ -69,6 +70,9 @@ export default function PipelineModal({
   const [currentFolderId, setCurrentFolderId] = useState(folderId);
   const [status, setStatus] = useState<string>(initialStatus || 'draft');
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [showUnsavedWarning, setShowUnsavedWarning] = useState(false);
+  const initialLoadDone = useRef(false);
 
   const statusOptions = [
     { value: 'draft', label: 'Draft', color: 'bg-slate-500' },
@@ -86,10 +90,14 @@ export default function PipelineModal({
     if (pipeline) {
       setActiveStage(pipeline.current_stage);
       setName(pipeline.name);
-      setStatus(pipeline.status || 'draft');
+      setStatus(pipeline.status || initialStatus || 'draft');
       setSelectedTags(pipeline.tags || []);
+      // Mark initial load as done after first pipeline load
+      if (!initialLoadDone.current) {
+        initialLoadDone.current = true;
+      }
     }
-  }, [pipeline]);
+  }, [pipeline, initialStatus]);
 
   // Create pipeline if not exists
   useEffect(() => {
@@ -139,20 +147,18 @@ export default function PipelineModal({
 
   const handleNameChange = (newName: string) => {
     setName(newName);
-    updatePipeline({ name: newName });
+    setHasUnsavedChanges(true);
   };
 
   const handleLocationChange = (newProjectId: string, newFolderId?: string) => {
     setCurrentProjectId(newProjectId);
     setCurrentFolderId(newFolderId);
+    setHasUnsavedChanges(true);
   };
 
   const handleStatusChange = (newStatus: string) => {
     setStatus(newStatus);
-    // Only update pipeline with valid pipeline statuses
-    if (['draft', 'processing', 'completed', 'failed'].includes(newStatus)) {
-      updatePipeline({ status: newStatus as 'draft' | 'processing' | 'completed' | 'failed' });
-    }
+    setHasUnsavedChanges(true);
   };
 
   const toggleTag = (tagId: string) => {
@@ -160,23 +166,57 @@ export default function PipelineModal({
       ? selectedTags.filter(t => t !== tagId)
       : [...selectedTags, tagId];
     setSelectedTags(newTags);
-    updatePipeline({ tags: newTags });
+    setHasUnsavedChanges(true);
   };
 
   const currentStatusOption = statusOptions.find(s => s.value === status) || statusOptions[0];
 
-  const handleClose = () => {
-    onClose();
-    if (pipeline?.status === 'completed') {
+  const handleSave = async () => {
+    try {
+      // Update the pipeline with current values
+      await updatePipeline({ 
+        name, 
+        status: status as 'draft' | 'processing' | 'completed' | 'failed',
+        tags: selectedTags 
+      });
+      
+      setHasUnsavedChanges(false);
+      
+      // Invalidate queries to refresh the grid/kanban
+      queryClient.invalidateQueries({ queryKey: ['files', currentProjectId] });
+      queryClient.invalidateQueries({ queryKey: ['pipelines', currentProjectId] });
+      
+      toast.success('Changes saved');
       onSuccess?.();
+    } catch (error) {
+      toast.error('Failed to save changes');
     }
+  };
+
+  const handleClose = () => {
+    if (hasUnsavedChanges) {
+      setShowUnsavedWarning(true);
+    } else {
+      onClose();
+    }
+  };
+
+  const handleConfirmClose = () => {
+    setShowUnsavedWarning(false);
+    setHasUnsavedChanges(false);
+    onClose();
+  };
+
+  const handleSaveAndClose = async () => {
+    await handleSave();
+    setShowUnsavedWarning(false);
   };
 
 
   if (isLoading || isCreating) {
     return (
       <Dialog open={open} onOpenChange={handleClose}>
-        <DialogContent className="max-w-6xl h-[90vh] flex items-center justify-center">
+        <DialogContent className="max-w-[1400px] h-[90vh] flex items-center justify-center">
           <div className="flex flex-col items-center gap-4">
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
             <p className="text-muted-foreground">Loading pipeline...</p>
@@ -186,38 +226,25 @@ export default function PipelineModal({
     );
   }
 
-  const handleSave = async () => {
-    try {
-      // Create a file entry for the talking head
-      await createFile({
-        project_id: currentProjectId,
-        folder_id: currentFolderId || null,
-        name: name || 'Untitled Talking Head',
-        file_type: 'talking_head',
-        status: pipeline?.status === 'completed' ? 'completed' : 'draft',
-        tags: selectedTags,
-        generation_params: {
-          pipeline_id: effectivePipelineId,
-          first_frame_complete: pipeline?.first_frame_complete,
-          script_complete: pipeline?.script_complete,
-          voice_complete: pipeline?.voice_complete,
-        },
-      });
-      
-      // Invalidate queries to refresh the grid/kanban
-      queryClient.invalidateQueries({ queryKey: ['files', currentProjectId] });
-      
-      toast.success('Pipeline saved to project');
-      onSuccess?.();
-      handleClose();
-    } catch (error) {
-      toast.error('Failed to save pipeline');
-    }
-  };
-
   return (
-    <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="max-w-7xl h-[90vh] flex flex-col p-0 gap-0 overflow-hidden rounded-lg">
+    <>
+      <AlertDialog open={showUnsavedWarning} onOpenChange={setShowUnsavedWarning}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Unsaved changes</AlertDialogTitle>
+            <AlertDialogDescription>
+              You have unsaved changes. Would you like to save them before closing?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={handleConfirmClose}>Don't save</AlertDialogCancel>
+            <AlertDialogAction onClick={handleSaveAndClose}>Save changes</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <Dialog open={open} onOpenChange={handleClose}>
+        <DialogContent className="max-w-[1400px] h-[90vh] flex flex-col p-0 gap-0 overflow-hidden rounded-lg">
         {/* Header - single row with all controls */}
         <div className="flex items-center gap-3 border-b bg-muted/30 px-6 py-3 flex-wrap">
           <Button variant="ghost" size="icon" className="h-8 w-8" onClick={handleClose}>
@@ -365,11 +392,12 @@ export default function PipelineModal({
 
       </DialogContent>
     </Dialog>
+    </>
   );
 
   function renderStageNavigation() {
     return (
-      <div className="flex items-center justify-center gap-4 flex-wrap">
+      <div className="flex items-center gap-4">
         {STAGES.map((stage, index) => {
           const isComplete = isStageComplete(stage.key);
           const isAccessible = isStageAccessible(stage.key);
@@ -379,7 +407,7 @@ export default function PipelineModal({
             <React.Fragment key={stage.key}>
               {index > 0 && (
                 <div className={cn(
-                  "w-10 h-0.5 rounded-full flex-shrink-0",
+                  "w-8 h-0.5 rounded-full flex-shrink-0",
                   isComplete || isStageComplete(STAGES[index - 1].key) ? "bg-primary" : "bg-border"
                 )} />
               )}
@@ -387,12 +415,12 @@ export default function PipelineModal({
                 onClick={() => handleStageClick(stage.key)}
                 disabled={!isAccessible}
                 className={cn(
-                  "flex items-center gap-2.5 transition-all group flex-shrink-0",
+                  "flex items-center gap-2 transition-all group flex-shrink-0",
                   isAccessible ? "cursor-pointer hover:scale-105" : "cursor-not-allowed opacity-50"
                 )}
               >
                 <div className={cn(
-                  "w-9 h-9 min-w-[2.25rem] min-h-[2.25rem] rounded-full flex items-center justify-center text-sm font-semibold transition-all shadow-sm",
+                  "w-8 h-8 min-w-[2rem] min-h-[2rem] rounded-full flex items-center justify-center text-sm font-semibold transition-all shadow-sm flex-shrink-0",
                   isComplete 
                     ? "bg-primary text-primary-foreground shadow-primary/30" 
                     : isActive 
@@ -408,7 +436,7 @@ export default function PipelineModal({
                   )}
                 </div>
                 <span className={cn(
-                  "text-sm font-semibold transition-colors whitespace-nowrap",
+                  "text-sm font-medium transition-colors whitespace-nowrap",
                   isComplete ? "text-primary" : isActive ? "text-primary" : "text-muted-foreground",
                   isAccessible && "group-hover:text-primary"
                 )}>
