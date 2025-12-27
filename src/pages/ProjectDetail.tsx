@@ -264,9 +264,15 @@ export default function ProjectDetail() {
     setSelectedTags((prev) => prev.filter((t) => t !== id));
   };
 
+  // Only show loading state if projectId is missing, don't navigate away
   if (!projectId) {
-    navigate('/projects');
-    return null;
+    return (
+      <MainLayout>
+        <div className="flex h-screen items-center justify-center">
+          <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+        </div>
+      </MainLayout>
+    );
   }
 
   // Create a virtual "default pipeline" for editing

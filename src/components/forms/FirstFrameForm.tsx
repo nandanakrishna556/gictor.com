@@ -151,7 +151,8 @@ export default function FirstFrameForm({
         toast.success('Generation started', { description: 'Your first frame is being generated.' });
         onSuccess();
       } else {
-        toast.error('Error', { description: result.error || 'Failed to start generation. Please try again.' });
+        const errorMessage = result.error?.userMessage || 'Failed to start generation. Please try again.';
+        toast.error('Error', { description: errorMessage });
       }
     } catch (error) {
       toast.error('Error', { description: 'Failed to start generation. Please try again.' });
