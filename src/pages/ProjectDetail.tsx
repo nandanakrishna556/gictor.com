@@ -33,6 +33,8 @@ export default function ProjectDetail() {
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [selectedStatuses, setSelectedStatuses] = useState<string[]>([]);
   const [selectedFileTypes, setSelectedFileTypes] = useState<string[]>([]);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectMode, setSelectMode] = useState(false);
 
   // Confirmation dialog states
   const [deleteFileConfirm, setDeleteFileConfirm] = useState<{ open: boolean; file: File | null }>({ open: false, file: null });
@@ -101,8 +103,12 @@ export default function ProjectDetail() {
     color: stage.color,
   }));
 
-  // Filter files based on selected filters
+  // Filter files based on selected filters and search
   const filteredFiles = (files || []).filter((file) => {
+    // Search filter
+    if (searchQuery && !file.name.toLowerCase().includes(searchQuery.toLowerCase())) {
+      return false;
+    }
     if (selectedStatuses.length > 0 && !selectedStatuses.includes(file.status || '')) {
       return false;
     }
@@ -314,6 +320,10 @@ export default function ProjectDetail() {
           onCreateTag={() => setCreateTagOpen(true)}
           onDeleteTag={handleDeleteTag}
           onClearFilters={handleClearFilters}
+          searchQuery={searchQuery}
+          onSearchChange={setSearchQuery}
+          selectMode={selectMode}
+          onSelectModeChange={setSelectMode}
         />
 
         <div className="flex-1 overflow-y-auto p-3 sm:p-4 md:p-6">

@@ -7,7 +7,10 @@ import { ThemeProvider } from "next-themes";
 import { AuthProvider } from "@/contexts/AuthContext";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import Login from "./pages/Login";
+import Dashboard from "./pages/Dashboard";
+import Projects from "./pages/Projects";
 import ProjectDetail from "./pages/ProjectDetail";
+import Settings from "./pages/Settings";
 import Billing from "./pages/Billing";
 import NotFound from "./pages/NotFound";
 
@@ -23,10 +26,22 @@ const App = () => (
           <AuthProvider>
             <Routes>
               <Route path="/login" element={<Login />} />
-              <Route path="/" element={<Navigate to="/projects" replace />} />
+              <Route path="/" element={<Navigate to="/dashboard" replace />} />
+              <Route
+                path="/dashboard"
+                element={
+                  <ProtectedRoute>
+                    <Dashboard />
+                  </ProtectedRoute>
+                }
+              />
               <Route
                 path="/projects"
-                element={<Navigate to="/" replace />}
+                element={
+                  <ProtectedRoute>
+                    <Projects />
+                  </ProtectedRoute>
+                }
               />
               <Route
                 path="/projects/:projectId"
@@ -41,6 +56,14 @@ const App = () => (
                 element={
                   <ProtectedRoute>
                     <ProjectDetail />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/settings"
+                element={
+                  <ProtectedRoute>
+                    <Settings />
                   </ProtectedRoute>
                 }
               />
