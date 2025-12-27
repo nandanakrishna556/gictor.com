@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { ArrowLeft, X, Check, Lock, Loader2, Plus } from 'lucide-react';
+import { ArrowLeft, X, Check, Lock, Loader2, Plus, Save } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { usePipeline } from '@/hooks/usePipeline';
 import { useProfile } from '@/hooks/useProfile';
@@ -177,13 +177,19 @@ export default function PipelineModal({
     );
   }
 
+  const handleSave = () => {
+    toast.success('Pipeline saved successfully');
+    onSuccess?.();
+    handleClose();
+  };
+
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="max-w-7xl h-[90vh] flex flex-col p-0 gap-0">
+      <DialogContent className="max-w-7xl h-[90vh] flex flex-col p-0 gap-0 overflow-hidden rounded-lg">
         {/* Header */}
         <div className="flex items-center gap-4 border-b bg-muted/30 px-6 py-4 flex-wrap">
           <div className="flex items-center gap-3">
-            <Button variant="ghost" size="icon" onClick={handleClose}>
+            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={handleClose}>
               <ArrowLeft className="h-4 w-4" />
             </Button>
             <h2 className="text-xl font-semibold">Talking Head</h2>
@@ -191,6 +197,23 @@ export default function PipelineModal({
           
           <div className="h-6 w-px bg-border" />
           
+          {/* Spacer to push save/close to right */}
+          <div className="flex-1" />
+          
+          {/* Save and Close buttons */}
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" onClick={handleSave} className="h-8">
+              <Save className="h-4 w-4 mr-1.5" />
+              Save
+            </Button>
+            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={handleClose}>
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+        
+        {/* Secondary row with name, location, status, tags */}
+        <div className="flex items-center gap-4 border-b bg-muted/20 px-6 py-3 flex-wrap">
           <Input
             value={name}
             onChange={(e) => handleNameChange(e.target.value)}
@@ -202,7 +225,6 @@ export default function PipelineModal({
             folderId={currentFolderId}
             onLocationChange={handleLocationChange}
           />
-
           <Select value={status} onValueChange={handleStatusChange}>
             <SelectTrigger className={cn(
               "h-8 w-fit rounded-md text-xs border-0 px-3 py-1 text-white gap-1",
