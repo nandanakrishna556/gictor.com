@@ -1,6 +1,7 @@
 import { Link, useNavigate } from 'react-router-dom';
-import { ChevronRight, Grid3X3, Kanban, Plus, Coins, LogOut, Settings, Sun, Moon } from 'lucide-react';
+import { ChevronRight, Grid3X3, Kanban, Plus, LogOut, Settings, Search, Zap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
   DropdownMenu,
@@ -11,7 +12,6 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { useAuth } from '@/contexts/AuthContext';
 import { useProfile } from '@/hooks/useProfile';
-import { useTheme } from 'next-themes';
 import FilterPopover from '@/components/modals/FilterPopover';
 import type { Tag } from '@/hooks/useTags';
 
@@ -60,7 +60,6 @@ export default function AppHeader({
   const { user, signOut } = useAuth();
   const { profile } = useProfile();
   const navigate = useNavigate();
-  const { theme, setTheme } = useTheme();
 
   const getInitials = (name?: string | null, email?: string | null) => {
     if (name) {
@@ -100,21 +99,33 @@ export default function AppHeader({
       </nav>
 
       {/* Actions */}
-      <div className="flex items-center gap-3">
-        {/* Filter */}
+      <div className="flex items-center gap-2">
+        {/* Select, Search, Filter - Inline */}
         {showCreateButtons && (
-          <FilterPopover
-            tags={tags}
-            selectedTags={selectedTags}
-            selectedStatuses={selectedStatuses}
-            selectedFileTypes={selectedFileTypes}
-            onTagsChange={onTagsChange}
-            onStatusesChange={onStatusesChange}
-            onFileTypesChange={onFileTypesChange}
-            onCreateTag={onCreateTag}
-            onDeleteTag={onDeleteTag}
-            onClearAll={onClearFilters}
-          />
+          <>
+            <Button variant="outline" size="sm">
+              Select
+            </Button>
+            <div className="relative w-48">
+              <Search className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                placeholder="Search..."
+                className="h-8 pl-8 text-sm"
+              />
+            </div>
+            <FilterPopover
+              tags={tags}
+              selectedTags={selectedTags}
+              selectedStatuses={selectedStatuses}
+              selectedFileTypes={selectedFileTypes}
+              onTagsChange={onTagsChange}
+              onStatusesChange={onStatusesChange}
+              onFileTypesChange={onFileTypesChange}
+              onCreateTag={onCreateTag}
+              onDeleteTag={onDeleteTag}
+              onClearAll={onClearFilters}
+            />
+          </>
         )}
 
         {/* View Toggle */}
@@ -155,25 +166,6 @@ export default function AppHeader({
           </Button>
         )}
 
-        {/* Credits */}
-        <Link
-          to="/billing"
-          className="flex items-center gap-2 rounded-lg border border-border bg-background px-3 py-1.5 text-sm font-medium text-foreground transition-apple hover:bg-secondary"
-        >
-          <Coins className="h-4 w-4 text-warning" />
-          {profile?.credits ?? 0} Credits
-          <Plus className="h-3 w-3 text-muted-foreground" />
-        </Link>
-
-        {/* Dark Mode Toggle */}
-        <button
-          onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-          className="flex h-9 w-9 items-center justify-center rounded-lg border border-border bg-background text-muted-foreground transition-all duration-200 hover:bg-secondary hover:text-foreground"
-        >
-          <Sun className="h-4 w-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
-          <Moon className="absolute h-4 w-4 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
-        </button>
-
         {/* User Menu */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -193,7 +185,7 @@ export default function AppHeader({
             </div>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={() => navigate('/billing')} className="gap-2">
-              <Coins className="h-4 w-4" />
+              <Zap className="h-4 w-4" />
               Billing
             </DropdownMenuItem>
             <DropdownMenuItem className="gap-2">
