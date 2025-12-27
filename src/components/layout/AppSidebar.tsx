@@ -78,33 +78,16 @@ export default function AppSidebar({ collapsed, onCollapse }: AppSidebarProps) {
           collapsed ? 'w-16' : 'w-64'
         )}
       >
-        {/* Logo and Collapse Button */}
-        <div className="flex h-14 items-center justify-between border-b border-border px-3">
-          <div className="flex items-center gap-2.5">
-            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary">
+        {/* Logo */}
+        <div className="flex h-14 items-center border-b border-border px-3">
+          <Link to="/" className="flex items-center gap-2.5">
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-primary">
               <Sparkles className="h-4 w-4 text-primary-foreground" />
             </div>
             {!collapsed && (
               <span className="font-semibold text-sm text-foreground">UGC Generator</span>
             )}
-          </div>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <button
-                onClick={() => onCollapse(!collapsed)}
-                className="flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-sidebar-accent hover:text-foreground"
-              >
-                {collapsed ? (
-                  <PanelLeft className="h-4 w-4" />
-                ) : (
-                  <PanelLeftClose className="h-4 w-4" />
-                )}
-              </button>
-            </TooltipTrigger>
-            <TooltipContent side="right">
-              {collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-            </TooltipContent>
-          </Tooltip>
+          </Link>
         </div>
 
         {/* Projects Section */}
@@ -261,7 +244,7 @@ export default function AppSidebar({ collapsed, onCollapse }: AppSidebarProps) {
           </Collapsible>
         </div>
 
-        {/* Bottom Section - Credits, Theme Toggle, Profile */}
+        {/* Bottom Section - Credits, Theme Toggle, Profile, Collapse */}
         <div className="border-t border-border p-2 space-y-1">
           {/* Credits */}
           {collapsed ? (
@@ -269,7 +252,7 @@ export default function AppSidebar({ collapsed, onCollapse }: AppSidebarProps) {
               <TooltipTrigger asChild>
                 <Link
                   to="/billing"
-                  className="flex h-9 w-full items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-sidebar-accent hover:text-foreground"
+                  className="flex h-9 w-full items-center justify-center rounded-xl text-muted-foreground transition-colors hover:bg-sidebar-accent hover:text-foreground"
                 >
                   <Coins className="h-4 w-4 text-warning" />
                 </Link>
@@ -279,7 +262,7 @@ export default function AppSidebar({ collapsed, onCollapse }: AppSidebarProps) {
           ) : (
             <Link
               to="/billing"
-              className="flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm text-muted-foreground transition-colors hover:bg-sidebar-accent hover:text-foreground"
+              className="flex items-center gap-2.5 rounded-xl px-2.5 py-2 text-sm text-muted-foreground transition-colors hover:bg-sidebar-accent hover:text-foreground"
             >
               <Coins className="h-4 w-4 text-warning" />
               <span className="flex-1">{profile?.credits ?? 0} Credits</span>
@@ -293,7 +276,7 @@ export default function AppSidebar({ collapsed, onCollapse }: AppSidebarProps) {
               <TooltipTrigger asChild>
                 <button
                   onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-                  className="flex h-9 w-full items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-sidebar-accent hover:text-foreground"
+                  className="flex h-9 w-full items-center justify-center rounded-xl text-muted-foreground transition-colors hover:bg-sidebar-accent hover:text-foreground"
                 >
                   {theme === 'dark' ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}
                 </button>
@@ -301,7 +284,7 @@ export default function AppSidebar({ collapsed, onCollapse }: AppSidebarProps) {
               <TooltipContent side="right">Toggle theme</TooltipContent>
             </Tooltip>
           ) : (
-            <div className="flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm text-muted-foreground">
+            <div className="flex items-center gap-2.5 rounded-xl px-2.5 py-2 text-sm text-muted-foreground">
               <Sun className="h-4 w-4" />
               <span className="flex-1">Dark mode</span>
               <Switch
@@ -317,10 +300,10 @@ export default function AppSidebar({ collapsed, onCollapse }: AppSidebarProps) {
               <Tooltip>
                 <TooltipTrigger asChild>
                   <DropdownMenuTrigger asChild>
-                    <button className="flex h-9 w-full items-center justify-center rounded-lg transition-colors hover:bg-sidebar-accent">
-                      <Avatar className="h-7 w-7 border border-border">
+                    <button className="flex h-9 w-full items-center justify-center rounded-xl transition-colors hover:bg-sidebar-accent">
+                      <Avatar className="h-7 w-7 border border-border rounded-xl">
                         <AvatarImage src={profile?.avatar_url || undefined} />
-                        <AvatarFallback className="bg-primary/10 text-xs font-medium text-primary">
+                        <AvatarFallback className="bg-primary/10 text-xs font-medium text-primary rounded-xl">
                           {getInitials(profile?.full_name, user?.email)}
                         </AvatarFallback>
                       </Avatar>
@@ -353,15 +336,15 @@ export default function AppSidebar({ collapsed, onCollapse }: AppSidebarProps) {
           ) : (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <button className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm text-muted-foreground transition-colors hover:bg-sidebar-accent hover:text-foreground">
-                  <Avatar className="h-7 w-7 border border-border">
+                <button className="flex w-full items-center gap-2.5 rounded-xl px-2.5 py-2 text-sm text-muted-foreground transition-colors hover:bg-sidebar-accent hover:text-foreground">
+                  <Avatar className="h-7 w-7 border border-border rounded-xl">
                     <AvatarImage src={profile?.avatar_url || undefined} />
-                    <AvatarFallback className="bg-primary/10 text-xs font-medium text-primary">
+                    <AvatarFallback className="bg-primary/10 text-xs font-medium text-primary rounded-xl">
                       {getInitials(profile?.full_name, user?.email)}
                     </AvatarFallback>
                   </Avatar>
-                  <div className="flex-1 text-left">
-                    <p className="text-sm font-medium text-foreground">{profile?.full_name || 'User'}</p>
+                  <div className="flex-1 text-left min-w-0">
+                    <p className="text-sm font-medium text-foreground truncate">{profile?.full_name || 'User'}</p>
                     <p className="text-xs text-muted-foreground truncate">{user?.email}</p>
                   </div>
                 </button>
@@ -383,6 +366,31 @@ export default function AppSidebar({ collapsed, onCollapse }: AppSidebarProps) {
               </DropdownMenuContent>
             </DropdownMenu>
           )}
+
+          {/* Collapse Button */}
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                onClick={() => onCollapse(!collapsed)}
+                className={cn(
+                  "flex h-9 w-full items-center rounded-xl text-muted-foreground transition-colors hover:bg-sidebar-accent hover:text-foreground",
+                  collapsed ? "justify-center" : "gap-2.5 px-2.5"
+                )}
+              >
+                {collapsed ? (
+                  <PanelLeft className="h-4 w-4" />
+                ) : (
+                  <>
+                    <PanelLeftClose className="h-4 w-4" />
+                    <span className="text-sm">Collapse</span>
+                  </>
+                )}
+              </button>
+            </TooltipTrigger>
+            <TooltipContent side="right">
+              {collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+            </TooltipContent>
+          </Tooltip>
         </div>
       </aside>
     </TooltipProvider>
