@@ -17,13 +17,15 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
-import { useFiles } from '@/hooks/useFiles';
 import { useProfile } from '@/hooks/useProfile';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 import LocationSelector from './LocationSelector';
 import { ImageUpload } from '@/components/ui/image-upload';
 import type { Tag } from '@/hooks/useTags';
 import { cn } from '@/lib/utils';
+import { startGeneration, CREDIT_COSTS } from '@/lib/generation-service';
+import { useAuth } from '@/contexts/AuthContext';
+import { v4 as uuidv4 } from 'uuid';
 
 interface StatusOption {
   value: string;
@@ -61,9 +63,8 @@ export default function FirstFrameForm({
   const [currentProjectId, setCurrentProjectId] = useState(projectId);
   const [currentFolderId, setCurrentFolderId] = useState(folderId);
   
-  const { createFile } = useFiles(currentProjectId, currentFolderId);
-  const { profile, deductCredits } = useProfile();
-  const { toast } = useToast();
+  const { user } = useAuth();
+  const { profile } = useProfile();
 
   // Use provided status options or default
   const availableStatusOptions = statusOptions || defaultStatusOptions;
@@ -91,7 +92,7 @@ export default function FirstFrameForm({
     setSelectedStatus(getInitialStatus());
   }, [initialStatus, statusOptions]);
 
-  const creditCost = 0.25;
+  const creditCost = CREDIT_COSTS.first_frame;
   const hasEnoughCredits = (profile?.credits ?? 0) >= creditCost;
 
   const currentStatusOption = availableStatusOptions.find(s => s.value === selectedStatus) || availableStatusOptions[0];
@@ -115,57 +116,45 @@ export default function FirstFrameForm({
     e.preventDefault();
 
     if (!prompt.trim()) {
-      toast({
-        title: 'Missing prompt',
-        description: 'Please describe the image you want to generate.',
-        variant: 'destructive',
-      });
+      toast.error('Missing prompt', { description: 'Please describe the image you want to generate.' });
       return;
     }
 
     if (!hasEnoughCredits) {
-      toast({
-        title: 'Insufficient credits',
-        description: 'Please purchase more credits to continue.',
-        variant: 'destructive',
-      });
+      toast.error('Insufficient credits', { description: 'Please purchase more credits to continue.' });
+      return;
+    }
+
+    if (!user) {
+      toast.error('Not authenticated', { description: 'Please log in to continue.' });
       return;
     }
 
     setIsSubmitting(true);
 
     try {
-      const fileId = crypto.randomUUID();
-      await createFile({
-        id: fileId,
+      const result = await startGeneration('first_frame', {
+        file_id: uuidv4(),
+        user_id: user.id,
         project_id: currentProjectId,
-        folder_id: currentFolderId || null,
-        name: fileName,
-        file_type: 'first_frame',
-        status: selectedStatus,
+        folder_id: currentFolderId,
+        file_name: fileName,
+        credits_cost: creditCost,
+        prompt,
+        image_type: imageType,
+        aspect_ratio: aspectRatio as '1:1' | '9:16' | '16:9',
+        reference_images: referenceImageUrls,
         tags: selectedTags,
-        generation_params: {
-          image_type: imageType,
-          aspect_ratio: aspectRatio,
-          reference_images: referenceImageUrls,
-          prompt,
-        },
       });
 
-      await deductCredits(creditCost);
-
-      toast({
-        title: 'Generation started',
-        description: 'Your first frame is being generated.',
-      });
-
-      onSuccess();
+      if (result.success) {
+        toast.success('Generation started', { description: 'Your first frame is being generated.' });
+        onSuccess();
+      } else {
+        toast.error('Error', { description: result.error || 'Failed to start generation. Please try again.' });
+      }
     } catch (error) {
-      toast({
-        title: 'Error',
-        description: 'Failed to start generation. Please try again.',
-        variant: 'destructive',
-      });
+      toast.error('Error', { description: 'Failed to start generation. Please try again.' });
     } finally {
       setIsSubmitting(false);
     }

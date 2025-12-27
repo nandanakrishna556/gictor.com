@@ -18,12 +18,14 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
-import { useFiles } from '@/hooks/useFiles';
 import { useProfile } from '@/hooks/useProfile';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 import LocationSelector from './LocationSelector';
 import type { Tag } from '@/hooks/useTags';
 import { cn } from '@/lib/utils';
+import { startGeneration, CREDIT_COSTS } from '@/lib/generation-service';
+import { useAuth } from '@/contexts/AuthContext';
+import { v4 as uuidv4 } from 'uuid';
 
 interface StatusOption {
   value: string;
@@ -70,9 +72,8 @@ export default function ScriptForm({
   const [currentProjectId, setCurrentProjectId] = useState(projectId);
   const [currentFolderId, setCurrentFolderId] = useState(folderId);
   
-  const { createFile } = useFiles(currentProjectId, currentFolderId);
-  const { profile, deductCredits } = useProfile();
-  const { toast } = useToast();
+  const { user } = useAuth();
+  const { profile } = useProfile();
 
   // Use provided status options or default
   const availableStatusOptions = statusOptions || defaultStatusOptions;
@@ -98,7 +99,7 @@ export default function ScriptForm({
     setSelectedStatus(getInitialStatus());
   }, [initialStatus, statusOptions]);
 
-  const creditCost = 0.5;
+  const creditCost = CREDIT_COSTS.script;
   const hasEnoughCredits = (profile?.credits ?? 0) >= creditCost;
   const estimatedCharacters = Math.round(duration * 15);
 
@@ -125,56 +126,44 @@ export default function ScriptForm({
     e.preventDefault();
 
     if (!description.trim()) {
-      toast({
-        title: 'Missing description',
-        description: 'Please describe what the script should be about.',
-        variant: 'destructive',
-      });
+      toast.error('Missing description', { description: 'Please describe what the script should be about.' });
       return;
     }
 
     if (!hasEnoughCredits) {
-      toast({
-        title: 'Insufficient credits',
-        description: 'Please purchase more credits to continue.',
-        variant: 'destructive',
-      });
+      toast.error('Insufficient credits', { description: 'Please purchase more credits to continue.' });
+      return;
+    }
+
+    if (!user) {
+      toast.error('Not authenticated', { description: 'Please log in to continue.' });
       return;
     }
 
     setIsSubmitting(true);
 
     try {
-      const fileId = crypto.randomUUID();
-      await createFile({
-        id: fileId,
+      const result = await startGeneration('script', {
+        file_id: uuidv4(),
+        user_id: user.id,
         project_id: currentProjectId,
-        folder_id: currentFolderId || null,
-        name: fileName,
-        file_type: 'script',
-        status: selectedStatus,
+        folder_id: currentFolderId,
+        file_name: fileName,
+        credits_cost: creditCost,
+        description,
+        script_type: scriptType.toLowerCase() as 'sales' | 'educational' | 'entertainment' | 'tutorial' | 'story' | 'other',
+        duration_seconds: duration,
         tags: selectedTags,
-        generation_params: {
-          duration_seconds: duration,
-          script_type: scriptType,
-          description,
-        },
       });
 
-      await deductCredits(creditCost);
-
-      toast({
-        title: 'Generation started',
-        description: 'Your script is being generated.',
-      });
-
-      onSuccess();
+      if (result.success) {
+        toast.success('Generation started', { description: 'Your script is being generated.' });
+        onSuccess();
+      } else {
+        toast.error('Error', { description: result.error || 'Failed to start generation. Please try again.' });
+      }
     } catch (error) {
-      toast({
-        title: 'Error',
-        description: 'Failed to start generation. Please try again.',
-        variant: 'destructive',
-      });
+      toast.error('Error', { description: 'Failed to start generation. Please try again.' });
     } finally {
       setIsSubmitting(false);
     }
