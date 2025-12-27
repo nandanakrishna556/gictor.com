@@ -313,6 +313,9 @@ export default function FirstFrameStage({ pipelineId, onContinue }: FirstFrameSt
     </div>
   );
 
+  // Check if output was AI generated (not uploaded)
+  const wasAIGenerated = pipeline?.first_frame_input?.mode === 'generate';
+
   return (
     <StageLayout
       inputTitle="Input"
@@ -328,7 +331,7 @@ export default function FirstFrameStage({ pipelineId, onContinue }: FirstFrameSt
       canContinue={hasOutput}
       generateLabel={mode === 'upload' ? 'Use Uploaded Image' : (isEditing ? 'Edit Image' : 'Generate First Frame')}
       creditsCost={mode === 'upload' ? 'Free' : `${PIPELINE_CREDITS.first_frame} Credits`}
-      showEditButton={mode === 'generate' && hasOutput}
+      isAIGenerated={wasAIGenerated}
       outputActions={hasOutput ? outputActions : undefined}
     />
   );

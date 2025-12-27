@@ -402,6 +402,9 @@ export default function VoiceStage({ pipelineId, onContinue }: VoiceStageProps) 
     </div>
   );
 
+  // Check if output was AI generated (not uploaded)
+  const wasAIGenerated = pipeline?.voice_input?.mode === 'generate';
+
   return (
     <StageLayout
       inputTitle="Input"
@@ -416,7 +419,7 @@ export default function VoiceStage({ pipelineId, onContinue }: VoiceStageProps) 
       canContinue={hasOutput}
       generateLabel={mode === 'upload' ? 'Use Uploaded Audio' : 'Generate Voice'}
       creditsCost={mode === 'upload' ? 'Free' : `${estimatedCost.toFixed(2)} Credits`}
-      showEditButton={false}
+      isAIGenerated={wasAIGenerated}
       outputActions={hasOutput ? outputActions : undefined}
     />
   );
