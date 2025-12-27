@@ -284,7 +284,7 @@ export default function ScriptStage({ pipelineId, onContinue, stageNavigation }:
       outputContent={outputContent}
       hasOutput={hasOutput}
       onGenerate={handleGenerate}
-      onRegenerate={handleRegenerate}
+      onRemix={handleRegenerate}
       onEdit={handleEdit}
       onContinue={handleContinue}
       isGenerating={isGenerating || isUpdating}
