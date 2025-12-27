@@ -319,9 +319,7 @@ export default function FirstFrameStage({ pipelineId, onContinue, stageNavigatio
 
   return (
     <StageLayout
-      inputTitle="Input"
       inputContent={inputContent}
-      outputTitle="Output"
       outputContent={outputContent}
       hasOutput={hasOutput}
       onGenerate={handleGenerate}
