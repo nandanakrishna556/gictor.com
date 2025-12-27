@@ -16,6 +16,20 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+const LAST_URL_KEY = 'lovable_last_url';
+
+// Save current URL to localStorage (excludes login page)
+function saveLastUrl(pathname: string) {
+  if (pathname !== '/login' && pathname !== '/') {
+    localStorage.setItem(LAST_URL_KEY, pathname);
+  }
+}
+
+// Get saved URL from localStorage
+function getLastUrl(): string | null {
+  return localStorage.getItem(LAST_URL_KEY);
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
@@ -23,6 +37,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const navigate = useNavigate();
   const location = useLocation();
   const hasInitialSession = useRef(false);
+
+  // Save URL whenever it changes (except login/root)
+  useEffect(() => {
+    saveLastUrl(location.pathname);
+  }, [location.pathname]);
 
   useEffect(() => {
     // Set up auth state listener FIRST
@@ -36,8 +55,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (event === 'SIGNED_IN' && session && !hasInitialSession.current) {
           // Only redirect if user is on the login page
           if (location.pathname === '/login' || location.pathname === '/') {
+            const savedUrl = getLastUrl();
             setTimeout(() => {
-              navigate('/projects');
+              navigate(savedUrl || '/projects');
             }, 0);
           }
         }
