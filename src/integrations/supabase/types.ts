@@ -169,6 +169,103 @@ export type Database = {
           },
         ]
       }
+      pipelines: {
+        Row: {
+          created_at: string | null
+          current_stage: string
+          final_video_input: Json | null
+          final_video_output: Json | null
+          first_frame_complete: boolean | null
+          first_frame_input: Json | null
+          first_frame_output: Json | null
+          folder_id: string | null
+          id: string
+          name: string
+          output_file_id: string | null
+          project_id: string
+          script_complete: boolean | null
+          script_input: Json | null
+          script_output: Json | null
+          status: string
+          tags: string[] | null
+          updated_at: string | null
+          user_id: string
+          voice_complete: boolean | null
+          voice_input: Json | null
+          voice_output: Json | null
+        }
+        Insert: {
+          created_at?: string | null
+          current_stage?: string
+          final_video_input?: Json | null
+          final_video_output?: Json | null
+          first_frame_complete?: boolean | null
+          first_frame_input?: Json | null
+          first_frame_output?: Json | null
+          folder_id?: string | null
+          id?: string
+          name?: string
+          output_file_id?: string | null
+          project_id: string
+          script_complete?: boolean | null
+          script_input?: Json | null
+          script_output?: Json | null
+          status?: string
+          tags?: string[] | null
+          updated_at?: string | null
+          user_id: string
+          voice_complete?: boolean | null
+          voice_input?: Json | null
+          voice_output?: Json | null
+        }
+        Update: {
+          created_at?: string | null
+          current_stage?: string
+          final_video_input?: Json | null
+          final_video_output?: Json | null
+          first_frame_complete?: boolean | null
+          first_frame_input?: Json | null
+          first_frame_output?: Json | null
+          folder_id?: string | null
+          id?: string
+          name?: string
+          output_file_id?: string | null
+          project_id?: string
+          script_complete?: boolean | null
+          script_input?: Json | null
+          script_output?: Json | null
+          status?: string
+          tags?: string[] | null
+          updated_at?: string | null
+          user_id?: string
+          voice_complete?: boolean | null
+          voice_input?: Json | null
+          voice_output?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pipelines_folder_id_fkey"
+            columns: ["folder_id"]
+            isOneToOne: false
+            referencedRelation: "folders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pipelines_output_file_id_fkey"
+            columns: ["output_file_id"]
+            isOneToOne: false
+            referencedRelation: "files"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pipelines_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
