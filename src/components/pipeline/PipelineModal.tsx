@@ -26,6 +26,12 @@ import VoiceStage from './stages/VoiceStage';
 import FinalVideoStage from './stages/FinalVideoStage';
 import LocationSelector from '@/components/forms/LocationSelector';
 
+interface StatusOption {
+  value: string;
+  label: string;
+  color: string;
+}
+
 interface PipelineModalProps {
   open: boolean;
   onClose: () => void;
@@ -34,6 +40,7 @@ interface PipelineModalProps {
   folderId?: string;
   initialStatus?: string;
   onSuccess?: () => void;
+  statusOptions?: StatusOption[];
 }
 
 const STAGES: { key: PipelineStage; label: string }[] = [
@@ -51,6 +58,7 @@ export default function PipelineModal({
   folderId,
   initialStatus,
   onSuccess,
+  statusOptions: passedStatusOptions,
 }: PipelineModalProps) {
   const queryClient = useQueryClient();
   const { profile } = useProfile();
@@ -83,8 +91,8 @@ export default function PipelineModal({
   const [showUnsavedWarning, setShowUnsavedWarning] = useState(false);
   const pipelineLoadedRef = useRef(false);
 
-  // Use the Kanban stage options from the user's pipeline configuration
-  const statusOptions = defaultStages.map(stage => ({
+  // Use the passed status options from the Kanban, or fall back to default stages
+  const statusOptions = passedStatusOptions || defaultStages.map(stage => ({
     value: stage.id,
     label: stage.name,
     color: stage.color,

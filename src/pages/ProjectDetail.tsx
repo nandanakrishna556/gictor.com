@@ -572,6 +572,7 @@ export default function ProjectDetail() {
         onSuccess={() => {
           // Refresh files after save
         }}
+        statusOptions={currentStatusOptions}
       />
     </MainLayout>
   );
