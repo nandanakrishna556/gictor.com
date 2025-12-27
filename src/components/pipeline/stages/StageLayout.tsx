@@ -60,9 +60,12 @@ export default function StageLayout({
         <div className="flex-1 overflow-auto p-6">
           {/* Stage Navigation */}
           {stageNavigation && (
-            <div className="mb-6">
-              {stageNavigation}
-            </div>
+            <>
+              <div className="mb-4">
+                {stageNavigation}
+              </div>
+              <div className="h-px bg-border mb-6" />
+            </>
           )}
           
           {/* Input Header with Actions */}

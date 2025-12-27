@@ -179,7 +179,7 @@ export default function PipelineModal({
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="max-w-6xl h-[90vh] flex flex-col p-0 gap-0">
+      <DialogContent className="max-w-7xl h-[90vh] flex flex-col p-0 gap-0">
         {/* Header */}
         <div className="flex items-center gap-4 border-b bg-muted/30 px-6 py-4 flex-wrap">
           <div className="flex items-center gap-3">
