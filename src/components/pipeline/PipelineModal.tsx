@@ -181,110 +181,96 @@ export default function PipelineModal({
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="max-w-6xl h-[90vh] flex flex-col p-0 gap-0">
         {/* Header */}
-        <div className="flex flex-col border-b bg-muted/30 px-6 py-4">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-3">
-              <Button variant="ghost" size="icon" onClick={handleClose}>
-                <ArrowLeft className="h-4 w-4" />
-              </Button>
-              <h2 className="text-xl font-semibold">Talking Head</h2>
-            </div>
+        <div className="flex items-center gap-4 border-b bg-muted/30 px-6 py-4 flex-wrap">
+          <div className="flex items-center gap-3">
+            <Button variant="ghost" size="icon" onClick={handleClose}>
+              <ArrowLeft className="h-4 w-4" />
+            </Button>
+            <h2 className="text-xl font-semibold">Talking Head</h2>
           </div>
           
-          {/* Metadata row */}
-          <div className="flex items-center gap-4 flex-wrap">
-            <div className="flex items-center gap-2">
-              <span className="text-sm text-muted-foreground">File name</span>
-              <Input
-                value={name}
-                onChange={(e) => handleNameChange(e.target.value)}
-                className="w-40 h-8"
-              />
-            </div>
-            
-            <LocationSelector
-              projectId={currentProjectId}
-              folderId={currentFolderId}
-              onLocationChange={handleLocationChange}
-            />
+          <div className="h-6 w-px bg-border" />
+          
+          <Input
+            value={name}
+            onChange={(e) => handleNameChange(e.target.value)}
+            className="w-36 h-8"
+          />
+          
+          <LocationSelector
+            projectId={currentProjectId}
+            folderId={currentFolderId}
+            onLocationChange={handleLocationChange}
+          />
 
-            {/* Status Selector */}
-            <div className="flex items-center gap-2">
-              <span className="text-sm text-muted-foreground">Status</span>
-              <Select value={status} onValueChange={handleStatusChange}>
-                <SelectTrigger className={cn(
-                  "h-8 w-fit rounded-md text-xs border-0 px-3 py-1 text-white gap-1",
-                  currentStatusOption.color
-                )}>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {statusOptions.map((opt) => (
-                    <SelectItem key={opt.value} value={opt.value}>
-                      <div className="flex items-center gap-2">
-                        <div className={cn('h-2 w-2 rounded-full', opt.color)} />
-                        {opt.label}
-                      </div>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* Tags Selector */}
-            <Popover>
-              <PopoverTrigger asChild>
-                <div className="flex items-center gap-2 cursor-pointer hover:bg-secondary/50 rounded-md px-2 py-1 transition-colors">
-                  <span className="text-sm text-muted-foreground">Tags</span>
-                  <div className="flex items-center gap-1">
-                    {selectedTags.length > 0 ? (
-                      <>
-                        {selectedTags.slice(0, 2).map((tagId) => {
-                          const tag = tags.find(t => t.id === tagId);
-                          if (!tag) return null;
-                          return (
-                            <Badge
-                              key={tagId}
-                              variant="secondary"
-                              className="text-xs"
-                              style={{ backgroundColor: `${tag.color}20`, color: tag.color }}
-                            >
-                              {tag.tag_name}
-                            </Badge>
-                          );
-                        })}
-                        {selectedTags.length > 2 && (
-                          <span className="text-xs text-muted-foreground">+{selectedTags.length - 2}</span>
-                        )}
-                      </>
-                    ) : (
-                      <span className="text-xs text-muted-foreground">+ Add tag</span>
-                    )}
+          <Select value={status} onValueChange={handleStatusChange}>
+            <SelectTrigger className={cn(
+              "h-8 w-fit rounded-md text-xs border-0 px-3 py-1 text-white gap-1",
+              currentStatusOption.color
+            )}>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {statusOptions.map((opt) => (
+                <SelectItem key={opt.value} value={opt.value}>
+                  <div className="flex items-center gap-2">
+                    <div className={cn('h-2 w-2 rounded-full', opt.color)} />
+                    {opt.label}
                   </div>
-                </div>
-              </PopoverTrigger>
-              <PopoverContent align="start" className="w-52">
-                <div className="space-y-1">
-                  <h4 className="text-sm font-medium mb-2">Tags</h4>
-                  {tags.length === 0 ? (
-                    <p className="text-xs text-muted-foreground">No tags available</p>
-                  ) : (
-                    tags.map((tag) => (
-                      <div
-                        key={tag.id}
-                        className="flex items-center gap-2 rounded-md p-1.5 hover:bg-secondary cursor-pointer"
-                        onClick={() => toggleTag(tag.id)}
-                      >
-                        <Checkbox checked={selectedTags.includes(tag.id)} />
-                        <span className="h-2 w-2 rounded-full" style={{ backgroundColor: tag.color }} />
-                        <span className="flex-1 text-sm truncate">{tag.tag_name}</span>
-                      </div>
-                    ))
-                  )}
-                </div>
-              </PopoverContent>
-            </Popover>
-          </div>
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          <Popover>
+            <PopoverTrigger asChild>
+              <div className="flex items-center gap-1 cursor-pointer hover:bg-secondary/50 rounded-md px-2 py-1 transition-colors">
+                {selectedTags.length > 0 ? (
+                  <>
+                    {selectedTags.slice(0, 2).map((tagId) => {
+                      const tag = tags.find(t => t.id === tagId);
+                      if (!tag) return null;
+                      return (
+                        <Badge
+                          key={tagId}
+                          variant="secondary"
+                          className="text-xs"
+                          style={{ backgroundColor: `${tag.color}20`, color: tag.color }}
+                        >
+                          {tag.tag_name}
+                        </Badge>
+                      );
+                    })}
+                    {selectedTags.length > 2 && (
+                      <span className="text-xs text-muted-foreground">+{selectedTags.length - 2}</span>
+                    )}
+                  </>
+                ) : (
+                  <span className="text-xs text-muted-foreground">+ Add tag</span>
+                )}
+              </div>
+            </PopoverTrigger>
+            <PopoverContent align="start" className="w-52">
+              <div className="space-y-1">
+                <h4 className="text-sm font-medium mb-2">Tags</h4>
+                {tags.length === 0 ? (
+                  <p className="text-xs text-muted-foreground">No tags available</p>
+                ) : (
+                  tags.map((tag) => (
+                    <div
+                      key={tag.id}
+                      className="flex items-center gap-2 rounded-md p-1.5 hover:bg-secondary cursor-pointer"
+                      onClick={() => toggleTag(tag.id)}
+                    >
+                      <Checkbox checked={selectedTags.includes(tag.id)} />
+                      <span className="h-2 w-2 rounded-full" style={{ backgroundColor: tag.color }} />
+                      <span className="flex-1 text-sm truncate">{tag.tag_name}</span>
+                    </div>
+                  ))
+                )}
+              </div>
+            </PopoverContent>
+          </Popover>
         </div>
 
         {/* Stage Navigation */}
@@ -374,15 +360,6 @@ export default function PipelineModal({
           )}
         </div>
 
-        {/* Credits display */}
-        <div className="flex items-center justify-between px-6 py-3 border-t bg-muted/30">
-          <span className="text-sm text-muted-foreground">
-            Available Credits: {profile?.credits?.toFixed(2) || '0.00'}
-          </span>
-          <span className="text-xs text-muted-foreground">
-            Progress is automatically saved
-          </span>
-        </div>
       </DialogContent>
     </Dialog>
   );

@@ -274,6 +274,9 @@ export default function ScriptStage({ pipelineId, onContinue }: ScriptStageProps
     </div>
   );
 
+  // Check if output was AI generated (not pasted)
+  const wasAIGenerated = pipeline?.script_input?.mode === 'generate';
+
   return (
     <StageLayout
       inputTitle="Input"
@@ -289,7 +292,7 @@ export default function ScriptStage({ pipelineId, onContinue }: ScriptStageProps
       canContinue={hasOutput}
       generateLabel={mode === 'paste' ? 'Use Pasted Script' : (isEditing ? 'Edit Script' : 'Generate Script')}
       creditsCost={mode === 'paste' ? 'Free' : `${PIPELINE_CREDITS.script} Credits`}
-      showEditButton={mode === 'generate' && hasOutput}
+      isAIGenerated={wasAIGenerated}
       outputActions={hasOutput ? outputActions : undefined}
     />
   );

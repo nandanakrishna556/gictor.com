@@ -26,9 +26,8 @@ interface StageLayoutProps {
   generateLabel: string;
   creditsCost: string;
   
-  // Optional
-  showEditButton?: boolean;
-  showRegenerateInInput?: boolean;
+  // Optional - only show edit/regenerate for AI-generated content
+  isAIGenerated?: boolean;
   
   // Output actions
   outputActions?: React.ReactNode;
@@ -48,8 +47,7 @@ export default function StageLayout({
   canContinue,
   generateLabel,
   creditsCost,
-  showEditButton = true,
-  showRegenerateInInput = true,
+  isAIGenerated = false,
   outputActions,
 }: StageLayoutProps) {
   return (
@@ -58,9 +56,9 @@ export default function StageLayout({
       <div className="flex-1 flex flex-col border-r">
         <div className="flex items-center justify-between px-6 py-3 border-b bg-muted/20">
           <h3 className="font-medium">{inputTitle}</h3>
-          {hasOutput && (
+          {hasOutput && isAIGenerated && (
             <div className="flex items-center gap-2">
-              {showEditButton && onEdit && (
+              {onEdit && (
                 <Button variant="ghost" size="sm" onClick={onEdit} disabled={isGenerating}>
                   <Edit className="h-4 w-4 mr-2" />
                   Edit
