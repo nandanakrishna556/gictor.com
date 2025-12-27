@@ -90,33 +90,36 @@ export default function StageLayout({
       {/* Output Section */}
       <div className="flex-1 flex flex-col bg-muted/10">
         <div className="flex-1 overflow-auto p-6">
-          {/* Output Actions Row */}
-          {hasOutput && (
-            <div className="flex items-center justify-end gap-1 mb-4">
-              {isAIGenerated && (
-                <>
-                  {onEdit && (
-                    <Button variant="ghost" size="sm" onClick={onEdit} disabled={isGenerating}>
-                      <Edit className="h-4 w-4 mr-1.5" />
-                      Edit
-                    </Button>
-                  )}
-                  {onRegenerate && (
-                    <Button variant="ghost" size="sm" onClick={onRegenerate} disabled={isGenerating}>
-                      <RefreshCw className={cn("h-4 w-4 mr-1.5", isGenerating && "animate-spin")} />
-                      Regenerate
-                    </Button>
-                  )}
-                </>
-              )}
-              {outputActions}
-            </div>
-          )}
+          {/* Output Header with Actions */}
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="font-medium text-lg">Output</h3>
+            {hasOutput && (
+              <div className="flex items-center gap-1">
+                {isAIGenerated && (
+                  <>
+                    {onEdit && (
+                      <Button variant="ghost" size="sm" onClick={onEdit} disabled={isGenerating}>
+                        <Edit className="h-4 w-4 mr-1.5" />
+                        Edit
+                      </Button>
+                    )}
+                    {onRegenerate && (
+                      <Button variant="ghost" size="sm" onClick={onRegenerate} disabled={isGenerating}>
+                        <RefreshCw className={cn("h-4 w-4 mr-1.5", isGenerating && "animate-spin")} />
+                        Regenerate
+                      </Button>
+                    )}
+                  </>
+                )}
+                {outputActions}
+              </div>
+            )}
+          </div>
           
           {hasOutput ? (
             outputContent
           ) : (
-            <div className="flex flex-col items-center justify-center h-full text-center text-muted-foreground">
+            <div className="flex flex-col items-center justify-center h-[calc(100%-2rem)] text-center text-muted-foreground">
               <p className="text-lg font-medium">No output yet</p>
               <p className="text-sm">Generate or upload content to see the result</p>
             </div>
