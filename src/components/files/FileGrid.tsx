@@ -370,11 +370,13 @@ export default function FileGrid({
         <DragDropContext onDragEnd={handleDragEnd}>
           <div className="flex gap-4 overflow-x-auto pb-4">
             {stages.map((stage, stageIndex) => {
-              // Default status is first stage - filter items with no status to first stage
+              // Filter items by status - handle both generation status and pipeline stage status
               const stageItems = allItems.filter((item) => {
                 const itemStatus = item.status;
-                if (!itemStatus || itemStatus === 'active') {
-                  return stageIndex === 0; // No status = first stage
+                // Special generation statuses should go to first stage
+                const generationStatuses = ['processing', 'completed', 'failed', 'active', undefined, null, ''];
+                if (generationStatuses.includes(itemStatus as any)) {
+                  return stageIndex === 0; // No pipeline status = first stage
                 }
                 return itemStatus === stage.id;
               });

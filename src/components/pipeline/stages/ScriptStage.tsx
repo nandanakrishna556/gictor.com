@@ -2,8 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Slider } from '@/components/ui/slider';
+import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Sparkles, FileText } from 'lucide-react';
+import { Sparkles, FileText, Copy } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { usePipeline } from '@/hooks/usePipeline';
 import { generateScript } from '@/lib/pipeline-service';
@@ -242,6 +243,16 @@ export default function ScriptStage({ pipelineId, onContinue }: ScriptStageProps
     </div>
   );
 
+  const handleCopyScript = async () => {
+    if (!outputScript?.text) return;
+    try {
+      await navigator.clipboard.writeText(outputScript.text);
+      toast.success('Script copied to clipboard');
+    } catch (error) {
+      toast.error('Failed to copy script');
+    }
+  };
+
   const outputContent = outputScript ? (
     <div className="w-full max-w-lg mx-auto space-y-4">
       <div className="bg-muted/50 rounded-xl p-4 max-h-96 overflow-y-auto">
@@ -253,6 +264,15 @@ export default function ScriptStage({ pipelineId, onContinue }: ScriptStageProps
       </div>
     </div>
   ) : null;
+
+  const outputActions = (
+    <div className="flex items-center gap-2">
+      <Button variant="ghost" size="sm" onClick={handleCopyScript}>
+        <Copy className="h-4 w-4 mr-2" />
+        Copy Script
+      </Button>
+    </div>
+  );
 
   return (
     <StageLayout
@@ -270,6 +290,7 @@ export default function ScriptStage({ pipelineId, onContinue }: ScriptStageProps
       generateLabel={mode === 'paste' ? 'Use Pasted Script' : (isEditing ? 'Edit Script' : 'Generate Script')}
       creditsCost={mode === 'paste' ? 'Free' : `${PIPELINE_CREDITS.script} Credits`}
       showEditButton={mode === 'generate' && hasOutput}
+      outputActions={hasOutput ? outputActions : undefined}
     />
   );
 }

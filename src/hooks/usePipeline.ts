@@ -82,7 +82,7 @@ export function usePipeline(pipelineId: string | null) {
 
   // Update pipeline metadata
   const updatePipeline = useMutation({
-    mutationFn: async (updates: Partial<Pick<Pipeline, 'name' | 'tags' | 'current_stage'>>) => {
+    mutationFn: async (updates: Partial<Pick<Pipeline, 'name' | 'tags' | 'current_stage' | 'status'>>) => {
       if (!pipelineId) throw new Error('No pipeline selected');
       
       const { data, error } = await supabase
