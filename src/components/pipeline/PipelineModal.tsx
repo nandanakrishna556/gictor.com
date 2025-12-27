@@ -454,10 +454,6 @@ export default function PipelineModal({
                 )}
               </div>
             )}
-            <Button variant="outline" size="sm" onClick={handleSave} className="h-8" disabled={saveStatus === 'saving'}>
-              <Save className="h-4 w-4 mr-1.5" />
-              Save
-            </Button>
             <Button variant="ghost" size="icon" className="h-8 w-8" onClick={handleClose}>
               <X className="h-4 w-4" />
             </Button>
