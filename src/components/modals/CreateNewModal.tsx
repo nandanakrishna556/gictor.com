@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react';
-import { Image, Video, FileText, ArrowLeft, FolderPlus, X } from 'lucide-react';
+import { Image, Video, FileText, ArrowLeft, FolderPlus, X, Loader2 } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
 import {
   Dialog,
@@ -10,6 +10,9 @@ import {
 import FirstFrameForm from '@/components/forms/FirstFrameForm';
 import ScriptForm from '@/components/forms/ScriptForm';
 import PipelineModal from '@/components/pipeline/PipelineModal';
+import { usePipeline } from '@/hooks/usePipeline';
+import { useAuth } from '@/contexts/AuthContext';
+import { toast } from 'sonner';
 import type { Tag } from '@/hooks/useTags';
 
 interface StatusOption {
@@ -73,12 +76,17 @@ export default function CreateNewModal({
   statusOptions,
 }: CreateNewModalProps) {
   const queryClient = useQueryClient();
+  const { user } = useAuth();
   const [selectedType, setSelectedType] = useState<ContentType>(null);
   const [pipelineModalOpen, setPipelineModalOpen] = useState(false);
-  // Use a ref to store the status synchronously (avoids race conditions with state)
+  const [createdPipelineId, setCreatedPipelineId] = useState<string | null>(null);
+  const [isCreatingPipeline, setIsCreatingPipeline] = useState(false);
+  
+  // Store the status in a ref to preserve it between modal transitions
   const pipelineInitialStatusRef = useRef<string | undefined>(undefined);
-  // Also use state to trigger re-render when modal opens
-  const [pipelineKey, setPipelineKey] = useState(0);
+  
+  // Get createPipeline from hook (null ID means no fetch, just get the create function)
+  const { createPipeline } = usePipeline(null);
 
   const handleClose = () => {
     setSelectedType(null);
@@ -90,19 +98,34 @@ export default function CreateNewModal({
     onOpenChange(false);
   };
 
-  const handleTypeSelect = (type: typeof contentTypes[0]) => {
+  const handleTypeSelect = async (type: typeof contentTypes[0]) => {
     if (type.id === 'folder') {
       onOpenChange(false);
       onCreateFolder?.(initialStatus);
     } else if ('isPipeline' in type && type.isPipeline) {
-      // Store the status in ref SYNCHRONOUSLY before any state changes
-      pipelineInitialStatusRef.current = initialStatus;
-      // Increment key to force fresh mount of PipelineModal
-      setPipelineKey(prev => prev + 1);
-      // Close this modal first
-      onOpenChange(false);
-      // Then open pipeline modal
-      setPipelineModalOpen(true);
+      // Create the pipeline FIRST, then open the modal with the ID
+      setIsCreatingPipeline(true);
+      
+      const statusToUse = initialStatus || 'draft';
+      pipelineInitialStatusRef.current = statusToUse;
+      
+      try {
+        const newPipeline = await createPipeline({
+          projectId,
+          folderId,
+          name: 'Untitled',
+          status: statusToUse,
+        });
+        
+        setCreatedPipelineId(newPipeline.id);
+        setIsCreatingPipeline(false);
+        onOpenChange(false);
+        setPipelineModalOpen(true);
+      } catch (error) {
+        console.error('Failed to create pipeline:', error);
+        toast.error('Failed to create pipeline');
+        setIsCreatingPipeline(false);
+      }
     } else {
       setSelectedType(type.id as ContentType);
     }
@@ -110,6 +133,7 @@ export default function CreateNewModal({
 
   const handlePipelineClose = () => {
     setPipelineModalOpen(false);
+    setCreatedPipelineId(null);
     pipelineInitialStatusRef.current = undefined;
   };
 
@@ -158,16 +182,23 @@ export default function CreateNewModal({
                 <button
                   key={type.id}
                   onClick={() => handleTypeSelect(type)}
-                  className="flex flex-col items-center rounded-xl border border-border bg-card p-6 text-center transition-apple hover:border-primary hover:bg-primary/5"
+                  disabled={isCreatingPipeline}
+                  className="flex flex-col items-center rounded-xl border border-border bg-card p-6 text-center transition-apple hover:border-primary hover:bg-primary/5 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10">
-                    <type.icon className="h-6 w-6 text-primary" />
+                    {isCreatingPipeline && 'isPipeline' in type && type.isPipeline ? (
+                      <Loader2 className="h-6 w-6 text-primary animate-spin" />
+                    ) : (
+                      <type.icon className="h-6 w-6 text-primary" />
+                    )}
                   </div>
                   <h3 className="font-medium text-foreground">
                     {type.title}
                   </h3>
                   <p className="mt-1 text-sm text-muted-foreground">
-                    {type.description}
+                    {isCreatingPipeline && 'isPipeline' in type && type.isPipeline 
+                      ? 'Creating...' 
+                      : type.description}
                   </p>
                 </button>
               ))}
@@ -196,17 +227,18 @@ export default function CreateNewModal({
         </DialogContent>
       </Dialog>
 
-      {/* Use key to force fresh mount each time */}
-      <PipelineModal
-        key={pipelineKey}
-        open={pipelineModalOpen}
-        onClose={handlePipelineClose}
-        pipelineId={null}
-        projectId={projectId}
-        folderId={folderId}
-        initialStatus={pipelineInitialStatusRef.current}
-        onSuccess={handlePipelineSuccess}
-      />
+      {/* Only open when we have a created pipeline ID */}
+      {createdPipelineId && (
+        <PipelineModal
+          open={pipelineModalOpen}
+          onClose={handlePipelineClose}
+          pipelineId={createdPipelineId}
+          projectId={projectId}
+          folderId={folderId}
+          initialStatus={pipelineInitialStatusRef.current}
+          onSuccess={handlePipelineSuccess}
+        />
+      )}
     </>
   );
 }

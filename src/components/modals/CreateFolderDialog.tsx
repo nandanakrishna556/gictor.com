@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Plus, Trash2 } from 'lucide-react';
+import { Plus, X } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -129,8 +129,15 @@ export default function CreateFolderDialog({
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="max-w-lg rounded-2xl">
-        <DialogHeader>
+        <DialogHeader className="flex flex-row items-center justify-between">
           <DialogTitle>Create folder</DialogTitle>
+          <button
+            type="button"
+            onClick={() => handleOpenChange(false)}
+            className="rounded-lg p-1.5 text-muted-foreground transition-apple hover:bg-secondary"
+          >
+            <X className="h-4 w-4" />
+          </button>
         </DialogHeader>
         <form onSubmit={handleSubmit}>
           <div className="space-y-4 py-4">

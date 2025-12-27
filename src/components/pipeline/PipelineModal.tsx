@@ -55,26 +55,19 @@ export default function PipelineModal({
   const { tags } = useTags();
   const { createFile } = useFiles(projectId);
   
-  // Core state - use refs to avoid race conditions
-  const [currentPipelineId, setCurrentPipelineId] = useState<string | null>(null);
-  const [isCreatingPipeline, setIsCreatingPipeline] = useState(false);
-  const creationAttemptedRef = useRef(false);
+  // Core state
   const initialStatusRef = useRef(initialStatus);
   
   // Capture initialStatus in ref immediately on mount
   initialStatusRef.current = initialStatus;
   
-  // Compute effective pipeline ID
-  const effectivePipelineId = pipelineId || currentPipelineId;
-  
-  // Only fetch pipeline data when we have an ID
+  // Use the provided pipelineId directly - pipeline creation now happens in CreateNewModal
   const {
     pipeline,
     isLoading,
     canProceedToFinalVideo,
-    createPipeline,
     updatePipeline,
-  } = usePipeline(effectivePipelineId);
+  } = usePipeline(pipelineId);
 
   // UI state
   const [activeStage, setActiveStage] = useState<PipelineStage>('first_frame');
@@ -105,39 +98,7 @@ export default function PipelineModal({
   };
 
   // Subscribe to realtime updates
-  usePipelineRealtime(effectivePipelineId);
-
-  // Create pipeline on mount if needed (only once)
-  useEffect(() => {
-    const needsCreation = open && !pipelineId && !currentPipelineId && !creationAttemptedRef.current;
-    
-    if (needsCreation && isValidUUID(projectId)) {
-      creationAttemptedRef.current = true;
-      setIsCreatingPipeline(true);
-      
-      const statusToUse = initialStatusRef.current || 'draft';
-      console.log('Creating pipeline with status:', statusToUse);
-      
-      createPipeline({
-        projectId: projectId,
-        folderId: folderId,
-        name: 'Untitled',
-        status: statusToUse,
-      })
-        .then((newPipeline) => {
-          console.log('Pipeline created:', newPipeline.id, 'with status:', newPipeline.status);
-          setCurrentPipelineId(newPipeline.id);
-          setStatus(newPipeline.status || statusToUse);
-          setIsCreatingPipeline(false);
-        })
-        .catch((error) => {
-          console.error('Failed to create pipeline:', error);
-          toast.error('Failed to create pipeline');
-          setIsCreatingPipeline(false);
-          onClose();
-        });
-    }
-  }, [open, pipelineId, currentPipelineId, projectId, folderId, createPipeline, onClose]);
+  usePipelineRealtime(pipelineId);
 
   // Sync pipeline data when loaded
   useEffect(() => {
@@ -163,7 +124,7 @@ export default function PipelineModal({
 
   // Auto-save functionality
   const triggerAutoSave = useCallback(() => {
-    if (!effectivePipelineId || !hasUnsavedChanges) return;
+    if (!pipelineId || !hasUnsavedChanges) return;
     
     if (autoSaveTimeoutRef.current) {
       clearTimeout(autoSaveTimeoutRef.current);
@@ -187,7 +148,7 @@ export default function PipelineModal({
         setSaveStatus('idle');
       }
     }, 2000);
-  }, [effectivePipelineId, hasUnsavedChanges, name, status, selectedTags, updatePipeline, queryClient, currentProjectId]);
+  }, [pipelineId, hasUnsavedChanges, name, status, selectedTags, updatePipeline, queryClient, currentProjectId]);
 
   // Trigger auto-save when unsaved changes occur
   useEffect(() => {
@@ -260,7 +221,7 @@ export default function PipelineModal({
   const currentStatusOption = statusOptions.find(s => s.value === status) || statusOptions[0];
 
   const handleSave = async () => {
-    if (!effectivePipelineId) {
+    if (!pipelineId) {
       toast.error('No pipeline to save');
       return;
     }
@@ -312,7 +273,8 @@ export default function PipelineModal({
   };
 
 
-  if (isLoading || isCreatingPipeline) {
+  // Show loading only when actually fetching existing pipeline data
+  if (isLoading && pipelineId) {
     return (
       <Dialog open={open} onOpenChange={handleClose}>
         <DialogContent className="max-w-[1400px] h-[90vh] flex items-center justify-center">
@@ -466,32 +428,32 @@ export default function PipelineModal({
 
         {/* Stage Content */}
         <div className="flex-1 overflow-hidden">
-          {effectivePipelineId && (
+          {pipelineId && (
             <>
               {activeStage === 'first_frame' && (
                 <FirstFrameStage
-                  pipelineId={effectivePipelineId}
+                  pipelineId={pipelineId}
                   onContinue={() => setActiveStage('script')}
                   stageNavigation={renderStageNavigation()}
                 />
               )}
               {activeStage === 'script' && (
                 <ScriptStage
-                  pipelineId={effectivePipelineId}
+                  pipelineId={pipelineId}
                   onContinue={() => setActiveStage('voice')}
                   stageNavigation={renderStageNavigation()}
                 />
               )}
               {activeStage === 'voice' && (
                 <VoiceStage
-                  pipelineId={effectivePipelineId}
+                  pipelineId={pipelineId}
                   onContinue={() => setActiveStage('final_video')}
                   stageNavigation={renderStageNavigation()}
                 />
               )}
               {activeStage === 'final_video' && (
                 <FinalVideoStage
-                  pipelineId={effectivePipelineId}
+                  pipelineId={pipelineId}
                   onComplete={() => {
                     toast.success('Video generated successfully!');
                     onSuccess?.();
