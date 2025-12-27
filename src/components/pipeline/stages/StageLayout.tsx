@@ -51,8 +51,8 @@ export default function StageLayout({
 }: StageLayoutProps) {
   return (
     <div className="flex h-full overflow-hidden">
-      {/* Input Section */}
-      <div className="flex-1 flex flex-col border-r min-h-0">
+      {/* Input Section - Fixed width */}
+      <div className="w-1/2 flex-shrink-0 flex flex-col border-r min-h-0">
         <div className="flex-1 overflow-y-auto p-6 min-h-0">
           {/* Stage Navigation */}
           {stageNavigation && (
@@ -86,9 +86,9 @@ export default function StageLayout({
         </div>
       </div>
 
-      {/* Output Section */}
-      <div className="flex-1 flex flex-col bg-muted/10">
-        <div className="flex-1 overflow-auto p-6">
+      {/* Output Section - Fixed width */}
+      <div className="w-1/2 flex-shrink-0 flex flex-col bg-muted/10 min-h-0">
+        <div className="flex-1 overflow-y-auto p-6 min-h-0">
           {/* Output Header with Actions */}
           <div className="flex items-center justify-between mb-4">
             <h3 className="font-medium text-lg">Output</h3>
