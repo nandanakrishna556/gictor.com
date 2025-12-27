@@ -34,7 +34,7 @@ export default function MainLayout({ children }: MainLayoutProps) {
         </SheetContent>
       </Sheet>
 
-      <main className="flex-1 overflow-hidden">{children}</main>
+      <main className="flex-1 overflow-y-auto">{children}</main>
     </div>
   );
 }
