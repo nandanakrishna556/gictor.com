@@ -508,103 +508,112 @@ export default function FileGrid({
       )}
 
       <DragDropContext onDragEnd={handleDragEnd}>
-        <div className="grid gap-3 grid-cols-1 xs:grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 3xl:grid-cols-7">
-          {/* Create New Card - First item */}
-          {onCreateNew && (
-            <button
-              onClick={() => onCreateNew()}
-              className="group relative flex aspect-[2/3] cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed border-border bg-card transition-colors duration-200 hover:border-primary hover:bg-primary/5"
+        <Droppable droppableId="grid-root" isDropDisabled={true}>
+          {(rootProvided) => (
+            <div 
+              ref={rootProvided.innerRef}
+              {...rootProvided.droppableProps}
+              className="grid gap-3 grid-cols-1 xs:grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 3xl:grid-cols-7"
             >
-              <div className="flex h-10 w-10 sm:h-14 sm:w-14 items-center justify-center rounded-full bg-primary/10 transition-all duration-200 group-hover:bg-primary/20">
-                <Plus className="h-5 w-5 sm:h-7 sm:w-7 text-primary" />
-              </div>
-              <span className="mt-3 sm:mt-4 text-sm sm:text-base font-medium text-muted-foreground transition-all duration-200 group-hover:text-primary">
-                Create new
-              </span>
-            </button>
-          )}
+              {/* Create New Card - First item */}
+              {onCreateNew && (
+                <button
+                  onClick={() => onCreateNew()}
+                  className="group relative flex aspect-[2/3] cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed border-border bg-card transition-colors duration-200 hover:border-primary hover:bg-primary/5"
+                >
+                  <div className="flex h-10 w-10 sm:h-14 sm:w-14 items-center justify-center rounded-full bg-primary/10 transition-all duration-200 group-hover:bg-primary/20">
+                    <Plus className="h-5 w-5 sm:h-7 sm:w-7 text-primary" />
+                  </div>
+                  <span className="mt-3 sm:mt-4 text-sm sm:text-base font-medium text-muted-foreground transition-all duration-200 group-hover:text-primary">
+                    Create new
+                  </span>
+                </button>
+              )}
 
-          {/* All Items (Folders first, then Files) */}
-          {allItems.map((item, index) =>
-            item.itemType === 'folder' ? (
-              <Droppable key={item.id} droppableId={`folder-${item.id}`}>
-                {(provided, snapshot) => (
-                  <div
-                    ref={provided.innerRef}
-                    {...provided.droppableProps}
-                    className={cn(
-                      'transition-all duration-200',
-                      snapshot.isDraggingOver && 'ring-2 ring-primary ring-offset-2 rounded-2xl'
+              {/* All Items (Folders first, then Files) */}
+              {allItems.map((item, index) =>
+                item.itemType === 'folder' ? (
+                  <Droppable key={item.id} droppableId={`folder-${item.id}`}>
+                    {(provided, snapshot) => (
+                      <div
+                        ref={provided.innerRef}
+                        {...provided.droppableProps}
+                        className={cn(
+                          'transition-all duration-200',
+                          snapshot.isDraggingOver && 'ring-2 ring-primary ring-offset-2 rounded-2xl'
+                        )}
+                      >
+                        <FolderCard
+                          folder={item}
+                          projectId={projectId}
+                          stages={stages}
+                          tags={tags}
+                          isSelected={selectedItems.has(item.id)}
+                          bulkMode={bulkMode}
+                          isRenaming={renamingItemId === item.id}
+                          onStartRename={() => setRenamingItemId(item.id)}
+                          onCancelRename={() => setRenamingItemId(null)}
+                          onSaveRename={(newName) => {
+                            onUpdateFolderName?.(item.id, newName);
+                            setRenamingItemId(null);
+                          }}
+                          onSelect={() => toggleSelection(item.id)}
+                          onDelete={onDeleteFolder}
+                          onStatusChange={onUpdateFolderStatus}
+                          onTagsChange={onUpdateFolderTags}
+                          onCreateTag={onCreateTag}
+                          onDeleteTag={onDeleteTag}
+                          onCreateNew={onCreateNew}
+                          isDragOver={snapshot.isDraggingOver}
+                        />
+                        <div className="hidden">{provided.placeholder}</div>
+                      </div>
                     )}
-                  >
-                    <FolderCard
-                      folder={item}
-                      projectId={projectId}
-                      stages={stages}
-                      tags={tags}
-                      isSelected={selectedItems.has(item.id)}
-                      bulkMode={bulkMode}
-                      isRenaming={renamingItemId === item.id}
-                      onStartRename={() => setRenamingItemId(item.id)}
-                      onCancelRename={() => setRenamingItemId(null)}
-                      onSaveRename={(newName) => {
-                        onUpdateFolderName?.(item.id, newName);
-                        setRenamingItemId(null);
-                      }}
-                      onSelect={() => toggleSelection(item.id)}
-                      onDelete={onDeleteFolder}
-                      onStatusChange={onUpdateFolderStatus}
-                      onTagsChange={onUpdateFolderTags}
-                      onCreateTag={onCreateTag}
-                      onDeleteTag={onDeleteTag}
-                      onCreateNew={onCreateNew}
-                      isDragOver={snapshot.isDraggingOver}
-                    />
-                    <div className="hidden">{provided.placeholder}</div>
-                  </div>
-                )}
-              </Droppable>
-            ) : (
-              <Draggable key={item.id} draggableId={item.id} index={index}>
-                {(provided, snapshot) => (
-                  <div
-                    ref={provided.innerRef}
-                    {...provided.draggableProps}
-                    {...provided.dragHandleProps}
-                    className={cn(snapshot.isDragging && 'opacity-80 z-50')}
-                  >
-                    <FileCard
-                      file={item}
-                      stages={stages}
-                      tags={tags}
-                      isSelected={selectedItems.has(item.id)}
-                      bulkMode={bulkMode}
-                      isRenaming={renamingItemId === item.id}
-                      onStartRename={() => setRenamingItemId(item.id)}
-                      onCancelRename={() => setRenamingItemId(null)}
-                      onSaveRename={(newName) => {
-                        onUpdateFileName?.(item.id, newName);
-                        setRenamingItemId(null);
-                      }}
-                      onSelect={() => toggleSelection(item.id)}
-                      onDelete={onDeleteFile}
-                      onStatusChange={onUpdateFileStatus}
-                      onTagsChange={onUpdateFileTags}
-                      onCreateTag={onCreateTag}
-                      onDeleteTag={onDeleteTag}
-                      onCreateNew={onCreateNew}
-                      onFileClick={onFileClick}
-                      onMove={() => {
-                        setFileToMove(item);
-                        setMoveDialogOpen(true);
-                      }}
-                    />
-                  </div>
-                )}
-              </Draggable>
-            )
+                  </Droppable>
+                ) : (
+                  <Draggable key={item.id} draggableId={item.id} index={index}>
+                    {(provided, snapshot) => (
+                      <div
+                        ref={provided.innerRef}
+                        {...provided.draggableProps}
+                        {...provided.dragHandleProps}
+                        className={cn(snapshot.isDragging && 'opacity-80 z-50')}
+                      >
+                        <FileCard
+                          file={item}
+                          stages={stages}
+                          tags={tags}
+                          isSelected={selectedItems.has(item.id)}
+                          bulkMode={bulkMode}
+                          isRenaming={renamingItemId === item.id}
+                          onStartRename={() => setRenamingItemId(item.id)}
+                          onCancelRename={() => setRenamingItemId(null)}
+                          onSaveRename={(newName) => {
+                            onUpdateFileName?.(item.id, newName);
+                            setRenamingItemId(null);
+                          }}
+                          onSelect={() => toggleSelection(item.id)}
+                          onDelete={onDeleteFile}
+                          onStatusChange={onUpdateFileStatus}
+                          onTagsChange={onUpdateFileTags}
+                          onCreateTag={onCreateTag}
+                          onDeleteTag={onDeleteTag}
+                          onCreateNew={onCreateNew}
+                          onFileClick={onFileClick}
+                          onMove={() => {
+                            setFileToMove(item);
+                            setMoveDialogOpen(true);
+                          }}
+                        />
+                      </div>
+                    )}
+                  </Draggable>
+                )
+              )}
+              {rootProvided.placeholder}
+            </div>
           )}
-        </div>
+        </Droppable>
       </DragDropContext>
     </div>
   );
