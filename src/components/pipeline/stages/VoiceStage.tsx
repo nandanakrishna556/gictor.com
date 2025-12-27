@@ -45,6 +45,7 @@ export default function VoiceStage({ pipelineId, onContinue, stageNavigation }: 
   });
   const [uploadedUrl, setUploadedUrl] = useState('');
   const [voiceOpen, setVoiceOpen] = useState(false);
+  const [scriptOpen, setScriptOpen] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   
   // Playback state
@@ -225,15 +226,25 @@ export default function VoiceStage({ pipelineId, onContinue, stageNavigation }: 
 
       {mode === 'generate' ? (
         <>
-          {/* Script Preview */}
-          <div className="space-y-2">
-            <Label>Script to voice ({charCount.toLocaleString()} characters)</Label>
-            <div className="bg-muted/50 rounded-xl p-4 max-h-32 overflow-y-auto">
-              <p className="text-sm text-muted-foreground whitespace-pre-wrap">
-                {scriptText || 'No script available'}
-              </p>
-            </div>
-          </div>
+          {/* Script Preview - Collapsible */}
+          <Collapsible open={scriptOpen} onOpenChange={setScriptOpen}>
+            <CollapsibleTrigger asChild>
+              <button 
+                type="button"
+                className="flex w-full items-center justify-between rounded-xl border bg-background p-3 hover:bg-secondary/50 transition-colors"
+              >
+                <Label className="cursor-pointer">Script to voice ({charCount.toLocaleString()} characters)</Label>
+                <ChevronDown className={cn("h-4 w-4 transition-transform", scriptOpen && "rotate-180")} />
+              </button>
+            </CollapsibleTrigger>
+            <CollapsibleContent className="mt-2">
+              <div className="bg-muted/50 rounded-xl p-4 max-h-32 overflow-y-auto">
+                <p className="text-sm text-muted-foreground whitespace-pre-wrap">
+                  {scriptText || 'No script available'}
+                </p>
+              </div>
+            </CollapsibleContent>
+          </Collapsible>
 
           {/* Voice Selector */}
           <Collapsible open={voiceOpen} onOpenChange={setVoiceOpen}>
