@@ -57,7 +57,7 @@ export default function Projects() {
               {[...Array(6)].map((_, i) => (
                 <div
                   key={i}
-                  className="aspect-[3/4] animate-pulse rounded-xl bg-secondary"
+                  className="aspect-[2/3] animate-pulse rounded-2xl bg-secondary"
                 />
               ))}
             </div>
@@ -85,7 +85,7 @@ export default function Projects() {
               {/* Create New Project Card */}
               <button
                 onClick={handleCreateProject}
-                className="group relative flex aspect-[3/4] cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed border-border bg-card card-interactive hover:border-primary hover:bg-primary/5"
+                className="group relative flex aspect-[2/3] cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed border-border bg-card transition-all duration-200 hover:border-primary hover:bg-primary/5"
               >
                 <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 transition-all duration-200 group-hover:bg-primary/20">
                   <Plus className="h-5 w-5 text-primary" />
@@ -98,7 +98,7 @@ export default function Projects() {
               {projects?.map((project) => (
                 <div
                   key={project.id}
-                  className="group relative flex aspect-[3/4] cursor-pointer flex-col items-center justify-center rounded-2xl border border-border bg-card card-interactive hover:border-primary"
+                  className="group relative flex aspect-[2/3] cursor-pointer flex-col items-center justify-center rounded-2xl border border-border bg-card transition-all duration-200 hover:border-primary"
                   onClick={() => {
                     if (renamingProjectId !== project.id) {
                       navigate(`/projects/${project.id}`);
