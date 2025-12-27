@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ImageUpload } from '@/components/ui/image-upload';
 import { SingleImageUpload } from '@/components/ui/single-image-upload';
-import { Upload, Sparkles } from 'lucide-react';
+import { Upload, Sparkles, Download, Copy } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { usePipeline } from '@/hooks/usePipeline';
 import { generateFirstFrame } from '@/lib/pipeline-service';
@@ -256,6 +257,39 @@ export default function FirstFrameStage({ pipelineId, onContinue }: FirstFrameSt
     </div>
   );
 
+  const handleDownload = async () => {
+    if (!outputUrl) return;
+    try {
+      const response = await fetch(outputUrl);
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `first-frame-${Date.now()}.png`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      toast.success('Image downloaded');
+    } catch (error) {
+      toast.error('Failed to download image');
+    }
+  };
+
+  const handleCopy = async () => {
+    if (!outputUrl) return;
+    try {
+      const response = await fetch(outputUrl);
+      const blob = await response.blob();
+      await navigator.clipboard.write([
+        new ClipboardItem({ [blob.type]: blob })
+      ]);
+      toast.success('Image copied to clipboard');
+    } catch (error) {
+      toast.error('Failed to copy image');
+    }
+  };
+
   const outputContent = outputUrl ? (
     <div className="w-full max-w-md mx-auto">
       <img
@@ -265,6 +299,19 @@ export default function FirstFrameStage({ pipelineId, onContinue }: FirstFrameSt
       />
     </div>
   ) : null;
+
+  const outputActions = (
+    <div className="flex items-center gap-2">
+      <Button variant="ghost" size="sm" onClick={handleDownload}>
+        <Download className="h-4 w-4 mr-2" />
+        Download
+      </Button>
+      <Button variant="ghost" size="sm" onClick={handleCopy}>
+        <Copy className="h-4 w-4 mr-2" />
+        Copy
+      </Button>
+    </div>
+  );
 
   return (
     <StageLayout
@@ -282,6 +329,7 @@ export default function FirstFrameStage({ pipelineId, onContinue }: FirstFrameSt
       generateLabel={mode === 'upload' ? 'Use Uploaded Image' : (isEditing ? 'Edit Image' : 'Generate First Frame')}
       creditsCost={mode === 'upload' ? 'Free' : `${PIPELINE_CREDITS.first_frame} Credits`}
       showEditButton={mode === 'generate' && hasOutput}
+      outputActions={hasOutput ? outputActions : undefined}
     />
   );
 }

@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
-import { Upload, Sparkles, Play, Pause, Star, ChevronDown } from 'lucide-react';
+import { Upload, Sparkles, Play, Pause, Star, ChevronDown, Download } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { usePipeline } from '@/hooks/usePipeline';
@@ -350,6 +350,26 @@ export default function VoiceStage({ pipelineId, onContinue }: VoiceStageProps) 
     </div>
   );
 
+  const handleDownloadAudio = async () => {
+    const audioUrl = outputAudio?.url;
+    if (!audioUrl) return;
+    try {
+      const response = await fetch(audioUrl);
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `voice-${Date.now()}.mp3`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      toast.success('Audio downloaded');
+    } catch (error) {
+      toast.error('Failed to download audio');
+    }
+  };
+
   const outputContent = outputAudio ? (
     <div className="flex flex-col items-center justify-center h-full gap-6">
       <div className="w-32 h-32 rounded-full bg-primary/10 flex items-center justify-center">
@@ -373,6 +393,15 @@ export default function VoiceStage({ pipelineId, onContinue }: VoiceStageProps) 
     </div>
   ) : null;
 
+  const outputActions = (
+    <div className="flex items-center gap-2">
+      <Button variant="ghost" size="sm" onClick={handleDownloadAudio}>
+        <Download className="h-4 w-4 mr-2" />
+        Download
+      </Button>
+    </div>
+  );
+
   return (
     <StageLayout
       inputTitle="Input"
@@ -388,6 +417,7 @@ export default function VoiceStage({ pipelineId, onContinue }: VoiceStageProps) 
       generateLabel={mode === 'upload' ? 'Use Uploaded Audio' : 'Generate Voice'}
       creditsCost={mode === 'upload' ? 'Free' : `${estimatedCost.toFixed(2)} Credits`}
       showEditButton={false}
+      outputActions={hasOutput ? outputActions : undefined}
     />
   );
 }

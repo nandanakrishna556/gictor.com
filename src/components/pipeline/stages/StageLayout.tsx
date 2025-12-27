@@ -1,7 +1,8 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { RefreshCw, Edit, ArrowRight, Loader2 } from 'lucide-react';
+import { RefreshCw, Edit, ArrowRight, Loader2, Download, Copy } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { toast } from 'sonner';
 
 interface StageLayoutProps {
   // Input section
@@ -28,6 +29,9 @@ interface StageLayoutProps {
   // Optional
   showEditButton?: boolean;
   showRegenerateInInput?: boolean;
+  
+  // Output actions
+  outputActions?: React.ReactNode;
 }
 
 export default function StageLayout({
@@ -46,6 +50,7 @@ export default function StageLayout({
   creditsCost,
   showEditButton = true,
   showRegenerateInInput = true,
+  outputActions,
 }: StageLayoutProps) {
   return (
     <div className="flex h-full">
@@ -53,11 +58,21 @@ export default function StageLayout({
       <div className="flex-1 flex flex-col border-r">
         <div className="flex items-center justify-between px-6 py-3 border-b bg-muted/20">
           <h3 className="font-medium">{inputTitle}</h3>
-          {showRegenerateInInput && hasOutput && onRegenerate && (
-            <Button variant="ghost" size="sm" onClick={onRegenerate} disabled={isGenerating}>
-              <RefreshCw className={cn("h-4 w-4 mr-2", isGenerating && "animate-spin")} />
-              Regenerate
-            </Button>
+          {hasOutput && (
+            <div className="flex items-center gap-2">
+              {showEditButton && onEdit && (
+                <Button variant="ghost" size="sm" onClick={onEdit} disabled={isGenerating}>
+                  <Edit className="h-4 w-4 mr-2" />
+                  Edit
+                </Button>
+              )}
+              {onRegenerate && (
+                <Button variant="ghost" size="sm" onClick={onRegenerate} disabled={isGenerating}>
+                  <RefreshCw className={cn("h-4 w-4 mr-2", isGenerating && "animate-spin")} />
+                  Regenerate
+                </Button>
+              )}
+            </div>
           )}
         </div>
         
@@ -89,22 +104,7 @@ export default function StageLayout({
       <div className="flex-1 flex flex-col bg-muted/10">
         <div className="flex items-center justify-between px-6 py-3 border-b bg-muted/20">
           <h3 className="font-medium">{outputTitle}</h3>
-          {hasOutput && (
-            <div className="flex items-center gap-2">
-              {showEditButton && onEdit && (
-                <Button variant="ghost" size="sm" onClick={onEdit} disabled={isGenerating}>
-                  <Edit className="h-4 w-4 mr-2" />
-                  Edit
-                </Button>
-              )}
-              {onRegenerate && (
-                <Button variant="ghost" size="sm" onClick={onRegenerate} disabled={isGenerating}>
-                  <RefreshCw className={cn("h-4 w-4 mr-2", isGenerating && "animate-spin")} />
-                  Regenerate
-                </Button>
-              )}
-            </div>
-          )}
+          {hasOutput && outputActions}
         </div>
         
         <div className="flex-1 overflow-auto p-6">

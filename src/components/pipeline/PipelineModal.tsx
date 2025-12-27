@@ -2,11 +2,16 @@ import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { ArrowLeft, X, Check, Lock, Loader2 } from 'lucide-react';
+import { ArrowLeft, X, Check, Lock, Loader2, Plus } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { usePipeline } from '@/hooks/usePipeline';
 import { useProfile } from '@/hooks/useProfile';
 import { usePipelineRealtime } from '@/hooks/usePipelineRealtime';
+import { useTags } from '@/hooks/useTags';
+import { Badge } from '@/components/ui/badge';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Checkbox } from '@/components/ui/checkbox';
 import type { PipelineStage } from '@/types/pipeline';
 import { toast } from 'sonner';
 
@@ -50,11 +55,20 @@ export default function PipelineModal({
   } = usePipeline(pipelineId);
 
   const { profile } = useProfile();
+  const { tags } = useTags();
   const [currentPipelineId, setCurrentPipelineId] = useState<string | null>(pipelineId);
   const [activeStage, setActiveStage] = useState<PipelineStage>('first_frame');
   const [name, setName] = useState('Untitled');
   const [currentProjectId, setCurrentProjectId] = useState(projectId);
   const [currentFolderId, setCurrentFolderId] = useState(folderId);
+  const [status, setStatus] = useState<'draft' | 'processing' | 'completed' | 'failed'>('draft');
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
+
+  const statusOptions = [
+    { value: 'draft', label: 'Draft', color: 'bg-slate-500' },
+    { value: 'review', label: 'Review', color: 'bg-blue-500' },
+    { value: 'approved', label: 'Approved', color: 'bg-emerald-500' },
+  ];
 
   // Subscribe to realtime updates for this pipeline
   const effectivePipelineId = currentPipelineId || pipelineId;
@@ -65,6 +79,8 @@ export default function PipelineModal({
     if (pipeline) {
       setActiveStage(pipeline.current_stage);
       setName(pipeline.name);
+      setStatus(pipeline.status || 'draft');
+      setSelectedTags(pipeline.tags || []);
     }
   }, [pipeline]);
 
@@ -124,6 +140,22 @@ export default function PipelineModal({
     setCurrentFolderId(newFolderId);
   };
 
+  const handleStatusChange = (newStatus: string) => {
+    const typedStatus = newStatus as 'draft' | 'processing' | 'completed' | 'failed';
+    setStatus(typedStatus);
+    updatePipeline({ status: typedStatus });
+  };
+
+  const toggleTag = (tagId: string) => {
+    const newTags = selectedTags.includes(tagId)
+      ? selectedTags.filter(t => t !== tagId)
+      : [...selectedTags, tagId];
+    setSelectedTags(newTags);
+    updatePipeline({ tags: newTags });
+  };
+
+  const currentStatusOption = statusOptions.find(s => s.value === status) || statusOptions[0];
+
   const handleClose = () => {
     onClose();
     if (pipeline?.status === 'completed') {
@@ -160,7 +192,7 @@ export default function PipelineModal({
           </div>
           
           {/* Metadata row */}
-          <div className="flex items-center gap-6">
+          <div className="flex items-center gap-4 flex-wrap">
             <div className="flex items-center gap-2">
               <span className="text-sm text-muted-foreground">File name</span>
               <Input
@@ -175,6 +207,83 @@ export default function PipelineModal({
               folderId={currentFolderId}
               onLocationChange={handleLocationChange}
             />
+
+            {/* Status Selector */}
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-muted-foreground">Status</span>
+              <Select value={status} onValueChange={handleStatusChange}>
+                <SelectTrigger className={cn(
+                  "h-8 w-fit rounded-md text-xs border-0 px-3 py-1 text-white gap-1",
+                  currentStatusOption.color
+                )}>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {statusOptions.map((opt) => (
+                    <SelectItem key={opt.value} value={opt.value}>
+                      <div className="flex items-center gap-2">
+                        <div className={cn('h-2 w-2 rounded-full', opt.color)} />
+                        {opt.label}
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Tags Selector */}
+            <Popover>
+              <PopoverTrigger asChild>
+                <div className="flex items-center gap-2 cursor-pointer hover:bg-secondary/50 rounded-md px-2 py-1 transition-colors">
+                  <span className="text-sm text-muted-foreground">Tags</span>
+                  <div className="flex items-center gap-1">
+                    {selectedTags.length > 0 ? (
+                      <>
+                        {selectedTags.slice(0, 2).map((tagId) => {
+                          const tag = tags.find(t => t.id === tagId);
+                          if (!tag) return null;
+                          return (
+                            <Badge
+                              key={tagId}
+                              variant="secondary"
+                              className="text-xs"
+                              style={{ backgroundColor: `${tag.color}20`, color: tag.color }}
+                            >
+                              {tag.tag_name}
+                            </Badge>
+                          );
+                        })}
+                        {selectedTags.length > 2 && (
+                          <span className="text-xs text-muted-foreground">+{selectedTags.length - 2}</span>
+                        )}
+                      </>
+                    ) : (
+                      <span className="text-xs text-muted-foreground">+ Add tag</span>
+                    )}
+                  </div>
+                </div>
+              </PopoverTrigger>
+              <PopoverContent align="start" className="w-52">
+                <div className="space-y-1">
+                  <h4 className="text-sm font-medium mb-2">Tags</h4>
+                  {tags.length === 0 ? (
+                    <p className="text-xs text-muted-foreground">No tags available</p>
+                  ) : (
+                    tags.map((tag) => (
+                      <div
+                        key={tag.id}
+                        className="flex items-center gap-2 rounded-md p-1.5 hover:bg-secondary cursor-pointer"
+                        onClick={() => toggleTag(tag.id)}
+                      >
+                        <Checkbox checked={selectedTags.includes(tag.id)} />
+                        <span className="h-2 w-2 rounded-full" style={{ backgroundColor: tag.color }} />
+                        <span className="flex-1 text-sm truncate">{tag.tag_name}</span>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </PopoverContent>
+            </Popover>
           </div>
         </div>
 
