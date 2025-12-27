@@ -440,6 +440,7 @@ export default function FileGrid({
                                   }
                                   onDeleteTag={onDeleteTag}
                                   onCreateTag={onCreateTag}
+                                  onFileClick={onFileClick}
                                 />
                               </div>
                             )}
@@ -1377,6 +1378,7 @@ function KanbanCard({
   onTagsChange,
   onDeleteTag,
   onCreateTag,
+  onFileClick,
 }: {
   item: GridItem;
   tags: TagType[];
@@ -1393,11 +1395,15 @@ function KanbanCard({
   onTagsChange?: (id: string, tags: string[]) => void;
   onDeleteTag?: (id: string) => void;
   onCreateTag?: () => void;
+  onFileClick?: (file: File) => void;
 }) {
   const navigate = useNavigate();
   const [renameValue, setRenameValue] = useState(item.name);
   const itemTags = item.tags || [];
   const isFolder = item.itemType === 'folder';
+  const isFile = item.itemType === 'file';
+  const file = isFile ? (item as File) : null;
+  const isProcessing = file?.status === 'processing';
 
   const toggleTag = (tagId: string) => {
     if (itemTags.includes(tagId)) {
@@ -1413,6 +1419,8 @@ function KanbanCard({
       onSelect();
     } else if (isFolder) {
       navigate(`/projects/${projectId}/folder/${item.id}`);
+    } else if (file) {
+      onFileClick?.(file);
     }
   };
 
@@ -1443,101 +1451,133 @@ function KanbanCard({
     <div
       onClick={handleClick}
       className={cn(
-        'group relative flex flex-col rounded-xl border bg-card overflow-hidden transition-all duration-200 hover:border-primary',
+        'group relative flex flex-col rounded-2xl border bg-card overflow-hidden transition-all duration-200 hover:border-primary cursor-pointer',
         isDragging && 'rotate-2 scale-105 shadow-lg',
         isFolder && 'bg-amber-50/50 dark:bg-card dark:border-border/50',
         isSelected && 'border-primary ring-2 ring-primary/20'
       )}
     >
-      {/* Thumbnail Preview - Show for files with preview_url */}
-      {!isFolder && (item as File).preview_url && (
-        <div className="relative h-32 w-full bg-secondary">
-          <img
-            src={(item as File).preview_url!}
-            alt={item.name}
-            className="h-full w-full object-cover"
-          />
-        </div>
-      )}
-      {!isFolder && !(item as File).preview_url && (item as File).status === 'processing' && (
-        <div className="relative h-32 w-full bg-secondary">
-          <div className="shimmer h-full w-full" />
-          {/* Progress Overlay */}
-          <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-background/90 to-transparent p-3">
-            <FileProgress progress={(item as File).progress || 0} status={(item as File).status} />
-          </div>
-        </div>
-      )}
-
-      <div className="p-3">
-        <div className="flex items-start gap-2">
-        {/* Selection Checkbox */}
-        {bulkMode && (
+      {/* Selection Checkbox */}
+      {bulkMode && (
+        <div className="absolute left-3 top-3 z-10">
           <Checkbox checked={isSelected} onClick={(e) => e.stopPropagation()} />
-        )}
-        
-        {/* Folder Icon for folders */}
-        {isFolder && (
-          <svg
-            width="24"
-            height="20"
-            viewBox="0 0 80 64"
-            fill="none"
-            className="mt-0.5 flex-shrink-0 text-amber-400"
-          >
-            <path
-              d="M4 20C4 15.5817 7.58172 12 12 12H68C72.4183 12 76 15.5817 76 20V52C76 56.4183 72.4183 60 68 60H12C7.58172 60 4 56.4183 4 52V20Z"
-              fill="currentColor"
-            />
-          </svg>
-        )}
-        
-        <div className="min-w-0 flex-1" onClick={(e) => e.stopPropagation()}>
-          {isRenaming ? (
-            <Input
-              value={renameValue}
-              onChange={(e) => setRenameValue(e.target.value)}
-              onKeyDown={handleRenameKeyDown}
-              onBlur={handleRenameBlur}
-              className="h-7 text-sm font-medium"
-              autoFocus
-            />
-          ) : (
-            <h4 className="truncate text-sm font-medium text-card-foreground">{item.name}</h4>
-          )}
-          
-          {/* File type badge */}
-          {!isFolder && (
-            <Badge
-              variant="secondary"
-              className={cn(
-                'mt-1.5 text-xs',
-                (item as File).file_type === 'first_frame' && 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
-                (item as File).file_type === 'talking_head' && 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400',
-                (item as File).file_type === 'script' && 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
-              )}
-            >
-              {fileTypeLabels[(item as File).file_type] || (item as File).file_type}
-            </Badge>
-          )}
+        </div>
+      )}
 
-          {/* Tags - Clickable with Popover */}
-          <Popover>
-            <PopoverTrigger asChild>
-              <button
-                className="mt-2 flex w-full items-center gap-3 rounded-md p-1 -m-1 hover:bg-secondary/50 transition-colors text-left"
-                onClick={(e) => e.stopPropagation()}
+      {/* Card Name at Top with Icon */}
+      <div className="p-3 pb-2" onClick={(e) => e.stopPropagation()}>
+        {isRenaming ? (
+          <Input
+            value={renameValue}
+            onChange={(e) => setRenameValue(e.target.value)}
+            onKeyDown={handleRenameKeyDown}
+            onBlur={handleRenameBlur}
+            className="h-8 text-sm font-medium"
+            autoFocus
+          />
+        ) : (
+          <div className="flex items-center gap-2 min-w-0">
+            {isFolder ? (
+              <svg
+                width="16"
+                height="14"
+                viewBox="0 0 80 64"
+                fill="none"
+                className="flex-shrink-0 text-amber-400"
               >
-                <span className="text-xs text-muted-foreground w-8">Tags</span>
+                <path
+                  d="M4 20C4 15.5817 7.58172 12 12 12H68C72.4183 12 76 15.5817 76 20V52C76 56.4183 72.4183 60 68 60H12C7.58172 60 4 56.4183 4 52V20Z"
+                  fill="currentColor"
+                />
+              </svg>
+            ) : (
+              (() => {
+                const FileIcon = fileTypeIcons[file?.file_type || ''] || FileText;
+                return (
+                  <FileIcon className={cn(
+                    'h-4 w-4 flex-shrink-0',
+                    file?.file_type === 'first_frame' && 'text-blue-500',
+                    file?.file_type === 'talking_head' && 'text-purple-500',
+                    file?.file_type === 'script' && 'text-amber-500'
+                  )} />
+                );
+              })()
+            )}
+            <h3 className="truncate text-sm font-medium text-card-foreground">{item.name}</h3>
+          </div>
+        )}
+      </div>
+
+      {/* Preview Area */}
+      <div className="relative aspect-[4/3] w-full bg-secondary overflow-hidden">
+        {isFolder ? (
+          <div className="flex h-full items-center justify-center">
+            <svg
+              width="60"
+              height="48"
+              viewBox="0 0 80 64"
+              fill="none"
+              className="text-amber-400 dark:text-amber-500"
+            >
+              <path
+                d="M4 12C4 7.58172 7.58172 4 12 4H28L34 12H68C72.4183 12 76 15.5817 76 20V52C76 56.4183 72.4183 60 68 60H12C7.58172 60 4 56.4183 4 52V12Z"
+                fill="currentColor"
+                opacity="0.3"
+              />
+              <path
+                d="M4 20C4 15.5817 7.58172 12 12 12H68C72.4183 12 76 15.5817 76 20V52C76 56.4183 72.4183 60 68 60H12C7.58172 60 4 56.4183 4 52V20Z"
+                fill="currentColor"
+              />
+              <path
+                d="M4 12C4 7.58172 7.58172 4 12 4H26C28.2091 4 30.2091 5.2 31.2 7.1L34 12H4V12Z"
+                fill="currentColor"
+                opacity="0.8"
+              />
+            </svg>
+          </div>
+        ) : file?.preview_url ? (
+          <img
+            src={file.preview_url}
+            alt={file.name}
+            className="h-full w-full object-contain"
+          />
+        ) : isProcessing ? (
+          <>
+            <div className="shimmer h-full w-full" />
+            <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-background/90 to-transparent p-3">
+              <FileProgress progress={file?.progress || 0} status={file?.status || 'processing'} />
+            </div>
+          </>
+        ) : (
+          <div className="flex h-full items-center justify-center">
+            {(() => {
+              const FileIcon = fileTypeIcons[file?.file_type || ''] || FileText;
+              return <FileIcon className="h-12 w-12 text-muted-foreground/50" />;
+            })()}
+          </div>
+        )}
+      </div>
+
+      {/* Info Section - Tags only (status is implicit via kanban column) */}
+      <div className="flex flex-col gap-1.5 p-3 min-w-0 bg-card">
+        {/* Tags Row with Popover */}
+        <Popover>
+          <PopoverTrigger asChild>
+            <div
+              className="flex items-center gap-3 rounded-md hover:bg-secondary/50 transition-colors cursor-pointer min-w-0"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <span className="text-xs text-muted-foreground w-9 shrink-0">Tags</span>
+              <div className="flex flex-1 items-center gap-1 min-w-0 overflow-hidden">
                 {itemTags.length > 0 ? (
-                  <div className="flex flex-wrap items-center gap-1">
+                  <>
                     {itemTags.slice(0, 2).map((tagId) => {
                       const tag = tags.find((t) => t.id === tagId);
                       if (!tag) return null;
                       return (
                         <span
                           key={tagId}
-                          className="rounded px-1.5 py-0.5 text-xs"
+                          className="rounded px-1.5 py-0.5 text-xs truncate max-w-[60px]"
                           style={{ backgroundColor: `${tag.color}20`, color: tag.color }}
                         >
                           {tag.tag_name}
@@ -1545,96 +1585,114 @@ function KanbanCard({
                       );
                     })}
                     {itemTags.length > 2 && (
-                      <span className="text-xs text-muted-foreground">+{itemTags.length - 2}</span>
+                      <span className="text-xs text-muted-foreground shrink-0">+{itemTags.length - 2}</span>
                     )}
-                  </div>
+                  </>
                 ) : (
                   <span className="text-xs text-muted-foreground">+ Add tag</span>
                 )}
-              </button>
-            </PopoverTrigger>
-            <PopoverContent align="start" className="w-52 bg-card border shadow-lg" onClick={(e) => e.stopPropagation()}>
-              <div className="space-y-1">
-                <h4 className="text-sm font-medium mb-2">Tags</h4>
-                {tags.length === 0 ? (
-                  <p className="text-xs text-muted-foreground">No tags available</p>
-                ) : (
-                  tags.map((tag) => (
-                    <div
-                      key={tag.id}
-                      className="flex items-center gap-2 rounded-md p-1.5 hover:bg-secondary cursor-pointer"
+              </div>
+            </div>
+          </PopoverTrigger>
+          <PopoverContent align="start" className="w-52 bg-card border shadow-lg" onClick={(e) => e.stopPropagation()}>
+            <div className="space-y-1">
+              <h4 className="text-sm font-medium mb-2">Tags</h4>
+              {tags.length === 0 ? (
+                <p className="text-xs text-muted-foreground">No tags available</p>
+              ) : (
+                tags.map((tag) => (
+                  <div
+                    key={tag.id}
+                    className="flex items-center gap-2 rounded-md p-1.5 hover:bg-secondary cursor-pointer"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      toggleTag(tag.id);
+                    }}
+                  >
+                    <Checkbox
+                      checked={itemTags.includes(tag.id)}
+                      onCheckedChange={() => toggleTag(tag.id)}
+                      onClick={(e) => e.stopPropagation()}
+                    />
+                    <span
+                      className="h-2 w-2 rounded-full flex-shrink-0"
+                      style={{ backgroundColor: tag.color }}
+                    />
+                    <span className="flex-1 text-sm truncate">{tag.tag_name}</span>
+                    <button
                       onClick={(e) => {
                         e.stopPropagation();
-                        toggleTag(tag.id);
+                        e.preventDefault();
+                        onDeleteTag?.(tag.id);
                       }}
+                      className="rounded p-0.5 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+                      title="Delete tag"
                     >
-                      <Checkbox
-                        checked={itemTags.includes(tag.id)}
-                        onCheckedChange={() => toggleTag(tag.id)}
-                        onClick={(e) => e.stopPropagation()}
-                      />
-                      <span
-                        className="h-2 w-2 rounded-full flex-shrink-0"
-                        style={{ backgroundColor: tag.color }}
-                      />
-                      <span className="flex-1 text-sm truncate">{tag.tag_name}</span>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          e.preventDefault();
-                          onDeleteTag?.(tag.id);
-                        }}
-                        className="rounded p-0.5 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
-                        title="Delete tag"
-                      >
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </button>
-                    </div>
-                  ))
-                )}
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onCreateTag?.();
-                  }}
-                  className="flex w-full items-center gap-2 rounded-md p-1.5 text-sm text-primary hover:bg-secondary mt-2"
-                >
-                  <Plus className="h-3.5 w-3.5" />
-                  Create new tag
-                </button>
-              </div>
-            </PopoverContent>
-          </Popover>
-        </div>
-
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <button
-              className="rounded p-1 opacity-0 transition-opacity hover:bg-secondary group-hover:opacity-100"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <MoreHorizontal className="h-4 w-4 text-muted-foreground" />
-            </button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem 
-              className="gap-2"
-              onClick={() => onStartRename()}
-            >
-              <Pencil className="h-4 w-4" />
-              Rename
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              className="gap-2 text-destructive"
-              onClick={() => onDelete?.(item.id)}
-            >
-              <Trash2 className="h-4 w-4" />
-              Delete
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-        </div>
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                ))
+              )}
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onCreateTag?.();
+                }}
+                className="flex w-full items-center gap-2 rounded-md p-1.5 text-sm text-primary hover:bg-secondary mt-2"
+              >
+                <Plus className="h-3.5 w-3.5" />
+                Create new tag
+              </button>
+            </div>
+          </PopoverContent>
+        </Popover>
       </div>
+
+      {/* Download button for completed files */}
+      {file?.status === 'completed' && file?.download_url && (
+        <a
+          href={file.download_url}
+          download
+          className="absolute bottom-12 right-3 rounded-lg p-1.5 text-muted-foreground opacity-0 transition-all duration-200 hover:bg-secondary group-hover:opacity-100"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <Download className="h-4 w-4" />
+        </a>
+      )}
+
+      {/* Actions Menu */}
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <button
+            className="absolute right-3 top-3 rounded-lg p-1.5 opacity-0 transition-all duration-200 hover:bg-secondary group-hover:opacity-100"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <MoreHorizontal className="h-4 w-4 text-muted-foreground" />
+          </button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" className="bg-card border shadow-lg">
+          <DropdownMenuItem 
+            className="gap-2"
+            onClick={(e) => {
+              e.stopPropagation();
+              onStartRename();
+            }}
+          >
+            <Pencil className="h-4 w-4" />
+            Rename
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            className="gap-2 text-destructive"
+            onClick={(e) => {
+              e.stopPropagation();
+              onDelete?.(item.id);
+            }}
+          >
+            <Trash2 className="h-4 w-4" />
+            Delete
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
     </div>
   );
 }
