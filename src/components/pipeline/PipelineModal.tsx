@@ -8,12 +8,14 @@ import { usePipeline } from '@/hooks/usePipeline';
 import { useProfile } from '@/hooks/useProfile';
 import { usePipelineRealtime } from '@/hooks/usePipelineRealtime';
 import { useTags } from '@/hooks/useTags';
+import { useFiles } from '@/hooks/useFiles';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Checkbox } from '@/components/ui/checkbox';
 import type { PipelineStage } from '@/types/pipeline';
 import { toast } from 'sonner';
+import { useQueryClient } from '@tanstack/react-query';
 
 import FirstFrameStage from './stages/FirstFrameStage';
 import ScriptStage from './stages/ScriptStage';
@@ -56,6 +58,8 @@ export default function PipelineModal({
 
   const { profile } = useProfile();
   const { tags } = useTags();
+  const { createFile } = useFiles(projectId);
+  const queryClient = useQueryClient();
   const [currentPipelineId, setCurrentPipelineId] = useState<string | null>(pipelineId);
   const [activeStage, setActiveStage] = useState<PipelineStage>('first_frame');
   const [name, setName] = useState('Untitled');
@@ -177,47 +181,51 @@ export default function PipelineModal({
     );
   }
 
-  const handleSave = () => {
-    toast.success('Pipeline saved successfully');
-    onSuccess?.();
-    handleClose();
+  const handleSave = async () => {
+    try {
+      // Create a file entry for the talking head
+      await createFile({
+        project_id: currentProjectId,
+        folder_id: currentFolderId || null,
+        name: name || 'Untitled Talking Head',
+        file_type: 'talking_head',
+        status: pipeline?.status === 'completed' ? 'completed' : 'draft',
+        tags: selectedTags,
+        generation_params: {
+          pipeline_id: effectivePipelineId,
+          first_frame_complete: pipeline?.first_frame_complete,
+          script_complete: pipeline?.script_complete,
+          voice_complete: pipeline?.voice_complete,
+        },
+      });
+      
+      // Invalidate queries to refresh the grid/kanban
+      queryClient.invalidateQueries({ queryKey: ['files', currentProjectId] });
+      
+      toast.success('Pipeline saved to project');
+      onSuccess?.();
+      handleClose();
+    } catch (error) {
+      toast.error('Failed to save pipeline');
+    }
   };
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="max-w-7xl h-[90vh] flex flex-col p-0 gap-0 overflow-hidden rounded-lg">
-        {/* Header */}
-        <div className="flex items-center gap-4 border-b bg-muted/30 px-6 py-4 flex-wrap">
-          <div className="flex items-center gap-3">
-            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={handleClose}>
-              <ArrowLeft className="h-4 w-4" />
-            </Button>
-            <h2 className="text-xl font-semibold">Talking Head</h2>
-          </div>
+        {/* Header - single row with all controls */}
+        <div className="flex items-center gap-3 border-b bg-muted/30 px-6 py-3 flex-wrap">
+          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={handleClose}>
+            <ArrowLeft className="h-4 w-4" />
+          </Button>
+          <h2 className="text-lg font-semibold">Talking Head</h2>
           
-          <div className="h-6 w-px bg-border" />
+          <div className="h-5 w-px bg-border" />
           
-          {/* Spacer to push save/close to right */}
-          <div className="flex-1" />
-          
-          {/* Save and Close buttons */}
-          <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" onClick={handleSave} className="h-8">
-              <Save className="h-4 w-4 mr-1.5" />
-              Save
-            </Button>
-            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={handleClose}>
-              <X className="h-4 w-4" />
-            </Button>
-          </div>
-        </div>
-        
-        {/* Secondary row with name, location, status, tags */}
-        <div className="flex items-center gap-4 border-b bg-muted/20 px-6 py-3 flex-wrap">
           <Input
             value={name}
             onChange={(e) => handleNameChange(e.target.value)}
-            className="w-36 h-8"
+            className="w-32 h-8"
           />
           
           <LocationSelector
@@ -225,6 +233,7 @@ export default function PipelineModal({
             folderId={currentFolderId}
             onLocationChange={handleLocationChange}
           />
+          
           <Select value={status} onValueChange={handleStatusChange}>
             <SelectTrigger className={cn(
               "h-8 w-fit rounded-md text-xs border-0 px-3 py-1 text-white gap-1",
@@ -293,6 +302,20 @@ export default function PipelineModal({
               </div>
             </PopoverContent>
           </Popover>
+          
+          {/* Spacer to push save/close to right */}
+          <div className="flex-1" />
+          
+          {/* Save and Close buttons */}
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" onClick={handleSave} className="h-8">
+              <Save className="h-4 w-4 mr-1.5" />
+              Save
+            </Button>
+            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={handleClose}>
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
 
         {/* Stage Content */}
