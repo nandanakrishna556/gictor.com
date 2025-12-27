@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Image, Video, FileText, ArrowLeft, FolderPlus } from 'lucide-react';
+import { Image, Video, FileText, ArrowLeft, FolderPlus, X } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
 import {
   Dialog,
@@ -108,42 +108,50 @@ export default function CreateNewModal({
       <Dialog open={open} onOpenChange={handleClose}>
         <DialogContent
           className={`gap-0 p-0 ${
-            selectedType ? 'max-w-2xl' : 'max-w-md'
+            selectedType ? 'max-w-2xl' : 'max-w-sm'
           } rounded-2xl border-border`}
         >
-          <DialogHeader className="border-b border-border p-6">
-            <div className="flex items-center gap-3">
-              {selectedType && (
-                <button
-                  onClick={() => setSelectedType(null)}
-                  className="rounded-lg p-1.5 text-muted-foreground transition-apple hover:bg-secondary"
-                >
-                  <ArrowLeft className="h-4 w-4" />
-                </button>
-              )}
-              <DialogTitle className="text-xl font-semibold">
-                {selectedType
-                  ? contentTypes.find((t) => t.id === selectedType)?.title
-                  : 'What would you like to create?'}
-              </DialogTitle>
+          <DialogHeader className="border-b border-border px-6 py-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                {selectedType && (
+                  <button
+                    onClick={() => setSelectedType(null)}
+                    className="rounded-lg p-1.5 text-muted-foreground transition-apple hover:bg-secondary"
+                  >
+                    <ArrowLeft className="h-4 w-4" />
+                  </button>
+                )}
+                <DialogTitle className="text-lg font-semibold">
+                  {selectedType
+                    ? contentTypes.find((t) => t.id === selectedType)?.title
+                    : 'Create New'}
+                </DialogTitle>
+              </div>
+              <button
+                onClick={handleClose}
+                className="rounded-lg p-1.5 text-muted-foreground transition-apple hover:bg-secondary"
+              >
+                <X className="h-4 w-4" />
+              </button>
             </div>
           </DialogHeader>
 
           {!selectedType ? (
-            <div className="grid grid-cols-2 gap-4 p-6">
+            <div className="grid grid-cols-2 gap-3 p-5">
               {contentTypes.map((type) => (
                 <button
                   key={type.id}
                   onClick={() => handleTypeSelect(type)}
-                  className="flex flex-col items-center rounded-2xl border border-border bg-card p-6 text-center transition-apple hover:border-primary hover:bg-primary/5"
+                  className="flex flex-col items-center rounded-xl border border-border bg-card p-4 text-center transition-apple hover:border-primary hover:bg-primary/5"
                 >
-                  <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10">
-                    <type.icon className="h-6 w-6 text-primary" />
+                  <div className="mb-2 flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
+                    <type.icon className="h-5 w-5 text-primary" />
                   </div>
-                  <h3 className="mb-1 font-semibold text-foreground">
+                  <h3 className="text-sm font-medium text-foreground">
                     {type.title}
                   </h3>
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-xs text-muted-foreground">
                     {type.description}
                   </p>
                 </button>
