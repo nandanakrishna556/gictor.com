@@ -408,9 +408,7 @@ export default function VoiceStage({ pipelineId, onContinue, stageNavigation }: 
 
   return (
     <StageLayout
-      inputTitle="Input"
       inputContent={inputContent}
-      outputTitle="Generated Voice"
       outputContent={outputContent}
       hasOutput={hasOutput}
       onGenerate={handleGenerate}

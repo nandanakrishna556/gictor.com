@@ -280,9 +280,7 @@ export default function ScriptStage({ pipelineId, onContinue, stageNavigation }:
 
   return (
     <StageLayout
-      inputTitle="Input"
       inputContent={inputContent}
-      outputTitle="Generated Script"
       outputContent={outputContent}
       hasOutput={hasOutput}
       onGenerate={handleGenerate}
