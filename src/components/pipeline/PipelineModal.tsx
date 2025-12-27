@@ -29,6 +29,7 @@ interface PipelineModalProps {
   pipelineId: string | null;
   projectId: string;
   folderId?: string;
+  initialStatus?: string;
   onSuccess?: () => void;
 }
 
@@ -45,6 +46,7 @@ export default function PipelineModal({
   pipelineId,
   projectId,
   folderId,
+  initialStatus,
   onSuccess,
 }: PipelineModalProps) {
   const {
@@ -65,13 +67,14 @@ export default function PipelineModal({
   const [name, setName] = useState('Untitled');
   const [currentProjectId, setCurrentProjectId] = useState(projectId);
   const [currentFolderId, setCurrentFolderId] = useState(folderId);
-  const [status, setStatus] = useState<'draft' | 'processing' | 'completed' | 'failed'>('draft');
+  const [status, setStatus] = useState<string>(initialStatus || 'draft');
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
 
   const statusOptions = [
     { value: 'draft', label: 'Draft', color: 'bg-slate-500' },
     { value: 'review', label: 'Review', color: 'bg-blue-500' },
     { value: 'approved', label: 'Approved', color: 'bg-emerald-500' },
+    { value: 'rejected', label: 'Rejected', color: 'bg-red-500' },
   ];
 
   // Subscribe to realtime updates for this pipeline
@@ -145,9 +148,11 @@ export default function PipelineModal({
   };
 
   const handleStatusChange = (newStatus: string) => {
-    const typedStatus = newStatus as 'draft' | 'processing' | 'completed' | 'failed';
-    setStatus(typedStatus);
-    updatePipeline({ status: typedStatus });
+    setStatus(newStatus);
+    // Only update pipeline with valid pipeline statuses
+    if (['draft', 'processing', 'completed', 'failed'].includes(newStatus)) {
+      updatePipeline({ status: newStatus as 'draft' | 'processing' | 'completed' | 'failed' });
+    }
   };
 
   const toggleTag = (tagId: string) => {
@@ -364,7 +369,7 @@ export default function PipelineModal({
 
   function renderStageNavigation() {
     return (
-      <div className="flex items-center gap-4">
+      <div className="flex items-center justify-center gap-4 flex-wrap">
         {STAGES.map((stage, index) => {
           const isComplete = isStageComplete(stage.key);
           const isAccessible = isStageAccessible(stage.key);
@@ -374,7 +379,7 @@ export default function PipelineModal({
             <React.Fragment key={stage.key}>
               {index > 0 && (
                 <div className={cn(
-                  "w-10 h-0.5 rounded-full",
+                  "w-10 h-0.5 rounded-full flex-shrink-0",
                   isComplete || isStageComplete(STAGES[index - 1].key) ? "bg-primary" : "bg-border"
                 )} />
               )}
@@ -382,12 +387,12 @@ export default function PipelineModal({
                 onClick={() => handleStageClick(stage.key)}
                 disabled={!isAccessible}
                 className={cn(
-                  "flex items-center gap-2.5 transition-all group",
+                  "flex items-center gap-2.5 transition-all group flex-shrink-0",
                   isAccessible ? "cursor-pointer hover:scale-105" : "cursor-not-allowed opacity-50"
                 )}
               >
                 <div className={cn(
-                  "w-9 h-9 rounded-full flex items-center justify-center text-sm font-semibold transition-all shadow-sm",
+                  "w-9 h-9 min-w-[2.25rem] min-h-[2.25rem] rounded-full flex items-center justify-center text-sm font-semibold transition-all shadow-sm",
                   isComplete 
                     ? "bg-primary text-primary-foreground shadow-primary/30" 
                     : isActive 
@@ -403,7 +408,7 @@ export default function PipelineModal({
                   )}
                 </div>
                 <span className={cn(
-                  "text-sm font-semibold transition-colors",
+                  "text-sm font-semibold transition-colors whitespace-nowrap",
                   isComplete ? "text-primary" : isActive ? "text-primary" : "text-muted-foreground",
                   isAccessible && "group-hover:text-primary"
                 )}>
