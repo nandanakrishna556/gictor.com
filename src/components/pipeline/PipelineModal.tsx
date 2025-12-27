@@ -1,9 +1,9 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { ArrowLeft, X, Check, Lock, Loader2 } from 'lucide-react';
+import { ArrowLeft, X, Check, Lock, Loader2, Save } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { usePipeline } from '@/hooks/usePipeline';
 import { useProfile } from '@/hooks/useProfile';
@@ -23,8 +23,6 @@ import ScriptStage from './stages/ScriptStage';
 import VoiceStage from './stages/VoiceStage';
 import FinalVideoStage from './stages/FinalVideoStage';
 import LocationSelector from '@/components/forms/LocationSelector';
-
-const AUTO_SAVE_INTERVAL = 30000; // 30 seconds
 
 interface PipelineModalProps {
   open: boolean;
@@ -117,42 +115,7 @@ export default function PipelineModal({
     }
   }, [open, pipelineId, currentPipelineId, isCreating, createPipeline, currentProjectId, currentFolderId, onClose]);
 
-  // Auto-save function
-  const performAutoSave = useCallback(async () => {
-    if (!hasUnsavedChanges || !effectivePipelineId) return;
-    
-    try {
-      await updatePipeline({ 
-        name, 
-        status: status as 'draft' | 'processing' | 'completed' | 'failed',
-        tags: selectedTags 
-      });
-      
-      setHasUnsavedChanges(false);
-      queryClient.invalidateQueries({ queryKey: ['files', currentProjectId] });
-      queryClient.invalidateQueries({ queryKey: ['pipelines', currentProjectId] });
-    } catch (error) {
-      console.error('Auto-save failed:', error);
-    }
-  }, [hasUnsavedChanges, effectivePipelineId, name, status, selectedTags, updatePipeline, queryClient, currentProjectId]);
-
-  // Periodic auto-save
-  useEffect(() => {
-    if (!open || !hasUnsavedChanges) return;
-    
-    const interval = setInterval(() => {
-      performAutoSave();
-    }, AUTO_SAVE_INTERVAL);
-
-    return () => clearInterval(interval);
-  }, [open, hasUnsavedChanges, performAutoSave]);
-
-  const handleStageClick = async (stage: PipelineStage) => {
-    // Auto-save before navigating to another stage
-    if (hasUnsavedChanges) {
-      await performAutoSave();
-    }
-
+  const handleStageClick = (stage: PipelineStage) => {
     // Can freely switch between first 3 stages
     if (stage === 'final_video') {
       if (!canProceedToFinalVideo) {
@@ -210,7 +173,19 @@ export default function PipelineModal({
 
   const handleSave = async () => {
     try {
-      await performAutoSave();
+      // Update the pipeline with current values
+      await updatePipeline({ 
+        name, 
+        status: status as 'draft' | 'processing' | 'completed' | 'failed',
+        tags: selectedTags 
+      });
+      
+      setHasUnsavedChanges(false);
+      
+      // Invalidate queries to refresh the grid/kanban
+      queryClient.invalidateQueries({ queryKey: ['files', currentProjectId] });
+      queryClient.invalidateQueries({ queryKey: ['pipelines', currentProjectId] });
+      
       toast.success('Changes saved');
       onSuccess?.();
     } catch (error) {
@@ -360,14 +335,15 @@ export default function PipelineModal({
             </PopoverContent>
           </Popover>
           
-          {/* Spacer to push close to right */}
+          {/* Spacer to push save/close to right */}
           <div className="flex-1" />
           
-          {/* Auto-save indicator and Close button */}
+          {/* Save and Close buttons */}
           <div className="flex items-center gap-2">
-            {hasUnsavedChanges && (
-              <span className="text-xs text-muted-foreground">Unsaved changes</span>
-            )}
+            <Button variant="outline" size="sm" onClick={handleSave} className="h-8">
+              <Save className="h-4 w-4 mr-1.5" />
+              Save
+            </Button>
             <Button variant="ghost" size="icon" className="h-8 w-8" onClick={handleClose}>
               <X className="h-4 w-4" />
             </Button>
