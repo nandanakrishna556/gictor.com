@@ -112,11 +112,20 @@
   }
 
   html {
-    font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   }
 }
 
 @layer utilities {
+  /* Hide scrollbar but keep scrolling */
+  .scrollbar-none {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .scrollbar-none::-webkit-scrollbar {
+    display: none;
+  }
+  
   /* Apple-style shadow */
   .shadow-apple {
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
