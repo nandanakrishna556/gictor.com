@@ -108,10 +108,10 @@ export default function CreateNewModal({
       <Dialog open={open} onOpenChange={handleClose}>
         <DialogContent
           className={`gap-0 p-0 ${
-            selectedType ? 'max-w-2xl' : 'max-w-sm'
+            selectedType ? 'max-w-2xl' : 'max-w-md'
           } rounded-2xl border-border`}
         >
-          <DialogHeader className="border-b border-border px-6 py-4">
+          <DialogHeader className="border-b border-border px-6 py-5">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 {selectedType && (
@@ -138,20 +138,20 @@ export default function CreateNewModal({
           </DialogHeader>
 
           {!selectedType ? (
-            <div className="grid grid-cols-2 gap-3 p-5">
+            <div className="grid grid-cols-2 gap-4 p-6">
               {contentTypes.map((type) => (
                 <button
                   key={type.id}
                   onClick={() => handleTypeSelect(type)}
-                  className="flex flex-col items-center rounded-xl border border-border bg-card p-4 text-center transition-apple hover:border-primary hover:bg-primary/5"
+                  className="flex flex-col items-center rounded-xl border border-border bg-card p-6 text-center transition-apple hover:border-primary hover:bg-primary/5"
                 >
-                  <div className="mb-2 flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
-                    <type.icon className="h-5 w-5 text-primary" />
+                  <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10">
+                    <type.icon className="h-6 w-6 text-primary" />
                   </div>
-                  <h3 className="text-sm font-medium text-foreground">
+                  <h3 className="font-medium text-foreground">
                     {type.title}
                   </h3>
-                  <p className="text-xs text-muted-foreground">
+                  <p className="mt-1 text-sm text-muted-foreground">
                     {type.description}
                   </p>
                 </button>

@@ -197,7 +197,10 @@ export default function AppSidebar() {
             </button>
           </CollapsibleContent>
         </Collapsible>
+      </div>
 
+      {/* Bottom Section - Settings, Credits, Dark Mode Toggle */}
+      <div className="border-t border-border p-4 space-y-1">
         {/* Settings */}
         <Link
           to="/settings"
@@ -211,10 +214,7 @@ export default function AppSidebar() {
           <Settings className="h-4 w-4" />
           <span>Settings</span>
         </Link>
-      </div>
-
-      {/* Bottom Section - Credits, Dark Mode Toggle */}
-      <div className="border-t border-border p-4 space-y-3">
+        
         {/* Credits */}
         <Link
           to="/billing"
