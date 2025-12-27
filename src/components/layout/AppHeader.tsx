@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ChevronRight, Grid3X3, Kanban, Plus, LogOut, Settings, Search, Zap, CheckSquare } from 'lucide-react';
+import { ChevronRight, Grid3X3, Kanban, Plus, LogOut, Settings, Search, Zap, MousePointer2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -118,8 +118,8 @@ export default function AppHeader({
               className="hidden sm:flex gap-1.5"
               onClick={() => onSelectModeChange?.(!selectMode)}
             >
-              <CheckSquare className="h-4 w-4" />
-              Select
+              <MousePointer2 className="h-4 w-4" />
+              {selectMode ? 'Cancel' : 'Select'}
             </Button>
             <div className="relative w-28 sm:w-48 hidden xs:block">
               <Search className="absolute left-2 sm:left-2.5 top-1/2 h-3.5 w-3.5 sm:h-4 sm:w-4 -translate-y-1/2 text-muted-foreground" />

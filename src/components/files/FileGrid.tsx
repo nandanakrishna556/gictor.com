@@ -14,6 +14,10 @@ import {
   Search,
   Paperclip,
   Pencil,
+  Image,
+  Video,
+  FileText,
+  MousePointer2,
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { FileProgress } from '@/components/ui/file-progress';
@@ -73,6 +77,8 @@ interface FileGridProps {
   onBulkUpdateStatus?: (ids: string[], status: string) => void;
   onBulkUpdateTags?: (ids: string[], tags: string[]) => void;
   defaultStages?: PipelineStage[];
+  selectMode?: boolean;
+  onSelectModeChange?: (mode: boolean) => void;
 }
 
 const fileTypeLabels: Record<string, string> = {
@@ -80,6 +86,12 @@ const fileTypeLabels: Record<string, string> = {
   talking_head: 'Talking Head',
   script: 'Script',
   folder: 'Folder',
+};
+
+const fileTypeIcons: Record<string, React.ComponentType<{ className?: string }>> = {
+  first_frame: Image,
+  talking_head: Video,
+  script: FileText,
 };
 
 const defaultStatusOptions = [
@@ -120,10 +132,12 @@ export default function FileGrid({
   onBulkUpdateStatus,
   onBulkUpdateTags,
   defaultStages,
+  selectMode = false,
+  onSelectModeChange,
 }: FileGridProps) {
   const navigate = useNavigate();
   const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
-  const [bulkMode, setBulkMode] = useState(false);
+  const bulkMode = selectMode;
   const [searchQuery, setSearchQuery] = useState('');
   const [renamingItemId, setRenamingItemId] = useState<string | null>(null);
   const [showBulkDeleteDialog, setShowBulkDeleteDialog] = useState(false);
@@ -187,7 +201,7 @@ export default function FileGrid({
 
   const clearSelection = () => {
     setSelectedItems(new Set());
-    setBulkMode(false);
+    onSelectModeChange?.(false);
   };
 
   const handleBulkDelete = () => {
@@ -1040,8 +1054,8 @@ function FileCard({
         </div>
       )}
 
-      {/* Card Name at Top */}
-      <div className="p-3 sm:p-4 pb-0" onClick={(e) => e.stopPropagation()}>
+      {/* Card Name at Top with Icon */}
+      <div className="p-3 sm:p-4 pb-2" onClick={(e) => e.stopPropagation()}>
         {isRenaming ? (
           <Input
             value={renameValue}
@@ -1052,21 +1066,41 @@ function FileCard({
             autoFocus
           />
         ) : (
-          <h3 className="truncate text-sm sm:text-base font-medium text-card-foreground">{file.name}</h3>
+          <div className="flex items-center gap-2 min-w-0">
+            {(() => {
+              const FileIcon = fileTypeIcons[file.file_type] || FileText;
+              return (
+                <FileIcon className={cn(
+                  'h-4 w-4 flex-shrink-0',
+                  file.file_type === 'first_frame' && 'text-blue-500',
+                  file.file_type === 'talking_head' && 'text-purple-500',
+                  file.file_type === 'script' && 'text-amber-500'
+                )} />
+              );
+            })()}
+            <h3 className="truncate text-sm sm:text-base font-medium text-card-foreground">{file.name}</h3>
+          </div>
         )}
       </div>
 
-      {/* Preview Area */}
-      <div className="relative flex flex-1 items-center justify-center bg-secondary">
+      {/* Preview Area - contained with object-contain to prevent cutoff */}
+      <div className="relative flex flex-1 items-center justify-center bg-secondary overflow-hidden">
         {file.preview_url ? (
           <img
             src={file.preview_url}
             alt={file.name}
-            className="h-full w-full object-cover"
+            className="h-full w-full object-contain"
           />
         ) : isProcessing ? (
           <div className="shimmer h-full w-full" />
-        ) : null}
+        ) : (
+          <div className="flex items-center justify-center h-full w-full">
+            {(() => {
+              const FileIcon = fileTypeIcons[file.file_type] || FileText;
+              return <FileIcon className="h-12 w-12 text-muted-foreground/50" />;
+            })()}
+          </div>
+        )}
         
         {/* Progress Overlay */}
         {isProcessing && (
@@ -1076,20 +1110,8 @@ function FileCard({
         )}
       </div>
 
-      {/* Info */}
-      <div className="flex flex-col gap-1.5 sm:gap-2 p-3 sm:p-4 min-w-0">
-
-        <Badge
-          variant="secondary"
-          className={cn(
-            'w-fit text-xs',
-            file.file_type === 'first_frame' && 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
-            file.file_type === 'talking_head' && 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400',
-            file.file_type === 'script' && 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
-          )}
-        >
-          {fileTypeLabels[file.file_type] || file.file_type}
-        </Badge>
+      {/* Info - Status and Tags */}
+      <div className="flex flex-col gap-1.5 sm:gap-2 p-3 sm:p-4 min-w-0 bg-card">
 
         {/* Status Row - Two Column Layout */}
         <div className="flex items-center gap-2 sm:gap-3 min-w-0">
