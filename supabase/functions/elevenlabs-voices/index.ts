@@ -23,7 +23,7 @@ interface SharedVoice {
 interface SharedVoicesResponse {
   voices: SharedVoice[];
   has_more: boolean;
-  next_page?: string;
+  next_cursor?: string;
 }
 
 serve(async (req) => {
@@ -43,19 +43,24 @@ serve(async (req) => {
       );
     }
 
-    console.log('Fetching shared voices from ElevenLabs...');
+    console.log('Fetching ALL shared voices from ElevenLabs...');
     
     const allVoices: SharedVoice[] = [];
     let hasMore = true;
-    let pageUrl = 'https://api.elevenlabs.io/v1/shared-voices?page_size=100&category=professional';
+    let cursor: string | null = null;
     let pageCount = 0;
-    const maxPages = 5; // Limit to prevent too many API calls
+    const maxPages = 100; // Allow up to 100 pages (100 voices per page = 10,000 max voices)
     
-    // Paginate through results
+    // Paginate through ALL results - no category filter to get all 5000+ voices
     while (hasMore && pageCount < maxPages) {
-      console.log(`Fetching page ${pageCount + 1}: ${pageUrl}`);
+      let url = 'https://api.elevenlabs.io/v1/shared-voices?page_size=100';
+      if (cursor) {
+        url += `&cursor=${cursor}`;
+      }
       
-      const response = await fetch(pageUrl, {
+      console.log(`Fetching page ${pageCount + 1}: ${url}`);
+      
+      const response = await fetch(url, {
         method: 'GET',
         headers: {
           'xi-api-key': ELEVENLABS_API_KEY,
@@ -77,15 +82,10 @@ serve(async (req) => {
       }
       
       hasMore = data.has_more === true;
-      if (hasMore && data.next_page) {
-        // The next_page might be a full URL or just a cursor
-        if (data.next_page.startsWith('http')) {
-          pageUrl = data.next_page;
-        } else {
-          pageUrl = `https://api.elevenlabs.io/v1/shared-voices?page_size=100&category=professional&page=${data.next_page}`;
-        }
-      } else {
-        hasMore = false;
+      cursor = data.next_cursor || null;
+      
+      if (!hasMore || !cursor) {
+        break;
       }
       
       pageCount++;
