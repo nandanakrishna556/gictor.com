@@ -103,24 +103,26 @@ export const SingleImageUpload: React.FC<SingleImageUploadProps> = ({
   return (
     <div className={cn('space-y-2', className)}>
       {displayImage ? (
-        <div className={cn('relative overflow-hidden rounded-xl bg-secondary group', aspectRatioClass)}>
-          <img
-            src={displayImage}
-            alt="Uploaded image"
-            className="h-full w-full object-contain"
-          />
-          
-          {isUploading && (
-            <div className="absolute inset-0 flex items-center justify-center bg-black/50">
-              <Loader2 className="h-8 w-8 animate-spin text-white" />
-            </div>
-          )}
+        <div className="relative group">
+          <div className={cn('overflow-hidden rounded-xl bg-secondary', aspectRatioClass)}>
+            <img
+              src={displayImage}
+              alt="Uploaded image"
+              className="h-full w-full object-contain"
+            />
+            
+            {isUploading && (
+              <div className="absolute inset-0 flex items-center justify-center bg-black/50">
+                <Loader2 className="h-8 w-8 animate-spin text-white" />
+              </div>
+            )}
+          </div>
           
           {!isUploading && !disabled && (
             <button
               type="button"
               onClick={handleRemove}
-              className="absolute left-2 top-2 rounded-full bg-foreground/80 p-1.5 text-background backdrop-blur transition-all duration-200 hover:bg-foreground opacity-0 group-hover:opacity-100"
+              className="absolute -left-2 -top-2 z-10 rounded-full bg-foreground/80 p-1.5 text-background backdrop-blur transition-all duration-200 hover:bg-foreground opacity-0 group-hover:opacity-100"
             >
               <X className="h-4 w-4" />
             </button>
