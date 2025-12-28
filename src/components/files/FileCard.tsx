@@ -13,7 +13,7 @@ import { cn } from '@/lib/utils';
 interface FileCardProps {
   id: string;
   name: string;
-  fileType: 'first_frame' | 'talking_head' | 'script';
+  fileType: 'first_frame' | 'talking_head' | 'b_roll' | 'script';
   status: 'processing' | 'completed' | 'failed';
   previewUrl?: string | null;
   errorMessage?: string | null;
@@ -38,6 +38,7 @@ export const FileCard: React.FC<FileCardProps> = ({
   const getTypeIcon = () => {
     if (fileType === 'first_frame') return <ImageIcon className="h-4 w-4" />;
     if (fileType === 'talking_head') return <Video className="h-4 w-4" />;
+    if (fileType === 'b_roll') return <Video className="h-4 w-4" />;
     return <FileText className="h-4 w-4" />;
   };
 
@@ -88,7 +89,7 @@ export const FileCard: React.FC<FileCardProps> = ({
           />
         )}
 
-        {status === 'completed' && previewUrl && fileType === 'talking_head' && (
+        {status === 'completed' && previewUrl && (fileType === 'talking_head' || fileType === 'b_roll') && (
           <div className="relative w-full h-full">
             <video 
               src={previewUrl} 
