@@ -308,51 +308,54 @@ export default function BRollPipelineModal({
     setShowUnsavedWarning(false);
   };
 
-  // Render stage navigation
+  // Render stage navigation - matching Talking Head design exactly
   const renderStageNavigation = () => (
-    <nav className="flex items-center justify-between gap-2 w-full">
-      {BROLL_STAGES.map((stage, idx) => {
-        const isActive = activeStage === stage.key;
+    <div className="flex items-center gap-4">
+      {BROLL_STAGES.map((stage, index) => {
         const isComplete = isStageComplete(stage.key);
-        
+        const isActive = activeStage === stage.key;
+
         return (
           <React.Fragment key={stage.key}>
+            {index > 0 && (
+              <div className={cn(
+                "w-8 h-0.5 rounded-full flex-shrink-0",
+                isComplete || isStageComplete(BROLL_STAGES[index - 1].key) ? "bg-primary" : "bg-border"
+              )} />
+            )}
             <button
               onClick={() => handleStageClick(stage.key)}
               className={cn(
-                "flex items-center gap-2.5 px-4 py-2.5 rounded-lg font-medium transition-all duration-200 flex-1 justify-center",
-                isActive 
-                  ? "bg-primary text-primary-foreground shadow-md" 
-                  : isComplete
-                    ? "bg-primary/10 text-primary hover:bg-primary/20 border border-primary/20"
-                    : "bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground"
+                "flex items-center gap-2 transition-all group flex-shrink-0",
+                "cursor-pointer hover:scale-105"
               )}
             >
-              {isComplete && !isActive ? (
-                <Check className="h-4 w-4 shrink-0" />
-              ) : (
-                <span className={cn(
-                  "h-5 w-5 rounded-full flex items-center justify-center text-xs font-semibold shrink-0",
-                  isActive 
-                    ? "bg-primary-foreground/20 text-primary-foreground" 
-                    : "bg-muted-foreground/20 text-muted-foreground"
-                )}>
-                  {idx + 1}
-                </span>
-              )}
-              <span className="text-sm whitespace-nowrap">{stage.label}</span>
-            </button>
-            
-            {idx < BROLL_STAGES.length - 1 && (
               <div className={cn(
-                "h-0.5 w-6 rounded-full transition-colors shrink-0",
-                isStageComplete(stage.key) ? "bg-primary" : "bg-muted-foreground/20"
-              )} />
-            )}
+                "w-8 h-8 min-w-[2rem] min-h-[2rem] rounded-full flex items-center justify-center text-sm font-semibold transition-all shadow-sm flex-shrink-0",
+                isComplete 
+                  ? "bg-primary text-primary-foreground shadow-primary/30" 
+                  : isActive 
+                    ? "bg-primary/15 text-primary border-2 border-primary shadow-primary/20" 
+                    : "bg-secondary text-muted-foreground border border-border"
+              )}>
+                {isComplete ? (
+                  <Check className="h-4 w-4" />
+                ) : (
+                  <span>{index + 1}</span>
+                )}
+              </div>
+              <span className={cn(
+                "text-sm font-medium transition-colors whitespace-nowrap",
+                isComplete ? "text-primary" : isActive ? "text-primary" : "text-muted-foreground",
+                "group-hover:text-primary"
+              )}>
+                {stage.label}
+              </span>
+            </button>
           </React.Fragment>
         );
       })}
-    </nav>
+    </div>
   );
 
   // Show nothing until pipeline data is loaded
