@@ -128,8 +128,6 @@ export default function BRollPromptStage({ pipelineId, onContinue, stageNavigati
 
   const inputContent = (
     <div className="space-y-6">
-      {stageNavigation}
-      
       {/* First Frame Preview */}
       {firstFrameUrl && (
         <div className="space-y-2">
