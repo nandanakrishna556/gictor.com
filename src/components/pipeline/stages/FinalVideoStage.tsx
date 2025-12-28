@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
-import { Sparkles, Video, Image as ImageIcon, FileAudio, Loader2, Download, CheckCircle } from 'lucide-react';
+import { Video, Image as ImageIcon, FileAudio, Loader2, Download, CheckCircle, Sparkles } from 'lucide-react';
 import { usePipeline } from '@/hooks/usePipeline';
 import { generateFinalVideo } from '@/lib/pipeline-service';
 import { calculateVideoCost } from '@/types/pipeline';
 import { toast } from 'sonner';
+import StageLayout from './StageLayout';
 
 interface FinalVideoStageProps {
   pipelineId: string;
@@ -144,183 +145,155 @@ export default function FinalVideoStage({ pipelineId, onComplete, stageNavigatio
     }
   };
 
-  return (
-    <div className="flex h-full">
-      {/* Input Summary */}
-      <div className="flex-1 flex flex-col border-r">
-        <div className="flex-1 overflow-auto p-6 space-y-6">
-          {/* Stage Navigation */}
-          {stageNavigation && (
-            <>
-              <div className="mb-2">
-                {stageNavigation}
-              </div>
-              <div className="h-px bg-border" />
-            </>
-          )}
-          
-          <h3 className="font-medium text-lg">Summary</h3>
+  const inputContent = (
+    <div className="space-y-6">
+      <h3 className="font-medium text-lg">Summary</h3>
 
-          {/* First Frame Preview */}
-          <div className="space-y-2">
-            <div className="flex items-center gap-2 text-sm font-medium">
-              <ImageIcon className="h-4 w-4 text-primary" />
-              First Frame
-            </div>
-            {firstFrameUrl ? (
-              <div className="w-full max-w-[200px]">
-                <img 
-                  src={firstFrameUrl} 
-                  alt="First frame" 
-                  className="w-full h-auto max-h-[150px] object-contain rounded-lg"
-                />
-              </div>
-            ) : (
-              <p className="text-sm text-muted-foreground">Not completed</p>
-            )}
-          </div>
-
-          {/* Script Preview */}
-          <div className="space-y-2">
-            <div className="flex items-center gap-2 text-sm font-medium">
-              <Sparkles className="h-4 w-4 text-primary" />
-              Script
-            </div>
-            {scriptText ? (
-              <div className="bg-muted/50 rounded-lg p-3 max-h-24 overflow-y-auto">
-                <p className="text-sm text-muted-foreground line-clamp-4">{scriptText}</p>
-              </div>
-            ) : (
-              <p className="text-sm text-muted-foreground">Not completed</p>
-            )}
-          </div>
-
-          {/* Voice Preview */}
-          <div className="space-y-2">
-            <div className="flex items-center gap-2 text-sm font-medium">
-              <FileAudio className="h-4 w-4 text-primary" />
-              Voice ({formatDuration(voiceDuration)})
-            </div>
-            {voiceUrl ? (
-              <audio src={voiceUrl} controls className="w-full h-10" />
-            ) : (
-              <p className="text-sm text-muted-foreground">Not completed</p>
-            )}
-          </div>
+      {/* First Frame Preview */}
+      <div className="space-y-2">
+        <div className="flex items-center gap-2 text-sm font-medium">
+          <ImageIcon className="h-4 w-4 text-primary" />
+          First Frame
         </div>
-
-        <div className="px-6 py-4 border-t bg-muted/20 space-y-3">
-          <Button 
-            className="w-full" 
-            onClick={handleGenerate}
-            disabled={isGenerating || isUpdating || !hasAllInputs || isProcessing}
-          >
-            {isGenerating || isProcessing ? (
-              <>
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                Generating Final Video...
-              </>
-            ) : (
-              <>
-                <Video className="h-4 w-4 mr-2" />
-                Generate Final Video • {formatCredits(estimatedCost)} Credits
-              </>
-            )}
-          </Button>
-          <p className="text-xs text-center text-muted-foreground">
-            0.2 credits per second ({formatDuration(voiceDuration)} = {formatCredits(estimatedCost)} credits)
-          </p>
-        </div>
-      </div>
-
-      {/* Output */}
-      <div className="flex-1 flex flex-col bg-muted/10">
-        <div className="flex-1 overflow-auto p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="font-medium text-lg">Final Video</h3>
-            {hasOutput && outputVideo && (
-              <Button variant="ghost" size="sm" asChild>
-                <a href={outputVideo.url} download>
-                  <Download className="h-4 w-4 mr-1.5" />
-                  Download
-                </a>
-              </Button>
-            )}
+        {firstFrameUrl ? (
+          <div className="w-full max-w-[200px]">
+            <img 
+              src={firstFrameUrl} 
+              alt="First frame" 
+              className="w-full h-auto max-h-[150px] object-contain rounded-lg"
+            />
           </div>
-          
-          <div className="flex items-center justify-center min-h-[300px]">
-            {hasOutput && outputVideo ? (
-              <div className="w-full max-w-lg space-y-4">
-                <video 
-                  src={outputVideo.url} 
-                  controls 
-                  className="w-full aspect-video rounded-xl bg-black"
-                />
-                <span className="text-sm text-muted-foreground block text-center">
-                  Duration: {formatDuration(outputVideo.duration_seconds)}
-                </span>
-              </div>
-            ) : isProcessing ? (
-              <div className="flex flex-col items-center justify-center text-center gap-6 w-full max-w-md">
-                <Loader2 className="h-12 w-12 animate-spin text-primary" />
-                <div className="w-full space-y-3">
-                  <div className="space-y-1">
-                    <p className="text-lg font-medium">Generating your video...</p>
-                    <p className="text-sm text-primary font-medium">
-                      {GENERATION_STEPS[currentStep]?.label || 'Processing...'}
-                    </p>
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Progress value={generationProgress} className="h-2" />
-                    <div className="flex justify-between text-xs text-muted-foreground">
-                      <span>{Math.round(generationProgress)}% complete</span>
-                      <span>{formatTimeRemaining()}</span>
-                    </div>
-                  </div>
-                  
-                  {/* Step indicators */}
-                  <div className="flex justify-center gap-1.5 pt-2">
-                    {GENERATION_STEPS.map((step, idx) => (
-                      <div
-                        key={idx}
-                        className={`h-1.5 w-6 rounded-full transition-colors ${
-                          idx < currentStep 
-                            ? 'bg-primary' 
-                            : idx === currentStep 
-                              ? 'bg-primary/60 animate-pulse' 
-                              : 'bg-muted'
-                        }`}
-                        title={step.label}
-                      />
-                    ))}
-                  </div>
-                </div>
-              </div>
-            ) : pipeline?.status === 'failed' ? (
-              <div className="flex flex-col items-center justify-center text-center gap-2">
-                <p className="text-lg font-medium text-destructive">Generation failed</p>
-                <p className="text-sm text-muted-foreground">Please try again</p>
-              </div>
-            ) : (
-              <div className="flex flex-col items-center justify-center text-center gap-2">
-                <Video className="h-16 w-16 text-muted-foreground/50" />
-                <p className="text-lg font-medium">No video generated yet</p>
-                <p className="text-sm text-muted-foreground">Complete all stages and generate your final video</p>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {hasOutput && (
-          <div className="px-6 py-4 border-t bg-muted/20">
-            <Button className="w-full" onClick={onComplete}>
-              <CheckCircle className="h-4 w-4 mr-2" />
-              Complete Pipeline
-            </Button>
-          </div>
+        ) : (
+          <p className="text-sm text-muted-foreground">Not completed</p>
         )}
       </div>
+
+      {/* Script Preview */}
+      <div className="space-y-2">
+        <div className="flex items-center gap-2 text-sm font-medium">
+          <Sparkles className="h-4 w-4 text-primary" />
+          Script
+        </div>
+        {scriptText ? (
+          <div className="bg-muted/50 rounded-lg p-3 max-h-24 overflow-y-auto">
+            <p className="text-sm text-muted-foreground line-clamp-4">{scriptText}</p>
+          </div>
+        ) : (
+          <p className="text-sm text-muted-foreground">Not completed</p>
+        )}
+      </div>
+
+      {/* Voice Preview */}
+      <div className="space-y-2">
+        <div className="flex items-center gap-2 text-sm font-medium">
+          <FileAudio className="h-4 w-4 text-primary" />
+          Voice ({formatDuration(voiceDuration)})
+        </div>
+        {voiceUrl ? (
+          <audio src={voiceUrl} controls className="w-full h-10" />
+        ) : (
+          <p className="text-sm text-muted-foreground">Not completed</p>
+        )}
+      </div>
+
+      {/* Cost info */}
+      <p className="text-xs text-center text-muted-foreground pt-2 border-t">
+        0.2 credits per second ({formatDuration(voiceDuration)} = {formatCredits(estimatedCost)} credits)
+      </p>
     </div>
+  );
+
+  const outputContent = (
+    <div className="flex items-center justify-center min-h-[300px]">
+      {hasOutput && outputVideo ? (
+        <div className="w-full max-w-lg space-y-4">
+          <video 
+            src={outputVideo.url} 
+            controls 
+            className="w-full aspect-video rounded-xl bg-black"
+          />
+          <span className="text-sm text-muted-foreground block text-center">
+            Duration: {formatDuration(outputVideo.duration_seconds)}
+          </span>
+        </div>
+      ) : isProcessing ? (
+        <div className="flex flex-col items-center justify-center text-center gap-6 w-full max-w-md">
+          <Loader2 className="h-12 w-12 animate-spin text-primary" />
+          <div className="w-full space-y-3">
+            <div className="space-y-1">
+              <p className="text-lg font-medium">Generating your video...</p>
+              <p className="text-sm text-primary font-medium">
+                {GENERATION_STEPS[currentStep]?.label || 'Processing...'}
+              </p>
+            </div>
+            
+            <div className="space-y-2">
+              <Progress value={generationProgress} className="h-2" />
+              <div className="flex justify-between text-xs text-muted-foreground">
+                <span>{Math.round(generationProgress)}% complete</span>
+                <span>{formatTimeRemaining()}</span>
+              </div>
+            </div>
+            
+            {/* Step indicators */}
+            <div className="flex justify-center gap-1.5 pt-2">
+              {GENERATION_STEPS.map((step, idx) => (
+                <div
+                  key={idx}
+                  className={`h-1.5 w-6 rounded-full transition-colors ${
+                    idx < currentStep 
+                      ? 'bg-primary' 
+                      : idx === currentStep 
+                        ? 'bg-primary/60 animate-pulse' 
+                        : 'bg-muted'
+                  }`}
+                  title={step.label}
+                />
+              ))}
+            </div>
+          </div>
+        </div>
+      ) : pipeline?.status === 'failed' ? (
+        <div className="flex flex-col items-center justify-center text-center gap-2">
+          <p className="text-lg font-medium text-destructive">Generation failed</p>
+          <p className="text-sm text-muted-foreground">Please try again</p>
+        </div>
+      ) : (
+        <div className="flex flex-col items-center justify-center text-center gap-2">
+          <Video className="h-16 w-16 text-muted-foreground/50" />
+          <p className="text-lg font-medium">No video generated yet</p>
+          <p className="text-sm text-muted-foreground">Complete all stages and generate your final video</p>
+        </div>
+      )}
+    </div>
+  );
+
+  const outputActions = hasOutput && outputVideo && (
+    <Button variant="ghost" size="sm" asChild>
+      <a href={outputVideo.url} download>
+        <Download className="h-4 w-4 mr-1.5" />
+        Download
+      </a>
+    </Button>
+  );
+
+  return (
+    <StageLayout
+      inputContent={inputContent}
+      outputContent={outputContent}
+      hasOutput={hasOutput}
+      onGenerate={handleGenerate}
+      onContinue={onComplete}
+      isGenerating={isGenerating || isProcessing}
+      canContinue={hasOutput}
+      generateLabel={
+        isGenerating || isProcessing 
+          ? 'Generating Final Video...' 
+          : `Generate Final Video • ${formatCredits(estimatedCost)} Credits`
+      }
+      creditsCost=""
+      outputActions={outputActions}
+      stageNavigation={stageNavigation}
+    />
   );
 }
