@@ -105,7 +105,7 @@ export const PIPELINE_CREDITS = {
   first_frame: 0.25,        // per generation/edit/regenerate
   script: 0.25,             // per generation/edit/regenerate
   voice_per_1000_chars: 0.25, // per 1000 characters
-  video_per_8_seconds: 1.0,   // per 8 seconds of audio
+  video_per_second: 0.125,    // per second of audio
 };
 
 // Calculate voice generation cost
@@ -115,5 +115,5 @@ export function calculateVoiceCost(charCount: number): number {
 
 // Calculate final video cost based on audio duration
 export function calculateVideoCost(audioDurationSeconds: number): number {
-  return Math.ceil(audioDurationSeconds / 8) * PIPELINE_CREDITS.video_per_8_seconds;
+  return audioDurationSeconds * PIPELINE_CREDITS.video_per_second;
 }
