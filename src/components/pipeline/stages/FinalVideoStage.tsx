@@ -1,7 +1,5 @@
 import React, { useState } from 'react';
-import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Sparkles, Video, Image as ImageIcon, FileAudio, Loader2, Download, CheckCircle } from 'lucide-react';
 import { usePipeline } from '@/hooks/usePipeline';
 import { generateFinalVideo } from '@/lib/pipeline-service';
@@ -96,11 +94,13 @@ export default function FinalVideoStage({ pipelineId, onComplete, stageNavigatio
               First Frame
             </div>
             {firstFrameUrl ? (
-              <img 
-                src={firstFrameUrl} 
-                alt="First frame" 
-                className="w-full aspect-video object-cover rounded-lg"
-              />
+              <div className="w-full max-w-[200px]">
+                <img 
+                  src={firstFrameUrl} 
+                  alt="First frame" 
+                  className="w-full h-auto max-h-[150px] object-contain rounded-lg"
+                />
+              </div>
             ) : (
               <p className="text-sm text-muted-foreground">Not completed</p>
             )}
@@ -133,21 +133,6 @@ export default function FinalVideoStage({ pipelineId, onComplete, stageNavigatio
               <p className="text-sm text-muted-foreground">Not completed</p>
             )}
           </div>
-
-          {/* Resolution */}
-          <div className="space-y-2">
-            <Label>Output Resolution</Label>
-            <Select value={resolution} onValueChange={setResolution}>
-              <SelectTrigger className="rounded-xl">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="480p">480p (Fast)</SelectItem>
-                <SelectItem value="720p">720p (Recommended)</SelectItem>
-                <SelectItem value="1080p">1080p (High Quality)</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
         </div>
 
         <div className="px-6 py-4 border-t bg-muted/20 space-y-3">
@@ -169,7 +154,7 @@ export default function FinalVideoStage({ pipelineId, onComplete, stageNavigatio
             )}
           </Button>
           <p className="text-xs text-center text-muted-foreground">
-            1 credit per 8 seconds of audio ({formatDuration(voiceDuration)} = {estimatedCost.toFixed(1)} credits)
+            0.125 credits per second ({formatDuration(voiceDuration)} = {estimatedCost.toFixed(1)} credits)
           </p>
         </div>
       </div>
