@@ -130,18 +130,14 @@ export default function VoiceStage({ pipelineId, onContinue, stageNavigation }: 
         console.log('Data.voices length:', data.voices?.length);
         
         if (data?.voices && data.voices.length > 0) {
-          console.log(`Total voices from API: ${data.voices.length}`);
+          console.log(`Total curated voices from API: ${data.voices.length}`);
           console.log('Sample voice_ids:', data.voices.slice(0, 5).map((v: ElevenLabsVoice) => v.voice_id));
           console.log('Sample voice object:', JSON.stringify(data.voices[0], null, 2));
           
-          // Filter to only curated voices
-          const curatedVoices = data.voices.filter((voice: ElevenLabsVoice) => 
-            CURATED_VOICE_IDS.has(voice.voice_id)
-          );
+          // Edge function already returns only curated voices
+          const curatedVoices = data.voices;
           
-          console.log(`Curated voices found: ${curatedVoices.length}`);
-          
-          // If no curated voices found, use all voices as fallback
+          // If no voices found, show error
           if (curatedVoices.length === 0) {
             console.warn('No curated voices matched - using all voices as fallback');
             setVoices(data.voices);
@@ -531,7 +527,7 @@ export default function VoiceStage({ pipelineId, onContinue, stageNavigation }: 
                       <>
                         <p className="font-medium">{selectedVoice.name}</p>
                         <p className="text-xs text-muted-foreground">
-                          {selectedVoice.gender} • {selectedVoice.accent || selectedVoice.language || 'Unknown'}
+                          {selectedVoice.gender} • {selectedVoice.accent || 'Unknown'}
                         </p>
                       </>
                     ) : (
