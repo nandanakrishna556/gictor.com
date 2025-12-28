@@ -16,11 +16,12 @@ import StageLayout from './StageLayout';
 interface BRollFirstFrameStageProps {
   pipelineId: string;
   onComplete: () => void;
+  stageNavigation?: React.ReactNode;
 }
 
 type InputMode = 'generate' | 'upload';
 
-export default function BRollFirstFrameStage({ pipelineId, onComplete }: BRollFirstFrameStageProps) {
+export default function BRollFirstFrameStage({ pipelineId, onComplete, stageNavigation }: BRollFirstFrameStageProps) {
   const { pipeline, updateFirstFrame, isUpdating } = usePipeline(pipelineId);
   
   // Input state
@@ -156,7 +157,7 @@ export default function BRollFirstFrameStage({ pipelineId, onComplete }: BRollFi
 
   const inputContent = (
     <div className="space-y-6">
-      {/* Mode Toggle */}
+      {stageNavigation && <div className="mb-4">{stageNavigation}</div>}
       <div className="flex gap-1 p-1 bg-muted rounded-lg">
         <button
           type="button"
