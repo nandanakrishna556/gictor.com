@@ -35,16 +35,19 @@ type InputMode = 'generate' | 'upload';
 const VOICES_CACHE_KEY = 'elevenlabs_curated_voices_v2';
 const VOICES_CACHE_TTL = 24 * 60 * 60 * 1000; // 24 hours
 
-// Voice interface - normalized format from edge function
+// Voice interface - format from ElevenLabs /v1/voices endpoint
 interface ElevenLabsVoice {
   voice_id: string;
   name: string;
   preview_url?: string;
-  gender?: string | null;
-  age?: string | null;
-  accent?: string | null;
-  description?: string | null;
-  use_case?: string | null;
+  labels?: {
+    gender?: string;
+    age?: string;
+    accent?: string;
+    description?: string;
+    use_case?: string;
+  };
+  category?: string;
 }
 
 export default function VoiceStage({ pipelineId, onContinue, stageNavigation }: VoiceStageProps) {
@@ -176,8 +179,8 @@ export default function VoiceStage({ pipelineId, onContinue, stageNavigation }: 
     const ages = new Set<string>();
     
     voices.forEach(voice => {
-      if (voice.gender) genders.add(voice.gender);
-      if (voice.age) ages.add(voice.age);
+      if (voice.labels?.gender) genders.add(voice.labels.gender);
+      if (voice.labels?.age) ages.add(voice.labels.age);
     });
     
     return {
@@ -194,22 +197,22 @@ export default function VoiceStage({ pipelineId, onContinue, stageNavigation }: 
       if (searchQuery) {
         const query = searchQuery.toLowerCase();
         const matchesName = voice.name.toLowerCase().includes(query);
-        const matchesDescription = voice.description?.toLowerCase().includes(query);
+        const matchesDescription = voice.labels?.description?.toLowerCase().includes(query);
         if (!matchesName && !matchesDescription) return false;
       }
       
       // Gender filter
-      if (genderFilter !== 'all' && voice.gender?.toLowerCase() !== genderFilter.toLowerCase()) {
+      if (genderFilter !== 'all' && voice.labels?.gender?.toLowerCase() !== genderFilter.toLowerCase()) {
         return false;
       }
       
       // Age filter
-      if (ageFilter !== 'all' && voice.age?.toLowerCase() !== ageFilter.toLowerCase()) {
+      if (ageFilter !== 'all' && voice.labels?.age?.toLowerCase() !== ageFilter.toLowerCase()) {
         return false;
       }
       
       // Accent filter (using category grouping)
-      if (accentFilter !== 'all' && getAccentCategory(voice.accent) !== accentFilter) {
+      if (accentFilter !== 'all' && getAccentCategory(voice.labels?.accent) !== accentFilter) {
         return false;
       }
       
@@ -527,7 +530,7 @@ export default function VoiceStage({ pipelineId, onContinue, stageNavigation }: 
                       <>
                         <p className="font-medium">{selectedVoice.name}</p>
                         <p className="text-xs text-muted-foreground">
-                          {selectedVoice.gender} • {selectedVoice.accent || 'Unknown'}
+                          {selectedVoice.labels?.gender} • {selectedVoice.labels?.accent || 'Unknown'}
                         </p>
                       </>
                     ) : (
@@ -673,19 +676,19 @@ export default function VoiceStage({ pipelineId, onContinue, stageNavigation }: 
                         <div className="flex-1 min-w-0">
                           <p className="font-medium text-sm truncate">{voice.name}</p>
                           <div className="flex flex-wrap gap-1 mt-1">
-                            {voice.gender && (
+                            {voice.labels?.gender && (
                               <span className="text-[10px] px-1.5 py-0.5 rounded bg-secondary text-muted-foreground">
-                                {voice.gender}
+                                {voice.labels.gender}
                               </span>
                             )}
-                            {voice.age && (
+                            {voice.labels?.age && (
                               <span className="text-[10px] px-1.5 py-0.5 rounded bg-secondary text-muted-foreground">
-                                {voice.age}
+                                {voice.labels.age}
                               </span>
                             )}
-                            {voice.accent && (
+                            {voice.labels?.accent && (
                               <span className="text-[10px] px-1.5 py-0.5 rounded bg-secondary text-muted-foreground">
-                                {voice.accent}
+                                {voice.labels.accent}
                               </span>
                             )}
                           </div>
