@@ -3,7 +3,7 @@ import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { ArrowLeft, X, Check, Lock, Loader2, Save } from 'lucide-react';
+import { ArrowLeft, X, Check, Loader2, Lock } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { usePipeline } from '@/hooks/usePipeline';
 import { useProfile } from '@/hooks/useProfile';
@@ -12,13 +12,12 @@ import { useTags } from '@/hooks/useTags';
 import { useFiles } from '@/hooks/useFiles';
 import { usePipelines, DEFAULT_STAGES } from '@/hooks/usePipelines';
 import { supabase } from '@/integrations/supabase/client';
-import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Checkbox } from '@/components/ui/checkbox';
 import type { PipelineStage } from '@/types/pipeline';
 import { toast } from 'sonner';
 import { useQueryClient } from '@tanstack/react-query';
+import { TagList, TagSelector } from '@/components/ui/tag-badge';
 
 import FirstFrameStage from './stages/FirstFrameStage';
 import ScriptStage from './stages/ScriptStage';
@@ -387,49 +386,24 @@ export default function PipelineModal({
             <PopoverTrigger asChild>
               <div className="flex items-center gap-1 cursor-pointer hover:bg-secondary/50 rounded-md px-2 py-1 transition-colors">
                 {selectedTags.length > 0 ? (
-                  <>
-                    {selectedTags.slice(0, 2).map((tagId) => {
-                      const tag = tags.find(t => t.id === tagId);
-                      if (!tag) return null;
-                      return (
-                        <Badge
-                          key={tagId}
-                          variant="secondary"
-                          className="text-xs"
-                          style={{ backgroundColor: `${tag.color}20`, color: tag.color }}
-                        >
-                          {tag.tag_name}
-                        </Badge>
-                      );
-                    })}
-                    {selectedTags.length > 2 && (
-                      <span className="text-xs text-muted-foreground">+{selectedTags.length - 2}</span>
-                    )}
-                  </>
+                  <TagList 
+                    tags={tags} 
+                    selectedTagIds={selectedTags} 
+                    maxVisible={2} 
+                    size="sm"
+                  />
                 ) : (
                   <span className="text-xs text-muted-foreground">+ Add tag</span>
                 )}
               </div>
             </PopoverTrigger>
-            <PopoverContent align="start" className="w-52">
-              <div className="space-y-1">
-                <h4 className="text-sm font-medium mb-2">Tags</h4>
-                {tags.length === 0 ? (
-                  <p className="text-xs text-muted-foreground">No tags available</p>
-                ) : (
-                  tags.map((tag) => (
-                    <div
-                      key={tag.id}
-                      className="flex items-center gap-2 rounded-md p-1.5 hover:bg-secondary cursor-pointer"
-                      onClick={() => toggleTag(tag.id)}
-                    >
-                      <Checkbox checked={selectedTags.includes(tag.id)} />
-                      <span className="h-2 w-2 rounded-full" style={{ backgroundColor: tag.color }} />
-                      <span className="flex-1 text-sm truncate">{tag.tag_name}</span>
-                    </div>
-                  ))
-                )}
-              </div>
+            <PopoverContent align="start" className="w-52 bg-popover">
+              <h4 className="text-sm font-medium mb-2">Tags</h4>
+              <TagSelector
+                tags={tags}
+                selectedTagIds={selectedTags}
+                onToggleTag={toggleTag}
+              />
             </PopoverContent>
           </Popover>
           
