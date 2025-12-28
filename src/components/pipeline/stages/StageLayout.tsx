@@ -22,6 +22,7 @@ interface StageLayoutProps {
   canContinue: boolean;
   generateLabel: string;
   creditsCost: string;
+  generateDisabled?: boolean;
   
   // Optional - only show edit/remix for AI-generated content
   isAIGenerated?: boolean;
@@ -31,6 +32,9 @@ interface StageLayoutProps {
   
   // Stage navigation (passed from parent)
   stageNavigation?: React.ReactNode;
+  
+  // Credits info shown below button
+  creditsInfo?: React.ReactNode;
 }
 
 export default function StageLayout({
@@ -45,9 +49,11 @@ export default function StageLayout({
   canContinue,
   generateLabel,
   creditsCost,
+  generateDisabled = false,
   isAIGenerated = false,
   outputActions,
   stageNavigation,
+  creditsInfo,
 }: StageLayoutProps) {
   return (
     <div className="flex h-full overflow-hidden">
@@ -66,23 +72,26 @@ export default function StageLayout({
           {inputContent}
         </div>
 
-        <div className="px-6 py-4 border-t bg-muted/20">
+        <div className="px-6 py-4 border-t bg-muted/20 space-y-2">
           <Button 
             className="w-full" 
             onClick={onGenerate}
-            disabled={isGenerating}
+            disabled={isGenerating || generateDisabled}
           >
             {isGenerating ? (
               <>
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                 Generating...
               </>
-            ) : (
+            ) : creditsCost ? (
               <>
                 {generateLabel} • {creditsCost}
               </>
+            ) : (
+              <>{generateLabel}</>
             )}
           </Button>
+          {creditsInfo}
         </div>
       </div>
 

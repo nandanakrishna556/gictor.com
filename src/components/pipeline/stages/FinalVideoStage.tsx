@@ -1,7 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
-import { Video, Image as ImageIcon, FileAudio, Loader2, Download, CheckCircle, Sparkles } from 'lucide-react';
+import { Textarea } from '@/components/ui/textarea';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { Video, Image as ImageIcon, FileAudio, Loader2, Download, Sparkles, X, Upload, ChevronDown, ChevronUp, Save } from 'lucide-react';
 import { usePipeline } from '@/hooks/usePipeline';
 import { generateFinalVideo } from '@/lib/pipeline-service';
 import { calculateVideoCost } from '@/types/pipeline';
@@ -25,32 +27,54 @@ const GENERATION_STEPS = [
 const TOTAL_ESTIMATED_TIME = GENERATION_STEPS.reduce((sum, step) => sum + step.duration, 0);
 
 export default function FinalVideoStage({ pipelineId, onComplete, stageNavigation }: FinalVideoStageProps) {
-  const { pipeline, updateFinalVideo, isUpdating } = usePipeline(pipelineId);
+  const { pipeline, updateFinalVideo, updateScript, updateFirstFrame, updateVoice, isUpdating } = usePipeline(pipelineId);
   
   const [resolution, setResolution] = useState<string>(pipeline?.final_video_input?.resolution || '720p');
   const [isGenerating, setIsGenerating] = useState(false);
   const [generationProgress, setGenerationProgress] = useState(0);
   const [currentStep, setCurrentStep] = useState(0);
   const [elapsedTime, setElapsedTime] = useState(0);
+  const [isScriptOpen, setIsScriptOpen] = useState(false);
+  const [editableScript, setEditableScript] = useState('');
+  const [isScriptEditing, setIsScriptEditing] = useState(false);
+  
+  // Custom uploads
+  const [customFirstFrame, setCustomFirstFrame] = useState<string | null>(null);
+  const [customVoice, setCustomVoice] = useState<{ url: string; duration: number } | null>(null);
+  
+  const firstFrameInputRef = useRef<HTMLInputElement>(null);
+  const voiceInputRef = useRef<HTMLInputElement>(null);
 
   // Get outputs from previous stages
-  const firstFrameUrl = pipeline?.first_frame_output?.url;
-  const scriptText = pipeline?.script_output?.text;
-  const voiceUrl = pipeline?.voice_output?.url;
-  const voiceDurationRaw = pipeline?.voice_output?.duration_seconds || 0;
-  const voiceDuration = Math.floor(voiceDurationRaw); // Use whole seconds for billing
+  const originalFirstFrameUrl = pipeline?.first_frame_output?.url;
+  const originalScriptText = pipeline?.script_output?.text;
+  const originalVoiceUrl = pipeline?.voice_output?.url;
+  const originalVoiceDuration = pipeline?.voice_output?.duration_seconds || 0;
+
+  // Use custom uploads if available, otherwise use originals
+  const firstFrameUrl = customFirstFrame || originalFirstFrameUrl;
+  const scriptText = editableScript || originalScriptText || '';
+  const voiceUrl = customVoice?.url || originalVoiceUrl;
+  const voiceDurationRaw = customVoice?.duration || originalVoiceDuration;
+  const voiceDuration = Math.floor(voiceDurationRaw);
 
   const estimatedCost = calculateVideoCost(voiceDuration);
-  const hasAllInputs = firstFrameUrl && scriptText && voiceUrl;
+  const hasFirstFrame = !!firstFrameUrl;
+  const hasVoice = !!voiceUrl;
+  const canGenerate = hasFirstFrame && hasVoice;
   const hasOutput = !!pipeline?.final_video_output?.url;
   const outputVideo = pipeline?.final_video_output;
   const isProcessing = pipeline?.status === 'processing';
 
-  // Format credits to show exact value without unnecessary trailing zeros
+  // Initialize editable script when pipeline loads
+  useEffect(() => {
+    if (originalScriptText && !editableScript) {
+      setEditableScript(originalScriptText);
+    }
+  }, [originalScriptText]);
+
   const formatCredits = (credits: number) => {
-    // Round to 3 decimal places to avoid floating point issues
     const rounded = Math.round(credits * 1000) / 1000;
-    // Remove trailing zeros but keep at least 2 decimal places if needed
     return rounded.toString();
   };
 
@@ -67,7 +91,6 @@ export default function FinalVideoStage({ pipelineId, onComplete, stageNavigatio
       setElapsedTime(prev => {
         const newElapsed = prev + 1;
         
-        // Calculate current step based on elapsed time
         let accumulated = 0;
         for (let i = 0; i < GENERATION_STEPS.length; i++) {
           accumulated += GENERATION_STEPS[i].duration;
@@ -77,7 +100,6 @@ export default function FinalVideoStage({ pipelineId, onComplete, stageNavigatio
           }
         }
         
-        // Calculate progress (cap at 95% until actually complete)
         const progress = Math.min(95, (newElapsed / TOTAL_ESTIMATED_TIME) * 100);
         setGenerationProgress(progress);
         
@@ -88,7 +110,6 @@ export default function FinalVideoStage({ pipelineId, onComplete, stageNavigatio
     return () => clearInterval(interval);
   }, [isProcessing]);
 
-  // When output arrives, complete the progress
   useEffect(() => {
     if (hasOutput && isProcessing) {
       setGenerationProgress(100);
@@ -110,9 +131,60 @@ export default function FinalVideoStage({ pipelineId, onComplete, stageNavigatio
     return `~${secs}s remaining`;
   };
 
+  const handleFirstFrameUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const url = URL.createObjectURL(file);
+      setCustomFirstFrame(url);
+      toast.success('First frame uploaded');
+    }
+  };
+
+  const handleVoiceUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const url = URL.createObjectURL(file);
+      // Get audio duration
+      const audio = new Audio(url);
+      audio.onloadedmetadata = () => {
+        setCustomVoice({ url, duration: audio.duration });
+        toast.success('Voice file uploaded');
+      };
+      audio.onerror = () => {
+        toast.error('Could not load audio file');
+      };
+    }
+  };
+
+  const handleRemoveFirstFrame = () => {
+    setCustomFirstFrame(null);
+    if (firstFrameInputRef.current) {
+      firstFrameInputRef.current.value = '';
+    }
+  };
+
+  const handleRemoveVoice = () => {
+    setCustomVoice(null);
+    if (voiceInputRef.current) {
+      voiceInputRef.current.value = '';
+    }
+  };
+
+  const handleSaveScript = async () => {
+    if (editableScript !== originalScriptText) {
+      const charCount = editableScript.length;
+      const estimatedDuration = Math.ceil(charCount / 15); // Rough estimate: 15 chars per second
+      await updateScript({
+        output: { text: editableScript, char_count: charCount, estimated_duration: estimatedDuration }
+      });
+      toast.success('Script saved');
+    }
+    setIsScriptEditing(false);
+  };
+
   const handleGenerate = async () => {
-    if (!hasAllInputs) {
-      toast.error('Missing inputs', { description: 'Please complete all previous stages first' });
+    if (!canGenerate) {
+      toast.error('Missing inputs', { description: 'Please provide first frame and voice audio' });
       return;
     }
 
@@ -151,9 +223,37 @@ export default function FinalVideoStage({ pipelineId, onComplete, stageNavigatio
 
       {/* First Frame Preview */}
       <div className="space-y-2">
-        <div className="flex items-center gap-2 text-sm font-medium">
-          <ImageIcon className="h-4 w-4 text-primary" />
-          First Frame
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2 text-sm font-medium">
+            <ImageIcon className="h-4 w-4 text-primary" />
+            First Frame
+          </div>
+          <div className="flex items-center gap-1">
+            <input
+              ref={firstFrameInputRef}
+              type="file"
+              accept="image/*"
+              onChange={handleFirstFrameUpload}
+              className="hidden"
+            />
+            <Button 
+              variant="ghost" 
+              size="sm"
+              onClick={() => firstFrameInputRef.current?.click()}
+            >
+              <Upload className="h-4 w-4 mr-1" />
+              Upload
+            </Button>
+            {(customFirstFrame || originalFirstFrameUrl) && (
+              <Button 
+                variant="ghost" 
+                size="sm"
+                onClick={handleRemoveFirstFrame}
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            )}
+          </div>
         </div>
         {firstFrameUrl ? (
           <div className="w-full max-w-[200px]">
@@ -164,44 +264,130 @@ export default function FinalVideoStage({ pipelineId, onComplete, stageNavigatio
             />
           </div>
         ) : (
-          <p className="text-sm text-muted-foreground">Not completed</p>
+          <div className="border-2 border-dashed border-muted-foreground/30 rounded-lg p-6 text-center">
+            <p className="text-sm text-muted-foreground">No first frame provided</p>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="mt-2"
+              onClick={() => firstFrameInputRef.current?.click()}
+            >
+              <Upload className="h-4 w-4 mr-1" />
+              Upload Image
+            </Button>
+          </div>
         )}
       </div>
 
-      {/* Script Preview */}
+      {/* Script Preview - Collapsible & Editable */}
       <div className="space-y-2">
-        <div className="flex items-center gap-2 text-sm font-medium">
-          <Sparkles className="h-4 w-4 text-primary" />
-          Script
-        </div>
-        {scriptText ? (
-          <div className="bg-muted/50 rounded-lg p-3 max-h-24 overflow-y-auto">
-            <p className="text-sm text-muted-foreground line-clamp-4">{scriptText}</p>
+        <Collapsible open={isScriptOpen} onOpenChange={setIsScriptOpen}>
+          <div className="flex items-center justify-between">
+            <CollapsibleTrigger className="flex items-center gap-2 text-sm font-medium hover:text-primary transition-colors">
+              <Sparkles className="h-4 w-4 text-primary" />
+              Script
+              {isScriptOpen ? (
+                <ChevronUp className="h-4 w-4" />
+              ) : (
+                <ChevronDown className="h-4 w-4" />
+              )}
+            </CollapsibleTrigger>
+            {isScriptOpen && (
+              <div className="flex items-center gap-1">
+                {isScriptEditing ? (
+                  <Button variant="ghost" size="sm" onClick={handleSaveScript}>
+                    <Save className="h-4 w-4 mr-1" />
+                    Save
+                  </Button>
+                ) : (
+                  <Button variant="ghost" size="sm" onClick={() => setIsScriptEditing(true)}>
+                    Edit
+                  </Button>
+                )}
+              </div>
+            )}
           </div>
-        ) : (
-          <p className="text-sm text-muted-foreground">Not completed</p>
+          <CollapsibleContent className="mt-2">
+            {isScriptEditing ? (
+              <Textarea
+                value={editableScript}
+                onChange={(e) => setEditableScript(e.target.value)}
+                className="min-h-[120px] text-sm"
+                placeholder="Enter your script..."
+              />
+            ) : scriptText ? (
+              <div className="bg-muted/50 rounded-lg p-3 max-h-32 overflow-y-auto">
+                <p className="text-sm text-muted-foreground whitespace-pre-wrap">{scriptText}</p>
+              </div>
+            ) : (
+              <p className="text-sm text-muted-foreground">No script available</p>
+            )}
+          </CollapsibleContent>
+        </Collapsible>
+        {!isScriptOpen && scriptText && (
+          <p className="text-xs text-muted-foreground truncate">{scriptText.substring(0, 50)}...</p>
         )}
       </div>
 
       {/* Voice Preview */}
       <div className="space-y-2">
-        <div className="flex items-center gap-2 text-sm font-medium">
-          <FileAudio className="h-4 w-4 text-primary" />
-          Voice ({formatDuration(voiceDuration)})
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2 text-sm font-medium">
+            <FileAudio className="h-4 w-4 text-primary" />
+            Voice {voiceDuration > 0 && `(${formatDuration(voiceDuration)})`}
+          </div>
+          <div className="flex items-center gap-1">
+            <input
+              ref={voiceInputRef}
+              type="file"
+              accept="audio/*"
+              onChange={handleVoiceUpload}
+              className="hidden"
+            />
+            <Button 
+              variant="ghost" 
+              size="sm"
+              onClick={() => voiceInputRef.current?.click()}
+            >
+              <Upload className="h-4 w-4 mr-1" />
+              Upload
+            </Button>
+            {(customVoice || originalVoiceUrl) && (
+              <Button 
+                variant="ghost" 
+                size="sm"
+                onClick={handleRemoveVoice}
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            )}
+          </div>
         </div>
         {voiceUrl ? (
           <audio src={voiceUrl} controls className="w-full h-10" />
         ) : (
-          <p className="text-sm text-muted-foreground">Not completed</p>
+          <div className="border-2 border-dashed border-muted-foreground/30 rounded-lg p-6 text-center">
+            <p className="text-sm text-muted-foreground">No voice audio provided</p>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="mt-2"
+              onClick={() => voiceInputRef.current?.click()}
+            >
+              <Upload className="h-4 w-4 mr-1" />
+              Upload Audio
+            </Button>
+          </div>
         )}
       </div>
-
-      {/* Cost info */}
-      <p className="text-xs text-center text-muted-foreground pt-2 border-t">
-        0.2 credits per second ({formatDuration(voiceDuration)} = {formatCredits(estimatedCost)} credits)
-      </p>
     </div>
   );
+
+  const creditsInfo = hasVoice ? (
+    <p className="text-xs text-center text-muted-foreground">
+      0.2 credits per second ({formatDuration(voiceDuration)} = {formatCredits(estimatedCost)} credits)
+    </p>
+  ) : null;
 
   const outputContent = (
     <div className="flex items-center justify-center min-h-[300px]">
@@ -235,7 +421,6 @@ export default function FinalVideoStage({ pipelineId, onComplete, stageNavigatio
               </div>
             </div>
             
-            {/* Step indicators */}
             <div className="flex justify-center gap-1.5 pt-2">
               {GENERATION_STEPS.map((step, idx) => (
                 <div
@@ -262,7 +447,11 @@ export default function FinalVideoStage({ pipelineId, onComplete, stageNavigatio
         <div className="flex flex-col items-center justify-center text-center gap-2">
           <Video className="h-16 w-16 text-muted-foreground/50" />
           <p className="text-lg font-medium">No video generated yet</p>
-          <p className="text-sm text-muted-foreground">Complete all stages and generate your final video</p>
+          <p className="text-sm text-muted-foreground">
+            {canGenerate 
+              ? 'Click generate to create your final video' 
+              : 'Upload first frame and voice audio to generate'}
+          </p>
         </div>
       )}
     </div>
@@ -285,6 +474,7 @@ export default function FinalVideoStage({ pipelineId, onComplete, stageNavigatio
       onGenerate={handleGenerate}
       onContinue={onComplete}
       isGenerating={isGenerating || isProcessing}
+      generateDisabled={!canGenerate}
       canContinue={hasOutput}
       generateLabel={
         isGenerating || isProcessing 
@@ -292,6 +482,7 @@ export default function FinalVideoStage({ pipelineId, onComplete, stageNavigatio
           : `Generate Final Video • ${formatCredits(estimatedCost)} Credits`
       }
       creditsCost=""
+      creditsInfo={creditsInfo}
       outputActions={outputActions}
       stageNavigation={stageNavigation}
     />
