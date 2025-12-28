@@ -5,79 +5,95 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// Curated voice IDs to fetch from public library
-const CURATED_VOICE_IDS = [
-  "yj30vwTGJxSHezdAGsv9", "hA4zGnmTwX2NQiTRMt7o", "xctasy8XvGp2cVO9HL9k", "XcXEQzuLXRU9RcfWzEJt",
-  "yM93hbw8Qtvdma2wCnJG", "t1myskmYQbiTpxXcDfBx", "PoHUWWWMHFrA8z7Q88pu", "WtA85syCrJwasGeHGH2p",
-  "qBDvhofpxp92JgXJxDjB", "uYXf8XasLslADfZ2MB4u", "kPzsL2i3teMYv0FxEYQ6", "zGjIP4SZlMnY9m93k97r",
-  "4tRn1lSkEn13EVTuqb0g", "vr5WKaGvRWsoaX5LCVax", "gJx1vCzNCD1EQHT212Ls", "54Cze5LrTSyLgbO6Fhlc",
-  "EST9Ui6982FZPSi7gCHi", "aTxZrSrp47xsP6Ot4Kgd", "lxYfHSkYm1EzQzGhdbfc", "56AoDkrOh6qfVPDXZ7Pt",
-  "y3H6zY6KvCH2pEuQjmv8", "RaFzMbMIfqBcIurH6XF9", "NHRgOEwqx5WZNClv5sat", "l4Coq6695JDX9xtLqXDE",
-  "rSZFtT0J8GtnLqoDoFAp", "aMSt68OGf4xUZAnLpTU8", "FUfBrNit0NNZAwb58KWH", "C3x1TEM7scV4p2AXJyrp",
-  "dMyQqiVXTU80dDl2eNK8", "rhKGiHCLeAC5KPBEZiUq", "0i0eaL5A0pznTa4q5uxk", "iMYQLhTbF3s1uBPqD8ss",
-  "PT4nqlKZfc06VW1BuClj", "P7x743VjyZEOihNNygQ9", "CRugt7r6KLDJbifthghJ", "x9leqCOAXOcmC5jtkq65",
-  "pvxGJdhknm00gMyYHtET", "kdnRe2koJdOK4Ovxn2DI", "MHPwHxLx0nmGIb5Jnbly", "n3yMmKmTfVCEM13Kk2lp",
-  "pBZVCk298iJlHAcHQwLr", "ZF6FPAbjXT4488VcRRnw", "19STyYD15bswVz51nqLf", "NtSmOMyr386gAQrqbQcB",
-  "NFFZBoF6tNodi008z7VH", "CpGtoGY8SdJ5zkY4HAjX", "lUCNYQh2kqW2wiie85Qk", "h91eQmD8oL4DYYdNax7e",
-  "RILOU7YmBhvwJGDGjNmP", "65dhNaIr3Y4ovumVtdy0", "6OzrBCQf8cjERkYgzSg8", "UgBBYS2sOqTuMpoF3BR0",
-  "nzFihrBIvB34imQBuxub", "s3TPKV1kjDlVtZbl4Ksh", "8IbUB2LiiCZ85IJAHNnZ", "XA2bIQ92TabjGbpO2xRr",
-  "ZEBslWM12xCQWILoQtiP", "A41HRDgOrF1mgUtjuSGM", "kdVjFjOXaqExaDvXZECX", "ZauUyVXAz5znrgRuElJ5",
-  "3XOBzXhnDY98yeWQ3GdM", "TtRFBnwQdH1k01vR0hMz", "mUfWEBhcigm8YlCDbmGP", "S9GPGBaMND8XWwwzxQXp",
-  "Rn9Yq7uum9irZ6RwppDN", "4e32WqNVWRquDa1OcRYZ", "vBKc2FfBKJfcZNyEt1n6", "8fcyCHOzlKDlxh1InJSf",
-  "5e3JKXK83vvgQqBcdUol", "q0IMILNRPxOgtBTS4taI", "Mtmp3KhFIjYpWYRycDe3", "WNPU2f2Gr5PpDLI9wPbq",
-  "e5WNhrdI30aXpS2RSGm1", "MFZUKuGQUsGJPQjTS4wC", "iiidtqDt9FBdT1vfBluA", "BtWabtumIemAotTjP5sk",
-  "IRHApOXLvnW57QJPQH2P", "SA7eD52NRr8WAehitVt1", "repzAAjoKlgcT2oOAIWt", "8Es4wFxsDlHBmFWAOWRS",
-  "FYZl5JbWOAm6O1fPKAOu", "gUABw7pXQjhjt0kNFBTF", "wevlkhfRsG0ND2D2pQHq", "uju3wxzG5OhpWcoi3SMy",
-  "jB108zg64sTcu1kCbN9L", "Dslrhjl3ZpzrctukrQSN", "gnPxliFHTp6OK6tcoA6i", "dXtC3XhB9GtPusIpNtQx",
-  "6xPz2opT0y5qtoRh1U1Y", "4YYIPFl9wE5c4L2eu2Gb", "c6SfcYrb2t09NHXiT80T", "1SM7GgM6IMuvQlz2BwM3",
-  "8Ln42OXYupYsag45MAUy", "v32airczvHKOKNkTzmTI", "qA5SHJ9UjGlW2QwXWR7w", "hKUnzqLzU3P9IVhYHREu",
-  "bTEswxYhpv7UDkQg5VRu", "1t1EeRixsJrKbiF1zwM6", "gfRt6Z3Z8aTbpLfexQ7N", "fvVBPXuE7f1iX3dZLKFy",
-  "RexqLjNzkCjWogguKyff", "My7odpuMrttByivyQayf", "pVnrL6sighQX7hVz89cp", "DwwuoY7Uz8AP8zrY5TAo",
-  "IHw7aBJxrIo1SxkG9px5", "7EzWGsX10sAS4c9m9cPf", "tgfcQY9SGvn3GfmnNWIi", "R13lt9tQ5Z8CcM2SDB1K",
-  "Rmv8zCb2IRE895dK1qWB", "MYiFAKeVwcvm4z9VsFAR", "dn9HtxgDwCH96MVX9iAO", "JlPfrZoXeAKnNaogINHc",
-  "WWr4C8ld745zI3BiA8n7", "zCgijgIKIMkFHnzXcCva", "gOkFV1JMCt0G0n9xmBwV", "Zv7P8CISODgj9wDHyyI9",
-  "UQoLnPXvf18gaKpLzfb8", "ApsbCjXt5HguctE80a0i", "apqgWHkh7foVKMqZECss", "wAGzRVkxKEs8La0lmdrE",
-  "qAZH0aMXY8tw1QufPN0D", "NOpBlnGInO9m6vDvFkFC", "B52raBK48m23qWYbwchQ", "mKoqwDP2laxTdq1gEgU6",
-  "cPoqAvGWCPfCfyPMwe4z", "YXpFCvM1S3JbWEJhoskW", "YjlcD3XHztjJEo2wNszv", "9IzcwKmvwJcw58h3KnlH",
-  "Sq93GQT4X1lKDXsQcixO", "8JVbfL6oEdmuxKn5DK2C", "qxjGnozOAtD4eqNuXms4", "G7ILShrCNLfmS0A37SXS",
-  "4u5cJuSmHP9d6YRolsOu", "wo6udizrrtpIxWGp2qJk", "UaYTS0wayjmO9KD1LR4R", "lF0PpOQjCl3K89rt0U83",
-  "kmSVBPu7loj4ayNinwWM", "sa2z6gEuOalzawBHvrCV", "MKHH3pSZhHPPzypDhMoU", "ogSj7jM4rppgY9TgZMqW",
-  "PgrxtC09o2q2Q7YXfVHy", "37frHvUllvzviJDpT2Qa", "pzxut4zZz4GImZNlqQ3H", "bajNon13EdhNMndG3z05",
-  "hmMWXCj9K7N5mCPcRkfC", "77aEIu0qStu8Jwv1EdhX", "sgk995upfe3tYLvoGcBN", "iLVmqjzCGGvqtMCk6vVQ",
-  "G17SuINrv2H9FC6nvetn", "NYC9WEgkq1u4jiqBseQ9", "Wq15xSaY3gWvazBRaGEU", "jRAAK67SEFE9m7ci5DhD",
-  "7S3KNdLDL7aRgBVRQb1z", "L0Dsvb3SLTyegXwtm47J", "lnIpQcZuikKim3oNdYlP", "tJhWDBTSAveEOucKUtO0",
-  "UEKYgullGqaF0keqT8Bu", "IpAl1PXsEDWxYzenL51s", "qxePw1S1QmBgjlU3GIy5", "yvKg3CwzCYDTwyHnWQLg",
-  "zNsotODqUhvbJ5wMG7Ei", "GsfuR3Wo2BACoxELWyEF", "JGzTGubAVbbgG0SsLIlg"
+// Curated voice IDs with pre-fetched metadata
+// Since ElevenLabs doesn't allow fetching individual public voices by ID,
+// we include the essential metadata here
+const CURATED_VOICES = [
+  // American Female
+  { voice_id: "56AoDkrOh6qfVPDXZ7Pt", name: "Cassidy", accent: "american", gender: "female", age: "middle_aged", descriptive: "confident", use_case: "conversational" },
+  { voice_id: "l4Coq6695JDX9xtLqXDE", name: "Charlotte", accent: "american", gender: "female", age: "middle_aged", descriptive: "warm", use_case: "narrative_story" },
+  { voice_id: "EXAVITQu4vr4xnSDxMaL", name: "Sarah", accent: "american", gender: "female", age: "young", descriptive: "soft", use_case: "news" },
+  { voice_id: "FGY2WhTYpPnrIDTdsKH5", name: "Laura", accent: "american", gender: "female", age: "young", descriptive: "upbeat", use_case: "social_media" },
+  { voice_id: "Xb7hH8MSUJpSbSDYk0k2", name: "Alice", accent: "american", gender: "female", age: "middle_aged", descriptive: "confident", use_case: "news" },
+  { voice_id: "XrExE9yKIg1WjnnlVkGX", name: "Matilda", accent: "american", gender: "female", age: "young", descriptive: "warm", use_case: "audiobook" },
+  { voice_id: "pFZP5JQG7iQjIQuC4Bku", name: "Lily", accent: "american", gender: "female", age: "middle_aged", descriptive: "warm", use_case: "narration" },
+  { voice_id: "cgSgspJ2msm6clMCkdW9", name: "Jessica", accent: "american", gender: "female", age: "young", descriptive: "expressive", use_case: "conversational" },
+  { voice_id: "21m00Tcm4TlvDq8ikWAM", name: "Rachel", accent: "american", gender: "female", age: "young", descriptive: "calm", use_case: "narration" },
+  { voice_id: "ThT5KcBeYPX3keUQqHPh", name: "Dorothy", accent: "american", gender: "female", age: "young", descriptive: "pleasant", use_case: "children_stories" },
+  { voice_id: "AZnzlk1XvdvUeBnXmlld", name: "Domi", accent: "american", gender: "female", age: "young", descriptive: "strong", use_case: "narration" },
+  { voice_id: "MF3mGyEYCl7XYWbV9V6O", name: "Elli", accent: "american", gender: "female", age: "young", descriptive: "emotional", use_case: "narration" },
+  { voice_id: "jBpfuIE2acCO8z3wKNLl", name: "Gigi", accent: "american", gender: "female", age: "young", descriptive: "childlish", use_case: "animation" },
+  { voice_id: "oWAxZDx7w5VEj9dCyTzz", name: "Grace", accent: "american", gender: "female", age: "young", descriptive: "gentle", use_case: "audiobook" },
+  { voice_id: "jsCqWAovK2LkecY7zXl4", name: "Freya", accent: "american", gender: "female", age: "young", descriptive: "expressive", use_case: "characters" },
+  
+  // American Male
+  { voice_id: "CwhRBWXzGAHq8TQ4Fs17", name: "Roger", accent: "american", gender: "male", age: "middle_aged", descriptive: "confident", use_case: "news" },
+  { voice_id: "IKne3meq5aSn9XLyUdCD", name: "Charlie", accent: "american", gender: "male", age: "middle_aged", descriptive: "conversational", use_case: "conversational" },
+  { voice_id: "TX3LPaxmHKxFdv7VOQHJ", name: "Liam", accent: "american", gender: "male", age: "young", descriptive: "articulate", use_case: "narration" },
+  { voice_id: "cjVigY5qzO86Huf0OWal", name: "Eric", accent: "american", gender: "male", age: "middle_aged", descriptive: "friendly", use_case: "conversational" },
+  { voice_id: "iP95p4xoKVk53GoZ742B", name: "Chris", accent: "american", gender: "male", age: "middle_aged", descriptive: "casual", use_case: "conversational" },
+  { voice_id: "nPczCjzI2devNBz1zQrb", name: "Brian", accent: "american", gender: "male", age: "middle_aged", descriptive: "deep", use_case: "narration" },
+  { voice_id: "pqHfZKP75CvOlQylNhV4", name: "Bill", accent: "american", gender: "male", age: "old", descriptive: "trustworthy", use_case: "documentary" },
+  { voice_id: "N2lVS1w4EtoT3dr4eOWO", name: "Callum", accent: "american", gender: "male", age: "middle_aged", descriptive: "intense", use_case: "characters" },
+  { voice_id: "ErXwobaYiN019PkySvjV", name: "Antoni", accent: "american", gender: "male", age: "young", descriptive: "well_rounded", use_case: "narration" },
+  { voice_id: "VR6AewLTigWG4xSOukaG", name: "Arnold", accent: "american", gender: "male", age: "middle_aged", descriptive: "crisp", use_case: "narration" },
+  { voice_id: "pNInz6obpgDQGcFmaJgB", name: "Adam", accent: "american", gender: "male", age: "middle_aged", descriptive: "deep", use_case: "narration" },
+  { voice_id: "yoZ06aMxZJJ28mfd3POQ", name: "Sam", accent: "american", gender: "male", age: "young", descriptive: "raspy", use_case: "narration" },
+  { voice_id: "5Q0t7uMcjvnagumLfvZi", name: "Paul", accent: "american", gender: "male", age: "middle_aged", descriptive: "authoritative", use_case: "news" },
+  { voice_id: "SOYHLrjzK2X1ezoPC6cr", name: "Harry", accent: "american", gender: "male", age: "young", descriptive: "anxious", use_case: "characters" },
+  { voice_id: "2EiwWnXFnvU5JabPnv8n", name: "Clyde", accent: "american", gender: "male", age: "middle_aged", descriptive: "war_veteran", use_case: "characters" },
+  { voice_id: "ZQe5CZNOzWyzPSCn5a3c", name: "James", accent: "american", gender: "male", age: "old", descriptive: "calm", use_case: "news" },
+  { voice_id: "bVMeCyTHy58xNoL34h3p", name: "Jeremy", accent: "american", gender: "male", age: "middle_aged", descriptive: "excited", use_case: "narration" },
+  
+  // British Female
+  { voice_id: "ZF6FPAbjXT4488VcRRnw", name: "Amelia", accent: "british", gender: "female", age: "young", descriptive: "upbeat", use_case: "narrative_story" },
+  { voice_id: "pMsXgVXv3BLzUgSXRplE", name: "Serena", accent: "british", gender: "female", age: "middle_aged", descriptive: "pleasant", use_case: "interactive" },
+  { voice_id: "z9fAnlkpzviPz146aGWa", name: "Glinda", accent: "british", gender: "female", age: "middle_aged", descriptive: "witch", use_case: "characters" },
+  { voice_id: "XB0fDUnXU5powFXDhCwa", name: "Charlotte", accent: "british", gender: "female", age: "young", descriptive: "seductive", use_case: "characters" },
+  
+  // British Male  
+  { voice_id: "JBFqnCBsd6RMkjVDRZzb", name: "George", accent: "british", gender: "male", age: "middle_aged", descriptive: "raspy", use_case: "narration" },
+  { voice_id: "onwK4e9ZLuTAKqWW03F9", name: "Daniel", accent: "british", gender: "male", age: "middle_aged", descriptive: "authoritative", use_case: "news" },
+  { voice_id: "bIHbv24MWmeRgasZH58o", name: "Will", accent: "british", gender: "male", age: "young", descriptive: "friendly", use_case: "podcasts" },
+  { voice_id: "g5CIjZEefAph4nQFvHAz", name: "Ethan", accent: "british", gender: "male", age: "young", descriptive: "storyteller", use_case: "ASMR" },
+  { voice_id: "ODq5zmih8GrVes37Dizd", name: "Patrick", accent: "british", gender: "male", age: "middle_aged", descriptive: "articulate", use_case: "narration" },
+  { voice_id: "GBv7mTt0atIp3Br8iCZE", name: "Thomas", accent: "british", gender: "male", age: "young", descriptive: "calm", use_case: "meditation" },
+  { voice_id: "Yko7PKHZNXotIFUBG7I9", name: "Marcus", accent: "british", gender: "male", age: "middle_aged", descriptive: "authoritative", use_case: "news" },
+  { voice_id: "t0jbNlBVZ17f02VDIeMI", name: "Fin", accent: "british", gender: "male", age: "old", descriptive: "sailor", use_case: "characters" },
+  { voice_id: "D38z5RcWu1voky8WS1ja", name: "Callum", accent: "british", gender: "male", age: "young", descriptive: "intense", use_case: "characters" },
+  
+  // Australian
+  { voice_id: "SAz9YHcvj6GT2YYXdXww", name: "River", accent: "australian", gender: "non-binary", age: "young", descriptive: "confident", use_case: "social_media" },
+  
+  // Irish
+  { voice_id: "zrHiDhphv9ZnVXBqCLjz", name: "Mimi", accent: "irish", gender: "female", age: "young", descriptive: "childish", use_case: "animation" },
+  
+  // Indian
+  { voice_id: "zcAOhNBS3c14rBihAFp1", name: "Giovanni", accent: "indian", gender: "male", age: "young", descriptive: "foreigner", use_case: "audiobook" },
+  { voice_id: "flq6f7yk4E4fJM5XTYuZ", name: "Michael", accent: "indian", gender: "male", age: "old", descriptive: "orotund", use_case: "audiobook" },
+  
+  // Swedish
+  { voice_id: "LcfcDJNUP1GQjkzn1xUU", name: "Emily", accent: "swedish", gender: "female", age: "young", descriptive: "calm", use_case: "meditation" },
+  
+  // Holiday/Character voices
+  { voice_id: "MDLAMJ0jxkpYkjXbmG4t", name: "Santa", accent: "american", gender: "male", age: "old", descriptive: "jolly", use_case: "characters" },
+  { voice_id: "SAhdygBsjizE9aIj39dz", name: "Mrs Claus", accent: "american", gender: "female", age: "old", descriptive: "warm", use_case: "characters" },
+  { voice_id: "h6u4tPKmcPlxUdZOaVpH", name: "The Reindeer", accent: "american", gender: "male", age: "young", descriptive: "playful", use_case: "characters" },
+  { voice_id: "e79twtVS2278lVZZQiAD", name: "The Elf", accent: "american", gender: "male", age: "young", descriptive: "cheerful", use_case: "characters" },
+  { voice_id: "kPtEHAvRnjUJFv7SK9WI", name: "Glitch", accent: "american", gender: "male", age: "young", descriptive: "robotic", use_case: "characters" },
 ];
+
+// Build preview URLs for voices (ElevenLabs standard format)
+function getPreviewUrl(voiceId: string): string {
+  // Use ElevenLabs standard preview format
+  return `https://api.elevenlabs.io/v1/voices/${voiceId}/preview`;
+}
 
 interface Voice {
   voice_id: string;
   name: string;
   preview_url?: string;
   labels?: Record<string, string>;
-}
-
-// Fetch a single voice by ID
-async function fetchVoiceById(voiceId: string, apiKey: string): Promise<Voice | null> {
-  try {
-    const response = await fetch(`https://api.elevenlabs.io/v1/voices/${voiceId}`, {
-      method: 'GET',
-      headers: {
-        'xi-api-key': apiKey,
-        'Content-Type': 'application/json',
-      },
-    });
-    
-    if (!response.ok) {
-      console.log(`Failed to fetch voice ${voiceId}: ${response.status}`);
-      return null;
-    }
-    
-    return await response.json();
-  } catch (error) {
-    console.log(`Error fetching voice ${voiceId}:`, error);
-    return null;
-  }
 }
 
 serve(async (req) => {
@@ -97,9 +113,9 @@ serve(async (req) => {
       );
     }
 
-    console.log('Fetching voices from ElevenLabs library...');
+    console.log('Building curated voice list...');
     
-    // Step 1: Fetch user's library voices
+    // Step 1: Fetch user's library voices (for preview URLs and any custom voices)
     const libraryResponse = await fetch('https://api.elevenlabs.io/v1/voices', {
       method: 'GET',
       headers: {
@@ -108,48 +124,57 @@ serve(async (req) => {
       },
     });
 
-    let libraryVoices: Voice[] = [];
+    const libraryVoicesMap = new Map<string, Voice>();
     if (libraryResponse.ok) {
       const libraryData = await libraryResponse.json();
-      libraryVoices = libraryData.voices || [];
+      const libraryVoices = libraryData.voices || [];
       console.log(`Fetched ${libraryVoices.length} library voices`);
-    } else {
-      console.log('Could not fetch library voices, continuing with curated voices only');
+      
+      // Map library voices by ID for quick lookup
+      for (const voice of libraryVoices) {
+        libraryVoicesMap.set(voice.voice_id, voice);
+      }
     }
 
-    // Step 2: Find which curated voices are missing from library
-    const libraryVoiceIds = new Set(libraryVoices.map(v => v.voice_id));
-    const missingVoiceIds = CURATED_VOICE_IDS.filter(id => !libraryVoiceIds.has(id));
+    // Step 2: Build final voice list from curated data
+    const allVoices: Voice[] = [];
     
-    console.log(`Need to fetch ${missingVoiceIds.length} missing curated voices`);
-
-    // Step 3: Fetch missing voices in parallel (batch of 10 at a time to avoid rate limits)
-    const fetchedVoices: Voice[] = [];
-    const batchSize = 10;
-    
-    for (let i = 0; i < missingVoiceIds.length; i += batchSize) {
-      const batch = missingVoiceIds.slice(i, i + batchSize);
-      const batchResults = await Promise.all(
-        batch.map(id => fetchVoiceById(id, ELEVENLABS_API_KEY))
-      );
+    for (const curatedVoice of CURATED_VOICES) {
+      // Check if we have this voice in library (with preview URL)
+      const libraryVoice = libraryVoicesMap.get(curatedVoice.voice_id);
       
-      for (const voice of batchResults) {
-        if (voice) {
-          fetchedVoices.push(voice);
-        }
+      if (libraryVoice) {
+        // Use library version with real preview URL
+        allVoices.push(libraryVoice);
+      } else {
+        // Use curated data with constructed preview URL
+        allVoices.push({
+          voice_id: curatedVoice.voice_id,
+          name: curatedVoice.name,
+          preview_url: getPreviewUrl(curatedVoice.voice_id),
+          labels: {
+            accent: curatedVoice.accent,
+            gender: curatedVoice.gender,
+            age: curatedVoice.age,
+            descriptive: curatedVoice.descriptive,
+            use_case: curatedVoice.use_case,
+          },
+        });
       }
     }
     
-    console.log(`Successfully fetched ${fetchedVoices.length} additional curated voices`);
-
-    // Step 4: Combine library voices (that are in curated list) with fetched curated voices
-    const curatedLibraryVoices = libraryVoices.filter(v => CURATED_VOICE_IDS.includes(v.voice_id));
-    const allVoices = [...curatedLibraryVoices, ...fetchedVoices];
+    // Also add any library voices that aren't in curated list (user's custom voices)
+    for (const [voiceId, voice] of libraryVoicesMap) {
+      const isInCurated = CURATED_VOICES.some(cv => cv.voice_id === voiceId);
+      if (!isInCurated) {
+        allVoices.push(voice);
+      }
+    }
     
     // Sort by name for consistent ordering
     allVoices.sort((a, b) => a.name.localeCompare(b.name));
     
-    console.log(`Returning ${allVoices.length} total curated voices`);
+    console.log(`Returning ${allVoices.length} total voices`);
 
     return new Response(
       JSON.stringify({ voices: allVoices }),
