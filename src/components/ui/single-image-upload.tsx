@@ -103,7 +103,7 @@ export const SingleImageUpload: React.FC<SingleImageUploadProps> = ({
   return (
     <div className={cn('space-y-2', className)}>
       {displayImage ? (
-        <div className={cn('relative overflow-hidden rounded-xl bg-secondary', aspectRatioClass)}>
+        <div className={cn('relative overflow-hidden rounded-xl bg-secondary group', aspectRatioClass)}>
           <img
             src={displayImage}
             alt="Uploaded image"
@@ -120,7 +120,7 @@ export const SingleImageUpload: React.FC<SingleImageUploadProps> = ({
             <button
               type="button"
               onClick={handleRemove}
-              className="absolute right-2 top-2 rounded-lg bg-background/80 p-1.5 text-foreground backdrop-blur transition-all duration-200 hover:bg-background"
+              className="absolute left-2 top-2 rounded-full bg-foreground/80 p-1.5 text-background backdrop-blur transition-all duration-200 hover:bg-foreground opacity-0 group-hover:opacity-100"
             >
               <X className="h-4 w-4" />
             </button>
