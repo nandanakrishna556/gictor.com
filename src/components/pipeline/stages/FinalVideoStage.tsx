@@ -36,7 +36,8 @@ export default function FinalVideoStage({ pipelineId, onComplete, stageNavigatio
   const firstFrameUrl = pipeline?.first_frame_output?.url;
   const scriptText = pipeline?.script_output?.text;
   const voiceUrl = pipeline?.voice_output?.url;
-  const voiceDuration = pipeline?.voice_output?.duration_seconds || 0;
+  const voiceDurationRaw = pipeline?.voice_output?.duration_seconds || 0;
+  const voiceDuration = Math.floor(voiceDurationRaw); // Use whole seconds for billing
 
   const estimatedCost = calculateVideoCost(voiceDuration);
   const hasAllInputs = firstFrameUrl && scriptText && voiceUrl;
