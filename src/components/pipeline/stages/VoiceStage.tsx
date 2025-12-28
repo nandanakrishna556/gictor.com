@@ -122,7 +122,24 @@ export default function VoiceStage({ pipelineId, onContinue, stageNavigation }: 
 
     setIsUploading(true);
     try {
-      const url = await uploadToR2(file, { folder: 'pipeline-voices' });
+      // Add allowedTypes and maxSize for audio files
+      const url = await uploadToR2(file, { 
+        folder: 'pipeline-voices',
+        allowedTypes: [
+          'audio/mpeg', 
+          'audio/mp3', 
+          'audio/wav', 
+          'audio/wave',
+          'audio/x-wav',
+          'audio/m4a', 
+          'audio/x-m4a', 
+          'audio/mp4',
+          'audio/ogg',
+          'audio/webm',
+          'audio/aac',
+        ],
+        maxSize: 50 * 1024 * 1024, // 50MB for audio files
+      });
       setUploadedUrl(url);
       
       const duration = await getAudioDuration(url);
@@ -133,9 +150,10 @@ export default function VoiceStage({ pipelineId, onContinue, stageNavigation }: 
         complete: true,
       });
       
-      toast.success('Voice uploaded successfully!');
+      toast.success('Audio uploaded successfully!');
     } catch (error) {
-      toast.error('Failed to upload audio');
+      console.error('Upload error:', error);
+      toast.error(error instanceof Error ? error.message : 'Failed to upload audio');
     } finally {
       setIsUploading(false);
     }
