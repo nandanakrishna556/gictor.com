@@ -89,6 +89,7 @@ interface FileGridProps {
 const fileTypeLabels: Record<string, string> = {
   first_frame: 'First Frame',
   talking_head: 'Talking Head',
+  b_roll: 'B-Roll',
   script: 'Script',
   folder: 'Folder',
 };
@@ -96,6 +97,7 @@ const fileTypeLabels: Record<string, string> = {
 const fileTypeIcons: Record<string, React.ComponentType<{ className?: string }>> = {
   first_frame: Image,
   talking_head: Video,
+  b_roll: Video,
   script: FileText,
 };
 
