@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
@@ -11,6 +11,7 @@ import { calculateVoiceCost } from '@/types/pipeline';
 import { toast } from 'sonner';
 import StageLayout from './StageLayout';
 import { uploadToR2 } from '@/lib/cloudflare-upload';
+import { AudioWaveform } from '@/components/ui/audio-waveform';
 
 interface VoiceStageProps {
   pipelineId: string;
@@ -47,9 +48,11 @@ export default function VoiceStage({ pipelineId, onContinue, stageNavigation }: 
   const [voiceOpen, setVoiceOpen] = useState(false);
   const [scriptOpen, setScriptOpen] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
   
   // Playback state
   const [isPlaying, setIsPlaying] = useState(false);
+  const [currentTime, setCurrentTime] = useState(0);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   
   // Generation state
@@ -99,7 +102,13 @@ export default function VoiceStage({ pipelineId, onContinue, stageNavigation }: 
 
     if (!audioRef.current) {
       audioRef.current = new Audio(outputUrl);
-      audioRef.current.onended = () => setIsPlaying(false);
+      audioRef.current.onended = () => {
+        setIsPlaying(false);
+        setCurrentTime(0);
+      };
+      audioRef.current.ontimeupdate = () => {
+        setCurrentTime(audioRef.current?.currentTime || 0);
+      };
     }
 
     if (isPlaying) {
@@ -111,10 +120,14 @@ export default function VoiceStage({ pipelineId, onContinue, stageNavigation }: 
     }
   };
 
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  const handleSeek = (time: number) => {
+    if (audioRef.current) {
+      audioRef.current.currentTime = time;
+      setCurrentTime(time);
+    }
+  };
 
+  const processFile = async (file: File) => {
     if (!file.type.startsWith('audio/')) {
       toast.error('Please upload an audio file');
       return;
@@ -122,7 +135,6 @@ export default function VoiceStage({ pipelineId, onContinue, stageNavigation }: 
 
     setIsUploading(true);
     try {
-      // Add allowedTypes and maxSize for audio files
       const url = await uploadToR2(file, { 
         folder: 'pipeline-voices',
         allowedTypes: [
@@ -138,7 +150,7 @@ export default function VoiceStage({ pipelineId, onContinue, stageNavigation }: 
           'audio/webm',
           'audio/aac',
         ],
-        maxSize: 50 * 1024 * 1024, // 50MB for audio files
+        maxSize: 50 * 1024 * 1024,
       });
       setUploadedUrl(url);
       
@@ -158,6 +170,35 @@ export default function VoiceStage({ pipelineId, onContinue, stageNavigation }: 
       setIsUploading(false);
     }
   };
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    await processFile(file);
+  };
+
+  const handleDragOver = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(true);
+  }, []);
+
+  const handleDragLeave = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+  }, []);
+
+  const handleDrop = useCallback(async (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+
+    const files = e.dataTransfer.files;
+    if (files.length > 0) {
+      await processFile(files[0]);
+    }
+  }, []);
 
   const handleGenerate = async () => {
     if (mode === 'upload') {
@@ -358,7 +399,17 @@ export default function VoiceStage({ pipelineId, onContinue, stageNavigation }: 
       ) : (
         <div className="space-y-4">
           <Label>Upload voice audio</Label>
-          <label className="flex flex-col items-center justify-center rounded-xl border-2 border-dashed p-8 cursor-pointer hover:border-primary/50 hover:bg-secondary/50 transition-colors">
+          <label 
+            className={cn(
+              "flex flex-col items-center justify-center rounded-xl border-2 border-dashed p-8 cursor-pointer transition-colors",
+              isDragging 
+                ? "border-primary bg-primary/10" 
+                : "hover:border-primary/50 hover:bg-secondary/50"
+            )}
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            onDrop={handleDrop}
+          >
             <input
               type="file"
               accept="audio/*"
@@ -366,14 +417,21 @@ export default function VoiceStage({ pipelineId, onContinue, stageNavigation }: 
               className="hidden"
               disabled={isUploading}
             />
-            <Upload className="h-8 w-8 text-muted-foreground mb-2" />
+            <Upload className={cn("h-8 w-8 mb-2", isDragging ? "text-primary" : "text-muted-foreground")} />
             <p className="text-sm text-muted-foreground">
-              {isUploading ? 'Uploading...' : 'Drag & drop or browse'}
+              {isUploading ? 'Uploading...' : isDragging ? 'Drop your audio file here' : 'Drag & drop or click to browse'}
             </p>
             <p className="text-xs text-muted-foreground mt-1">MP3, WAV, M4A • Max 50MB</p>
           </label>
           {uploadedUrl && (
-            <audio src={uploadedUrl} controls className="w-full" />
+            <div className="space-y-2">
+              <AudioWaveform 
+                audioUrl={uploadedUrl} 
+                isPlaying={false}
+                currentTime={0}
+              />
+              <audio src={uploadedUrl} controls className="w-full" />
+            </div>
           )}
         </div>
       )}
@@ -401,23 +459,37 @@ export default function VoiceStage({ pipelineId, onContinue, stageNavigation }: 
   };
 
   const outputContent = outputAudio ? (
-    <div className="flex flex-col items-center justify-center h-full gap-6">
-      <div className="w-32 h-32 rounded-full bg-primary/10 flex items-center justify-center">
+    <div className="flex flex-col items-center justify-center h-full gap-6 px-4">
+      {/* Waveform Visualization */}
+      <div className="w-full max-w-md">
+        <AudioWaveform 
+          audioUrl={outputAudio.url} 
+          isPlaying={isPlaying}
+          currentTime={currentTime}
+          onSeek={handleSeek}
+        />
+      </div>
+      
+      {/* Play Button */}
+      <div className="w-24 h-24 rounded-full bg-primary/10 flex items-center justify-center">
         <Button
           size="lg"
           variant="ghost"
-          className="w-20 h-20 rounded-full"
+          className="w-16 h-16 rounded-full"
           onClick={togglePlayback}
         >
           {isPlaying ? (
-            <Pause className="h-10 w-10" />
+            <Pause className="h-8 w-8" />
           ) : (
-            <Play className="h-10 w-10 ml-1" />
+            <Play className="h-8 w-8 ml-1" />
           )}
         </Button>
       </div>
+      
       <div className="text-center">
-        <p className="text-lg font-medium">{formatDuration(outputAudio.duration_seconds)}</p>
+        <p className="text-lg font-medium">
+          {formatDuration(currentTime)} / {formatDuration(outputAudio.duration_seconds)}
+        </p>
         <p className="text-sm text-muted-foreground">Duration</p>
       </div>
     </div>
