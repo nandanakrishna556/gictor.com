@@ -17,6 +17,7 @@ import {
   Image,
   Video,
   FileText,
+  Film,
   MousePointer2,
   FolderInput,
 } from 'lucide-react';
@@ -51,6 +52,7 @@ import type { Pipeline, PipelineStage } from '@/hooks/usePipelines';
 import type { Tag as TagType } from '@/hooks/useTags';
 import ConfirmDeleteDialog from '@/components/modals/ConfirmDeleteDialog';
 import MoveToFolderDialog from '@/components/modals/MoveToFolderDialog';
+import { FileTypeIcon, FileType } from '@/components/ui/file-type-icon';
 
 interface FileGridProps {
   files: File[];
@@ -89,14 +91,9 @@ interface FileGridProps {
 const fileTypeLabels: Record<string, string> = {
   first_frame: 'First Frame',
   talking_head: 'Talking Head',
+  b_roll: 'B-Roll',
   script: 'Script',
   folder: 'Folder',
-};
-
-const fileTypeIcons: Record<string, React.ComponentType<{ className?: string }>> = {
-  first_frame: Image,
-  talking_head: Video,
-  script: FileText,
 };
 
 const defaultStatusOptions = [
@@ -1152,17 +1149,7 @@ function FileCard({
           />
         ) : (
           <div className="flex items-center gap-2 min-w-0">
-            {(() => {
-              const FileIcon = fileTypeIcons[file.file_type] || FileText;
-              return (
-                <FileIcon className={cn(
-                  'h-4 w-4 flex-shrink-0',
-                  file.file_type === 'first_frame' && 'text-blue-500',
-                  file.file_type === 'talking_head' && 'text-purple-500',
-                  file.file_type === 'script' && 'text-amber-500'
-                )} />
-              );
-            })()}
+            <FileTypeIcon fileType={file.file_type as FileType} className="flex-shrink-0" />
             <h3 className="truncate text-sm sm:text-base font-medium text-card-foreground">{file.name}</h3>
           </div>
         )}
@@ -1180,10 +1167,7 @@ function FileCard({
           <div className="shimmer h-full w-full" />
         ) : (
           <div className="flex items-center justify-center h-full w-full">
-            {(() => {
-              const FileIcon = fileTypeIcons[file.file_type] || FileText;
-              return <FileIcon className="h-12 w-12 text-muted-foreground/50" />;
-            })()}
+            <FileTypeIcon fileType={file.file_type as FileType} size="lg" className="h-12 w-12 opacity-50" />
           </div>
         )}
         
@@ -1493,17 +1477,7 @@ function KanbanCard({
                 />
               </svg>
             ) : (
-              (() => {
-                const FileIcon = fileTypeIcons[file?.file_type || ''] || FileText;
-                return (
-                  <FileIcon className={cn(
-                    'h-4 w-4 flex-shrink-0',
-                    file?.file_type === 'first_frame' && 'text-blue-500',
-                    file?.file_type === 'talking_head' && 'text-purple-500',
-                    file?.file_type === 'script' && 'text-amber-500'
-                  )} />
-                );
-              })()
+              <FileTypeIcon fileType={(file?.file_type || 'script') as FileType} className="flex-shrink-0" />
             )}
             <h3 className="truncate text-sm font-medium text-card-foreground">{item.name}</h3>
           </div>
@@ -1552,10 +1526,7 @@ function KanbanCard({
           </>
         ) : (
           <div className="flex h-full items-center justify-center">
-            {(() => {
-              const FileIcon = fileTypeIcons[file?.file_type || ''] || FileText;
-              return <FileIcon className="h-12 w-12 text-muted-foreground/50" />;
-            })()}
+            <FileTypeIcon fileType={(file?.file_type || 'script') as FileType} size="lg" className="h-12 w-12 opacity-50" />
           </div>
         )}
       </div>
