@@ -12,6 +12,7 @@ import CreateTagDialog from '@/components/modals/CreateTagDialog';
 import ConfirmDeleteDialog from '@/components/modals/ConfirmDeleteDialog';
 import { FileDetailModalEnhanced } from '@/components/files/FileDetailModalEnhanced';
 import PipelineModal from '@/components/pipeline/PipelineModal';
+import BRollPipelineModal from '@/components/pipeline/BRollPipelineModal';
 import { useFiles, Folder, File } from '@/hooks/useFiles';
 import { useFileRealtime } from '@/hooks/useFileRealtime';
 import { usePipelines, Pipeline, PipelineStage, DEFAULT_STAGES } from '@/hooks/usePipelines';
@@ -48,6 +49,10 @@ export default function ProjectDetail() {
   // Pipeline modal state for talking head files
   const [pipelineModalOpen, setPipelineModalOpen] = useState(false);
   const [openPipelineId, setOpenPipelineId] = useState<string | null>(null);
+  
+  // B-Roll pipeline modal state
+  const [brollPipelineModalOpen, setBrollPipelineModalOpen] = useState(false);
+  const [openBrollPipelineId, setOpenBrollPipelineId] = useState<string | null>(null);
 
   // Fetch project details
   const { data: project } = useQuery({
@@ -279,7 +284,7 @@ export default function ProjectDetail() {
     setSelectedTags((prev) => prev.filter((t) => t !== id));
   };
 
-  // Handle file click - open pipeline modal for talking_head files, otherwise file detail modal
+  // Handle file click - open pipeline modal for talking_head/b_roll files, otherwise file detail modal
   const handleFileClick = (file: File) => {
     if (file.file_type === 'talking_head') {
       // Extract pipeline_id from generation_params
@@ -287,6 +292,16 @@ export default function ProjectDetail() {
       if (params?.pipeline_id) {
         setOpenPipelineId(params.pipeline_id);
         setPipelineModalOpen(true);
+      } else {
+        // Fallback to file detail modal if no pipeline_id
+        setSelectedFile(file);
+      }
+    } else if (file.file_type === 'b_roll') {
+      // Extract pipeline_id from generation_params for B-Roll
+      const params = file.generation_params as { pipeline_id?: string } | null;
+      if (params?.pipeline_id) {
+        setOpenBrollPipelineId(params.pipeline_id);
+        setBrollPipelineModalOpen(true);
       } else {
         // Fallback to file detail modal if no pipeline_id
         setSelectedFile(file);
@@ -567,6 +582,22 @@ export default function ProjectDetail() {
           setOpenPipelineId(null);
         }}
         pipelineId={openPipelineId}
+        projectId={projectId}
+        folderId={folderId}
+        onSuccess={() => {
+          // Refresh files after save
+        }}
+        statusOptions={currentStatusOptions}
+      />
+
+      {/* B-Roll Pipeline Modal */}
+      <BRollPipelineModal
+        open={brollPipelineModalOpen}
+        onClose={() => {
+          setBrollPipelineModalOpen(false);
+          setOpenBrollPipelineId(null);
+        }}
+        pipelineId={openBrollPipelineId}
         projectId={projectId}
         folderId={folderId}
         onSuccess={() => {
