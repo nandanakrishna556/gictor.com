@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react';
-import { Image, Video, FileText, ArrowLeft, FolderPlus, X, Loader2 } from 'lucide-react';
+import { Video, FolderPlus, X, Loader2 } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
 import {
   Dialog,
@@ -7,11 +7,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import FirstFrameForm from '@/components/forms/FirstFrameForm';
-import ScriptForm from '@/components/forms/ScriptForm';
 import PipelineModal from '@/components/pipeline/PipelineModal';
 import { usePipeline } from '@/hooks/usePipeline';
-import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import type { Tag } from '@/hooks/useTags';
@@ -34,8 +31,6 @@ interface CreateNewModalProps {
   statusOptions?: StatusOption[];
 }
 
-type ContentType = 'first_frame' | 'script' | null;
-
 const contentTypes = [
   {
     id: 'folder' as const,
@@ -51,18 +46,6 @@ const contentTypes = [
     description: 'Create with AI pipeline',
     isPipeline: true,
   },
-  {
-    id: 'first_frame' as const,
-    icon: Image,
-    title: 'First Frame',
-    description: 'Generate AI images',
-  },
-  {
-    id: 'script' as const,
-    icon: FileText,
-    title: 'Script',
-    description: 'Generate video scripts',
-  },
 ];
 
 export default function CreateNewModal({
@@ -72,13 +55,9 @@ export default function CreateNewModal({
   folderId,
   onCreateFolder,
   initialStatus,
-  tags = [],
-  onCreateTag,
   statusOptions,
 }: CreateNewModalProps) {
   const queryClient = useQueryClient();
-  const { user } = useAuth();
-  const [selectedType, setSelectedType] = useState<ContentType>(null);
   const [pipelineModalOpen, setPipelineModalOpen] = useState(false);
   const [createdPipelineId, setCreatedPipelineId] = useState<string | null>(null);
   const [isCreatingPipeline, setIsCreatingPipeline] = useState(false);
@@ -90,12 +69,6 @@ export default function CreateNewModal({
   const { createPipeline } = usePipeline(null);
 
   const handleClose = () => {
-    setSelectedType(null);
-    onOpenChange(false);
-  };
-
-  const handleSuccess = () => {
-    setSelectedType(null);
     onOpenChange(false);
   };
 
@@ -150,8 +123,6 @@ export default function CreateNewModal({
         toast.error('Failed to create pipeline');
         setIsCreatingPipeline(false);
       }
-    } else {
-      setSelectedType(type.id as ContentType);
     }
   };
 
@@ -169,28 +140,12 @@ export default function CreateNewModal({
   return (
     <>
       <Dialog open={open} onOpenChange={handleClose}>
-        <DialogContent
-          className={`gap-0 p-0 ${
-            selectedType ? 'max-w-2xl' : 'max-w-md'
-          } rounded-2xl border-border`}
-        >
+        <DialogContent className="gap-0 p-0 max-w-md rounded-2xl border-border">
           <DialogHeader className="border-b border-border px-6 py-5">
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                {selectedType && (
-                  <button
-                    onClick={() => setSelectedType(null)}
-                    className="rounded-lg p-1.5 text-muted-foreground transition-apple hover:bg-secondary"
-                  >
-                    <ArrowLeft className="h-4 w-4" />
-                  </button>
-                )}
-                <DialogTitle className="text-lg font-semibold">
-                  {selectedType
-                    ? contentTypes.find((t) => t.id === selectedType)?.title
-                    : 'Create New'}
-                </DialogTitle>
-              </div>
+              <DialogTitle className="text-lg font-semibold">
+                Create New
+              </DialogTitle>
               <button
                 onClick={handleClose}
                 className="rounded-lg p-1.5 text-muted-foreground transition-apple hover:bg-secondary"
@@ -200,54 +155,32 @@ export default function CreateNewModal({
             </div>
           </DialogHeader>
 
-          {!selectedType ? (
-            <div className="grid grid-cols-2 gap-4 p-6">
-              {contentTypes.map((type) => (
-                <button
-                  key={type.id}
-                  onClick={() => handleTypeSelect(type)}
-                  disabled={isCreatingPipeline}
-                  className="flex flex-col items-center rounded-xl border border-border bg-card p-6 text-center transition-apple hover:border-primary hover:bg-primary/5 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10">
-                    {isCreatingPipeline && 'isPipeline' in type && type.isPipeline ? (
-                      <Loader2 className="h-6 w-6 text-primary animate-spin" />
-                    ) : (
-                      <type.icon className="h-6 w-6 text-primary" />
-                    )}
-                  </div>
-                  <h3 className="font-medium text-foreground">
-                    {type.title}
-                  </h3>
-                  <p className="mt-1 text-sm text-muted-foreground">
-                    {isCreatingPipeline && 'isPipeline' in type && type.isPipeline 
-                      ? 'Creating...' 
-                      : type.description}
-                  </p>
-                </button>
-              ))}
-            </div>
-          ) : selectedType === 'first_frame' ? (
-            <FirstFrameForm
-              projectId={projectId}
-              folderId={folderId}
-              onSuccess={handleSuccess}
-              initialStatus={initialStatus}
-              tags={tags}
-              onCreateTag={onCreateTag}
-              statusOptions={statusOptions}
-            />
-          ) : (
-            <ScriptForm
-              projectId={projectId}
-              folderId={folderId}
-              onSuccess={handleSuccess}
-              initialStatus={initialStatus}
-              tags={tags}
-              onCreateTag={onCreateTag}
-              statusOptions={statusOptions}
-            />
-          )}
+          <div className="grid grid-cols-2 gap-4 p-6">
+            {contentTypes.map((type) => (
+              <button
+                key={type.id}
+                onClick={() => handleTypeSelect(type)}
+                disabled={isCreatingPipeline}
+                className="flex flex-col items-center rounded-xl border border-border bg-card p-6 text-center transition-apple hover:border-primary hover:bg-primary/5 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10">
+                  {isCreatingPipeline && 'isPipeline' in type && type.isPipeline ? (
+                    <Loader2 className="h-6 w-6 text-primary animate-spin" />
+                  ) : (
+                    <type.icon className="h-6 w-6 text-primary" />
+                  )}
+                </div>
+                <h3 className="font-medium text-foreground">
+                  {type.title}
+                </h3>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  {isCreatingPipeline && 'isPipeline' in type && type.isPipeline 
+                    ? 'Creating...' 
+                    : type.description}
+                </p>
+              </button>
+            ))}
+          </div>
         </DialogContent>
       </Dialog>
 
