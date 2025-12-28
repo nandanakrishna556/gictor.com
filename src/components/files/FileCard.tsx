@@ -1,5 +1,5 @@
 import React from 'react';
-import { Loader2, Play, AlertCircle, MoreHorizontal, Trash2, Edit, FileText } from 'lucide-react';
+import { Loader2, Play, AlertCircle, MoreHorizontal, Trash2, Edit, FileText, Film } from 'lucide-react';
 import { 
   DropdownMenu, 
   DropdownMenuContent, 
@@ -109,6 +109,13 @@ export const FileCard: React.FC<FileCardProps> = ({
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-muted">
             <FileText className="h-12 w-12 text-muted-foreground/50" />
             <span className="text-sm text-muted-foreground">Script Ready</span>
+          </div>
+        )}
+
+        {status === 'completed' && !previewUrl && fileType === 'b_roll' && (
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-muted">
+            <Film className="h-12 w-12 text-muted-foreground/50" />
+            <span className="text-sm text-muted-foreground">B-Roll Ready</span>
           </div>
         )}
 
