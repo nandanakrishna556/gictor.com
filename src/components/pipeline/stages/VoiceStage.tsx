@@ -155,10 +155,14 @@ export default function VoiceStage({ pipelineId, onContinue, stageNavigation }: 
           const curatedVoices = data.voices.filter((v: ElevenLabsVoice) => 
             CURATED_VOICE_IDS.includes(v.voice_id)
           );
-          setVoices(curatedVoices);
+          
+          // If no curated voices found, show all available voices
+          const voicesToUse = curatedVoices.length > 0 ? curatedVoices : data.voices;
+          setVoices(voicesToUse);
+          
           // Set default voice if none selected
-          if (!selectedVoice && curatedVoices.length > 0) {
-            setSelectedVoice(curatedVoices[0]);
+          if (!selectedVoice && voicesToUse.length > 0) {
+            setSelectedVoice(voicesToUse[0]);
           }
         }
       } catch (error) {
