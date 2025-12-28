@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
-import { Upload, Sparkles, Play, Pause, Star, ChevronDown, Download } from 'lucide-react';
+import { Upload, Sparkles, Play, Pause, Star, ChevronDown, Download, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { usePipeline } from '@/hooks/usePipeline';
@@ -11,7 +11,6 @@ import { calculateVoiceCost } from '@/types/pipeline';
 import { toast } from 'sonner';
 import StageLayout from './StageLayout';
 import { uploadToR2 } from '@/lib/cloudflare-upload';
-import { AudioWaveform } from '@/components/ui/audio-waveform';
 
 interface VoiceStageProps {
   pipelineId: string;
@@ -199,6 +198,12 @@ export default function VoiceStage({ pipelineId, onContinue, stageNavigation }: 
       await processFile(files[0]);
     }
   }, []);
+
+  const handleRemoveUploadedAudio = async () => {
+    setUploadedUrl('');
+    await updateVoice({ output: null, complete: false });
+    toast.success('Audio removed');
+  };
 
   const handleGenerate = async () => {
     if (mode === 'upload') {
@@ -424,7 +429,16 @@ export default function VoiceStage({ pipelineId, onContinue, stageNavigation }: 
             <p className="text-xs text-muted-foreground mt-1">MP3, WAV, M4A • Max 50MB</p>
           </label>
           {uploadedUrl && (
-            <audio src={uploadedUrl} controls className="w-full" />
+            <div className="relative group">
+              <button
+                type="button"
+                onClick={handleRemoveUploadedAudio}
+                className="absolute -top-2 -left-2 z-10 rounded-full bg-foreground/80 p-1.5 text-background backdrop-blur transition-all duration-200 hover:bg-foreground opacity-0 group-hover:opacity-100"
+              >
+                <X className="h-4 w-4" />
+              </button>
+              <audio src={uploadedUrl} controls className="w-full" />
+            </div>
           )}
         </div>
       )}
@@ -453,16 +467,6 @@ export default function VoiceStage({ pipelineId, onContinue, stageNavigation }: 
 
   const outputContent = outputAudio ? (
     <div className="flex flex-col items-center justify-center h-full gap-6 px-4">
-      {/* Waveform Visualization */}
-      <div className="w-full max-w-md">
-        <AudioWaveform 
-          audioUrl={outputAudio.url} 
-          isPlaying={isPlaying}
-          currentTime={currentTime}
-          onSeek={handleSeek}
-        />
-      </div>
-      
       {/* Play Button */}
       <div className="w-24 h-24 rounded-full bg-primary/10 flex items-center justify-center">
         <Button

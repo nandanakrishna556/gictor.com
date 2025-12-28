@@ -4,6 +4,7 @@ import { Progress } from '@/components/ui/progress';
 import { Textarea } from '@/components/ui/textarea';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Video, Image as ImageIcon, FileAudio, Loader2, Download, Sparkles, X, Upload, ChevronDown, ChevronUp, Save } from 'lucide-react';
+import { cn } from '@/lib/utils';
 import { usePipeline } from '@/hooks/usePipeline';
 import { generateFinalVideo } from '@/lib/pipeline-service';
 import { calculateVideoCost } from '@/types/pipeline';
@@ -41,6 +42,8 @@ export default function FinalVideoStage({ pipelineId, onComplete, stageNavigatio
   // Custom uploads
   const [customFirstFrame, setCustomFirstFrame] = useState<string | null>(null);
   const [customVoice, setCustomVoice] = useState<{ url: string; duration: number } | null>(null);
+  const [isDraggingFirstFrame, setIsDraggingFirstFrame] = useState(false);
+  const [isDraggingVoice, setIsDraggingVoice] = useState(false);
   
   const firstFrameInputRef = useRef<HTMLInputElement>(null);
   const voiceInputRef = useRef<HTMLInputElement>(null);
@@ -131,29 +134,54 @@ export default function FinalVideoStage({ pipelineId, onComplete, stageNavigatio
     return `~${secs}s remaining`;
   };
 
-  const handleFirstFrameUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const url = URL.createObjectURL(file);
-      setCustomFirstFrame(url);
-      toast.success('First frame uploaded');
+  const handleFirstFrameUpload = (file: File) => {
+    if (!file.type.startsWith('image/')) {
+      toast.error('Please upload an image file');
+      return;
     }
+    const url = URL.createObjectURL(file);
+    setCustomFirstFrame(url);
+    toast.success('First frame uploaded');
   };
 
-  const handleVoiceUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFirstFrameFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      const url = URL.createObjectURL(file);
-      // Get audio duration
-      const audio = new Audio(url);
-      audio.onloadedmetadata = () => {
-        setCustomVoice({ url, duration: audio.duration });
-        toast.success('Voice file uploaded');
-      };
-      audio.onerror = () => {
-        toast.error('Could not load audio file');
-      };
+    if (file) handleFirstFrameUpload(file);
+  };
+
+  const handleFirstFrameDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDraggingFirstFrame(false);
+    const file = e.dataTransfer.files[0];
+    if (file) handleFirstFrameUpload(file);
+  };
+
+  const handleVoiceUpload = (file: File) => {
+    if (!file.type.startsWith('audio/')) {
+      toast.error('Please upload an audio file');
+      return;
     }
+    const url = URL.createObjectURL(file);
+    const audio = new Audio(url);
+    audio.onloadedmetadata = () => {
+      setCustomVoice({ url, duration: audio.duration });
+      toast.success('Voice file uploaded');
+    };
+    audio.onerror = () => {
+      toast.error('Could not load audio file');
+    };
+  };
+
+  const handleVoiceFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) handleVoiceUpload(file);
+  };
+
+  const handleVoiceDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDraggingVoice(false);
+    const file = e.dataTransfer.files[0];
+    if (file) handleVoiceUpload(file);
   };
 
   const handleRemoveFirstFrame = async () => {
@@ -235,7 +263,7 @@ export default function FinalVideoStage({ pipelineId, onComplete, stageNavigatio
           ref={firstFrameInputRef}
           type="file"
           accept="image/*"
-          onChange={handleFirstFrameUpload}
+          onChange={handleFirstFrameFileChange}
           className="hidden"
         />
         {firstFrameUrl ? (
@@ -255,18 +283,21 @@ export default function FinalVideoStage({ pipelineId, onComplete, stageNavigatio
           </div>
         ) : (
           <div 
-            className="border-2 border-dashed border-muted-foreground/30 rounded-lg p-6 text-center cursor-pointer hover:border-primary/50 transition-colors"
+            className={cn(
+              "border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-colors",
+              isDraggingFirstFrame 
+                ? "border-primary bg-primary/10" 
+                : "border-muted-foreground/30 hover:border-primary/50"
+            )}
             onClick={() => firstFrameInputRef.current?.click()}
+            onDragOver={(e) => { e.preventDefault(); setIsDraggingFirstFrame(true); }}
+            onDragLeave={(e) => { e.preventDefault(); setIsDraggingFirstFrame(false); }}
+            onDrop={handleFirstFrameDrop}
           >
-            <p className="text-sm text-muted-foreground">No first frame provided</p>
-            <Button 
-              variant="outline" 
-              size="sm" 
-              className="mt-2"
-            >
-              <Upload className="h-4 w-4 mr-1" />
-              Upload Image
-            </Button>
+            <Upload className={cn("h-6 w-6 mx-auto mb-2", isDraggingFirstFrame ? "text-primary" : "text-muted-foreground")} />
+            <p className="text-sm text-muted-foreground">
+              {isDraggingFirstFrame ? "Drop image here" : "Drag & drop or click to upload"}
+            </p>
           </div>
         )}
       </div>
@@ -331,34 +362,38 @@ export default function FinalVideoStage({ pipelineId, onComplete, stageNavigatio
           ref={voiceInputRef}
           type="file"
           accept="audio/*"
-          onChange={handleVoiceUpload}
+          onChange={handleVoiceFileChange}
           className="hidden"
         />
         {voiceUrl ? (
           <div className="relative group">
-            <audio src={voiceUrl} controls className="w-full h-10" />
             <button
               type="button"
               onClick={handleRemoveVoice}
-              className="absolute left-2 top-1/2 -translate-y-1/2 rounded-full bg-foreground/80 p-1.5 text-background backdrop-blur transition-all duration-200 hover:bg-foreground opacity-0 group-hover:opacity-100"
+              className="absolute -top-2 -left-2 z-10 rounded-full bg-foreground/80 p-1.5 text-background backdrop-blur transition-all duration-200 hover:bg-foreground opacity-0 group-hover:opacity-100"
             >
               <X className="h-4 w-4" />
             </button>
+            <audio src={voiceUrl} controls className="w-full h-10" />
           </div>
         ) : (
           <div 
-            className="border-2 border-dashed border-muted-foreground/30 rounded-lg p-6 text-center cursor-pointer hover:border-primary/50 transition-colors"
+            className={cn(
+              "border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-colors",
+              isDraggingVoice 
+                ? "border-primary bg-primary/10" 
+                : "border-muted-foreground/30 hover:border-primary/50"
+            )}
             onClick={() => voiceInputRef.current?.click()}
+            onDragOver={(e) => { e.preventDefault(); setIsDraggingVoice(true); }}
+            onDragLeave={(e) => { e.preventDefault(); setIsDraggingVoice(false); }}
+            onDrop={handleVoiceDrop}
           >
-            <p className="text-sm text-muted-foreground">No voice audio provided</p>
-            <Button 
-              variant="outline" 
-              size="sm" 
-              className="mt-2"
-            >
-              <Upload className="h-4 w-4 mr-1" />
-              Upload Audio
-            </Button>
+            <Upload className={cn("h-6 w-6 mx-auto mb-2", isDraggingVoice ? "text-primary" : "text-muted-foreground")} />
+            <p className="text-sm text-muted-foreground">
+              {isDraggingVoice ? "Drop audio here" : "Drag & drop or click to upload"}
+            </p>
+            <p className="text-xs text-muted-foreground mt-1">MP3, WAV, M4A</p>
           </div>
         )}
       </div>
