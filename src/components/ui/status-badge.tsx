@@ -1,14 +1,15 @@
 import React from 'react';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Check, X, Clock, AlertCircle } from 'lucide-react';
 
-export type StatusType = 'processing' | 'completed' | 'failed' | 'draft' | 'review' | 'approved' | 'rejected' | 'active' | 'pending';
+export type StatusType = 'processing' | 'completed' | 'failed' | 'draft' | 'review' | 'approved' | 'rejected' | 'active' | 'pending' | 'generating';
 
 interface StatusConfig {
   label: string;
   className: string;
   showLoader?: boolean;
+  icon?: React.ReactNode;
 }
 
 const STATUS_CONFIG: Record<StatusType, StatusConfig> = {
@@ -17,17 +18,25 @@ const STATUS_CONFIG: Record<StatusType, StatusConfig> = {
     className: 'bg-amber-500/10 text-amber-500 border-amber-500/20',
     showLoader: true,
   },
+  generating: {
+    label: 'Generating',
+    className: 'bg-primary/10 text-primary border-primary/20',
+    showLoader: true,
+  },
   pending: {
     label: 'Pending',
     className: 'bg-amber-500/10 text-amber-500 border-amber-500/20',
+    icon: <Clock className="h-3 w-3" />,
   },
   completed: {
     label: 'Ready',
     className: 'bg-green-500/10 text-green-500 border-green-500/20',
+    icon: <Check className="h-3 w-3" />,
   },
   failed: {
     label: 'Failed',
     className: 'bg-destructive/10 text-destructive border-destructive/20',
+    icon: <AlertCircle className="h-3 w-3" />,
   },
   draft: {
     label: 'Draft',
@@ -40,10 +49,12 @@ const STATUS_CONFIG: Record<StatusType, StatusConfig> = {
   approved: {
     label: 'Approved',
     className: 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20',
+    icon: <Check className="h-3 w-3" />,
   },
   rejected: {
     label: 'Rejected',
     className: 'bg-red-500/10 text-red-500 border-red-500/20',
+    icon: <X className="h-3 w-3" />,
   },
   active: {
     label: 'Active',
@@ -56,7 +67,9 @@ interface StatusBadgeProps {
   label?: string;
   className?: string;
   showLoader?: boolean;
-  size?: 'sm' | 'md';
+  showIcon?: boolean;
+  size?: 'sm' | 'md' | 'lg';
+  pulse?: boolean;
 }
 
 export function StatusBadge({ 
@@ -64,7 +77,9 @@ export function StatusBadge({
   label, 
   className,
   showLoader,
-  size = 'md'
+  showIcon = false,
+  size = 'md',
+  pulse = false,
 }: StatusBadgeProps) {
   const config = STATUS_CONFIG[status as StatusType] || {
     label: status,
@@ -74,22 +89,34 @@ export function StatusBadge({
   const displayLabel = label || config.label;
   const shouldShowLoader = showLoader ?? config.showLoader;
 
+  const sizeClasses = {
+    sm: 'text-[10px] px-1.5 py-0',
+    md: 'text-xs px-2 py-0.5',
+    lg: 'text-sm px-2.5 py-1',
+  };
+
+  const iconSizes = {
+    sm: 'h-2.5 w-2.5',
+    md: 'h-3 w-3',
+    lg: 'h-3.5 w-3.5',
+  };
+
   return (
     <Badge 
       variant="secondary" 
       className={cn(
         config.className,
-        size === 'sm' && 'text-[10px] px-1.5 py-0',
-        size === 'md' && 'text-xs',
-        'gap-1',
+        sizeClasses[size],
+        'gap-1 font-medium',
+        pulse && shouldShowLoader && 'animate-pulse',
         className
       )}
     >
       {shouldShowLoader && (
-        <Loader2 className={cn(
-          'animate-spin',
-          size === 'sm' ? 'h-2.5 w-2.5' : 'h-3 w-3'
-        )} />
+        <Loader2 className={cn('animate-spin', iconSizes[size])} />
+      )}
+      {!shouldShowLoader && showIcon && config.icon && (
+        <span className={iconSizes[size]}>{config.icon}</span>
       )}
       {displayLabel}
     </Badge>
