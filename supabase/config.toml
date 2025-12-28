@@ -2,3 +2,6 @@ project_id = "uqwpvqgstxtevhifgurb"
 
 [functions.update-file-status]
 verify_jwt = false
+
+[functions.elevenlabs-voices]
+verify_jwt = false
