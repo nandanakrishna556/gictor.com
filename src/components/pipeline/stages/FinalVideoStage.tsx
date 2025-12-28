@@ -156,18 +156,22 @@ export default function FinalVideoStage({ pipelineId, onComplete, stageNavigatio
     }
   };
 
-  const handleRemoveFirstFrame = () => {
+  const handleRemoveFirstFrame = async () => {
     setCustomFirstFrame(null);
     if (firstFrameInputRef.current) {
       firstFrameInputRef.current.value = '';
     }
+    // Also clear the original if we want to allow re-upload
+    await updateFirstFrame({ output: null });
   };
 
-  const handleRemoveVoice = () => {
+  const handleRemoveVoice = async () => {
     setCustomVoice(null);
     if (voiceInputRef.current) {
       voiceInputRef.current.value = '';
     }
+    // Also clear the original voice
+    await updateVoice({ output: null });
   };
 
   const handleSaveScript = async () => {
@@ -223,54 +227,42 @@ export default function FinalVideoStage({ pipelineId, onComplete, stageNavigatio
 
       {/* First Frame Preview */}
       <div className="space-y-2">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2 text-sm font-medium">
-            <ImageIcon className="h-4 w-4 text-primary" />
-            First Frame
-          </div>
-          <div className="flex items-center gap-1">
-            <input
-              ref={firstFrameInputRef}
-              type="file"
-              accept="image/*"
-              onChange={handleFirstFrameUpload}
-              className="hidden"
-            />
-            <Button 
-              variant="ghost" 
-              size="sm"
-              onClick={() => firstFrameInputRef.current?.click()}
-            >
-              <Upload className="h-4 w-4 mr-1" />
-              Upload
-            </Button>
-            {(customFirstFrame || originalFirstFrameUrl) && (
-              <Button 
-                variant="ghost" 
-                size="sm"
-                onClick={handleRemoveFirstFrame}
-              >
-                <X className="h-4 w-4" />
-              </Button>
-            )}
-          </div>
+        <div className="flex items-center gap-2 text-sm font-medium">
+          <ImageIcon className="h-4 w-4 text-primary" />
+          First Frame
         </div>
+        <input
+          ref={firstFrameInputRef}
+          type="file"
+          accept="image/*"
+          onChange={handleFirstFrameUpload}
+          className="hidden"
+        />
         {firstFrameUrl ? (
-          <div className="w-full max-w-[200px]">
+          <div className="relative w-full max-w-[200px] group">
             <img 
               src={firstFrameUrl} 
               alt="First frame" 
               className="w-full h-auto max-h-[150px] object-contain rounded-lg"
             />
+            <button
+              type="button"
+              onClick={handleRemoveFirstFrame}
+              className="absolute left-2 top-2 rounded-full bg-foreground/80 p-1.5 text-background backdrop-blur transition-all duration-200 hover:bg-foreground opacity-0 group-hover:opacity-100"
+            >
+              <X className="h-4 w-4" />
+            </button>
           </div>
         ) : (
-          <div className="border-2 border-dashed border-muted-foreground/30 rounded-lg p-6 text-center">
+          <div 
+            className="border-2 border-dashed border-muted-foreground/30 rounded-lg p-6 text-center cursor-pointer hover:border-primary/50 transition-colors"
+            onClick={() => firstFrameInputRef.current?.click()}
+          >
             <p className="text-sm text-muted-foreground">No first frame provided</p>
             <Button 
               variant="outline" 
               size="sm" 
               className="mt-2"
-              onClick={() => firstFrameInputRef.current?.click()}
             >
               <Upload className="h-4 w-4 mr-1" />
               Upload Image
@@ -331,48 +323,38 @@ export default function FinalVideoStage({ pipelineId, onComplete, stageNavigatio
 
       {/* Voice Preview */}
       <div className="space-y-2">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2 text-sm font-medium">
-            <FileAudio className="h-4 w-4 text-primary" />
-            Voice {voiceDuration > 0 && `(${formatDuration(voiceDuration)})`}
-          </div>
-          <div className="flex items-center gap-1">
-            <input
-              ref={voiceInputRef}
-              type="file"
-              accept="audio/*"
-              onChange={handleVoiceUpload}
-              className="hidden"
-            />
-            <Button 
-              variant="ghost" 
-              size="sm"
-              onClick={() => voiceInputRef.current?.click()}
-            >
-              <Upload className="h-4 w-4 mr-1" />
-              Upload
-            </Button>
-            {(customVoice || originalVoiceUrl) && (
-              <Button 
-                variant="ghost" 
-                size="sm"
-                onClick={handleRemoveVoice}
-              >
-                <X className="h-4 w-4" />
-              </Button>
-            )}
-          </div>
+        <div className="flex items-center gap-2 text-sm font-medium">
+          <FileAudio className="h-4 w-4 text-primary" />
+          Voice {voiceDuration > 0 && `(${formatDuration(voiceDuration)})`}
         </div>
+        <input
+          ref={voiceInputRef}
+          type="file"
+          accept="audio/*"
+          onChange={handleVoiceUpload}
+          className="hidden"
+        />
         {voiceUrl ? (
-          <audio src={voiceUrl} controls className="w-full h-10" />
+          <div className="relative group">
+            <audio src={voiceUrl} controls className="w-full h-10" />
+            <button
+              type="button"
+              onClick={handleRemoveVoice}
+              className="absolute left-2 top-1/2 -translate-y-1/2 rounded-full bg-foreground/80 p-1.5 text-background backdrop-blur transition-all duration-200 hover:bg-foreground opacity-0 group-hover:opacity-100"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </div>
         ) : (
-          <div className="border-2 border-dashed border-muted-foreground/30 rounded-lg p-6 text-center">
+          <div 
+            className="border-2 border-dashed border-muted-foreground/30 rounded-lg p-6 text-center cursor-pointer hover:border-primary/50 transition-colors"
+            onClick={() => voiceInputRef.current?.click()}
+          >
             <p className="text-sm text-muted-foreground">No voice audio provided</p>
             <Button 
               variant="outline" 
               size="sm" 
               className="mt-2"
-              onClick={() => voiceInputRef.current?.click()}
             >
               <Upload className="h-4 w-4 mr-1" />
               Upload Audio
