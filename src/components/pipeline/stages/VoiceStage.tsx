@@ -177,21 +177,30 @@ export default function VoiceStage({ pipelineId, onContinue, stageNavigation }: 
         console.log('Data.voices length:', data.voices?.length);
         
         if (data?.voices && data.voices.length > 0) {
-          console.log(`Successfully fetched ${data.voices.length} voices from API`);
+          console.log(`Total voices from API: ${data.voices.length}`);
+          console.log('Sample voice_ids:', data.voices.slice(0, 5).map((v: ElevenLabsVoice) => v.voice_id));
+          console.log('Sample voice object:', JSON.stringify(data.voices[0], null, 2));
           
           // Filter to only curated voices
           const curatedVoices = data.voices.filter((voice: ElevenLabsVoice) => 
             CURATED_VOICE_IDS.has(voice.voice_id)
           );
           
-          console.log(`Filtered to ${curatedVoices.length} curated voices`);
-          console.log('First 3 curated voices:', curatedVoices.slice(0, 3));
+          console.log(`Curated voices found: ${curatedVoices.length}`);
           
-          setVoices(curatedVoices);
-          
-          // Set default voice if none selected
-          if (!selectedVoice && curatedVoices.length > 0) {
-            setSelectedVoice(curatedVoices[0]);
+          // If no curated voices found, use all voices as fallback
+          if (curatedVoices.length === 0) {
+            console.warn('No curated voices matched - using all voices as fallback');
+            setVoices(data.voices);
+            if (!selectedVoice && data.voices.length > 0) {
+              setSelectedVoice(data.voices[0]);
+            }
+          } else {
+            console.log('First 3 curated voices:', curatedVoices.slice(0, 3).map((v: ElevenLabsVoice) => v.name));
+            setVoices(curatedVoices);
+            if (!selectedVoice && curatedVoices.length > 0) {
+              setSelectedVoice(curatedVoices[0]);
+            }
           }
         } else {
           console.warn('No voices in response or empty array');
