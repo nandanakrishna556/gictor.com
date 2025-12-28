@@ -10,6 +10,7 @@ const N8N_API_KEY = import.meta.env.VITE_N8N_API_KEY || '';
 
 export type PipelineGenerationType = 
   | 'pipeline_first_frame' 
+  | 'pipeline_first_frame_b_roll'
   | 'pipeline_script' 
   | 'pipeline_voice' 
   | 'pipeline_final_video';
@@ -130,6 +131,31 @@ export async function generateFirstFrame(
     aspect_ratio: input.aspect_ratio,
     reference_images: referenceImages,
     is_edit: isEdit,
+  }, PIPELINE_CREDITS.first_frame);
+}
+
+// Generate B-Roll First Frame (differentiated from Talking Head)
+export async function generateBRollFirstFrame(
+  pipelineId: string,
+  input: {
+    prompt: string;
+    aspect_ratio: string;
+    reference_images?: string[];
+  },
+  isEdit: boolean = false,
+  previousImageUrl?: string
+): Promise<GenerationResult> {
+  const referenceImages = isEdit && previousImageUrl 
+    ? [previousImageUrl, ...(input.reference_images || [])]
+    : (input.reference_images || []);
+
+  return executeGeneration('pipeline_first_frame_b_roll', {
+    pipeline_id: pipelineId,
+    prompt: input.prompt,
+    aspect_ratio: input.aspect_ratio,
+    reference_images: referenceImages,
+    is_edit: isEdit,
+    pipeline_type: 'b_roll', // Differentiate from talking_head
   }, PIPELINE_CREDITS.first_frame);
 }
 
