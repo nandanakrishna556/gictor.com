@@ -92,48 +92,48 @@ export default function VoiceStage({ pipelineId, onContinue, stageNavigation }: 
   const charCount = scriptText.length;
   const estimatedCost = calculateVoiceCost(charCount);
 
-  // Cache key and TTL for localStorage
-  const VOICES_CACHE_KEY = 'elevenlabs_curated_voices';
-  const VOICES_CACHE_TTL = 24 * 60 * 60 * 1000; // 24 hours
+  // Voice fetch error state
+  const [voiceFetchError, setVoiceFetchError] = useState<string | null>(null);
 
-  // Fetch voices from ElevenLabs with localStorage caching
+  // Fetch voices from ElevenLabs - NO CACHING for debugging
   useEffect(() => {
     const fetchVoices = async () => {
+      console.log('=== VOICE FETCH START ===');
+      console.log('Calling elevenlabs-voices edge function...');
       setIsLoadingVoices(true);
+      setVoiceFetchError(null);
       
       try {
-        // Check localStorage cache first
-        const cached = localStorage.getItem(VOICES_CACHE_KEY);
-        if (cached) {
-          const { voices: cachedVoices, timestamp } = JSON.parse(cached);
-          const age = Date.now() - timestamp;
-          
-          if (age < VOICES_CACHE_TTL && cachedVoices?.length > 0) {
-            console.log(`Using ${cachedVoices.length} cached voices`);
-            setVoices(cachedVoices);
-            if (!selectedVoice && cachedVoices.length > 0) {
-              setSelectedVoice(cachedVoices[0]);
-            }
-            setIsLoadingVoices(false);
-            return;
-          }
-        }
-        
-        // Fetch from API
+        // Fetch from edge function - NO CACHING
+        console.log('Making supabase.functions.invoke call...');
         const { data, error } = await supabase.functions.invoke('elevenlabs-voices');
         
+        console.log('=== VOICE FETCH RESPONSE ===');
+        console.log('Error:', error);
+        console.log('Data:', data);
+        console.log('Data type:', typeof data);
+        
         if (error) {
-          console.error('Error fetching voices:', error);
-          toast.error('Failed to load voices');
+          console.error('Edge function error:', error);
+          const errorMsg = `Failed to load voices: ${error.message || 'Unknown error'}`;
+          setVoiceFetchError(errorMsg);
+          toast.error(errorMsg);
           return;
         }
         
+        if (!data) {
+          console.error('No data returned from edge function');
+          setVoiceFetchError('No data returned from voice API');
+          toast.error('No data returned from voice API');
+          return;
+        }
+        
+        console.log('Data.voices exists:', !!data.voices);
+        console.log('Data.voices length:', data.voices?.length);
+        
         if (data?.voices && data.voices.length > 0) {
-          // Cache the voices
-          localStorage.setItem(VOICES_CACHE_KEY, JSON.stringify({
-            voices: data.voices,
-            timestamp: Date.now()
-          }));
+          console.log(`Successfully fetched ${data.voices.length} voices`);
+          console.log('First 3 voices:', data.voices.slice(0, 3));
           
           setVoices(data.voices);
           
@@ -141,11 +141,18 @@ export default function VoiceStage({ pipelineId, onContinue, stageNavigation }: 
           if (!selectedVoice && data.voices.length > 0) {
             setSelectedVoice(data.voices[0]);
           }
+        } else {
+          console.warn('No voices in response or empty array');
+          setVoiceFetchError('No voices found in API response');
         }
       } catch (error) {
-        console.error('Error fetching voices:', error);
-        toast.error('Failed to load voices');
+        console.error('=== VOICE FETCH ERROR ===');
+        console.error('Caught error:', error);
+        const errorMsg = error instanceof Error ? error.message : 'Unknown error fetching voices';
+        setVoiceFetchError(errorMsg);
+        toast.error(`Failed to load voices: ${errorMsg}`);
       } finally {
+        console.log('=== VOICE FETCH END ===');
         setIsLoadingVoices(false);
       }
     };
@@ -606,8 +613,23 @@ export default function VoiceStage({ pipelineId, onContinue, stageNavigation }: 
 
               {/* Voice List */}
               {isLoadingVoices ? (
-                <div className="flex items-center justify-center py-8">
+                <div className="flex flex-col items-center justify-center py-8 gap-3">
                   <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                  <p className="text-sm text-muted-foreground">Loading voices from ElevenLabs...</p>
+                </div>
+              ) : voiceFetchError ? (
+                <div className="flex flex-col items-center justify-center py-8 gap-3 text-center">
+                  <div className="text-destructive">
+                    <p className="font-medium">Failed to load voices</p>
+                    <p className="text-sm text-muted-foreground mt-1">{voiceFetchError}</p>
+                  </div>
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => window.location.reload()}
+                  >
+                    Retry
+                  </Button>
                 </div>
               ) : (
                 <ScrollArea className="h-64">
