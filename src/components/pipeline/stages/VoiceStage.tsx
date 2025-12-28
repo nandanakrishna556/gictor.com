@@ -424,14 +424,7 @@ export default function VoiceStage({ pipelineId, onContinue, stageNavigation }: 
             <p className="text-xs text-muted-foreground mt-1">MP3, WAV, M4A • Max 50MB</p>
           </label>
           {uploadedUrl && (
-            <div className="space-y-2">
-              <AudioWaveform 
-                audioUrl={uploadedUrl} 
-                isPlaying={false}
-                currentTime={0}
-              />
-              <audio src={uploadedUrl} controls className="w-full" />
-            </div>
+            <audio src={uploadedUrl} controls className="w-full" />
           )}
         </div>
       )}
