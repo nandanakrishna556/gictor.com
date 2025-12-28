@@ -134,6 +134,14 @@ export default function FirstFrameStage({ pipelineId, onContinue, stageNavigatio
         output: { url, generated_at: new Date().toISOString() },
         complete: true,
       });
+    } else {
+      // Image was removed - clear the output
+      setUploadedUrl('');
+      await updateFirstFrame({
+        input: { mode: 'upload', uploaded_url: '' },
+        output: null,
+        complete: false,
+      });
     }
   };
 
