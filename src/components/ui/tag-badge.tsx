@@ -1,13 +1,30 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
-import { X } from 'lucide-react';
+import { X, Plus, Check } from 'lucide-react';
 
 export interface TagData {
   id: string;
   tag_name: string;
   color: string;
 }
+
+// Preset colors for tag creation
+const TAG_COLORS = [
+  '#007AFF', // Blue
+  '#34C759', // Green
+  '#FF9500', // Orange
+  '#FF3B30', // Red
+  '#AF52DE', // Purple
+  '#5856D6', // Indigo
+  '#FF2D55', // Pink
+  '#00C7BE', // Teal
+  '#FFD60A', // Yellow
+  '#8E8E93', // Gray
+];
 
 interface TagBadgeProps {
   tag: TagData;
@@ -204,7 +221,7 @@ export function TagSelectorItem({
           ? 'bg-primary border-primary text-primary-foreground' 
           : 'border-border'
       )}>
-        {selected && <span className="text-xs">✓</span>}
+        {selected && <Check className="h-3 w-3" />}
       </div>
       <span 
         className="h-2 w-2 rounded-full flex-shrink-0" 
@@ -225,3 +242,166 @@ export function TagSelectorItem({
     </div>
   );
 }
+
+// Inline tag creator with color picker
+interface InlineTagCreatorProps {
+  onCreateTag: (name: string, color: string) => void;
+  placeholder?: string;
+  className?: string;
+}
+
+export function InlineTagCreator({
+  onCreateTag,
+  placeholder = 'New tag...',
+  className,
+}: InlineTagCreatorProps) {
+  const [isOpen, setIsOpen] = useState(false);
+  const [name, setName] = useState('');
+  const [selectedColor, setSelectedColor] = useState(TAG_COLORS[0]);
+
+  const handleCreate = () => {
+    const trimmedName = name.trim();
+    if (trimmedName && trimmedName.length <= 50) {
+      onCreateTag(trimmedName, selectedColor);
+      setName('');
+      setSelectedColor(TAG_COLORS[0]);
+      setIsOpen(false);
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      handleCreate();
+    } else if (e.key === 'Escape') {
+      setIsOpen(false);
+    }
+  };
+
+  return (
+    <Popover open={isOpen} onOpenChange={setIsOpen}>
+      <PopoverTrigger asChild>
+        <button
+          className={cn(
+            'flex items-center gap-1 text-xs text-muted-foreground hover:text-primary transition-colors px-2 py-1 rounded-md hover:bg-secondary',
+            className
+          )}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <Plus className="h-3 w-3" />
+          Add tag
+        </button>
+      </PopoverTrigger>
+      <PopoverContent 
+        className="w-64 p-3 bg-popover" 
+        align="start"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="space-y-3">
+          <Input
+            value={name}
+            onChange={(e) => setName(e.target.value.slice(0, 50))}
+            onKeyDown={handleKeyDown}
+            placeholder={placeholder}
+            className="h-8 text-sm"
+            autoFocus
+            maxLength={50}
+          />
+          
+          <div className="space-y-1.5">
+            <span className="text-xs text-muted-foreground">Color</span>
+            <div className="flex flex-wrap gap-1.5">
+              {TAG_COLORS.map((color) => (
+                <button
+                  key={color}
+                  onClick={() => setSelectedColor(color)}
+                  className={cn(
+                    'h-6 w-6 rounded-full border-2 transition-all hover:scale-110',
+                    selectedColor === color 
+                      ? 'border-foreground scale-110' 
+                      : 'border-transparent'
+                  )}
+                  style={{ backgroundColor: color }}
+                />
+              ))}
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <div 
+              className="flex-1 flex items-center gap-1.5 px-2 py-1 rounded-md text-xs"
+              style={{ 
+                backgroundColor: `${selectedColor}20`, 
+                color: selectedColor 
+              }}
+            >
+              <span 
+                className="h-2 w-2 rounded-full" 
+                style={{ backgroundColor: selectedColor }} 
+              />
+              {name || 'Preview'}
+            </div>
+            <Button
+              size="sm"
+              onClick={handleCreate}
+              disabled={!name.trim()}
+              className="h-7"
+            >
+              Create
+            </Button>
+          </div>
+        </div>
+      </PopoverContent>
+    </Popover>
+  );
+}
+
+// Complete tag selector with list and inline creator
+interface TagSelectorProps {
+  tags: TagData[];
+  selectedTagIds: string[];
+  onToggleTag: (tagId: string) => void;
+  onCreateTag?: (name: string, color: string) => void;
+  onDeleteTag?: (tagId: string) => void;
+  showDelete?: boolean;
+  emptyMessage?: string;
+  className?: string;
+}
+
+export function TagSelector({
+  tags,
+  selectedTagIds,
+  onToggleTag,
+  onCreateTag,
+  onDeleteTag,
+  showDelete = false,
+  emptyMessage = 'No tags available',
+  className,
+}: TagSelectorProps) {
+  return (
+    <div className={cn('space-y-1', className)}>
+      {tags.length === 0 ? (
+        <p className="text-xs text-muted-foreground py-2">{emptyMessage}</p>
+      ) : (
+        tags.map((tag) => (
+          <TagSelectorItem
+            key={tag.id}
+            tag={tag}
+            selected={selectedTagIds.includes(tag.id)}
+            onToggle={() => onToggleTag(tag.id)}
+            onDelete={onDeleteTag ? () => onDeleteTag(tag.id) : undefined}
+            showDelete={showDelete}
+          />
+        ))
+      )}
+      {onCreateTag && (
+        <div className="pt-1 border-t mt-2">
+          <InlineTagCreator onCreateTag={onCreateTag} />
+        </div>
+      )}
+    </div>
+  );
+}
+
+// Export preset colors for external use
+export { TAG_COLORS };
