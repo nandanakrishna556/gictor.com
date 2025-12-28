@@ -199,15 +199,7 @@ export default function PipelineModal({
 
 
   const handleStageClick = (stage: PipelineStage) => {
-    // Can freely switch between first 3 stages
-    if (stage === 'final_video') {
-      if (!canProceedToFinalVideo) {
-        toast.error('Complete all stages first', {
-          description: 'You need to complete First Frame, Script, and Voice stages before generating the final video.',
-        });
-        return;
-      }
-    }
+    // All stages are freely accessible
     setActiveStage(stage);
     updatePipeline({ current_stage: stage });
   };
@@ -224,8 +216,7 @@ export default function PipelineModal({
   };
 
   const isStageAccessible = (stage: PipelineStage): boolean => {
-    if (stage === 'final_video') return canProceedToFinalVideo || false;
-    return true; // First 3 stages are always accessible
+    return true; // All stages are always accessible
   };
 
   const handleNameChange = (newName: string) => {
