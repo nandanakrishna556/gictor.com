@@ -227,7 +227,7 @@ export default function FinalVideoStage({ pipelineId, onComplete, stageNavigatio
             )}
           </Button>
           <p className="text-xs text-center text-muted-foreground">
-            0.125 credits per second ({formatDuration(voiceDuration)} = {formatCredits(estimatedCost)} credits)
+            0.2 credits per second ({formatDuration(voiceDuration)} = {formatCredits(estimatedCost)} credits)
           </p>
         </div>
       </div>
