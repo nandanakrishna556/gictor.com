@@ -1,5 +1,7 @@
 export type PipelineStage = 'first_frame' | 'script' | 'voice' | 'final_video';
 
+export type PipelineType = 'talking_head' | 'b_roll';
+
 export type StageMode = 'generate' | 'upload' | 'paste';
 
 export interface FirstFrameInput {
@@ -76,6 +78,7 @@ export interface Pipeline {
   status: 'draft' | 'processing' | 'completed' | 'failed';
   display_status: string | null; // Kanban column status
   tags: string[];
+  pipeline_type: PipelineType;
   
   current_stage: PipelineStage;
   first_frame_complete: boolean;

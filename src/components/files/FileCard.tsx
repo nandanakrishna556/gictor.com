@@ -1,5 +1,5 @@
 import React from 'react';
-import { Loader2, Play, AlertCircle, MoreHorizontal, Trash2, Edit, FileText, Image as ImageIcon, Video, Film } from 'lucide-react';
+import { Loader2, Play, AlertCircle, MoreHorizontal, Trash2, Edit, FileText } from 'lucide-react';
 import { 
   DropdownMenu, 
   DropdownMenuContent, 
@@ -9,11 +9,12 @@ import {
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
+import { FileTypeIcon, FileType } from '@/components/ui/file-type-icon';
 
 interface FileCardProps {
   id: string;
   name: string;
-  fileType: 'first_frame' | 'talking_head' | 'script' | 'b_roll';
+  fileType: FileType;
   status: 'processing' | 'completed' | 'failed';
   previewUrl?: string | null;
   errorMessage?: string | null;
@@ -35,12 +36,6 @@ export const FileCard: React.FC<FileCardProps> = ({
   onDelete, 
   onRename 
 }) => {
-  const getTypeIcon = () => {
-    if (fileType === 'first_frame') return <ImageIcon className="h-4 w-4" />;
-    if (fileType === 'talking_head') return <Video className="h-4 w-4" />;
-    if (fileType === 'b_roll') return <Film className="h-4 w-4" />;
-    return <FileText className="h-4 w-4" />;
-  };
 
   const getStatusBadge = () => {
     if (status === 'processing') {
@@ -153,7 +148,7 @@ export const FileCard: React.FC<FileCardProps> = ({
       <div className="p-3 space-y-2">
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-2 min-w-0">
-            {getTypeIcon()}
+            <FileTypeIcon fileType={fileType} />
             <span className="text-sm font-medium truncate">{name}</span>
           </div>
           {getStatusBadge()}
