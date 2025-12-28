@@ -183,6 +183,7 @@ export type Database = {
           id: string
           name: string
           output_file_id: string | null
+          pipeline_type: string
           project_id: string
           script_complete: boolean | null
           script_input: Json | null
@@ -208,6 +209,7 @@ export type Database = {
           id?: string
           name?: string
           output_file_id?: string | null
+          pipeline_type?: string
           project_id: string
           script_complete?: boolean | null
           script_input?: Json | null
@@ -233,6 +235,7 @@ export type Database = {
           id?: string
           name?: string
           output_file_id?: string | null
+          pipeline_type?: string
           project_id?: string
           script_complete?: boolean | null
           script_input?: Json | null

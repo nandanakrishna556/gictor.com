@@ -28,6 +28,7 @@ function parsePipeline(data: any): Pipeline {
     final_video_output: data.final_video_output as FinalVideoOutput | null,
     tags: data.tags || [],
     display_status: data.display_status || null,
+    pipeline_type: data.pipeline_type || 'talking_head',
   } as Pipeline;
 }
 
@@ -73,6 +74,7 @@ export function usePipeline(pipelineId: string | null) {
           status: params.status || 'draft',
           display_status: params.displayStatus || null,
           current_stage: 'first_frame',
+          pipeline_type: params.pipelineType || 'talking_head',
         })
         .select()
         .single();
