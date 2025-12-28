@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
+import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
-import { X, Plus, Check } from 'lucide-react';
+import { X, Plus, Check, GripVertical } from 'lucide-react';
 
 export interface TagData {
   id: string;
@@ -198,6 +199,8 @@ interface TagSelectorItemProps {
   onToggle: () => void;
   onDelete?: () => void;
   showDelete?: boolean;
+  isDraggable?: boolean;
+  dragHandleProps?: React.HTMLAttributes<HTMLDivElement>;
 }
 
 export function TagSelectorItem({
@@ -206,6 +209,8 @@ export function TagSelectorItem({
   onToggle,
   onDelete,
   showDelete = false,
+  isDraggable = false,
+  dragHandleProps,
 }: TagSelectorItemProps) {
   return (
     <div
@@ -215,6 +220,15 @@ export function TagSelectorItem({
         onToggle();
       }}
     >
+      {isDraggable && (
+        <div 
+          {...dragHandleProps}
+          className="text-muted-foreground hover:text-foreground cursor-grab active:cursor-grabbing"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <GripVertical className="h-3 w-3" />
+        </div>
+      )}
       <div className={cn(
         'h-4 w-4 rounded border flex items-center justify-center transition-colors',
         selected 
@@ -363,7 +377,9 @@ interface TagSelectorProps {
   onToggleTag: (tagId: string) => void;
   onCreateTag?: (name: string, color: string) => void;
   onDeleteTag?: (tagId: string) => void;
+  onReorderTags?: (reorderedTags: TagData[]) => void;
   showDelete?: boolean;
+  enableDragDrop?: boolean;
   emptyMessage?: string;
   className?: string;
 }
@@ -374,26 +390,83 @@ export function TagSelector({
   onToggleTag,
   onCreateTag,
   onDeleteTag,
+  onReorderTags,
   showDelete = false,
+  enableDragDrop = false,
   emptyMessage = 'No tags available',
   className,
 }: TagSelectorProps) {
+  const handleDragEnd = (result: DropResult) => {
+    if (!result.destination || !onReorderTags) return;
+    
+    const items = Array.from(tags);
+    const [reorderedItem] = items.splice(result.source.index, 1);
+    items.splice(result.destination.index, 0, reorderedItem);
+    
+    onReorderTags(items);
+  };
+
+  const renderTagItems = () => {
+    if (tags.length === 0) {
+      return <p className="text-xs text-muted-foreground py-2">{emptyMessage}</p>;
+    }
+
+    if (enableDragDrop && onReorderTags) {
+      return (
+        <DragDropContext onDragEnd={handleDragEnd}>
+          <Droppable droppableId="tags">
+            {(provided) => (
+              <div
+                {...provided.droppableProps}
+                ref={provided.innerRef}
+                className="space-y-1"
+              >
+                {tags.map((tag, index) => (
+                  <Draggable key={tag.id} draggableId={tag.id} index={index}>
+                    {(provided, snapshot) => (
+                      <div
+                        ref={provided.innerRef}
+                        {...provided.draggableProps}
+                        className={cn(
+                          snapshot.isDragging && 'opacity-90 bg-secondary rounded-md shadow-md'
+                        )}
+                      >
+                        <TagSelectorItem
+                          tag={tag}
+                          selected={selectedTagIds.includes(tag.id)}
+                          onToggle={() => onToggleTag(tag.id)}
+                          onDelete={onDeleteTag ? () => onDeleteTag(tag.id) : undefined}
+                          showDelete={showDelete}
+                          isDraggable
+                          dragHandleProps={provided.dragHandleProps ?? undefined}
+                        />
+                      </div>
+                    )}
+                  </Draggable>
+                ))}
+                {provided.placeholder}
+              </div>
+            )}
+          </Droppable>
+        </DragDropContext>
+      );
+    }
+
+    return tags.map((tag) => (
+      <TagSelectorItem
+        key={tag.id}
+        tag={tag}
+        selected={selectedTagIds.includes(tag.id)}
+        onToggle={() => onToggleTag(tag.id)}
+        onDelete={onDeleteTag ? () => onDeleteTag(tag.id) : undefined}
+        showDelete={showDelete}
+      />
+    ));
+  };
+
   return (
     <div className={cn('space-y-1', className)}>
-      {tags.length === 0 ? (
-        <p className="text-xs text-muted-foreground py-2">{emptyMessage}</p>
-      ) : (
-        tags.map((tag) => (
-          <TagSelectorItem
-            key={tag.id}
-            tag={tag}
-            selected={selectedTagIds.includes(tag.id)}
-            onToggle={() => onToggleTag(tag.id)}
-            onDelete={onDeleteTag ? () => onDeleteTag(tag.id) : undefined}
-            showDelete={showDelete}
-          />
-        ))
-      )}
+      {renderTagItems()}
       {onCreateTag && (
         <div className="pt-1 border-t mt-2">
           <InlineTagCreator onCreateTag={onCreateTag} />

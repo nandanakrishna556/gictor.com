@@ -403,6 +403,28 @@ export default function PipelineModal({
                 tags={tags}
                 selectedTagIds={selectedTags}
                 onToggleTag={toggleTag}
+                onCreateTag={async (name, color) => {
+                  const { createTag } = await import('@/hooks/useTags').then(m => ({ createTag: null }));
+                  // Use direct supabase call for inline creation
+                  const { data, error } = await supabase
+                    .from('user_tags')
+                    .insert({
+                      user_id: profile?.id,
+                      tag_name: name,
+                      color,
+                    })
+                    .select()
+                    .single();
+                  
+                  if (!error && data) {
+                    // Auto-select the newly created tag
+                    setSelectedTags(prev => [...prev, data.id]);
+                    setHasUnsavedChanges(true);
+                    queryClient.invalidateQueries({ queryKey: ['tags'] });
+                    toast.success('Tag created');
+                  }
+                }}
+                enableDragDrop
               />
             </PopoverContent>
           </Popover>
