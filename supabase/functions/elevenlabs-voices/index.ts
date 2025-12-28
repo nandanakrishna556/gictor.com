@@ -24,6 +24,7 @@ interface SharedVoicesResponse {
   voices: SharedVoice[];
   has_more: boolean;
   next_cursor?: string;
+  last_sort_id?: string;
 }
 
 serve(async (req) => {
@@ -55,10 +56,10 @@ serve(async (req) => {
     while (hasMore && pageCount < maxPages) {
       let url = 'https://api.elevenlabs.io/v1/shared-voices?page_size=100';
       if (cursor) {
-        url += `&cursor=${cursor}`;
+        url += `&cursor=${encodeURIComponent(cursor)}`;
       }
       
-      console.log(`Fetching page ${pageCount + 1}: ${url}`);
+      console.log(`Fetching page ${pageCount + 1}...`);
       
       const response = await fetch(url, {
         method: 'GET',
@@ -76,15 +77,23 @@ serve(async (req) => {
 
       const data: SharedVoicesResponse = await response.json();
       
+      // Debug log the response structure
+      console.log(`Response keys: ${Object.keys(data).join(', ')}`);
+      console.log(`has_more: ${data.has_more}, next_cursor exists: ${!!data.next_cursor}, last_sort_id exists: ${!!data.last_sort_id}`);
+      
       if (data.voices && data.voices.length > 0) {
         allVoices.push(...data.voices);
         console.log(`Fetched ${data.voices.length} voices (total: ${allVoices.length})`);
       }
       
       hasMore = data.has_more === true;
-      cursor = data.next_cursor || null;
+      // Try both cursor and last_sort_id as the pagination cursor
+      cursor = data.next_cursor || data.last_sort_id || null;
+      
+      console.log(`hasMore: ${hasMore}, cursor: ${cursor ? cursor.substring(0, 20) + '...' : 'null'}`);
       
       if (!hasMore || !cursor) {
+        console.log('Stopping pagination - no more pages or no cursor');
         break;
       }
       
