@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { FileTypeIcon, FileType } from '@/components/ui/file-type-icon';
+import { StatusBadge } from '@/components/ui/status-badge';
 
 interface FileCardProps {
   id: string;
@@ -36,28 +37,6 @@ export const FileCard: React.FC<FileCardProps> = ({
   onDelete, 
   onRename 
 }) => {
-
-  const getStatusBadge = () => {
-    if (status === 'processing') {
-      return (
-        <Badge variant="secondary" className="bg-amber-500/10 text-amber-500 border-amber-500/20">
-          Processing
-        </Badge>
-      );
-    }
-    if (status === 'completed') {
-      return (
-        <Badge variant="secondary" className="bg-green-500/10 text-green-500 border-green-500/20">
-          Ready
-        </Badge>
-      );
-    }
-    return (
-      <Badge variant="secondary" className="bg-destructive/10 text-destructive border-destructive/20">
-        Failed
-      </Badge>
-    );
-  };
 
   return (
     <div 
@@ -158,7 +137,7 @@ export const FileCard: React.FC<FileCardProps> = ({
             <FileTypeIcon fileType={fileType} />
             <span className="text-sm font-medium truncate">{name}</span>
           </div>
-          {getStatusBadge()}
+          <StatusBadge status={status} />
         </div>
         
         {tags.length > 0 && (

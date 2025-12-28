@@ -1,5 +1,5 @@
 import React from 'react';
-import { Loader2, Play, AlertCircle, MoreHorizontal, Trash2, Edit, Video, Image as ImageIcon } from 'lucide-react';
+import { Loader2, Play, AlertCircle, MoreHorizontal, Trash2, Edit } from 'lucide-react';
 import { 
   DropdownMenu, 
   DropdownMenuContent, 
@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { FileTypeIcon, FileType, getFileTypeLabel } from '@/components/ui/file-type-icon';
+import { StatusBadge, StatusType } from '@/components/ui/status-badge';
 
 export type PipelineStatus = 'processing' | 'completed' | 'failed';
 
@@ -27,32 +28,6 @@ interface PipelineCardProps {
   onDelete: () => void;
   onRename: () => void;
 }
-
-// Status badge component
-const StatusBadge: React.FC<{ status: PipelineStatus }> = ({ status }) => {
-  const config = {
-    processing: {
-      className: 'bg-amber-500/10 text-amber-500 border-amber-500/20',
-      label: 'Processing'
-    },
-    completed: {
-      className: 'bg-green-500/10 text-green-500 border-green-500/20',
-      label: 'Ready'
-    },
-    failed: {
-      className: 'bg-destructive/10 text-destructive border-destructive/20',
-      label: 'Failed'
-    }
-  };
-
-  const { className, label } = config[status];
-  
-  return (
-    <Badge variant="secondary" className={className}>
-      {label}
-    </Badge>
-  );
-};
 
 // Preview placeholder for different pipeline types
 const PreviewPlaceholder: React.FC<{ 
