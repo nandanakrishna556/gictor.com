@@ -3,7 +3,7 @@ import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { ArrowLeft, X, Check, Loader2 } from 'lucide-react';
+import { ArrowLeft, X, Check, Lock, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { usePipeline } from '@/hooks/usePipeline';
 import { useProfile } from '@/hooks/useProfile';
@@ -20,6 +20,8 @@ import { toast } from 'sonner';
 import { useQueryClient } from '@tanstack/react-query';
 
 import BRollFirstFrameStage from './stages/BRollFirstFrameStage';
+import BRollPromptStage from './stages/BRollPromptStage';
+import BRollFinalVideoStage from './stages/BRollFinalVideoStage';
 import LocationSelector from '@/components/forms/LocationSelector';
 
 interface StatusOption {
@@ -38,6 +40,15 @@ interface BRollPipelineModalProps {
   onSuccess?: () => void;
   statusOptions?: StatusOption[];
 }
+
+// B-Roll has 3 stages: First Frame, Prompt, Final Video
+type BRollStage = 'first_frame' | 'prompt' | 'final_video';
+
+const BROLL_STAGES: { key: BRollStage; label: string }[] = [
+  { key: 'first_frame', label: 'First Frame' },
+  { key: 'prompt', label: 'Prompt' },
+  { key: 'final_video', label: 'Final Video' },
+];
 
 export default function BRollPipelineModal({
   open,
@@ -67,6 +78,7 @@ export default function BRollPipelineModal({
   } = usePipeline(pipelineId);
 
   // UI state
+  const [activeStage, setActiveStage] = useState<BRollStage>('first_frame');
   const [name, setName] = useState('Untitled');
   const [currentProjectId, setCurrentProjectId] = useState(projectId);
   const [currentFolderId, setCurrentFolderId] = useState(folderId);
@@ -96,10 +108,19 @@ export default function BRollPipelineModal({
   // Subscribe to realtime updates
   usePipelineRealtime(pipelineId);
 
+  // Map pipeline's current_stage to B-Roll stage
+  const mapPipelineStageToBRoll = (stage: string): BRollStage => {
+    if (stage === 'first_frame') return 'first_frame';
+    if (stage === 'script') return 'prompt'; // We use script stage for prompt
+    if (stage === 'final_video') return 'final_video';
+    return 'first_frame';
+  };
+
   // Sync pipeline data when loaded
   useEffect(() => {
     if (pipeline && !pipelineLoadedRef.current) {
       pipelineLoadedRef.current = true;
+      setActiveStage(mapPipelineStageToBRoll(pipeline.current_stage));
       setName(pipeline.name);
       setDisplayStatus(pipeline.display_status || initialStatusRef.current || 'draft');
       setSelectedTags(pipeline.tags || []);
@@ -177,6 +198,23 @@ export default function BRollPipelineModal({
       }
     };
   }, [hasUnsavedChanges, name, displayStatus, selectedTags, triggerAutoSave]);
+
+  const handleStageClick = (stage: BRollStage) => {
+    setActiveStage(stage);
+    // Map B-Roll stage back to pipeline stage
+    const pipelineStage = stage === 'prompt' ? 'script' : stage;
+    updatePipeline({ current_stage: pipelineStage as any });
+  };
+
+  const isStageComplete = (stage: BRollStage): boolean => {
+    if (!pipeline) return false;
+    switch (stage) {
+      case 'first_frame': return pipeline.first_frame_complete;
+      case 'prompt': return pipeline.script_complete; // We use script_complete for prompt
+      case 'final_video': return pipeline.status === 'completed';
+      default: return false;
+    }
+  };
 
   const handleNameChange = (newName: string) => {
     setName(newName);
@@ -269,6 +307,53 @@ export default function BRollPipelineModal({
     await handleSave();
     setShowUnsavedWarning(false);
   };
+
+  // Render stage navigation
+  const renderStageNavigation = () => (
+    <nav className="flex items-center justify-between gap-2 w-full">
+      {BROLL_STAGES.map((stage, idx) => {
+        const isActive = activeStage === stage.key;
+        const isComplete = isStageComplete(stage.key);
+        
+        return (
+          <React.Fragment key={stage.key}>
+            <button
+              onClick={() => handleStageClick(stage.key)}
+              className={cn(
+                "flex items-center gap-2.5 px-4 py-2.5 rounded-lg font-medium transition-all duration-200 flex-1 justify-center",
+                isActive 
+                  ? "bg-primary text-primary-foreground shadow-md" 
+                  : isComplete
+                    ? "bg-primary/10 text-primary hover:bg-primary/20 border border-primary/20"
+                    : "bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground"
+              )}
+            >
+              {isComplete && !isActive ? (
+                <Check className="h-4 w-4 shrink-0" />
+              ) : (
+                <span className={cn(
+                  "h-5 w-5 rounded-full flex items-center justify-center text-xs font-semibold shrink-0",
+                  isActive 
+                    ? "bg-primary-foreground/20 text-primary-foreground" 
+                    : "bg-muted-foreground/20 text-muted-foreground"
+                )}>
+                  {idx + 1}
+                </span>
+              )}
+              <span className="text-sm whitespace-nowrap">{stage.label}</span>
+            </button>
+            
+            {idx < BROLL_STAGES.length - 1 && (
+              <div className={cn(
+                "h-0.5 w-6 rounded-full transition-colors shrink-0",
+                isStageComplete(stage.key) ? "bg-primary" : "bg-muted-foreground/20"
+              )} />
+            )}
+          </React.Fragment>
+        );
+      })}
+    </nav>
+  );
 
   // Show nothing until pipeline data is loaded
   if (!pipeline && pipelineId) {
@@ -410,17 +495,36 @@ export default function BRollPipelineModal({
           </div>
         </div>
 
-        {/* Stage Content - B-Roll only has First Frame stage */}
+        {/* Stage Content */}
         <div className="flex-1 overflow-hidden">
           {pipelineId && (
-            <BRollFirstFrameStage
-              pipelineId={pipelineId}
-              onComplete={() => {
-                toast.success('B-Roll video generated successfully!');
-                onSuccess?.();
-                onClose();
-              }}
-            />
+            <>
+              {activeStage === 'first_frame' && (
+                <BRollFirstFrameStage
+                  pipelineId={pipelineId}
+                  onComplete={() => setActiveStage('prompt')}
+                  stageNavigation={renderStageNavigation()}
+                />
+              )}
+              {activeStage === 'prompt' && (
+                <BRollPromptStage
+                  pipelineId={pipelineId}
+                  onContinue={() => setActiveStage('final_video')}
+                  stageNavigation={renderStageNavigation()}
+                />
+              )}
+              {activeStage === 'final_video' && (
+                <BRollFinalVideoStage
+                  pipelineId={pipelineId}
+                  onComplete={() => {
+                    toast.success('B-Roll video generated successfully!');
+                    onSuccess?.();
+                    onClose();
+                  }}
+                  stageNavigation={renderStageNavigation()}
+                />
+              )}
+            </>
           )}
         </div>
 
