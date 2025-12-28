@@ -442,6 +442,25 @@ export default function BRollPipelineModal({
                 tags={tags}
                 selectedTagIds={selectedTags}
                 onToggleTag={toggleTag}
+                onCreateTag={async (name, color) => {
+                  const { data, error } = await supabase
+                    .from('user_tags')
+                    .insert({
+                      user_id: profile?.id,
+                      tag_name: name,
+                      color,
+                    })
+                    .select()
+                    .single();
+                  
+                  if (!error && data) {
+                    setSelectedTags(prev => [...prev, data.id]);
+                    setHasUnsavedChanges(true);
+                    queryClient.invalidateQueries({ queryKey: ['tags'] });
+                    toast.success('Tag created');
+                  }
+                }}
+                enableDragDrop
               />
             </PopoverContent>
           </Popover>
