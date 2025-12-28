@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
+import { Progress } from '@/components/ui/progress';
 import { Sparkles, Video, Image as ImageIcon, FileAudio, Loader2, Download, CheckCircle } from 'lucide-react';
 import { usePipeline } from '@/hooks/usePipeline';
 import { generateFinalVideo } from '@/lib/pipeline-service';
@@ -12,11 +13,24 @@ interface FinalVideoStageProps {
   stageNavigation?: React.ReactNode;
 }
 
+const GENERATION_STEPS = [
+  { label: 'Preparing assets', duration: 5 },
+  { label: 'Processing first frame', duration: 10 },
+  { label: 'Syncing audio', duration: 15 },
+  { label: 'Rendering video', duration: 45 },
+  { label: 'Finalizing output', duration: 10 },
+];
+
+const TOTAL_ESTIMATED_TIME = GENERATION_STEPS.reduce((sum, step) => sum + step.duration, 0);
+
 export default function FinalVideoStage({ pipelineId, onComplete, stageNavigation }: FinalVideoStageProps) {
   const { pipeline, updateFinalVideo, isUpdating } = usePipeline(pipelineId);
   
   const [resolution, setResolution] = useState<string>(pipeline?.final_video_input?.resolution || '720p');
   const [isGenerating, setIsGenerating] = useState(false);
+  const [generationProgress, setGenerationProgress] = useState(0);
+  const [currentStep, setCurrentStep] = useState(0);
+  const [elapsedTime, setElapsedTime] = useState(0);
 
   // Get outputs from previous stages
   const firstFrameUrl = pipeline?.first_frame_output?.url;
@@ -28,11 +42,70 @@ export default function FinalVideoStage({ pipelineId, onComplete, stageNavigatio
   const hasAllInputs = firstFrameUrl && scriptText && voiceUrl;
   const hasOutput = !!pipeline?.final_video_output?.url;
   const outputVideo = pipeline?.final_video_output;
+  const isProcessing = pipeline?.status === 'processing';
+
+  // Format credits to show exact value without unnecessary trailing zeros
+  const formatCredits = (credits: number) => {
+    // Round to 3 decimal places to avoid floating point issues
+    const rounded = Math.round(credits * 1000) / 1000;
+    // Remove trailing zeros but keep at least 2 decimal places if needed
+    return rounded.toString();
+  };
+
+  // Progress simulation during generation
+  useEffect(() => {
+    if (!isProcessing) {
+      setGenerationProgress(0);
+      setCurrentStep(0);
+      setElapsedTime(0);
+      return;
+    }
+
+    const interval = setInterval(() => {
+      setElapsedTime(prev => {
+        const newElapsed = prev + 1;
+        
+        // Calculate current step based on elapsed time
+        let accumulated = 0;
+        for (let i = 0; i < GENERATION_STEPS.length; i++) {
+          accumulated += GENERATION_STEPS[i].duration;
+          if (newElapsed <= accumulated) {
+            setCurrentStep(i);
+            break;
+          }
+        }
+        
+        // Calculate progress (cap at 95% until actually complete)
+        const progress = Math.min(95, (newElapsed / TOTAL_ESTIMATED_TIME) * 100);
+        setGenerationProgress(progress);
+        
+        return newElapsed;
+      });
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [isProcessing]);
+
+  // When output arrives, complete the progress
+  useEffect(() => {
+    if (hasOutput && isProcessing) {
+      setGenerationProgress(100);
+    }
+  }, [hasOutput, isProcessing]);
 
   const formatDuration = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
     const secs = Math.floor(seconds % 60);
     return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  const formatTimeRemaining = () => {
+    const remaining = Math.max(0, TOTAL_ESTIMATED_TIME - elapsedTime);
+    if (remaining <= 0) return 'Almost done...';
+    const mins = Math.floor(remaining / 60);
+    const secs = remaining % 60;
+    if (mins > 0) return `~${mins}m ${secs}s remaining`;
+    return `~${secs}s remaining`;
   };
 
   const handleGenerate = async () => {
@@ -139,9 +212,9 @@ export default function FinalVideoStage({ pipelineId, onComplete, stageNavigatio
           <Button 
             className="w-full" 
             onClick={handleGenerate}
-            disabled={isGenerating || isUpdating || !hasAllInputs || pipeline?.status === 'processing'}
+            disabled={isGenerating || isUpdating || !hasAllInputs || isProcessing}
           >
-            {isGenerating || pipeline?.status === 'processing' ? (
+            {isGenerating || isProcessing ? (
               <>
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                 Generating Final Video...
@@ -149,12 +222,12 @@ export default function FinalVideoStage({ pipelineId, onComplete, stageNavigatio
             ) : (
               <>
                 <Video className="h-4 w-4 mr-2" />
-                Generate Final Video • {estimatedCost.toFixed(1)} Credits
+                Generate Final Video • {formatCredits(estimatedCost)} Credits
               </>
             )}
           </Button>
           <p className="text-xs text-center text-muted-foreground">
-            0.125 credits per second ({formatDuration(voiceDuration)} = {estimatedCost.toFixed(1)} credits)
+            0.125 credits per second ({formatDuration(voiceDuration)} = {formatCredits(estimatedCost)} credits)
           </p>
         </div>
       </div>
@@ -186,12 +259,41 @@ export default function FinalVideoStage({ pipelineId, onComplete, stageNavigatio
                   Duration: {formatDuration(outputVideo.duration_seconds)}
                 </span>
               </div>
-            ) : pipeline?.status === 'processing' ? (
-              <div className="flex flex-col items-center justify-center text-center gap-4">
+            ) : isProcessing ? (
+              <div className="flex flex-col items-center justify-center text-center gap-6 w-full max-w-md">
                 <Loader2 className="h-12 w-12 animate-spin text-primary" />
-                <div>
-                  <p className="text-lg font-medium">Generating your video...</p>
-                  <p className="text-sm text-muted-foreground">This may take a few minutes</p>
+                <div className="w-full space-y-3">
+                  <div className="space-y-1">
+                    <p className="text-lg font-medium">Generating your video...</p>
+                    <p className="text-sm text-primary font-medium">
+                      {GENERATION_STEPS[currentStep]?.label || 'Processing...'}
+                    </p>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Progress value={generationProgress} className="h-2" />
+                    <div className="flex justify-between text-xs text-muted-foreground">
+                      <span>{Math.round(generationProgress)}% complete</span>
+                      <span>{formatTimeRemaining()}</span>
+                    </div>
+                  </div>
+                  
+                  {/* Step indicators */}
+                  <div className="flex justify-center gap-1.5 pt-2">
+                    {GENERATION_STEPS.map((step, idx) => (
+                      <div
+                        key={idx}
+                        className={`h-1.5 w-6 rounded-full transition-colors ${
+                          idx < currentStep 
+                            ? 'bg-primary' 
+                            : idx === currentStep 
+                              ? 'bg-primary/60 animate-pulse' 
+                              : 'bg-muted'
+                        }`}
+                        title={step.label}
+                      />
+                    ))}
+                  </div>
                 </div>
               </div>
             ) : pipeline?.status === 'failed' ? (
