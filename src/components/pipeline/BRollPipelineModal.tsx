@@ -310,7 +310,7 @@ export default function BRollPipelineModal({
 
   // Render stage navigation - matching Talking Head design exactly
   const renderStageNavigation = () => (
-    <div className="flex items-center gap-4">
+    <div className="flex items-center justify-between w-full">
       {BROLL_STAGES.map((stage, index) => {
         const isComplete = isStageComplete(stage.key);
         const isActive = activeStage === stage.key;
@@ -319,7 +319,7 @@ export default function BRollPipelineModal({
           <React.Fragment key={stage.key}>
             {index > 0 && (
               <div className={cn(
-                "w-8 h-0.5 rounded-full flex-shrink-0",
+                "flex-1 h-0.5 rounded-full mx-3",
                 isComplete || isStageComplete(BROLL_STAGES[index - 1].key) ? "bg-primary" : "bg-border"
               )} />
             )}
