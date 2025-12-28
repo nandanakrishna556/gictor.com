@@ -57,9 +57,7 @@ export default function StageLayout({
           {/* Stage Navigation */}
           {stageNavigation && (
             <div className="mb-6 pb-5 border-b border-border">
-              <div className="bg-gradient-to-r from-primary/5 via-primary/10 to-primary/5 rounded-xl p-5 border border-primary/20 shadow-sm">
-                {stageNavigation}
-              </div>
+              {stageNavigation}
             </div>
           )}
           
