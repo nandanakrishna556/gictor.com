@@ -157,7 +157,7 @@ export default function BRollFirstFrameStage({ pipelineId, onComplete, stageNavi
 
   const inputContent = (
     <div className="space-y-6">
-      {stageNavigation && <div className="mb-4">{stageNavigation}</div>}
+      {/* Mode Toggle */}
       <div className="flex gap-1 p-1 bg-muted rounded-lg">
         <button
           type="button"
@@ -317,6 +317,7 @@ export default function BRollFirstFrameStage({ pipelineId, onComplete, stageNavi
       creditsCost={mode === 'upload' ? 'Free' : `${PIPELINE_CREDITS.first_frame} Credits`}
       isAIGenerated={wasAIGenerated}
       outputActions={outputActions}
+      stageNavigation={stageNavigation}
     />
   );
 }

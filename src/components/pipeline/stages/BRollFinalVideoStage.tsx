@@ -204,8 +204,6 @@ export default function BRollFinalVideoStage({ pipelineId, onComplete, stageNavi
 
   const inputContent = (
     <div className="space-y-6">
-      {stageNavigation}
-      
       <h3 className="font-medium text-lg">Summary</h3>
 
       {/* First Frame Preview */}
