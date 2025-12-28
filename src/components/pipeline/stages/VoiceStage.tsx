@@ -1,8 +1,11 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
-import { Upload, Sparkles, Play, Pause, Star, ChevronDown, Download, X } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Upload, Sparkles, Play, Pause, Star, ChevronDown, Download, X, Search, Filter, Loader2, Volume2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { usePipeline } from '@/hooks/usePipeline';
@@ -11,6 +14,7 @@ import { calculateVoiceCost } from '@/types/pipeline';
 import { toast } from 'sonner';
 import StageLayout from './StageLayout';
 import { uploadToR2 } from '@/lib/cloudflare-upload';
+import { supabase } from '@/integrations/supabase/client';
 
 interface VoiceStageProps {
   pipelineId: string;
@@ -20,24 +24,30 @@ interface VoiceStageProps {
 
 type InputMode = 'generate' | 'upload';
 
-// ElevenLabs voices
-const VOICES = [
-  { id: 'EXAVITQu4vr4xnSDxMaL', name: 'Sarah', gender: 'female', accent: 'American' },
-  { id: '21m00Tcm4TlvDq8ikWAM', name: 'Rachel', gender: 'female', accent: 'American' },
-  { id: 'AZnzlk1XvdvUeBnXmlld', name: 'Domi', gender: 'female', accent: 'American' },
-  { id: 'ErXwobaYiN019PkySvjV', name: 'Antoni', gender: 'male', accent: 'American' },
-  { id: 'MF3mGyEYCl7XYWbV9V6O', name: 'Elli', gender: 'female', accent: 'American' },
-  { id: 'TxGEqnHWrfWFTfGW9XjX', name: 'Josh', gender: 'male', accent: 'American' },
-  { id: 'VR6AewLTigWG4xSOukaG', name: 'Arnold', gender: 'male', accent: 'American' },
-  { id: 'pNInz6obpgDQGcFmaJgB', name: 'Adam', gender: 'male', accent: 'American' },
-];
+interface ElevenLabsVoice {
+  voice_id: string;
+  name: string;
+  category?: string;
+  description?: string;
+  preview_url?: string;
+  labels?: {
+    gender?: string;
+    age?: string;
+    accent?: string;
+    language?: string;
+    use_case?: string;
+    [key: string]: string | undefined;
+  };
+}
 
 export default function VoiceStage({ pipelineId, onContinue, stageNavigation }: VoiceStageProps) {
   const { pipeline, updateVoice, isUpdating } = usePipeline(pipelineId);
   
   // Input state
   const [mode, setMode] = useState<InputMode>('generate');
-  const [selectedVoice, setSelectedVoice] = useState(VOICES[0]);
+  const [voices, setVoices] = useState<ElevenLabsVoice[]>([]);
+  const [isLoadingVoices, setIsLoadingVoices] = useState(false);
+  const [selectedVoice, setSelectedVoice] = useState<ElevenLabsVoice | null>(null);
   const [voiceSettings, setVoiceSettings] = useState({
     stability: 0.5,
     similarity: 0.75,
@@ -48,6 +58,18 @@ export default function VoiceStage({ pipelineId, onContinue, stageNavigation }: 
   const [scriptOpen, setScriptOpen] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
+  
+  // Search and filter state
+  const [searchQuery, setSearchQuery] = useState('');
+  const [showFilters, setShowFilters] = useState(false);
+  const [genderFilter, setGenderFilter] = useState<string>('all');
+  const [ageFilter, setAgeFilter] = useState<string>('all');
+  const [accentFilter, setAccentFilter] = useState<string>('all');
+  const [languageFilter, setLanguageFilter] = useState<string>('all');
+  
+  // Voice preview state
+  const [previewingVoiceId, setPreviewingVoiceId] = useState<string | null>(null);
+  const previewAudioRef = useRef<HTMLAudioElement | null>(null);
   
   // Playback state
   const [isPlaying, setIsPlaying] = useState(false);
@@ -62,13 +84,111 @@ export default function VoiceStage({ pipelineId, onContinue, stageNavigation }: 
   const charCount = scriptText.length;
   const estimatedCost = calculateVoiceCost(charCount);
 
+  // Fetch voices from ElevenLabs
+  useEffect(() => {
+    const fetchVoices = async () => {
+      setIsLoadingVoices(true);
+      try {
+        const { data, error } = await supabase.functions.invoke('elevenlabs-voices');
+        
+        if (error) {
+          console.error('Error fetching voices:', error);
+          toast.error('Failed to load voices');
+          return;
+        }
+        
+        if (data?.voices) {
+          setVoices(data.voices);
+          // Set default voice if none selected
+          if (!selectedVoice && data.voices.length > 0) {
+            setSelectedVoice(data.voices[0]);
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching voices:', error);
+        toast.error('Failed to load voices');
+      } finally {
+        setIsLoadingVoices(false);
+      }
+    };
+    
+    fetchVoices();
+  }, []);
+
+  // Extract filter options from voice data
+  const filterOptions = useMemo(() => {
+    const genders = new Set<string>();
+    const ages = new Set<string>();
+    const accents = new Set<string>();
+    const languages = new Set<string>();
+    
+    voices.forEach(voice => {
+      if (voice.labels?.gender) genders.add(voice.labels.gender);
+      if (voice.labels?.age) ages.add(voice.labels.age);
+      if (voice.labels?.accent) accents.add(voice.labels.accent);
+      if (voice.labels?.language) languages.add(voice.labels.language);
+    });
+    
+    return {
+      genders: Array.from(genders).sort(),
+      ages: Array.from(ages).sort(),
+      accents: Array.from(accents).sort(),
+      languages: Array.from(languages).sort(),
+    };
+  }, [voices]);
+
+  // Filter voices based on search and filters
+  const filteredVoices = useMemo(() => {
+    return voices.filter(voice => {
+      // Search filter
+      if (searchQuery) {
+        const query = searchQuery.toLowerCase();
+        const matchesName = voice.name.toLowerCase().includes(query);
+        const matchesDescription = voice.description?.toLowerCase().includes(query);
+        if (!matchesName && !matchesDescription) return false;
+      }
+      
+      // Gender filter
+      if (genderFilter !== 'all' && voice.labels?.gender?.toLowerCase() !== genderFilter.toLowerCase()) {
+        return false;
+      }
+      
+      // Age filter
+      if (ageFilter !== 'all' && voice.labels?.age?.toLowerCase() !== ageFilter.toLowerCase()) {
+        return false;
+      }
+      
+      // Accent filter
+      if (accentFilter !== 'all' && voice.labels?.accent?.toLowerCase() !== accentFilter.toLowerCase()) {
+        return false;
+      }
+      
+      // Language filter
+      if (languageFilter !== 'all' && voice.labels?.language?.toLowerCase() !== languageFilter.toLowerCase()) {
+        return false;
+      }
+      
+      return true;
+    });
+  }, [voices, searchQuery, genderFilter, ageFilter, accentFilter, languageFilter]);
+
+  const hasActiveFilters = genderFilter !== 'all' || ageFilter !== 'all' || accentFilter !== 'all' || languageFilter !== 'all';
+
+  const clearFilters = () => {
+    setGenderFilter('all');
+    setAgeFilter('all');
+    setAccentFilter('all');
+    setLanguageFilter('all');
+    setSearchQuery('');
+  };
+
   // Load existing data
   useEffect(() => {
     if (pipeline?.voice_input) {
       const input = pipeline.voice_input;
       setMode(input.mode || 'generate');
-      if (input.voice_id) {
-        const voice = VOICES.find(v => v.id === input.voice_id);
+      if (input.voice_id && voices.length > 0) {
+        const voice = voices.find(v => v.voice_id === input.voice_id);
         if (voice) setSelectedVoice(voice);
       }
       if (input.voice_settings) {
@@ -76,14 +196,15 @@ export default function VoiceStage({ pipelineId, onContinue, stageNavigation }: 
       }
       setUploadedUrl(input.uploaded_url || '');
     }
-  }, [pipeline?.voice_input]);
+  }, [pipeline?.voice_input, voices]);
 
   // Save input changes
   const saveInput = async () => {
+    if (!selectedVoice) return;
     await updateVoice({
       input: {
         mode,
-        voice_id: selectedVoice.id,
+        voice_id: selectedVoice.voice_id,
         voice_settings: voiceSettings,
         uploaded_url: uploadedUrl,
       },
@@ -94,6 +215,34 @@ export default function VoiceStage({ pipelineId, onContinue, stageNavigation }: 
     const timer = setTimeout(saveInput, 500);
     return () => clearTimeout(timer);
   }, [mode, selectedVoice, voiceSettings, uploadedUrl]);
+
+  // Voice preview
+  const handlePreviewVoice = (voice: ElevenLabsVoice) => {
+    if (!voice.preview_url) {
+      toast.error('No preview available for this voice');
+      return;
+    }
+    
+    // If already previewing this voice, stop it
+    if (previewingVoiceId === voice.voice_id) {
+      previewAudioRef.current?.pause();
+      setPreviewingVoiceId(null);
+      return;
+    }
+    
+    // Stop any existing preview
+    previewAudioRef.current?.pause();
+    
+    // Create and play new preview
+    previewAudioRef.current = new Audio(voice.preview_url);
+    previewAudioRef.current.onended = () => setPreviewingVoiceId(null);
+    previewAudioRef.current.onerror = () => {
+      toast.error('Failed to play voice preview');
+      setPreviewingVoiceId(null);
+    };
+    previewAudioRef.current.play();
+    setPreviewingVoiceId(voice.voice_id);
+  };
 
   const togglePlayback = () => {
     const outputUrl = pipeline?.voice_output?.url;
@@ -219,11 +368,16 @@ export default function VoiceStage({ pipelineId, onContinue, stageNavigation }: 
       return;
     }
 
+    if (!selectedVoice) {
+      toast.error('Please select a voice');
+      return;
+    }
+
     setIsGenerating(true);
     try {
       const result = await generateVoice(pipelineId, {
         script_text: scriptText,
-        voice_id: selectedVoice.id,
+        voice_id: selectedVoice.voice_id,
         voice_settings: voiceSettings,
       });
 
@@ -322,10 +476,18 @@ export default function VoiceStage({ pipelineId, onContinue, stageNavigation }: 
                     🎙️
                   </div>
                   <div className="text-left">
-                    <p className="font-medium">{selectedVoice.name}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {selectedVoice.gender} • {selectedVoice.accent}
-                    </p>
+                    {isLoadingVoices ? (
+                      <p className="font-medium text-muted-foreground">Loading voices...</p>
+                    ) : selectedVoice ? (
+                      <>
+                        <p className="font-medium">{selectedVoice.name}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {selectedVoice.labels?.gender} • {selectedVoice.labels?.accent || selectedVoice.labels?.language || 'Unknown'}
+                        </p>
+                      </>
+                    ) : (
+                      <p className="font-medium text-muted-foreground">Select a voice</p>
+                    )}
                   </div>
                 </div>
                 <ChevronDown className={cn("h-4 w-4 transition-transform", voiceOpen && "rotate-180")} />
@@ -333,32 +495,166 @@ export default function VoiceStage({ pipelineId, onContinue, stageNavigation }: 
             </CollapsibleTrigger>
 
             <CollapsibleContent className="mt-2 space-y-4">
-              <div className="grid grid-cols-2 gap-2">
-                {VOICES.map((voice) => (
-                  <button
-                    key={voice.id}
-                    type="button"
-                    onClick={() => setSelectedVoice(voice)}
-                    className={cn(
-                      "flex items-center gap-3 rounded-lg p-3 text-left transition-all",
-                      selectedVoice.id === voice.id 
-                        ? "bg-primary/10 text-primary ring-1 ring-primary" 
-                        : "bg-muted/50 hover:bg-secondary"
-                    )}
+              {/* Search and Filter Controls */}
+              <div className="space-y-3">
+                <div className="flex gap-2">
+                  <div className="relative flex-1">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      placeholder="Search voices..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="pl-9"
+                    />
+                  </div>
+                  <Button
+                    variant={showFilters ? "secondary" : "outline"}
+                    size="icon"
+                    onClick={() => setShowFilters(!showFilters)}
+                    className="shrink-0"
                   >
-                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-secondary">
-                      <Play className="h-3 w-3" />
-                    </div>
-                    <div>
-                      <p className="font-medium text-sm">{voice.name}</p>
-                      <p className="text-xs text-muted-foreground">{voice.gender}</p>
-                    </div>
-                    {selectedVoice.id === voice.id && (
-                      <Star className="h-4 w-4 ml-auto fill-primary text-primary" />
-                    )}
-                  </button>
-                ))}
+                    <Filter className="h-4 w-4" />
+                  </Button>
+                </div>
+
+                {/* Filters */}
+                {showFilters && (
+                  <div className="grid grid-cols-2 gap-2">
+                    <Select value={genderFilter} onValueChange={setGenderFilter}>
+                      <SelectTrigger className="h-9">
+                        <SelectValue placeholder="Gender" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Genders</SelectItem>
+                        {filterOptions.genders.map(g => (
+                          <SelectItem key={g} value={g.toLowerCase()}>{g}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+
+                    <Select value={ageFilter} onValueChange={setAgeFilter}>
+                      <SelectTrigger className="h-9">
+                        <SelectValue placeholder="Age" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Ages</SelectItem>
+                        {filterOptions.ages.map(a => (
+                          <SelectItem key={a} value={a.toLowerCase()}>{a}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+
+                    <Select value={accentFilter} onValueChange={setAccentFilter}>
+                      <SelectTrigger className="h-9">
+                        <SelectValue placeholder="Accent" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Accents</SelectItem>
+                        {filterOptions.accents.map(a => (
+                          <SelectItem key={a} value={a.toLowerCase()}>{a}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+
+                    <Select value={languageFilter} onValueChange={setLanguageFilter}>
+                      <SelectTrigger className="h-9">
+                        <SelectValue placeholder="Language" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Languages</SelectItem>
+                        {filterOptions.languages.map(l => (
+                          <SelectItem key={l} value={l.toLowerCase()}>{l}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+
+                {/* Results count and clear */}
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-muted-foreground">
+                    {filteredVoices.length} voice{filteredVoices.length !== 1 ? 's' : ''} found
+                  </span>
+                  {(hasActiveFilters || searchQuery) && (
+                    <Button variant="ghost" size="sm" onClick={clearFilters} className="h-7 text-xs">
+                      Clear filters
+                    </Button>
+                  )}
+                </div>
               </div>
+
+              {/* Voice List */}
+              {isLoadingVoices ? (
+                <div className="flex items-center justify-center py-8">
+                  <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                </div>
+              ) : (
+                <ScrollArea className="h-64">
+                  <div className="space-y-2 pr-4">
+                    {filteredVoices.map((voice) => (
+                      <div
+                        key={voice.voice_id}
+                        onClick={() => setSelectedVoice(voice)}
+                        className={cn(
+                          "flex items-center gap-3 rounded-lg p-3 cursor-pointer transition-all",
+                          selectedVoice?.voice_id === voice.voice_id 
+                            ? "bg-primary/10 text-primary ring-1 ring-primary" 
+                            : "bg-muted/50 hover:bg-secondary"
+                        )}
+                      >
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 shrink-0 rounded-full bg-secondary"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handlePreviewVoice(voice);
+                          }}
+                        >
+                          {previewingVoiceId === voice.voice_id ? (
+                            <Volume2 className="h-3 w-3 animate-pulse" />
+                          ) : (
+                            <Play className="h-3 w-3" />
+                          )}
+                        </Button>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium text-sm truncate">{voice.name}</p>
+                          <div className="flex flex-wrap gap-1 mt-1">
+                            {voice.labels?.gender && (
+                              <span className="text-[10px] px-1.5 py-0.5 rounded bg-secondary text-muted-foreground">
+                                {voice.labels.gender}
+                              </span>
+                            )}
+                            {voice.labels?.age && (
+                              <span className="text-[10px] px-1.5 py-0.5 rounded bg-secondary text-muted-foreground">
+                                {voice.labels.age}
+                              </span>
+                            )}
+                            {voice.labels?.accent && (
+                              <span className="text-[10px] px-1.5 py-0.5 rounded bg-secondary text-muted-foreground">
+                                {voice.labels.accent}
+                              </span>
+                            )}
+                            {voice.labels?.language && (
+                              <span className="text-[10px] px-1.5 py-0.5 rounded bg-secondary text-muted-foreground">
+                                {voice.labels.language}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                        {selectedVoice?.voice_id === voice.voice_id && (
+                          <Star className="h-4 w-4 shrink-0 fill-primary text-primary" />
+                        )}
+                      </div>
+                    ))}
+                    {filteredVoices.length === 0 && (
+                      <p className="text-sm text-muted-foreground text-center py-8">
+                        No voices match your filters
+                      </p>
+                    )}
+                  </div>
+                </ScrollArea>
+              )}
 
               {/* Voice Settings */}
               <div className="space-y-4 pt-4 border-t">
@@ -372,11 +668,12 @@ export default function VoiceStage({ pipelineId, onContinue, stageNavigation }: 
                     onValueChange={([v]) => setVoiceSettings(s => ({ ...s, stability: v }))}
                     min={0} max={1} step={0.05}
                   />
+                  <p className="text-xs text-muted-foreground">Lower = more expressive, higher = more consistent</p>
                 </div>
 
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
-                    <Label className="text-sm">Similarity</Label>
+                    <Label className="text-sm">Clarity / Similarity</Label>
                     <span className="text-sm text-muted-foreground">{voiceSettings.similarity.toFixed(2)}</span>
                   </div>
                   <Slider
@@ -384,6 +681,7 @@ export default function VoiceStage({ pipelineId, onContinue, stageNavigation }: 
                     onValueChange={([v]) => setVoiceSettings(s => ({ ...s, similarity: v }))}
                     min={0} max={1} step={0.05}
                   />
+                  <p className="text-xs text-muted-foreground">How closely to match original voice characteristics</p>
                 </div>
 
                 <div className="space-y-2">
