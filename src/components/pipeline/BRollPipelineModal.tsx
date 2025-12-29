@@ -375,7 +375,7 @@ export default function BRollPipelineModal({
           <Input
             value={name}
             onChange={(e) => handleNameChange(e.target.value)}
-            className="w-32 h-8"
+            className="w-28 h-7 text-sm"
           />
           
           <LocationSelector
@@ -386,7 +386,7 @@ export default function BRollPipelineModal({
           
           <Select value={displayStatus} onValueChange={handleStatusChange}>
             <SelectTrigger className={cn(
-              "h-8 w-fit rounded-md text-xs border-0 px-3 py-1 text-white gap-1",
+              "h-7 w-fit rounded-md text-xs border-0 px-3 py-1 text-white gap-1",
               currentStatusOption.color
             )}>
               <SelectValue />
@@ -496,6 +496,7 @@ export default function BRollPipelineModal({
                     progress={progress}
                     isComplete={isComplete}
                     isActive={isActive}
+                    isAccessible={true}
                     stageNumber={index + 1}
                   />
                   <span className={cn(
