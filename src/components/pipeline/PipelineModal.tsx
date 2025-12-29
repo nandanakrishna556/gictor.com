@@ -4,6 +4,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ArrowLeft, X, Check, Loader2, Lock } from 'lucide-react';
+import StageProgressIndicator from './StageProgressIndicator';
 import { cn } from '@/lib/utils';
 import { usePipeline } from '@/hooks/usePipeline';
 import { useProfile } from '@/hooks/useProfile';
@@ -211,6 +212,43 @@ export default function PipelineModal({
       case 'voice': return pipeline.voice_complete;
       case 'final_video': return pipeline.status === 'completed';
       default: return false;
+    }
+  };
+
+  const getStageProgress = (stage: PipelineStage): number => {
+    if (!pipeline) return 0;
+    
+    switch (stage) {
+      case 'first_frame': {
+        if (pipeline.first_frame_complete) return 100;
+        const hasInput = pipeline.first_frame_input?.prompt || pipeline.first_frame_input?.uploaded_url;
+        const hasOutput = pipeline.first_frame_output?.url;
+        if (hasOutput) return 90;
+        if (hasInput) return 40;
+        return 0;
+      }
+      case 'script': {
+        if (pipeline.script_complete) return 100;
+        const hasInput = pipeline.script_input?.description || pipeline.script_input?.pasted_text;
+        const hasOutput = pipeline.script_output?.text;
+        if (hasOutput) return 90;
+        if (hasInput) return 40;
+        return 0;
+      }
+      case 'voice': {
+        if (pipeline.voice_complete) return 100;
+        const hasOutput = pipeline.voice_output?.url;
+        if (hasOutput) return 90;
+        return 0;
+      }
+      case 'final_video': {
+        if (pipeline.status === 'completed') return 100;
+        const hasOutput = pipeline.final_video_output?.url;
+        if (hasOutput) return 90;
+        if (pipeline.status === 'processing') return 50;
+        return 0;
+      }
+      default: return 0;
     }
   };
 
@@ -471,12 +509,13 @@ export default function PipelineModal({
               const isComplete = isStageComplete(stage.key);
               const isAccessible = isStageAccessible(stage.key);
               const isActive = activeStage === stage.key;
+              const progress = getStageProgress(stage.key);
 
               return (
                 <React.Fragment key={stage.key}>
                   {index > 0 && (
                     <div className={cn(
-                      "w-12 h-0.5 rounded-full",
+                      "w-12 h-0.5 rounded-full transition-colors duration-300",
                       isComplete || isStageComplete(STAGES[index - 1].key) ? "bg-primary" : "bg-border"
                     )} />
                   )}
@@ -488,20 +527,12 @@ export default function PipelineModal({
                       isAccessible ? "cursor-pointer" : "cursor-not-allowed opacity-50"
                     )}
                   >
-                    <div className={cn(
-                      "w-10 h-10 rounded-full flex items-center justify-center text-sm font-semibold transition-all",
-                      isComplete 
-                        ? "bg-primary text-primary-foreground" 
-                        : isActive 
-                          ? "bg-foreground text-background" 
-                          : "bg-muted text-muted-foreground"
-                    )}>
-                      {isComplete ? (
-                        <Check className="h-5 w-5" />
-                      ) : !isAccessible ? (
-                        <Lock className="h-4 w-4" />
-                      ) : null}
-                    </div>
+                    <StageProgressIndicator
+                      progress={progress}
+                      isComplete={isComplete}
+                      isActive={isActive}
+                      isAccessible={isAccessible}
+                    />
                     <span className={cn(
                       "text-sm font-medium transition-colors",
                       isComplete || isActive ? "text-foreground" : "text-muted-foreground"
