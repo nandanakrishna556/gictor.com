@@ -502,9 +502,9 @@ export default function PipelineModal({
           </div>
         </div>
 
-        {/* Stage Navigation - horizontal bar below header */}
-        <div className="px-6 py-4 border-b bg-background">
-          <div className="flex items-center justify-center gap-3">
+        {/* Stage Tabs */}
+        <div className="bg-muted/30 border-b">
+          <div className="flex">
             {STAGES.map((stage, index) => {
               const isComplete = isStageComplete(stage.key);
               const isAccessible = isStageAccessible(stage.key);
@@ -512,37 +512,32 @@ export default function PipelineModal({
               const progress = getStageProgress(stage.key);
 
               return (
-                <React.Fragment key={stage.key}>
-                  {index > 0 && (
-                    <div className={cn(
-                      "w-8 h-0.5 rounded-full transition-colors duration-300",
-                      isComplete || isStageComplete(STAGES[index - 1].key) ? "bg-primary" : "bg-border"
-                    )} />
+                <button
+                  key={stage.key}
+                  onClick={() => handleStageClick(stage.key)}
+                  disabled={!isAccessible}
+                  className={cn(
+                    "flex-1 flex items-center justify-center gap-2 px-4 py-3 transition-all relative",
+                    isAccessible ? "cursor-pointer" : "cursor-not-allowed opacity-50",
+                    isActive 
+                      ? "bg-background border-b-2 border-primary" 
+                      : "hover:bg-muted/50 border-b-2 border-transparent"
                   )}
-                  <button
-                    onClick={() => handleStageClick(stage.key)}
-                    disabled={!isAccessible}
-                    className={cn(
-                      "flex items-center gap-2 transition-all group",
-                      isAccessible ? "cursor-pointer hover:scale-105" : "cursor-not-allowed opacity-50"
-                    )}
-                  >
-                    <StageProgressIndicator
-                      progress={progress}
-                      isComplete={isComplete}
-                      isActive={isActive}
-                      isAccessible={isAccessible}
-                      stageNumber={index + 1}
-                    />
-                    <span className={cn(
-                      "text-sm font-medium transition-colors whitespace-nowrap",
-                      isComplete ? "text-primary" : isActive ? "text-primary" : "text-muted-foreground",
-                      isAccessible && "group-hover:text-primary"
-                    )}>
-                      {stage.label}
-                    </span>
-                  </button>
-                </React.Fragment>
+                >
+                  <StageProgressIndicator
+                    progress={progress}
+                    isComplete={isComplete}
+                    isActive={isActive}
+                    isAccessible={isAccessible}
+                    stageNumber={index + 1}
+                  />
+                  <span className={cn(
+                    "text-sm font-medium transition-colors whitespace-nowrap",
+                    isComplete ? "text-primary" : isActive ? "text-foreground" : "text-muted-foreground"
+                  )}>
+                    {stage.label}
+                  </span>
+                </button>
               );
             })}
           </div>
