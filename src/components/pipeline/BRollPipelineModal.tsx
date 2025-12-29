@@ -475,7 +475,7 @@ export default function BRollPipelineModal({
 
         {/* Stage Navigation - horizontal bar below header */}
         <div className="px-6 py-4 border-b bg-background">
-          <div className="flex items-center justify-center gap-6">
+          <div className="flex items-center justify-center gap-3">
             {BROLL_STAGES.map((stage, index) => {
               const isComplete = isStageComplete(stage.key);
               const isActive = activeStage === stage.key;
@@ -485,22 +485,24 @@ export default function BRollPipelineModal({
                 <React.Fragment key={stage.key}>
                   {index > 0 && (
                     <div className={cn(
-                      "w-12 h-0.5 rounded-full transition-colors duration-300",
+                      "w-8 h-0.5 rounded-full transition-colors duration-300",
                       isComplete || isStageComplete(BROLL_STAGES[index - 1].key) ? "bg-primary" : "bg-border"
                     )} />
                   )}
                   <button
                     onClick={() => handleStageClick(stage.key)}
-                    className="flex flex-col items-center gap-2 transition-all group cursor-pointer"
+                    className="flex items-center gap-2 transition-all group cursor-pointer hover:scale-105"
                   >
                     <StageProgressIndicator
                       progress={progress}
                       isComplete={isComplete}
                       isActive={isActive}
+                      stageNumber={index + 1}
                     />
                     <span className={cn(
-                      "text-sm font-medium transition-colors",
-                      isComplete || isActive ? "text-foreground" : "text-muted-foreground"
+                      "text-sm font-medium transition-colors whitespace-nowrap",
+                      isComplete ? "text-primary" : isActive ? "text-primary" : "text-muted-foreground",
+                      "group-hover:text-primary"
                     )}>
                       {stage.label}
                     </span>
