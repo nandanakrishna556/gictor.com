@@ -32,7 +32,7 @@ interface CreateNewModalProps {
   statusOptions?: StatusOption[];
 }
 
-type PipelineType = 'talking_head' | 'b_roll';
+type PipelineType = 'talking_head' | 'clips';
 
 const contentTypes = [
   {
@@ -51,12 +51,12 @@ const contentTypes = [
     pipelineType: 'talking_head' as PipelineType,
   },
   {
-    id: 'b_roll' as const,
+    id: 'clips' as const,
     icon: Film,
     title: 'Clips',
     description: 'Generate video clips',
     isPipeline: true,
-    pipelineType: 'b_roll' as PipelineType,
+    pipelineType: 'clips' as PipelineType,
   },
 ];
 
@@ -98,7 +98,7 @@ export default function CreateNewModal({
       // Store the Kanban status in ref for the pipeline modal
       pipelineInitialStatusRef.current = initialStatus;
       
-      const fileType = type.pipelineType === 'b_roll' ? 'b_roll' : 'talking_head';
+      const fileType = type.pipelineType === 'clips' ? 'clips' : 'talking_head';
       
       try {
         // Create pipeline with 'draft' status (DB constraint)
@@ -135,7 +135,7 @@ export default function CreateNewModal({
         setCreatingType(null);
         
         // Open the appropriate modal based on pipeline type
-        if (type.pipelineType === 'b_roll') {
+        if (type.pipelineType === 'clips') {
           setBRollModalOpen(true);
         } else {
           setPipelineModalOpen(true);

@@ -50,7 +50,7 @@ const ProcessingPreview: React.FC<{
   pipelineType: FileType;
   progress?: number;
 }> = ({ thumbnailUrl, pipelineType, progress }) => {
-  const showThumbnail = thumbnailUrl && (pipelineType === 'talking_head' || pipelineType === 'b_roll');
+  const showThumbnail = thumbnailUrl && (pipelineType === 'talking_head' || pipelineType === 'clips' || pipelineType === 'b_roll');
   
   return (
     <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-muted">
@@ -153,7 +153,7 @@ export const PipelineCard: React.FC<PipelineCardProps> = ({
   onDelete, 
   onRename 
 }) => {
-  const isVideo = pipelineType === 'talking_head' || pipelineType === 'b_roll';
+  const isVideo = pipelineType === 'talking_head' || pipelineType === 'clips' || pipelineType === 'b_roll';
   const isImage = pipelineType === 'first_frame';
   const hasPreview = status === 'completed' && previewUrl;
 

@@ -1,6 +1,6 @@
 export type PipelineStage = 'first_frame' | 'script' | 'voice' | 'final_video';
 
-export type PipelineType = 'talking_head' | 'b_roll';
+export type PipelineType = 'talking_head' | 'clips';
 
 export type StageMode = 'generate' | 'upload' | 'paste';
 

@@ -2,9 +2,8 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
-import StageProgressIndicator from './StageProgressIndicator';
 import PipelineHeader from './PipelineHeader';
-import { cn } from '@/lib/utils';
+import PipelineTabNavigation from './PipelineTabNavigation';
 import { usePipeline } from '@/hooks/usePipeline';
 import { useProfile } from '@/hooks/useProfile';
 import { usePipelineRealtime } from '@/hooks/usePipelineRealtime';
@@ -394,43 +393,13 @@ export default function BRollPipelineModal({
           onClose={handleClose}
         />
 
-        {/* Stage Tabs */}
-        <div className="border-b bg-muted/20">
-          <div className="flex">
-            {BROLL_STAGES.map((stage, index) => {
-              const isComplete = isStageComplete(stage.key);
-              const isActive = activeStage === stage.key;
-              const progress = getStageProgress(stage.key);
-
-              return (
-                <button
-                  key={stage.key}
-                  onClick={() => handleStageClick(stage.key)}
-                  className={cn(
-                    "flex-1 flex items-center justify-center gap-2 px-4 py-3 transition-all relative cursor-pointer",
-                    isActive 
-                      ? "bg-[hsl(24,100%,60%)] text-white" 
-                      : "bg-muted/30 hover:bg-muted/50 text-muted-foreground"
-                  )}
-                >
-                  <StageProgressIndicator
-                    progress={progress}
-                    isComplete={isComplete}
-                    isActive={isActive}
-                    isAccessible={true}
-                    stageNumber={index + 1}
-                  />
-                  <span className={cn(
-                    "text-sm font-medium transition-colors whitespace-nowrap",
-                    isActive ? "text-primary-foreground" : isComplete ? "text-primary" : "text-muted-foreground"
-                  )}>
-                    {stage.label}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
-        </div>
+        <PipelineTabNavigation
+          stages={BROLL_STAGES}
+          activeStage={activeStage}
+          onStageClick={handleStageClick}
+          isStageComplete={isStageComplete}
+          getStageProgress={getStageProgress}
+        />
 
         {/* Stage Content */}
         <div className="flex-1 overflow-hidden">
