@@ -427,7 +427,7 @@ export default function PipelineModal({
                   <TagList 
                     tags={tags} 
                     selectedTagIds={selectedTags} 
-                    maxVisible={2} 
+                    maxVisible={1} 
                     size="sm"
                   />
                 ) : (
