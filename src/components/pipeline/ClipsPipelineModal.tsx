@@ -15,9 +15,9 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useQueryClient } from '@tanstack/react-query';
 
-import BRollFirstFrameStage from './stages/BRollFirstFrameStage';
-import BRollPromptStage from './stages/BRollPromptStage';
-import BRollFinalVideoStage from './stages/BRollFinalVideoStage';
+import ClipsFirstFrameStage from './stages/ClipsFirstFrameStage';
+import ClipsPromptStage from './stages/ClipsPromptStage';
+import ClipsFinalVideoStage from './stages/ClipsFinalVideoStage';
 
 interface StatusOption {
   value: string;
@@ -359,7 +359,7 @@ export default function BRollPipelineModal({
       <Dialog open={open} onOpenChange={handleClose}>
         <DialogContent className="max-w-[900px] h-[85vh] flex flex-col p-0 gap-0 overflow-hidden rounded-lg">
         <PipelineHeader
-          title="B-Roll"
+          title="Clips"
           name={name}
           onNameChange={handleNameChange}
           projectId={currentProjectId}
@@ -437,22 +437,22 @@ export default function BRollPipelineModal({
           {pipelineId && (
             <>
               {activeStage === 'first_frame' && (
-                <BRollFirstFrameStage
+                <ClipsFirstFrameStage
                   pipelineId={pipelineId}
                   onComplete={() => setActiveStage('prompt')}
                 />
               )}
               {activeStage === 'prompt' && (
-                <BRollPromptStage
+                <ClipsPromptStage
                   pipelineId={pipelineId}
                   onContinue={() => setActiveStage('final_video')}
                 />
               )}
               {activeStage === 'final_video' && (
-                <BRollFinalVideoStage
+                <ClipsFinalVideoStage
                   pipelineId={pipelineId}
                   onComplete={() => {
-                    toast.success('B-Roll video generated successfully!');
+                    toast.success('Clip video generated successfully!');
                     onSuccess?.();
                     onClose();
                   }}
