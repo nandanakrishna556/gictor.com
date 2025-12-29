@@ -63,7 +63,7 @@ export const FileCard: React.FC<FileCardProps> = ({
           />
         )}
 
-        {status === 'completed' && previewUrl && (fileType === 'talking_head' || fileType === 'b_roll') && (
+        {status === 'completed' && previewUrl && (fileType === 'talking_head' || fileType === 'clips' || fileType === 'b_roll') && (
           <div className="relative w-full h-full">
             <video 
               src={previewUrl} 
@@ -91,10 +91,10 @@ export const FileCard: React.FC<FileCardProps> = ({
           </div>
         )}
 
-        {status === 'completed' && !previewUrl && fileType === 'b_roll' && (
+        {status === 'completed' && !previewUrl && (fileType === 'clips' || fileType === 'b_roll') && (
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-muted">
             <Film className="h-12 w-12 text-muted-foreground/50" />
-            <span className="text-sm text-muted-foreground">B-Roll Ready</span>
+            <span className="text-sm text-muted-foreground">Clip Ready</span>
           </div>
         )}
 
