@@ -2,9 +2,8 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { ArrowLeft, X, Check, Loader2 } from 'lucide-react';
 import StageProgressIndicator from './StageProgressIndicator';
+import PipelineHeader from './PipelineHeader';
 import { cn } from '@/lib/utils';
 import { usePipeline } from '@/hooks/usePipeline';
 import { useProfile } from '@/hooks/useProfile';
@@ -13,16 +12,12 @@ import { useTags } from '@/hooks/useTags';
 import { useFiles } from '@/hooks/useFiles';
 import { usePipelines, DEFAULT_STAGES } from '@/hooks/usePipelines';
 import { supabase } from '@/integrations/supabase/client';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { toast } from 'sonner';
 import { useQueryClient } from '@tanstack/react-query';
-import { TagList, TagSelector } from '@/components/ui/tag-badge';
 
 import BRollFirstFrameStage from './stages/BRollFirstFrameStage';
 import BRollPromptStage from './stages/BRollPromptStage';
 import BRollFinalVideoStage from './stages/BRollFinalVideoStage';
-import LocationSelector from '@/components/forms/LocationSelector';
 
 interface StatusOption {
   value: string;
@@ -363,115 +358,41 @@ export default function BRollPipelineModal({
 
       <Dialog open={open} onOpenChange={handleClose}>
         <DialogContent className="max-w-[900px] h-[85vh] flex flex-col p-0 gap-0 overflow-hidden rounded-lg">
-        {/* Header */}
-        <div className="flex items-center gap-3 border-b bg-muted/30 px-6 py-3 flex-wrap">
-          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={handleClose}>
-            <ArrowLeft className="h-4 w-4" />
-          </Button>
-          <h2 className="text-lg font-semibold">B-Roll</h2>
-          
-          <div className="h-5 w-px bg-border" />
-          
-          <Input
-            value={name}
-            onChange={(e) => handleNameChange(e.target.value)}
-            className="w-28 h-7 text-sm"
-          />
-          
-          <LocationSelector
-            projectId={currentProjectId}
-            folderId={currentFolderId}
-            onLocationChange={handleLocationChange}
-          />
-          
-          <Select value={displayStatus} onValueChange={handleStatusChange}>
-            <SelectTrigger className={cn(
-              "h-7 w-fit rounded-md text-xs border-0 px-3 py-1 text-white gap-1",
-              currentStatusOption.color
-            )}>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {statusOptions.map((opt) => (
-                <SelectItem key={opt.value} value={opt.value}>
-                  <div className="flex items-center gap-2">
-                    <div className={cn('h-2 w-2 rounded-full', opt.color)} />
-                    {opt.label}
-                  </div>
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-
-          <Popover>
-            <PopoverTrigger asChild>
-              <div className="flex items-center gap-1 cursor-pointer hover:bg-secondary/50 rounded-md px-2 py-1 transition-colors">
-                {selectedTags.length > 0 ? (
-                  <TagList 
-                    tags={tags} 
-                    selectedTagIds={selectedTags} 
-                    maxVisible={1} 
-                    size="sm"
-                  />
-                ) : (
-                  <span className="text-xs text-muted-foreground">+ Add tag</span>
-                )}
-              </div>
-            </PopoverTrigger>
-            <PopoverContent align="start" className="w-52 bg-popover">
-              <h4 className="text-sm font-medium mb-2">Tags</h4>
-              <TagSelector
-                tags={tags}
-                selectedTagIds={selectedTags}
-                onToggleTag={toggleTag}
-                onCreateTag={async (name, color) => {
-                  const { data, error } = await supabase
-                    .from('user_tags')
-                    .insert({
-                      user_id: profile?.id,
-                      tag_name: name,
-                      color,
-                    })
-                    .select()
-                    .single();
-                  
-                  if (!error && data) {
-                    setSelectedTags(prev => [...prev, data.id]);
-                    setHasUnsavedChanges(true);
-                    queryClient.invalidateQueries({ queryKey: ['tags'] });
-                    toast.success('Tag created');
-                  }
-                }}
-                enableDragDrop
-              />
-            </PopoverContent>
-          </Popover>
-          
-          {/* Spacer */}
-          <div className="flex-1" />
-          
-          {/* Auto-save indicator and Close button */}
-          <div className="flex items-center gap-3">
-            {saveStatus !== 'idle' && (
-              <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
-                {saveStatus === 'saving' ? (
-                  <>
-                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                    <span>Saving...</span>
-                  </>
-                ) : (
-                  <>
-                    <Check className="h-3.5 w-3.5 text-emerald-500" />
-                    <span className="text-emerald-500">Saved</span>
-                  </>
-                )}
-              </div>
-            )}
-            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={handleClose}>
-              <X className="h-4 w-4" />
-            </Button>
-          </div>
-        </div>
+        <PipelineHeader
+          title="B-Roll"
+          name={name}
+          onNameChange={handleNameChange}
+          projectId={currentProjectId}
+          folderId={currentFolderId}
+          onLocationChange={handleLocationChange}
+          displayStatus={displayStatus}
+          onStatusChange={handleStatusChange}
+          statusOptions={statusOptions}
+          currentStatusOption={currentStatusOption}
+          tags={tags}
+          selectedTags={selectedTags}
+          onToggleTag={toggleTag}
+          onCreateTag={async (tagName, color) => {
+            const { data, error } = await supabase
+              .from('user_tags')
+              .insert({
+                user_id: profile?.id,
+                tag_name: tagName,
+                color,
+              })
+              .select()
+              .single();
+            
+            if (!error && data) {
+              setSelectedTags(prev => [...prev, data.id]);
+              setHasUnsavedChanges(true);
+              queryClient.invalidateQueries({ queryKey: ['tags'] });
+              toast.success('Tag created');
+            }
+          }}
+          saveStatus={saveStatus}
+          onClose={handleClose}
+        />
 
         {/* Stage Tabs */}
         <div className="border-b bg-muted/20">
