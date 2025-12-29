@@ -17,6 +17,7 @@
     /* Vibrant Orange */
     --primary: 24 95% 53%;
     --primary-foreground: 0 0% 100%;
+    --primary-light: 24 100% 60%;
     
     /* Warm gray surface */
     --secondary: 30 10% 96%;
@@ -68,6 +69,7 @@
     
     --primary: 24 95% 53%;
     --primary-foreground: 0 0% 100%;
+    --primary-light: 24 100% 60%;
     
     --secondary: 24 10% 14%;
     --secondary-foreground: 30 10% 98%;
