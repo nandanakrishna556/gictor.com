@@ -8,7 +8,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import PipelineModal from '@/components/pipeline/PipelineModal';
-import BRollPipelineModal from '@/components/pipeline/BRollPipelineModal';
+import ClipsPipelineModal from '@/components/pipeline/ClipsPipelineModal';
 import { usePipeline } from '@/hooks/usePipeline';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -53,7 +53,7 @@ const contentTypes = [
   {
     id: 'b_roll' as const,
     icon: Film,
-    title: 'B-Roll',
+    title: 'Clips',
     description: 'Generate video clips',
     isPipeline: true,
     pipelineType: 'b_roll' as PipelineType,
@@ -225,9 +225,9 @@ export default function CreateNewModal({
         />
       )}
 
-      {/* B-Roll Pipeline Modal */}
+      {/* Clips Pipeline Modal */}
       {createdPipelineId && bRollModalOpen && (
-        <BRollPipelineModal
+        <ClipsPipelineModal
           open={bRollModalOpen}
           onClose={handlePipelineClose}
           pipelineId={createdPipelineId}

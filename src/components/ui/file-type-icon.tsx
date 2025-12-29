@@ -23,7 +23,7 @@ const FILE_TYPE_CONFIG: Record<FileType, { icon: LucideIcon; label: string; colo
   },
   b_roll: {
     icon: Film,
-    label: 'B-Roll',
+    label: 'Clips',
     color: 'text-primary',
   },
   script: {

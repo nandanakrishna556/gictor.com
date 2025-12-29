@@ -12,7 +12,7 @@ import CreateTagDialog from '@/components/modals/CreateTagDialog';
 import ConfirmDeleteDialog from '@/components/modals/ConfirmDeleteDialog';
 import { FileDetailModalEnhanced } from '@/components/files/FileDetailModalEnhanced';
 import PipelineModal from '@/components/pipeline/PipelineModal';
-import BRollPipelineModal from '@/components/pipeline/BRollPipelineModal';
+import ClipsPipelineModal from '@/components/pipeline/ClipsPipelineModal';
 import { useFiles, Folder, File } from '@/hooks/useFiles';
 import { useFileRealtime } from '@/hooks/useFileRealtime';
 import { usePipelines, Pipeline, PipelineStage, DEFAULT_STAGES } from '@/hooks/usePipelines';
@@ -590,8 +590,8 @@ export default function ProjectDetail() {
         statusOptions={currentStatusOptions}
       />
 
-      {/* B-Roll Pipeline Modal */}
-      <BRollPipelineModal
+      {/* Clips Pipeline Modal */}
+      <ClipsPipelineModal
         open={brollPipelineModalOpen}
         onClose={() => {
           setBrollPipelineModalOpen(false);
