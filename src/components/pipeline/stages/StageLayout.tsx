@@ -30,9 +30,6 @@ interface StageLayoutProps {
   // Output actions (download, copy, etc.)
   outputActions?: React.ReactNode;
   
-  // Stage navigation (passed from parent)
-  stageNavigation?: React.ReactNode;
-  
   // Credits info shown below button
   creditsInfo?: React.ReactNode;
 }
@@ -52,7 +49,6 @@ export default function StageLayout({
   generateDisabled = false,
   isAIGenerated = false,
   outputActions,
-  stageNavigation,
   creditsInfo,
 }: StageLayoutProps) {
   return (
@@ -60,15 +56,7 @@ export default function StageLayout({
       {/* Input Section - Fixed width */}
       <div className="w-1/2 flex-shrink-0 flex flex-col border-r min-h-0">
         <div className="flex-1 overflow-y-auto p-6 min-h-0">
-          {/* Stage Navigation */}
-          {stageNavigation && (
-            <div className="mb-6 pb-5 border-b border-border">
-              <div className="bg-gradient-to-r from-primary/5 via-primary/10 to-primary/5 rounded-xl p-5 border border-primary/20 shadow-sm">
-                {stageNavigation}
-              </div>
-            </div>
-          )}
-          
+          <h3 className="font-medium text-lg mb-4">Input</h3>
           {inputContent}
         </div>
 

@@ -307,55 +307,6 @@ export default function BRollPipelineModal({
     setShowUnsavedWarning(false);
   };
 
-  // Render stage navigation - matching Talking Head design exactly
-  const renderStageNavigation = () => (
-    <div className="flex items-center justify-between w-full">
-      {BROLL_STAGES.map((stage, index) => {
-        const isComplete = isStageComplete(stage.key);
-        const isActive = activeStage === stage.key;
-
-        return (
-          <React.Fragment key={stage.key}>
-            {index > 0 && (
-              <div className={cn(
-                "flex-1 h-0.5 rounded-full mx-3",
-                isComplete || isStageComplete(BROLL_STAGES[index - 1].key) ? "bg-primary" : "bg-border"
-              )} />
-            )}
-            <button
-              onClick={() => handleStageClick(stage.key)}
-              className={cn(
-                "flex items-center gap-2 transition-all group flex-shrink-0",
-                "cursor-pointer hover:scale-105"
-              )}
-            >
-              <div className={cn(
-                "w-8 h-8 min-w-[2rem] min-h-[2rem] rounded-full flex items-center justify-center text-sm font-semibold transition-all shadow-sm flex-shrink-0",
-                isComplete 
-                  ? "bg-primary text-primary-foreground shadow-primary/30" 
-                  : isActive 
-                    ? "bg-primary/15 text-primary border-2 border-primary shadow-primary/20" 
-                    : "bg-secondary text-muted-foreground border border-border"
-              )}>
-                {isComplete ? (
-                  <Check className="h-4 w-4" />
-                ) : (
-                  <span>{index + 1}</span>
-                )}
-              </div>
-              <span className={cn(
-                "text-sm font-medium transition-colors whitespace-nowrap",
-                isComplete ? "text-primary" : isActive ? "text-primary" : "text-muted-foreground",
-                "group-hover:text-primary"
-              )}>
-                {stage.label}
-              </span>
-            </button>
-          </React.Fragment>
-        );
-      })}
-    </div>
-  );
 
   // Show nothing until pipeline data is loaded
   if (!pipeline && pipelineId) {
@@ -491,6 +442,50 @@ export default function BRollPipelineModal({
           </div>
         </div>
 
+        {/* Stage Navigation - horizontal bar below header */}
+        <div className="px-6 py-4 border-b bg-background">
+          <div className="flex items-center justify-center gap-6">
+            {BROLL_STAGES.map((stage, index) => {
+              const isComplete = isStageComplete(stage.key);
+              const isActive = activeStage === stage.key;
+
+              return (
+                <React.Fragment key={stage.key}>
+                  {index > 0 && (
+                    <div className={cn(
+                      "w-12 h-0.5 rounded-full",
+                      isComplete || isStageComplete(BROLL_STAGES[index - 1].key) ? "bg-primary" : "bg-border"
+                    )} />
+                  )}
+                  <button
+                    onClick={() => handleStageClick(stage.key)}
+                    className="flex flex-col items-center gap-2 transition-all group cursor-pointer"
+                  >
+                    <div className={cn(
+                      "w-10 h-10 rounded-full flex items-center justify-center text-sm font-semibold transition-all",
+                      isComplete 
+                        ? "bg-primary text-primary-foreground" 
+                        : isActive 
+                          ? "bg-foreground text-background" 
+                          : "bg-muted text-muted-foreground"
+                    )}>
+                      {isComplete ? (
+                        <Check className="h-5 w-5" />
+                      ) : null}
+                    </div>
+                    <span className={cn(
+                      "text-sm font-medium transition-colors",
+                      isComplete || isActive ? "text-foreground" : "text-muted-foreground"
+                    )}>
+                      {stage.label}
+                    </span>
+                  </button>
+                </React.Fragment>
+              );
+            })}
+          </div>
+        </div>
+
         {/* Stage Content */}
         <div className="flex-1 overflow-hidden">
           {pipelineId && (
@@ -499,14 +494,12 @@ export default function BRollPipelineModal({
                 <BRollFirstFrameStage
                   pipelineId={pipelineId}
                   onComplete={() => setActiveStage('prompt')}
-                  stageNavigation={renderStageNavigation()}
                 />
               )}
               {activeStage === 'prompt' && (
                 <BRollPromptStage
                   pipelineId={pipelineId}
                   onContinue={() => setActiveStage('final_video')}
-                  stageNavigation={renderStageNavigation()}
                 />
               )}
               {activeStage === 'final_video' && (
@@ -517,7 +510,6 @@ export default function BRollPipelineModal({
                     onSuccess?.();
                     onClose();
                   }}
-                  stageNavigation={renderStageNavigation()}
                 />
               )}
             </>
