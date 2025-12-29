@@ -274,7 +274,6 @@ export default function BRollPromptStage({ pipelineId, onContinue, stageNavigati
       canContinue={!!hasOutput}
       generateLabel="Save Prompt"
       creditsCost="Free"
-      stageNavigation={stageNavigation}
     />
   );
 }

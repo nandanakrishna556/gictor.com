@@ -14,7 +14,6 @@ import StageLayout from './StageLayout';
 interface FinalVideoStageProps {
   pipelineId: string;
   onComplete: () => void;
-  stageNavigation?: React.ReactNode;
 }
 
 const GENERATION_STEPS = [
@@ -27,7 +26,7 @@ const GENERATION_STEPS = [
 
 const TOTAL_ESTIMATED_TIME = GENERATION_STEPS.reduce((sum, step) => sum + step.duration, 0);
 
-export default function FinalVideoStage({ pipelineId, onComplete, stageNavigation }: FinalVideoStageProps) {
+export default function FinalVideoStage({ pipelineId, onComplete }: FinalVideoStageProps) {
   const { pipeline, updateFinalVideo, updateScript, updateFirstFrame, updateVoice, isUpdating } = usePipeline(pipelineId);
   
   const [resolution, setResolution] = useState<string>(pipeline?.final_video_input?.resolution || '720p');
@@ -501,7 +500,6 @@ export default function FinalVideoStage({ pipelineId, onComplete, stageNavigatio
       creditsCost=""
       creditsInfo={creditsInfo}
       outputActions={outputActions}
-      stageNavigation={stageNavigation}
     />
   );
 }

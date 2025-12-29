@@ -351,83 +351,92 @@ export default function PipelineModal({
           
           <div className="h-5 w-px bg-border" />
           
-          <Input
-            value={name}
-            onChange={(e) => handleNameChange(e.target.value)}
-            className="w-32 h-8"
-          />
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-muted-foreground">File name</span>
+            <Input
+              value={name}
+              onChange={(e) => handleNameChange(e.target.value)}
+              className="w-28 h-7 text-sm"
+            />
+          </div>
           
-          <LocationSelector
-            projectId={currentProjectId}
-            folderId={currentFolderId}
-            onLocationChange={handleLocationChange}
-          />
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-muted-foreground">Location</span>
+            <LocationSelector
+              projectId={currentProjectId}
+              folderId={currentFolderId}
+              onLocationChange={handleLocationChange}
+            />
+          </div>
           
-          <Select value={displayStatus} onValueChange={handleStatusChange}>
-            <SelectTrigger className={cn(
-              "h-8 w-fit rounded-md text-xs border-0 px-3 py-1 text-white gap-1",
-              currentStatusOption.color
-            )}>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {statusOptions.map((opt) => (
-                <SelectItem key={opt.value} value={opt.value}>
-                  <div className="flex items-center gap-2">
-                    <div className={cn('h-2 w-2 rounded-full', opt.color)} />
-                    {opt.label}
-                  </div>
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-muted-foreground">Status</span>
+            <Select value={displayStatus} onValueChange={handleStatusChange}>
+              <SelectTrigger className={cn(
+                "h-7 w-fit rounded-md text-xs border-0 px-3 py-1 text-white gap-1",
+                currentStatusOption.color
+              )}>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {statusOptions.map((opt) => (
+                  <SelectItem key={opt.value} value={opt.value}>
+                    <div className="flex items-center gap-2">
+                      <div className={cn('h-2 w-2 rounded-full', opt.color)} />
+                      {opt.label}
+                    </div>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
 
-          <Popover>
-            <PopoverTrigger asChild>
-              <div className="flex items-center gap-1 cursor-pointer hover:bg-secondary/50 rounded-md px-2 py-1 transition-colors">
-                {selectedTags.length > 0 ? (
-                  <TagList 
-                    tags={tags} 
-                    selectedTagIds={selectedTags} 
-                    maxVisible={2} 
-                    size="sm"
-                  />
-                ) : (
-                  <span className="text-xs text-muted-foreground">+ Add tag</span>
-                )}
-              </div>
-            </PopoverTrigger>
-            <PopoverContent align="start" className="w-52 bg-popover">
-              <h4 className="text-sm font-medium mb-2">Tags</h4>
-              <TagSelector
-                tags={tags}
-                selectedTagIds={selectedTags}
-                onToggleTag={toggleTag}
-                onCreateTag={async (name, color) => {
-                  const { createTag } = await import('@/hooks/useTags').then(m => ({ createTag: null }));
-                  // Use direct supabase call for inline creation
-                  const { data, error } = await supabase
-                    .from('user_tags')
-                    .insert({
-                      user_id: profile?.id,
-                      tag_name: name,
-                      color,
-                    })
-                    .select()
-                    .single();
-                  
-                  if (!error && data) {
-                    // Auto-select the newly created tag
-                    setSelectedTags(prev => [...prev, data.id]);
-                    setHasUnsavedChanges(true);
-                    queryClient.invalidateQueries({ queryKey: ['tags'] });
-                    toast.success('Tag created');
-                  }
-                }}
-                enableDragDrop
-              />
-            </PopoverContent>
-          </Popover>
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-muted-foreground">Tags</span>
+            <Popover>
+              <PopoverTrigger asChild>
+                <div className="flex items-center gap-1 cursor-pointer hover:bg-secondary/50 rounded-md px-2 py-1 transition-colors">
+                  {selectedTags.length > 0 ? (
+                    <TagList 
+                      tags={tags} 
+                      selectedTagIds={selectedTags} 
+                      maxVisible={2} 
+                      size="sm"
+                    />
+                  ) : (
+                    <span className="text-xs text-muted-foreground">Tags</span>
+                  )}
+                </div>
+              </PopoverTrigger>
+              <PopoverContent align="start" className="w-52 bg-popover">
+                <h4 className="text-sm font-medium mb-2">Tags</h4>
+                <TagSelector
+                  tags={tags}
+                  selectedTagIds={selectedTags}
+                  onToggleTag={toggleTag}
+                  onCreateTag={async (name, color) => {
+                    const { data, error } = await supabase
+                      .from('user_tags')
+                      .insert({
+                        user_id: profile?.id,
+                        tag_name: name,
+                        color,
+                      })
+                      .select()
+                      .single();
+                    
+                    if (!error && data) {
+                      setSelectedTags(prev => [...prev, data.id]);
+                      setHasUnsavedChanges(true);
+                      queryClient.invalidateQueries({ queryKey: ['tags'] });
+                      toast.success('Tag created');
+                    }
+                  }}
+                  enableDragDrop
+                />
+              </PopoverContent>
+            </Popover>
+          </div>
           
           {/* Spacer to push save/close to right */}
           <div className="flex-1" />
@@ -455,6 +464,57 @@ export default function PipelineModal({
           </div>
         </div>
 
+        {/* Stage Navigation - horizontal bar below header */}
+        <div className="px-6 py-4 border-b bg-background">
+          <div className="flex items-center justify-center gap-6">
+            {STAGES.map((stage, index) => {
+              const isComplete = isStageComplete(stage.key);
+              const isAccessible = isStageAccessible(stage.key);
+              const isActive = activeStage === stage.key;
+
+              return (
+                <React.Fragment key={stage.key}>
+                  {index > 0 && (
+                    <div className={cn(
+                      "w-12 h-0.5 rounded-full",
+                      isComplete || isStageComplete(STAGES[index - 1].key) ? "bg-primary" : "bg-border"
+                    )} />
+                  )}
+                  <button
+                    onClick={() => handleStageClick(stage.key)}
+                    disabled={!isAccessible}
+                    className={cn(
+                      "flex flex-col items-center gap-2 transition-all group",
+                      isAccessible ? "cursor-pointer" : "cursor-not-allowed opacity-50"
+                    )}
+                  >
+                    <div className={cn(
+                      "w-10 h-10 rounded-full flex items-center justify-center text-sm font-semibold transition-all",
+                      isComplete 
+                        ? "bg-primary text-primary-foreground" 
+                        : isActive 
+                          ? "bg-foreground text-background" 
+                          : "bg-muted text-muted-foreground"
+                    )}>
+                      {isComplete ? (
+                        <Check className="h-5 w-5" />
+                      ) : !isAccessible ? (
+                        <Lock className="h-4 w-4" />
+                      ) : null}
+                    </div>
+                    <span className={cn(
+                      "text-sm font-medium transition-colors",
+                      isComplete || isActive ? "text-foreground" : "text-muted-foreground"
+                    )}>
+                      {stage.label}
+                    </span>
+                  </button>
+                </React.Fragment>
+              );
+            })}
+          </div>
+        </div>
+
         {/* Stage Content */}
         <div className="flex-1 overflow-hidden">
           {pipelineId && (
@@ -463,21 +523,18 @@ export default function PipelineModal({
                 <FirstFrameStage
                   pipelineId={pipelineId}
                   onContinue={() => setActiveStage('script')}
-                  stageNavigation={renderStageNavigation()}
                 />
               )}
               {activeStage === 'script' && (
                 <ScriptStage
                   pipelineId={pipelineId}
                   onContinue={() => setActiveStage('voice')}
-                  stageNavigation={renderStageNavigation()}
                 />
               )}
               {activeStage === 'voice' && (
                 <VoiceStage
                   pipelineId={pipelineId}
                   onContinue={() => setActiveStage('final_video')}
-                  stageNavigation={renderStageNavigation()}
                 />
               )}
               {activeStage === 'final_video' && (
@@ -488,7 +545,6 @@ export default function PipelineModal({
                     onSuccess?.();
                     onClose();
                   }}
-                  stageNavigation={renderStageNavigation()}
                 />
               )}
             </>
@@ -500,58 +556,4 @@ export default function PipelineModal({
     </>
   );
 
-  function renderStageNavigation() {
-    return (
-      <div className="flex items-center gap-4">
-        {STAGES.map((stage, index) => {
-          const isComplete = isStageComplete(stage.key);
-          const isAccessible = isStageAccessible(stage.key);
-          const isActive = activeStage === stage.key;
-
-          return (
-            <React.Fragment key={stage.key}>
-              {index > 0 && (
-                <div className={cn(
-                  "w-8 h-0.5 rounded-full flex-shrink-0",
-                  isComplete || isStageComplete(STAGES[index - 1].key) ? "bg-primary" : "bg-border"
-                )} />
-              )}
-              <button
-                onClick={() => handleStageClick(stage.key)}
-                disabled={!isAccessible}
-                className={cn(
-                  "flex items-center gap-2 transition-all group flex-shrink-0",
-                  isAccessible ? "cursor-pointer hover:scale-105" : "cursor-not-allowed opacity-50"
-                )}
-              >
-                <div className={cn(
-                  "w-8 h-8 min-w-[2rem] min-h-[2rem] rounded-full flex items-center justify-center text-sm font-semibold transition-all shadow-sm flex-shrink-0",
-                  isComplete 
-                    ? "bg-primary text-primary-foreground shadow-primary/30" 
-                    : isActive 
-                      ? "bg-primary/15 text-primary border-2 border-primary shadow-primary/20" 
-                      : "bg-secondary text-muted-foreground border border-border"
-                )}>
-                  {isComplete ? (
-                    <Check className="h-4 w-4" />
-                  ) : !isAccessible ? (
-                    <Lock className="h-3.5 w-3.5" />
-                  ) : (
-                    <span>{index + 1}</span>
-                  )}
-                </div>
-                <span className={cn(
-                  "text-sm font-medium transition-colors whitespace-nowrap",
-                  isComplete ? "text-primary" : isActive ? "text-primary" : "text-muted-foreground",
-                  isAccessible && "group-hover:text-primary"
-                )}>
-                  {stage.label}
-                </span>
-              </button>
-            </React.Fragment>
-          );
-        })}
-      </div>
-    );
-  }
 }

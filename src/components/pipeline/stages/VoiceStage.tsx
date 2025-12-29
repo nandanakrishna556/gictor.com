@@ -12,10 +12,9 @@ import { uploadToR2 } from '@/lib/cloudflare-upload';
 interface VoiceStageProps {
   pipelineId: string;
   onContinue: () => void;
-  stageNavigation?: React.ReactNode;
 }
 
-export default function VoiceStage({ pipelineId, onContinue, stageNavigation }: VoiceStageProps) {
+export default function VoiceStage({ pipelineId, onContinue }: VoiceStageProps) {
   const { pipeline, updateVoice, isUpdating } = usePipeline(pipelineId);
   
   // Input state
@@ -276,7 +275,6 @@ export default function VoiceStage({ pipelineId, onContinue, stageNavigation }: 
       creditsCost="Free"
       isAIGenerated={false}
       outputActions={hasOutput ? outputActions : undefined}
-      stageNavigation={stageNavigation}
     />
   );
 }

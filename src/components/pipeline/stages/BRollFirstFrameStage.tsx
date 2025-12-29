@@ -16,12 +16,11 @@ import StageLayout from './StageLayout';
 interface BRollFirstFrameStageProps {
   pipelineId: string;
   onComplete: () => void;
-  stageNavigation?: React.ReactNode;
 }
 
 type InputMode = 'generate' | 'upload';
 
-export default function BRollFirstFrameStage({ pipelineId, onComplete, stageNavigation }: BRollFirstFrameStageProps) {
+export default function BRollFirstFrameStage({ pipelineId, onComplete }: BRollFirstFrameStageProps) {
   const { pipeline, updateFirstFrame, isUpdating } = usePipeline(pipelineId);
   
   // Input state
@@ -317,7 +316,6 @@ export default function BRollFirstFrameStage({ pipelineId, onComplete, stageNavi
       creditsCost={mode === 'upload' ? 'Free' : `${PIPELINE_CREDITS.first_frame} Credits`}
       isAIGenerated={wasAIGenerated}
       outputActions={outputActions}
-      stageNavigation={stageNavigation}
     />
   );
 }
