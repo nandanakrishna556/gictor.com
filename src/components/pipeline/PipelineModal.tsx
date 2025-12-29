@@ -389,92 +389,80 @@ export default function PipelineModal({
           
           <div className="h-5 w-px bg-border" />
           
-          <div className="flex items-center gap-2">
-            <span className="text-sm text-muted-foreground">File name</span>
-            <Input
-              value={name}
-              onChange={(e) => handleNameChange(e.target.value)}
-              className="w-28 h-7 text-sm"
-            />
-          </div>
+          <Input
+            value={name}
+            onChange={(e) => handleNameChange(e.target.value)}
+            className="w-28 h-7 text-sm"
+          />
           
-          <div className="flex items-center gap-2">
-            <span className="text-sm text-muted-foreground">Location</span>
-            <LocationSelector
-              projectId={currentProjectId}
-              folderId={currentFolderId}
-              onLocationChange={handleLocationChange}
-            />
-          </div>
+          <LocationSelector
+            projectId={currentProjectId}
+            folderId={currentFolderId}
+            onLocationChange={handleLocationChange}
+          />
           
-          <div className="flex items-center gap-2">
-            <span className="text-sm text-muted-foreground">Status</span>
-            <Select value={displayStatus} onValueChange={handleStatusChange}>
-              <SelectTrigger className={cn(
-                "h-7 w-fit rounded-md text-xs border-0 px-3 py-1 text-white gap-1",
-                currentStatusOption.color
-              )}>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {statusOptions.map((opt) => (
-                  <SelectItem key={opt.value} value={opt.value}>
-                    <div className="flex items-center gap-2">
-                      <div className={cn('h-2 w-2 rounded-full', opt.color)} />
-                      {opt.label}
-                    </div>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+          <Select value={displayStatus} onValueChange={handleStatusChange}>
+            <SelectTrigger className={cn(
+              "h-7 w-fit rounded-md text-xs border-0 px-3 py-1 text-white gap-1",
+              currentStatusOption.color
+            )}>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {statusOptions.map((opt) => (
+                <SelectItem key={opt.value} value={opt.value}>
+                  <div className="flex items-center gap-2">
+                    <div className={cn('h-2 w-2 rounded-full', opt.color)} />
+                    {opt.label}
+                  </div>
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
 
-          <div className="flex items-center gap-2">
-            <span className="text-sm text-muted-foreground">Tags</span>
-            <Popover>
-              <PopoverTrigger asChild>
-                <div className="flex items-center gap-1 cursor-pointer hover:bg-secondary/50 rounded-md px-2 py-1 transition-colors">
-                  {selectedTags.length > 0 ? (
-                    <TagList 
-                      tags={tags} 
-                      selectedTagIds={selectedTags} 
-                      maxVisible={2} 
-                      size="sm"
-                    />
-                  ) : (
-                    <span className="text-xs text-muted-foreground">Tags</span>
-                  )}
-                </div>
-              </PopoverTrigger>
-              <PopoverContent align="start" className="w-52 bg-popover">
-                <h4 className="text-sm font-medium mb-2">Tags</h4>
-                <TagSelector
-                  tags={tags}
-                  selectedTagIds={selectedTags}
-                  onToggleTag={toggleTag}
-                  onCreateTag={async (name, color) => {
-                    const { data, error } = await supabase
-                      .from('user_tags')
-                      .insert({
-                        user_id: profile?.id,
-                        tag_name: name,
-                        color,
-                      })
-                      .select()
-                      .single();
-                    
-                    if (!error && data) {
-                      setSelectedTags(prev => [...prev, data.id]);
-                      setHasUnsavedChanges(true);
-                      queryClient.invalidateQueries({ queryKey: ['tags'] });
-                      toast.success('Tag created');
-                    }
-                  }}
-                  enableDragDrop
-                />
-              </PopoverContent>
-            </Popover>
-          </div>
+          <Popover>
+            <PopoverTrigger asChild>
+              <div className="flex items-center gap-1 cursor-pointer hover:bg-secondary/50 rounded-md px-2 py-1 transition-colors">
+                {selectedTags.length > 0 ? (
+                  <TagList 
+                    tags={tags} 
+                    selectedTagIds={selectedTags} 
+                    maxVisible={2} 
+                    size="sm"
+                  />
+                ) : (
+                  <span className="text-xs text-muted-foreground">+ Add tag</span>
+                )}
+              </div>
+            </PopoverTrigger>
+            <PopoverContent align="start" className="w-52 bg-popover">
+              <h4 className="text-sm font-medium mb-2">Tags</h4>
+              <TagSelector
+                tags={tags}
+                selectedTagIds={selectedTags}
+                onToggleTag={toggleTag}
+                onCreateTag={async (name, color) => {
+                  const { data, error } = await supabase
+                    .from('user_tags')
+                    .insert({
+                      user_id: profile?.id,
+                      tag_name: name,
+                      color,
+                    })
+                    .select()
+                    .single();
+                  
+                  if (!error && data) {
+                    setSelectedTags(prev => [...prev, data.id]);
+                    setHasUnsavedChanges(true);
+                    queryClient.invalidateQueries({ queryKey: ['tags'] });
+                    toast.success('Tag created');
+                  }
+                }}
+                enableDragDrop
+              />
+            </PopoverContent>
+          </Popover>
           
           {/* Spacer to push save/close to right */}
           <div className="flex-1" />
