@@ -17,7 +17,7 @@ export default function StageProgressIndicator({
   isActive,
   isAccessible = true,
   stageNumber,
-  size = 32,
+  size = 28,
 }: StageProgressIndicatorProps) {
   const strokeWidth = 2;
   const radius = (size - strokeWidth) / 2;
@@ -40,10 +40,10 @@ export default function StageProgressIndicator({
           strokeWidth={strokeWidth}
           stroke="currentColor"
           fill="none"
-          className="text-border"
+          className={isActive ? "text-primary-foreground/30" : "text-border"}
         />
         {/* Progress arc - only show if in progress (not complete) */}
-        {progress > 0 && !isComplete && (
+        {progress > 0 && !isComplete && !isActive && (
           <circle
             cx={size / 2}
             cy={size / 2}
@@ -58,7 +58,7 @@ export default function StageProgressIndicator({
           />
         )}
         {/* Complete ring */}
-        {isComplete && (
+        {isComplete && !isActive && (
           <circle
             cx={size / 2}
             cy={size / 2}
@@ -74,16 +74,16 @@ export default function StageProgressIndicator({
       {/* Inner circle with number or checkmark */}
       <div
         className={cn(
-          "absolute inset-0.5 rounded-full flex items-center justify-center text-sm font-semibold transition-all shadow-sm",
-          isComplete
-            ? "bg-primary text-primary-foreground shadow-primary/30"
-            : isActive
-              ? "bg-primary/15 text-primary border-2 border-primary shadow-primary/20"
-              : "bg-secondary text-muted-foreground border border-border"
+          "absolute inset-0 rounded-full flex items-center justify-center text-xs font-semibold transition-all",
+          isActive
+            ? "bg-primary-foreground text-primary"
+            : isComplete
+              ? "bg-primary text-primary-foreground"
+              : "bg-muted text-muted-foreground"
         )}
       >
         {isComplete ? (
-          <Check className="h-4 w-4" />
+          <Check className="h-3.5 w-3.5" />
         ) : (
           <span>{stageNumber}</span>
         )}

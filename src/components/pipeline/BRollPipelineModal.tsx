@@ -362,7 +362,7 @@ export default function BRollPipelineModal({
       </AlertDialog>
 
       <Dialog open={open} onOpenChange={handleClose}>
-        <DialogContent className="max-w-[1400px] h-[90vh] flex flex-col p-0 gap-0 overflow-hidden rounded-lg">
+        <DialogContent className="max-w-[1100px] h-[85vh] flex flex-col p-0 gap-0 overflow-hidden rounded-lg">
         {/* Header */}
         <div className="flex items-center gap-3 border-b bg-muted/30 px-6 py-3 flex-wrap">
           <Button variant="ghost" size="icon" className="h-8 w-8" onClick={handleClose}>
@@ -474,7 +474,7 @@ export default function BRollPipelineModal({
         </div>
 
         {/* Stage Tabs */}
-        <div className="bg-muted/30 border-b">
+        <div className="border-b bg-muted/20">
           <div className="flex">
             {BROLL_STAGES.map((stage, index) => {
               const isComplete = isStageComplete(stage.key);
@@ -488,8 +488,8 @@ export default function BRollPipelineModal({
                   className={cn(
                     "flex-1 flex items-center justify-center gap-2 px-4 py-3 transition-all relative cursor-pointer",
                     isActive 
-                      ? "bg-background border-b-2 border-primary" 
-                      : "hover:bg-muted/50 border-b-2 border-transparent"
+                      ? "bg-primary text-primary-foreground" 
+                      : "bg-muted/30 hover:bg-muted/50 text-muted-foreground"
                   )}
                 >
                   <StageProgressIndicator
@@ -500,7 +500,7 @@ export default function BRollPipelineModal({
                   />
                   <span className={cn(
                     "text-sm font-medium transition-colors whitespace-nowrap",
-                    isComplete ? "text-primary" : isActive ? "text-foreground" : "text-muted-foreground"
+                    isActive ? "text-primary-foreground" : isComplete ? "text-primary" : "text-muted-foreground"
                   )}>
                     {stage.label}
                   </span>
