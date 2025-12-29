@@ -4,6 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 import { X, Plus, Check, GripVertical } from 'lucide-react';
 
@@ -156,7 +157,8 @@ export function TagList({
     : tags;
 
   const visibleTags = displayTags.slice(0, maxVisible);
-  const overflowCount = displayTags.length - maxVisible;
+  const hiddenTags = displayTags.slice(maxVisible);
+  const overflowCount = hiddenTags.length;
 
   if (displayTags.length === 0) {
     return null;
@@ -176,17 +178,28 @@ export function TagList({
         />
       ))}
       {overflowCount > 0 && (
-        <Badge 
-          variant="outline" 
-          className={cn(
-            'text-muted-foreground border-border',
-            size === 'sm' && 'text-[10px] px-1.5 py-0',
-            size === 'md' && 'text-xs px-2 py-0.5',
-            size === 'lg' && 'text-sm px-2.5 py-1',
-          )}
-        >
-          +{overflowCount}
-        </Badge>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Badge 
+              variant="outline" 
+              className={cn(
+                'text-muted-foreground border-border cursor-default',
+                size === 'sm' && 'text-[10px] px-1.5 py-0',
+                size === 'md' && 'text-xs px-2 py-0.5',
+                size === 'lg' && 'text-sm px-2.5 py-1',
+              )}
+            >
+              +{overflowCount}
+            </Badge>
+          </TooltipTrigger>
+          <TooltipContent side="bottom" className="max-w-xs">
+            <div className="flex flex-wrap gap-1">
+              {hiddenTags.map(tag => (
+                <span key={tag.id} className="text-xs">{tag.tag_name}</span>
+              )).reduce((prev, curr, i) => [prev, <span key={`sep-${i}`} className="text-muted-foreground">,</span>, curr] as any)}
+            </div>
+          </TooltipContent>
+        </Tooltip>
       )}
     </div>
   );
