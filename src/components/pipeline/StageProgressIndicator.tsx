@@ -7,6 +7,7 @@ interface StageProgressIndicatorProps {
   isComplete: boolean;
   isActive: boolean;
   isAccessible?: boolean;
+  stageNumber: number;
   size?: number;
 }
 
@@ -15,21 +16,23 @@ export default function StageProgressIndicator({
   isComplete,
   isActive,
   isAccessible = true,
-  size = 48,
+  stageNumber,
+  size = 32,
 }: StageProgressIndicatorProps) {
-  const strokeWidth = 3;
+  const strokeWidth = 2;
   const radius = (size - strokeWidth) / 2;
   const circumference = radius * 2 * Math.PI;
   const offset = circumference - (progress / 100) * circumference;
 
   return (
     <div className="relative" style={{ width: size, height: size }}>
-      {/* Background circle */}
+      {/* Background circle and progress ring */}
       <svg
         className="absolute inset-0 -rotate-90"
         width={size}
         height={size}
       >
+        {/* Background ring */}
         <circle
           cx={size / 2}
           cy={size / 2}
@@ -39,7 +42,7 @@ export default function StageProgressIndicator({
           fill="none"
           className="text-border"
         />
-        {/* Progress arc */}
+        {/* Progress arc - only show if in progress (not complete) */}
         {progress > 0 && !isComplete && (
           <circle
             cx={size / 2}
@@ -68,18 +71,22 @@ export default function StageProgressIndicator({
         )}
       </svg>
 
-      {/* Inner circle */}
+      {/* Inner circle with number or checkmark */}
       <div
         className={cn(
-          "absolute inset-1.5 rounded-full flex items-center justify-center text-sm font-semibold transition-all",
+          "absolute inset-0.5 rounded-full flex items-center justify-center text-sm font-semibold transition-all shadow-sm",
           isComplete
-            ? "bg-primary text-primary-foreground"
+            ? "bg-primary text-primary-foreground shadow-primary/30"
             : isActive
-              ? "bg-foreground text-background"
-              : "bg-muted text-muted-foreground"
+              ? "bg-primary/15 text-primary border-2 border-primary shadow-primary/20"
+              : "bg-secondary text-muted-foreground border border-border"
         )}
       >
-        {isComplete && <Check className="h-5 w-5" />}
+        {isComplete ? (
+          <Check className="h-4 w-4" />
+        ) : (
+          <span>{stageNumber}</span>
+        )}
       </div>
     </div>
   );

@@ -504,7 +504,7 @@ export default function PipelineModal({
 
         {/* Stage Navigation - horizontal bar below header */}
         <div className="px-6 py-4 border-b bg-background">
-          <div className="flex items-center justify-center gap-6">
+          <div className="flex items-center justify-center gap-3">
             {STAGES.map((stage, index) => {
               const isComplete = isStageComplete(stage.key);
               const isAccessible = isStageAccessible(stage.key);
@@ -515,7 +515,7 @@ export default function PipelineModal({
                 <React.Fragment key={stage.key}>
                   {index > 0 && (
                     <div className={cn(
-                      "w-12 h-0.5 rounded-full transition-colors duration-300",
+                      "w-8 h-0.5 rounded-full transition-colors duration-300",
                       isComplete || isStageComplete(STAGES[index - 1].key) ? "bg-primary" : "bg-border"
                     )} />
                   )}
@@ -523,8 +523,8 @@ export default function PipelineModal({
                     onClick={() => handleStageClick(stage.key)}
                     disabled={!isAccessible}
                     className={cn(
-                      "flex flex-col items-center gap-2 transition-all group",
-                      isAccessible ? "cursor-pointer" : "cursor-not-allowed opacity-50"
+                      "flex items-center gap-2 transition-all group",
+                      isAccessible ? "cursor-pointer hover:scale-105" : "cursor-not-allowed opacity-50"
                     )}
                   >
                     <StageProgressIndicator
@@ -532,10 +532,12 @@ export default function PipelineModal({
                       isComplete={isComplete}
                       isActive={isActive}
                       isAccessible={isAccessible}
+                      stageNumber={index + 1}
                     />
                     <span className={cn(
-                      "text-sm font-medium transition-colors",
-                      isComplete || isActive ? "text-foreground" : "text-muted-foreground"
+                      "text-sm font-medium transition-colors whitespace-nowrap",
+                      isComplete ? "text-primary" : isActive ? "text-primary" : "text-muted-foreground",
+                      isAccessible && "group-hover:text-primary"
                     )}>
                       {stage.label}
                     </span>
