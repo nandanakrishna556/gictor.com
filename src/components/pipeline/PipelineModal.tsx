@@ -379,7 +379,7 @@ export default function PipelineModal({
       </AlertDialog>
 
       <Dialog open={open} onOpenChange={handleClose}>
-        <DialogContent className="max-w-[1100px] h-[85vh] flex flex-col p-0 gap-0 overflow-hidden rounded-lg">
+        <DialogContent className="max-w-[900px] h-[85vh] flex flex-col p-0 gap-0 overflow-hidden rounded-lg">
         {/* Header - single row with all controls */}
         <div className="flex items-center gap-3 border-b bg-muted/30 px-6 py-3 flex-wrap">
           <Button variant="ghost" size="icon" className="h-8 w-8" onClick={handleClose}>
@@ -520,7 +520,7 @@ export default function PipelineModal({
                     "flex-1 flex items-center justify-center gap-2 px-4 py-3 transition-all relative",
                     isAccessible ? "cursor-pointer" : "cursor-not-allowed opacity-50",
                     isActive 
-                      ? "bg-primary text-primary-foreground" 
+                      ? "bg-[hsl(24,100%,60%)] text-white" 
                       : "bg-muted/30 hover:bg-muted/50 text-muted-foreground"
                   )}
                 >
