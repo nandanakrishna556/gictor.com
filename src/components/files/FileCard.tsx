@@ -1,5 +1,5 @@
 import React from 'react';
-import { Loader2, Play, AlertCircle, MoreHorizontal, Trash2, Pencil, FileText, Film } from 'lucide-react';
+import { Loader2, Play, AlertCircle, MoreHorizontal, Trash2, Pencil, FileText, Film, Mic, Video } from 'lucide-react';
 import { 
   DropdownMenu, 
   DropdownMenuContent, 
@@ -25,6 +25,12 @@ interface FileCardProps {
   onRename: () => void;
 }
 
+// Video file types that should show video preview
+const VIDEO_FILE_TYPES = ['talking_head', 'clips', 'b_roll', 'lip_sync', 'veo3'];
+
+// Audio file types
+const AUDIO_FILE_TYPES = ['audio', 'voice'];
+
 export const FileCard: React.FC<FileCardProps> = ({ 
   id, 
   name, 
@@ -37,6 +43,8 @@ export const FileCard: React.FC<FileCardProps> = ({
   onDelete, 
   onRename 
 }) => {
+  const isVideoType = VIDEO_FILE_TYPES.includes(fileType);
+  const isAudioType = AUDIO_FILE_TYPES.includes(fileType);
 
   return (
     <div 
@@ -63,13 +71,14 @@ export const FileCard: React.FC<FileCardProps> = ({
           />
         )}
 
-        {status === 'completed' && previewUrl && (fileType === 'talking_head' || fileType === 'clips' || fileType === 'b_roll') && (
+        {status === 'completed' && previewUrl && isVideoType && (
           <div className="relative w-full h-full">
             <video 
               src={previewUrl} 
               className="w-full h-full object-cover"
               muted
               loop
+              playsInline
               onMouseEnter={(e) => e.currentTarget.play()}
               onMouseLeave={(e) => {
                 e.currentTarget.pause();
@@ -91,10 +100,17 @@ export const FileCard: React.FC<FileCardProps> = ({
           </div>
         )}
 
-        {status === 'completed' && !previewUrl && (fileType === 'clips' || fileType === 'b_roll') && (
+        {status === 'completed' && isAudioType && (
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-muted">
-            <Film className="h-12 w-12 text-muted-foreground/50" strokeWidth={1.5} />
-            <span className="text-sm text-muted-foreground">Clip Ready</span>
+            <Mic className="h-12 w-12 text-muted-foreground/50" strokeWidth={1.5} />
+            <span className="text-sm text-muted-foreground">Audio Ready</span>
+          </div>
+        )}
+
+        {status === 'completed' && !previewUrl && isVideoType && (
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-muted">
+            <Video className="h-12 w-12 text-muted-foreground/50" strokeWidth={1.5} />
+            <span className="text-sm text-muted-foreground">Video Ready</span>
           </div>
         )}
 
