@@ -17,7 +17,7 @@ import LocationSelector from '@/components/forms/LocationSelector';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { TagList, TagSelector, TagData } from '@/components/ui/tag-badge';
-import { ArrowLeft, X, Check, Loader2, Mic, Download, AlertCircle, Play, Pause } from 'lucide-react';
+import { ArrowLeft, X, Check, Loader2, Mic, Download, AlertCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { uploadToR2, validateFile } from '@/lib/cloudflare-upload';
 
@@ -88,10 +88,6 @@ export default function LipSyncModal({
   const [audioError, setAudioError] = useState<string | null>(null);
   const [isUploadingAudio, setIsUploadingAudio] = useState(false);
   
-  // Audio player state
-  const audioRef = useRef<HTMLAudioElement>(null);
-  const [isAudioPlaying, setIsAudioPlaying] = useState(false);
-  const [audioCurrentTime, setAudioCurrentTime] = useState(0);
   
   // Generation state
   const [isGenerating, setIsGenerating] = useState(false);
@@ -294,37 +290,10 @@ export default function LipSyncModal({
     });
   };
   
-  // Handle audio playback
-  const toggleAudioPlayback = () => {
-    if (audioRef.current) {
-      if (isAudioPlaying) {
-        audioRef.current.pause();
-      } else {
-        audioRef.current.play();
-      }
-      setIsAudioPlaying(!isAudioPlaying);
-    }
-  };
-  
-  const handleAudioTimeUpdate = () => {
-    if (audioRef.current) {
-      setAudioCurrentTime(audioRef.current.currentTime);
-    }
-  };
-  
-  const handleAudioSeek = (time: number) => {
-    if (audioRef.current) {
-      audioRef.current.currentTime = time;
-      setAudioCurrentTime(time);
-    }
-  };
-  
   const removeAudio = () => {
     setAudioUrl(undefined);
     setAudioDuration(0);
     setAudioError(null);
-    setIsAudioPlaying(false);
-    setAudioCurrentTime(0);
     setHasUnsavedChanges(true);
   };
   
@@ -646,40 +615,13 @@ export default function LipSyncModal({
                 </p>
                 
                 {audioUrl ? (
-                  <div className="relative group rounded-xl border border-border bg-secondary/30 p-4 space-y-3">
-                    <audio
-                      ref={audioRef}
-                      src={audioUrl}
-                      onTimeUpdate={handleAudioTimeUpdate}
-                      onEnded={() => setIsAudioPlaying(false)}
-                    />
-                    
+                  <div className="relative group rounded-xl border border-border bg-secondary/30 p-4">
                     <AudioWaveform
                       audioUrl={audioUrl}
-                      isPlaying={isAudioPlaying}
-                      currentTime={audioCurrentTime}
-                      onSeek={handleAudioSeek}
+                      onReady={(dur) => setAudioDuration(dur)}
+                      showControls={true}
+                      height={60}
                     />
-                    
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8"
-                          onClick={toggleAudioPlayback}
-                        >
-                          {isAudioPlaying ? (
-                            <Pause className="h-4 w-4" strokeWidth={1.5} />
-                          ) : (
-                            <Play className="h-4 w-4" strokeWidth={1.5} />
-                          )}
-                        </Button>
-                        <span className="text-sm text-muted-foreground">
-                          {formatDuration(audioCurrentTime)} / {formatDuration(audioDuration)}
-                        </span>
-                      </div>
-                    </div>
                     
                     <button
                       type="button"
