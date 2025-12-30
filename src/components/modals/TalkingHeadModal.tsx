@@ -314,6 +314,12 @@ export default function TalkingHeadModal({
     setGenerationProgress(0);
     
     try {
+      // Refresh session to get fresh JWT token
+      const { data: sessionData, error: sessionError } = await supabase.auth.refreshSession();
+      if (sessionError || !sessionData.session) {
+        throw new Error('Session expired. Please log in again.');
+      }
+      
       // Update file record to processing
       await supabase.from('files').update({
         status: 'processing',
@@ -324,13 +330,13 @@ export default function TalkingHeadModal({
         },
       }).eq('id', fileId);
       
-      // Call edge function
+      // Call edge function with fresh session
       const { data, error } = await supabase.functions.invoke('trigger-generation', {
         body: {
           type: 'talking_head',
           payload: {
             file_id: fileId,
-            user_id: user.id,
+            user_id: sessionData.session.user.id,
             project_id: currentProjectId,
             folder_id: currentFolderId,
             file_name: name,
@@ -350,6 +356,7 @@ export default function TalkingHeadModal({
         throw new Error(data?.error || 'Generation failed');
       }
       
+      toast.success('Generation started! This may take a few minutes.');
       queryClient.invalidateQueries({ queryKey: ['files', currentProjectId] });
     } catch (err) {
       console.error('Generation error:', err);
