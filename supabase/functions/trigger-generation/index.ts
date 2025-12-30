@@ -7,6 +7,7 @@ const ALLOWED_ORIGINS = [
   'https://gictor.com',
   'https://www.gictor.com',
   'https://lovable.dev',
+  'https://lovableproject.com',
   Deno.env.get('ALLOWED_ORIGIN') || '',
 ].filter(Boolean);
 
@@ -121,10 +122,15 @@ serve(async (req) => {
   try {
     // Verify user is authenticated via Supabase JWT
     const authHeader = req.headers.get('Authorization');
+    const origin = req.headers.get('Origin');
+    
+    console.log('Auth header present:', !!authHeader);
+    console.log('Origin:', origin);
+    
     if (!authHeader) {
       console.error('Missing authorization header');
       return new Response(
-        JSON.stringify({ success: false, error: 'Unauthorized' }),
+        JSON.stringify({ success: false, error: 'Unauthorized - missing auth header' }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
@@ -132,16 +138,22 @@ serve(async (req) => {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
     
+    console.log('Supabase URL:', supabaseUrl);
+    console.log('Anon key present:', !!supabaseAnonKey);
+    
     // Create client with user's auth token
     const supabase = createClient(supabaseUrl, supabaseAnonKey, {
       global: { headers: { Authorization: authHeader } }
     });
 
     const { data: userData, error: authError } = await supabase.auth.getUser();
+    
+    console.log('Auth result:', { hasUser: !!userData?.user, userId: userData?.user?.id, error: authError?.message });
+    
     if (authError || !userData?.user) {
       console.error('Auth error:', authError);
       return new Response(
-        JSON.stringify({ success: false, error: 'Unauthorized' }),
+        JSON.stringify({ success: false, error: 'Unauthorized - invalid token', details: authError?.message }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
