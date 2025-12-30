@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, useNavigate, useParams, useLocation } from 'react-router-dom';
-import { ChevronDown, Plus, Sparkles, Layers, MoreHorizontal, Trash2, Pencil, Check, X, Coins, Sun, Moon, LayoutDashboard, Settings } from 'lucide-react';
+import { ChevronDown, Plus, Sparkles, Layers, MoreHorizontal, Trash2, Pencil, Check, X, Coins, Sun, Moon, LayoutDashboard, Settings, UserCircle } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -74,6 +74,20 @@ export default function AppSidebar() {
         >
           <LayoutDashboard className="h-[18px] w-[18px]" strokeWidth={1.5} />
           <span>Dashboard</span>
+        </Link>
+
+        {/* Actor */}
+        <Link
+          to="/actors"
+          className={cn(
+            'flex w-full items-center gap-2 rounded-sm px-3 py-2.5 text-sm font-medium transition-fast',
+            isActive('/actors')
+              ? 'bg-primary/15 text-primary'
+              : 'text-sidebar-muted hover:bg-sidebar-border/50 hover:text-sidebar-foreground'
+          )}
+        >
+          <UserCircle className="h-[18px] w-[18px]" strokeWidth={1.5} />
+          <span>Actor</span>
         </Link>
 
         {/* Projects Collapsible */}

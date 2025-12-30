@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react';
-import { Video, FolderPlus, X, Loader2, Film } from 'lucide-react';
+import { Video, FolderPlus, X, Loader2, Film, Mic, Image, FileText } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
 import {
   Dialog,
@@ -9,6 +9,7 @@ import {
 } from '@/components/ui/dialog';
 import PipelineModal from '@/components/pipeline/PipelineModal';
 import ClipsPipelineModal from '@/components/pipeline/ClipsPipelineModal';
+import LipSyncModal from '@/components/modals/LipSyncModal';
 import { usePipeline } from '@/hooks/usePipeline';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -33,6 +34,7 @@ interface CreateNewModalProps {
 }
 
 type PipelineType = 'talking_head' | 'clips';
+type QuickGenType = 'lip_sync' | 'audio' | 'first_frame' | 'veo3' | 'script';
 
 const contentTypes = [
   {
@@ -43,21 +45,57 @@ const contentTypes = [
     isFolder: true,
   },
   {
-    id: 'talking_head' as const,
+    id: 'lip_sync' as const,
     icon: Video,
-    title: 'Talking Head',
-    description: 'Create with AI pipeline',
-    isPipeline: true,
-    pipelineType: 'talking_head' as PipelineType,
+    title: 'Lip Sync',
+    description: 'Sync audio to face',
+    isQuickGen: true,
   },
   {
-    id: 'clips' as const,
-    icon: Film,
-    title: 'Clips',
-    description: 'Generate video clips',
-    isPipeline: true,
-    pipelineType: 'clips' as PipelineType,
+    id: 'audio' as const,
+    icon: Mic,
+    title: 'Audio',
+    description: 'Generate voice audio',
+    isQuickGen: true,
   },
+  {
+    id: 'first_frame' as const,
+    icon: Image,
+    title: 'First Frame',
+    description: 'Generate AI image',
+    isQuickGen: true,
+  },
+  {
+    id: 'veo3' as const,
+    icon: Film,
+    title: 'Veo3',
+    description: 'Generate video clip',
+    isQuickGen: true,
+  },
+  {
+    id: 'script' as const,
+    icon: FileText,
+    title: 'Script',
+    description: 'Generate script',
+    isQuickGen: true,
+  },
+  // TEMPORARILY HIDDEN - Re-enable by uncommenting:
+  // {
+  //   id: 'talking_head' as const,
+  //   icon: Video,
+  //   title: 'Talking Head',
+  //   description: 'Create with AI pipeline',
+  //   isPipeline: true,
+  //   pipelineType: 'talking_head' as PipelineType,
+  // },
+  // {
+  //   id: 'clips' as const,
+  //   icon: Film,
+  //   title: 'Clips',
+  //   description: 'Generate video clips',
+  //   isPipeline: true,
+  //   pipelineType: 'clips' as PipelineType,
+  // },
 ];
 
 export default function CreateNewModal({
@@ -72,6 +110,7 @@ export default function CreateNewModal({
   const queryClient = useQueryClient();
   const [pipelineModalOpen, setPipelineModalOpen] = useState(false);
   const [bRollModalOpen, setBRollModalOpen] = useState(false);
+  const [lipSyncModalOpen, setLipSyncModalOpen] = useState(false);
   const [createdPipelineId, setCreatedPipelineId] = useState<string | null>(null);
   const [isCreatingPipeline, setIsCreatingPipeline] = useState(false);
   const [creatingType, setCreatingType] = useState<string | null>(null);
@@ -90,29 +129,35 @@ export default function CreateNewModal({
     if (type.id === 'folder') {
       onOpenChange(false);
       onCreateFolder?.(initialStatus);
-    } else if ('isPipeline' in type && type.isPipeline) {
-      // Create the pipeline AND a placeholder file for Kanban display
+    } else if ('isQuickGen' in type && type.isQuickGen) {
+      // Handle quick generation types
+      if (type.id === 'lip_sync') {
+        pipelineInitialStatusRef.current = initialStatus;
+        onOpenChange(false);
+        setLipSyncModalOpen(true);
+      } else {
+        // Coming soon for other quick gen types
+        toast.info(`${type.title} generation coming soon!`);
+      }
+    } else if ('isPipeline' in type && (type as any).isPipeline) {
+      // Handle pipeline types (currently hidden)
+      const pipelineType = (type as any).pipelineType as PipelineType;
       setIsCreatingPipeline(true);
       setCreatingType(type.id);
-      
-      // Store the Kanban status in ref for the pipeline modal
       pipelineInitialStatusRef.current = initialStatus;
       
-      const fileType = type.pipelineType === 'clips' ? 'clips' : 'talking_head';
+      const fileType = pipelineType === 'clips' ? 'clips' : 'talking_head';
       
       try {
-        // Create pipeline with 'draft' status (DB constraint)
         const newPipeline = await createPipeline({
           projectId,
           folderId,
           name: 'Untitled',
           status: 'draft',
-          displayStatus: initialStatus, // Store Kanban column in display_status
-          pipelineType: type.pipelineType, // Store the pipeline type
+          displayStatus: initialStatus,
+          pipelineType: pipelineType,
         });
         
-        // Create a placeholder file for Kanban display
-        // This file links to the pipeline and shows in the correct Kanban column
         const { error: fileError } = await supabase
           .from('files')
           .insert({
@@ -120,28 +165,25 @@ export default function CreateNewModal({
             folder_id: folderId || null,
             name: 'Untitled',
             file_type: fileType,
-            status: initialStatus || 'draft', // Use Kanban column status
-            generation_params: { pipeline_id: newPipeline.id, pipeline_type: type.pipelineType },
+            status: initialStatus || 'draft',
+            generation_params: { pipeline_id: newPipeline.id, pipeline_type: pipelineType },
           });
         
         if (fileError) {
           console.error('Failed to create file entry:', fileError);
         }
         
-        // Store the created pipeline ID and open modal immediately
         setCreatedPipelineId(newPipeline.id);
         onOpenChange(false);
         setIsCreatingPipeline(false);
         setCreatingType(null);
         
-        // Open the appropriate modal based on pipeline type
-        if (type.pipelineType === 'clips') {
+        if (pipelineType === 'clips') {
           setBRollModalOpen(true);
         } else {
           setPipelineModalOpen(true);
         }
         
-        // Invalidate files query to show the new file in Kanban
         queryClient.invalidateQueries({ queryKey: ['files', projectId] });
       } catch (error) {
         console.error('Failed to create pipeline:', error);
@@ -155,6 +197,7 @@ export default function CreateNewModal({
   const handlePipelineClose = () => {
     setPipelineModalOpen(false);
     setBRollModalOpen(false);
+    setLipSyncModalOpen(false);
     setCreatedPipelineId(null);
     pipelineInitialStatusRef.current = undefined;
   };
@@ -238,6 +281,17 @@ export default function CreateNewModal({
           statusOptions={statusOptions}
         />
       )}
+
+      {/* Lip Sync Modal */}
+      <LipSyncModal
+        open={lipSyncModalOpen}
+        onClose={handlePipelineClose}
+        projectId={projectId}
+        folderId={folderId}
+        initialStatus={pipelineInitialStatusRef.current}
+        onSuccess={handlePipelineSuccess}
+        statusOptions={statusOptions}
+      />
     </>
   );
 }
