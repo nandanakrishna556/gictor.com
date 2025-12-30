@@ -195,8 +195,8 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
               />
               
               {image.status === 'uploading' && (
-                <div className="absolute inset-0 flex items-center justify-center bg-black/50">
-                  <Loader2 className="h-5 w-5 animate-spin text-white" />
+                <div className="absolute inset-0 flex items-center justify-center bg-background/80">
+                  <Loader2 className="h-5 w-5 animate-spin text-primary" />
                 </div>
               )}
               
@@ -204,7 +204,7 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
                 <div
                   onClick={(e) => { e.stopPropagation(); retryUpload(image.id); }}
                   title={image.error}
-                  className="absolute inset-0 flex cursor-pointer flex-col items-center justify-center bg-black/60 text-xs text-white"
+                  className="absolute inset-0 flex cursor-pointer flex-col items-center justify-center bg-background/80 text-xs text-foreground"
                 >
                   <AlertCircle className="h-4 w-4 text-destructive" />
                   <span className="mt-1">Retry</span>
@@ -212,8 +212,8 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
               )}
               
               {image.status === 'success' && (
-                <div className="absolute bottom-1 right-1 flex h-5 w-5 items-center justify-center rounded-full bg-green-500">
-                  <Check className="h-3 w-3 text-white" />
+                <div className="absolute bottom-1 right-1 flex h-5 w-5 items-center justify-center rounded-full bg-success">
+                  <Check className="h-3 w-3 text-success-foreground" />
                 </div>
               )}
               
@@ -223,9 +223,9 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
                   e.stopPropagation();
                   removeImage(image.id);
                 }}
-                className="absolute left-1 top-1 flex h-5 w-5 items-center justify-center rounded-full bg-black/60 opacity-0 transition-opacity hover:bg-black/80 group-hover:opacity-100"
+                className="absolute left-1 top-1 flex h-5 w-5 items-center justify-center rounded-full bg-foreground/70 opacity-0 transition-opacity hover:bg-foreground/90 group-hover:opacity-100"
               >
-                <X className="h-3 w-3 text-white" />
+                <X className="h-3 w-3 text-background" />
               </button>
             </div>
           ))}
