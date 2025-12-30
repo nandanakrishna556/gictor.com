@@ -6,19 +6,24 @@ import { z } from 'https://deno.land/x/zod@v3.22.4/mod.ts'
 const ALLOWED_ORIGINS = [
   'https://gictor.com',
   'https://www.gictor.com',
+  'https://promptgeist-studio.lovable.app',
   'https://lovable.dev',
+  'https://lovableproject.com',
   Deno.env.get('ALLOWED_ORIGIN') || '',
 ].filter(Boolean);
 
 function getCorsHeaders(req: Request) {
   const origin = req.headers.get('Origin') || '';
   const isAllowed = ALLOWED_ORIGINS.some(allowed => 
-    origin === allowed || origin.endsWith('.lovable.app') || origin.endsWith('.lovable.dev')
+    origin === allowed || 
+    origin.endsWith('.lovable.app') || 
+    origin.endsWith('.lovable.dev') ||
+    origin.endsWith('.lovableproject.com')
   );
   
   return {
     'Access-Control-Allow-Origin': isAllowed ? origin : ALLOWED_ORIGINS[0],
-    'Access-Control-Allow-Headers': 'authorization, x-api-key, content-type',
+    'Access-Control-Allow-Headers': 'authorization, x-api-key, x-client-info, apikey, content-type',
     'Access-Control-Allow-Methods': 'POST, OPTIONS',
     'Access-Control-Allow-Credentials': 'true',
   };

@@ -6,6 +6,7 @@ import { z } from 'https://deno.land/x/zod@v3.22.4/mod.ts'
 const ALLOWED_ORIGINS = [
   'https://gictor.com',
   'https://www.gictor.com',
+  'https://promptgeist-studio.lovable.app',
   'https://lovable.dev',
   'https://lovableproject.com',
   Deno.env.get('ALLOWED_ORIGIN') || '',
