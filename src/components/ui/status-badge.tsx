@@ -1,7 +1,7 @@
 import React from 'react';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
-import { Loader2, Check, X, Clock, AlertCircle } from 'lucide-react';
+import { Loader2, Check, X, Clock, AlertCircle, LucideIcon } from 'lucide-react';
 
 export type StatusType = 'processing' | 'completed' | 'failed' | 'draft' | 'review' | 'approved' | 'rejected' | 'active' | 'pending' | 'generating';
 
@@ -26,17 +26,17 @@ const STATUS_CONFIG: Record<StatusType, StatusConfig> = {
   pending: {
     label: 'Pending',
     className: 'bg-amber-500/10 text-amber-500 border-amber-500/20',
-    icon: <Clock className="h-3 w-3" />,
+    icon: <Clock className="h-3 w-3" strokeWidth={1.5} />,
   },
   completed: {
     label: 'Ready',
     className: 'bg-green-500/10 text-green-500 border-green-500/20',
-    icon: <Check className="h-3 w-3" />,
+    icon: <Check className="h-3 w-3" strokeWidth={1.5} />,
   },
   failed: {
     label: 'Failed',
     className: 'bg-destructive/10 text-destructive border-destructive/20',
-    icon: <AlertCircle className="h-3 w-3" />,
+    icon: <AlertCircle className="h-3 w-3" strokeWidth={1.5} />,
   },
   draft: {
     label: 'Draft',
@@ -49,12 +49,12 @@ const STATUS_CONFIG: Record<StatusType, StatusConfig> = {
   approved: {
     label: 'Approved',
     className: 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20',
-    icon: <Check className="h-3 w-3" />,
+    icon: <Check className="h-3 w-3" strokeWidth={1.5} />,
   },
   rejected: {
     label: 'Rejected',
     className: 'bg-red-500/10 text-red-500 border-red-500/20',
-    icon: <X className="h-3 w-3" />,
+    icon: <X className="h-3 w-3" strokeWidth={1.5} />,
   },
   active: {
     label: 'Active',

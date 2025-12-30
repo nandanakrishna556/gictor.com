@@ -1,5 +1,5 @@
 import React from 'react';
-import { Loader2, Play, AlertCircle, MoreHorizontal, Trash2, Edit, FileText, Film } from 'lucide-react';
+import { Loader2, Play, AlertCircle, MoreHorizontal, Trash2, Pencil, FileText, Film } from 'lucide-react';
 import { 
   DropdownMenu, 
   DropdownMenuContent, 
@@ -50,7 +50,7 @@ export const FileCard: React.FC<FileCardProps> = ({
       <div className="aspect-video bg-muted relative overflow-hidden">
         {status === 'processing' && (
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-muted">
-            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            <Loader2 className="h-8 w-8 animate-spin text-primary" strokeWidth={1.5} />
             <span className="text-sm text-muted-foreground">Generating...</span>
           </div>
         )}
@@ -78,7 +78,7 @@ export const FileCard: React.FC<FileCardProps> = ({
             />
             <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/20">
               <div className="w-12 h-12 rounded-full bg-primary/90 flex items-center justify-center">
-                <Play className="h-6 w-6 text-primary-foreground ml-0.5" />
+                <Play className="h-6 w-6 text-primary-foreground ml-0.5" strokeWidth={1.5} />
               </div>
             </div>
           </div>
@@ -86,21 +86,21 @@ export const FileCard: React.FC<FileCardProps> = ({
 
         {status === 'completed' && fileType === 'script' && (
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-muted">
-            <FileText className="h-12 w-12 text-muted-foreground/50" />
+            <FileText className="h-12 w-12 text-muted-foreground/50" strokeWidth={1.5} />
             <span className="text-sm text-muted-foreground">Script Ready</span>
           </div>
         )}
 
         {status === 'completed' && !previewUrl && (fileType === 'clips' || fileType === 'b_roll') && (
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-muted">
-            <Film className="h-12 w-12 text-muted-foreground/50" />
+            <Film className="h-12 w-12 text-muted-foreground/50" strokeWidth={1.5} />
             <span className="text-sm text-muted-foreground">Clip Ready</span>
           </div>
         )}
 
         {status === 'failed' && (
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-destructive/5 p-4">
-            <AlertCircle className="h-8 w-8 text-destructive" />
+            <AlertCircle className="h-8 w-8 text-destructive" strokeWidth={1.5} />
             <span className="text-sm text-destructive text-center line-clamp-2">
               {errorMessage || 'Generation failed'}
             </span>
@@ -113,16 +113,16 @@ export const FileCard: React.FC<FileCardProps> = ({
           <DropdownMenu>
             <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
               <Button variant="secondary" size="icon" className="h-8 w-8">
-                <MoreHorizontal className="h-4 w-4" />
+                <MoreHorizontal className="h-4 w-4" strokeWidth={1.5} />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
               <DropdownMenuItem onClick={onRename}>
-                <Edit className="h-4 w-4 mr-2" />
+                <Pencil className="h-4 w-4 mr-2" strokeWidth={1.5} />
                 Rename
               </DropdownMenuItem>
               <DropdownMenuItem onClick={onDelete} className="text-destructive">
-                <Trash2 className="h-4 w-4 mr-2" />
+                <Trash2 className="h-4 w-4 mr-2" strokeWidth={1.5} />
                 Delete
               </DropdownMenuItem>
             </DropdownMenuContent>

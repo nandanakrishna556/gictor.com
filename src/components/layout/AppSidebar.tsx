@@ -72,7 +72,7 @@ export default function AppSidebar() {
               : 'text-sidebar-muted hover:bg-sidebar-border/50 hover:text-sidebar-foreground'
           )}
         >
-          <LayoutDashboard className="h-4 w-4" strokeWidth={1.5} />
+          <LayoutDashboard className="h-[18px] w-[18px]" strokeWidth={1.5} />
           <span>Dashboard</span>
         </Link>
 
@@ -81,12 +81,16 @@ export default function AppSidebar() {
           <CollapsibleTrigger asChild>
             <button
               className={cn(
-                'flex w-full items-center gap-2 rounded-sm px-3 py-2.5 text-sm font-medium transition-fast cursor-pointer',
+                'flex w-full items-center justify-between rounded-sm px-3 py-2.5 text-sm font-medium transition-fast cursor-pointer',
                 isActive('/projects')
                   ? 'bg-primary/15 text-primary'
                   : 'text-sidebar-muted hover:bg-sidebar-border/50 hover:text-sidebar-foreground'
               )}
             >
+              <div className="flex items-center gap-2">
+                <Layers className="h-[18px] w-[18px]" strokeWidth={1.5} />
+                <span>Projects</span>
+              </div>
               <ChevronDown
                 className={cn(
                   'h-4 w-4 transition-transform',
@@ -94,8 +98,6 @@ export default function AppSidebar() {
                 )}
                 strokeWidth={1.5}
               />
-              <Layers className="h-4 w-4" strokeWidth={1.5} />
-              <span className="flex-1 text-left">Projects</span>
             </button>
           </CollapsibleTrigger>
 
@@ -212,7 +214,7 @@ export default function AppSidebar() {
               : 'text-sidebar-muted hover:bg-sidebar-border/50 hover:text-sidebar-foreground'
           )}
         >
-          <Settings className="h-4 w-4" strokeWidth={1.5} />
+          <Settings className="h-[18px] w-[18px]" strokeWidth={1.5} />
           <span>Settings</span>
         </Link>
         
@@ -221,7 +223,7 @@ export default function AppSidebar() {
           to="/billing"
           className="flex items-center gap-2.5 rounded-sm px-3 py-2.5 text-sm text-sidebar-muted transition-fast hover:bg-sidebar-border/50 hover:text-sidebar-foreground"
         >
-          <Coins className="h-4 w-4 text-primary" strokeWidth={1.5} />
+          <Coins className="h-[18px] w-[18px] text-primary" strokeWidth={1.5} />
           <span className="flex-1">{profile?.credits ?? 0} Credits</span>
           <Plus className="h-3.5 w-3.5" strokeWidth={1.5} />
         </Link>
@@ -230,9 +232,9 @@ export default function AppSidebar() {
         <div className="flex items-center justify-between rounded-sm px-3 py-2.5">
           <div className="flex items-center gap-2.5">
             {theme === 'dark' ? (
-              <Moon className="h-4 w-4 text-sidebar-muted" strokeWidth={1.5} />
+              <Moon className="h-[18px] w-[18px] text-sidebar-muted" strokeWidth={1.5} />
             ) : (
-              <Sun className="h-4 w-4 text-sidebar-muted" strokeWidth={1.5} />
+              <Sun className="h-[18px] w-[18px] text-sidebar-muted" strokeWidth={1.5} />
             )}
             <span className="text-sm text-sidebar-muted">Dark Mode</span>
           </div>

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Loader2, Play, AlertCircle, MoreHorizontal, Trash2, Edit } from 'lucide-react';
+import { Loader2, Play, AlertCircle, MoreHorizontal, Trash2, Pencil } from 'lucide-react';
 import { 
   DropdownMenu, 
   DropdownMenuContent, 
@@ -62,7 +62,7 @@ const ProcessingPreview: React.FC<{
             className="absolute inset-0 w-full h-full object-cover opacity-50"
           />
           <div className="absolute inset-0 bg-background/60 flex flex-col items-center justify-center gap-2">
-            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            <Loader2 className="h-8 w-8 animate-spin text-primary" strokeWidth={1.5} />
             <span className="text-sm text-muted-foreground">
               Generating{progress ? ` ${progress}%` : '...'}
             </span>
@@ -70,7 +70,7 @@ const ProcessingPreview: React.FC<{
         </>
       ) : (
         <>
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <Loader2 className="h-8 w-8 animate-spin text-primary" strokeWidth={1.5} />
           <span className="text-sm text-muted-foreground">
             Generating{progress ? ` ${progress}%` : '...'}
           </span>
@@ -102,7 +102,7 @@ const VideoPreview: React.FC<{
       />
       <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/20">
         <div className="w-12 h-12 rounded-full bg-primary/90 flex items-center justify-center">
-          <Play className="h-6 w-6 text-primary-foreground ml-0.5" />
+          <Play className="h-6 w-6 text-primary-foreground ml-0.5" strokeWidth={1.5} />
         </div>
       </div>
     </div>
@@ -129,7 +129,7 @@ const FailedPreview: React.FC<{
 }> = ({ errorMessage }) => {
   return (
     <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-destructive/5 p-4">
-      <AlertCircle className="h-8 w-8 text-destructive" />
+      <AlertCircle className="h-8 w-8 text-destructive" strokeWidth={1.5} />
       <span className="text-sm text-destructive text-center line-clamp-2">
         {errorMessage || 'Generation failed'}
       </span>
@@ -205,16 +205,16 @@ export const PipelineCard: React.FC<PipelineCardProps> = ({
           <DropdownMenu>
             <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
               <Button variant="secondary" size="icon" className="h-8 w-8">
-                <MoreHorizontal className="h-4 w-4" />
+                <MoreHorizontal className="h-4 w-4" strokeWidth={1.5} />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="bg-popover" onClick={(e) => e.stopPropagation()}>
               <DropdownMenuItem onClick={onRename}>
-                <Edit className="h-4 w-4 mr-2" />
+                <Pencil className="h-4 w-4 mr-2" strokeWidth={1.5} />
                 Rename
               </DropdownMenuItem>
               <DropdownMenuItem onClick={onDelete} className="text-destructive">
-                <Trash2 className="h-4 w-4 mr-2" />
+                <Trash2 className="h-4 w-4 mr-2" strokeWidth={1.5} />
                 Delete
               </DropdownMenuItem>
             </DropdownMenuContent>
