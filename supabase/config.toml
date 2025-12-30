@@ -5,3 +5,6 @@ verify_jwt = false
 
 [functions.elevenlabs-voices]
 verify_jwt = false
+
+[functions.trigger-generation]
+verify_jwt = true
