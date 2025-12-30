@@ -5,9 +5,6 @@ import {
   calculateVideoCost 
 } from '@/types/pipeline';
 
-const N8N_WEBHOOK_URL = import.meta.env.VITE_N8N_WEBHOOK_URL || '';
-const N8N_API_KEY = import.meta.env.VITE_N8N_API_KEY || '';
-
 export type PipelineGenerationType = 
   | 'pipeline_first_frame' 
   | 'pipeline_first_frame_b_roll'
@@ -20,7 +17,7 @@ interface GenerationResult {
   error?: string;
 }
 
-// Deduct credits and call n8n
+// Deduct credits and call edge function (which proxies to n8n securely)
 async function executeGeneration(
   type: PipelineGenerationType,
   payload: Record<string, unknown>,
@@ -56,31 +53,33 @@ async function executeGeneration(
       description: `Pipeline ${type.replace('pipeline_', '')} generation`
     });
 
-    // Call n8n webhook
-    const response = await fetch(N8N_WEBHOOK_URL, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': N8N_API_KEY,
-      },
-      body: JSON.stringify({ 
+    // Call secure edge function (n8n API key stays server-side)
+    const { data, error } = await supabase.functions.invoke('trigger-generation', {
+      body: { 
         type, 
         payload: {
           ...payload,
-          user_id: user.id,
           credits_cost: creditsCost,
         }
-      }),
+      },
     });
 
-    if (!response.ok) {
+    if (error) {
+      console.error('Edge function error:', error);
       // Refund on failure
       await refundCredits(user.id, creditsCost, type);
-      return { success: false, error: 'Generation service error' };
+      return { success: false, error: error.message || 'Generation service error' };
+    }
+
+    if (!data?.success) {
+      // Refund on failure
+      await refundCredits(user.id, creditsCost, type);
+      return { success: false, error: data?.error || 'Generation failed' };
     }
 
     return { success: true };
   } catch (error) {
+    console.error('Generation error:', error);
     return { success: false, error: 'Network error' };
   }
 }
@@ -155,7 +154,7 @@ export async function generateBRollFirstFrame(
     aspect_ratio: input.aspect_ratio,
     reference_images: referenceImages,
     is_edit: isEdit,
-    pipeline_type: 'b_roll', // Differentiate from talking_head
+    pipeline_type: 'clips',
   }, PIPELINE_CREDITS.first_frame);
 }
 

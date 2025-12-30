@@ -1,8 +1,5 @@
 import { supabase } from '@/integrations/supabase/client';
 
-const N8N_WEBHOOK_URL = import.meta.env.VITE_N8N_WEBHOOK_URL || '';
-const N8N_API_KEY = import.meta.env.VITE_N8N_API_KEY || '';
-
 export type GenerationType = 'first_frame' | 'talking_head' | 'script';
 
 // Error types for better user messaging
@@ -12,6 +9,7 @@ export type GenerationErrorType =
   | 'insufficient_credits'
   | 'service_unavailable'
   | 'validation_error'
+  | 'rate_limit_exceeded'
   | 'unknown_error';
 
 export interface GenerationError {
@@ -32,6 +30,8 @@ const getErrorMessage = (type: GenerationErrorType): string => {
       return 'The generation service is temporarily unavailable. Please try again in a few minutes.';
     case 'validation_error':
       return 'Invalid request. Please check your inputs and try again.';
+    case 'rate_limit_exceeded':
+      return 'Too many requests. Please wait a moment and try again.';
     default:
       return 'An unexpected error occurred. Please try again.';
   }
@@ -85,19 +85,6 @@ export async function startGeneration(
   type: GenerationType,
   payload: GenerationPayload
 ): Promise<GenerationResult> {
-  // Validate webhook URL is configured
-  if (!N8N_WEBHOOK_URL) {
-    console.error('N8N_WEBHOOK_URL is not configured');
-    return {
-      success: false,
-      error: {
-        type: 'service_unavailable',
-        message: 'Webhook URL not configured',
-        userMessage: getErrorMessage('service_unavailable'),
-      },
-    };
-  }
-
   try {
     // Create file record in database first
     const { error: dbError } = await supabase.from('files').insert([{
@@ -186,70 +173,26 @@ export async function startGeneration(
       description: `${type} generation`
     }]);
 
-    // Send to n8n webhook with timeout
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
+    // Call secure edge function (n8n API key stays server-side)
+    const { data, error: invokeError } = await supabase.functions.invoke('trigger-generation', {
+      body: { type, payload },
+    });
 
-    try {
-      const response = await fetch(N8N_WEBHOOK_URL, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-api-key': N8N_API_KEY,
-        },
-        body: JSON.stringify({ type, payload }),
-        signal: controller.signal,
-      });
-
-      clearTimeout(timeoutId);
-
-      if (!response.ok) {
-        const statusCode = response.status;
-        let errorType: GenerationErrorType = 'service_unavailable';
-        let errorMessage = 'Generation service returned an error';
-
-        if (statusCode === 401 || statusCode === 403) {
-          errorType = 'auth_error';
-          errorMessage = 'Authentication with generation service failed';
-        } else if (statusCode === 400 || statusCode === 422) {
-          errorType = 'validation_error';
-          errorMessage = 'Invalid generation request';
-        } else if (statusCode >= 500) {
-          errorType = 'service_unavailable';
-          errorMessage = 'Generation service is temporarily unavailable';
-        }
-
-        // Update file status to failed
-        await supabase.from('files').update({
-          status: 'failed',
-          error_message: errorMessage,
-        }).eq('id', payload.file_id);
-
-        // Refund credits
-        await refundCredits(user.id, payload.credits_cost, type);
-
-        return {
-          success: false,
-          error: {
-            type: errorType,
-            message: errorMessage,
-            userMessage: getErrorMessage(errorType),
-          },
-        };
-      }
-
-      return { success: true, file_id: payload.file_id };
-    } catch (fetchError) {
-      clearTimeout(timeoutId);
-
+    if (invokeError) {
+      console.error('Edge function error:', invokeError);
+      
       // Determine error type
-      const isAbortError = fetchError instanceof DOMException && fetchError.name === 'AbortError';
-      const isNetworkError = fetchError instanceof TypeError;
+      let errorType: GenerationErrorType = 'service_unavailable';
+      if (invokeError.message?.includes('rate limit')) {
+        errorType = 'rate_limit_exceeded';
+      } else if (invokeError.message?.includes('Unauthorized')) {
+        errorType = 'auth_error';
+      }
 
       // Update file status to failed
       await supabase.from('files').update({
         status: 'failed',
-        error_message: isAbortError ? 'Request timed out' : 'Network error',
+        error_message: invokeError.message,
       }).eq('id', payload.file_id);
 
       // Refund credits
@@ -258,14 +201,34 @@ export async function startGeneration(
       return {
         success: false,
         error: {
-          type: isAbortError ? 'service_unavailable' : 'network_error',
-          message: isAbortError ? 'Request timed out' : 'Network error',
-          userMessage: isAbortError
-            ? 'The request timed out. Please try again.'
-            : getErrorMessage('network_error'),
+          type: errorType,
+          message: invokeError.message,
+          userMessage: getErrorMessage(errorType),
         },
       };
     }
+
+    if (!data?.success) {
+      // Update file status to failed
+      await supabase.from('files').update({
+        status: 'failed',
+        error_message: data?.error || 'Generation failed',
+      }).eq('id', payload.file_id);
+
+      // Refund credits
+      await refundCredits(user.id, payload.credits_cost, type);
+
+      return {
+        success: false,
+        error: {
+          type: 'service_unavailable',
+          message: data?.error || 'Generation failed',
+          userMessage: getErrorMessage('service_unavailable'),
+        },
+      };
+    }
+
+    return { success: true, file_id: payload.file_id };
   } catch (error) {
     console.error('Generation error:', error);
     return {
