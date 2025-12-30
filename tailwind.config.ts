@@ -131,6 +131,9 @@ export default {
           from: { transform: "translateX(0)" },
           to: { transform: "translateX(-100%)" },
         },
+        "shimmer": {
+          "100%": { transform: "translateX(100%)" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.15s ease-out",
@@ -140,6 +143,7 @@ export default {
         "scale-in": "scale-in 0.15s ease-out",
         "slide-in-left": "slide-in-left 0.2s ease-out",
         "slide-out-left": "slide-out-left 0.2s ease-out",
+        "shimmer": "shimmer 2s infinite",
       },
     },
   },
