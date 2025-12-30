@@ -12,7 +12,7 @@ import { Input } from '@/components/ui/input';
 import { Progress } from '@/components/ui/progress';
 import { SingleImageUpload } from '@/components/ui/single-image-upload';
 import { VideoPlayer } from '@/components/ui/video-player';
-import { AudioWaveform } from '@/components/ui/audio-waveform';
+import { AudioPlayer } from '@/components/ui/audio-player';
 import LocationSelector from '@/components/forms/LocationSelector';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -615,22 +615,12 @@ export default function LipSyncModal({
                 </p>
                 
                 {audioUrl ? (
-                  <div className="relative group rounded-xl border border-border bg-secondary/30 p-4">
-                    <AudioWaveform
-                      audioUrl={audioUrl}
-                      onReady={(dur) => setAudioDuration(dur)}
-                      showControls={true}
-                      height={60}
-                    />
-                    
-                    <button
-                      type="button"
-                      onClick={removeAudio}
-                      className="absolute -left-2 -top-2 z-10 rounded-full bg-foreground/80 p-1.5 text-background backdrop-blur transition-all duration-200 hover:bg-foreground opacity-0 group-hover:opacity-100"
-                    >
-                      <X className="h-4 w-4" />
-                    </button>
-                  </div>
+                  <AudioPlayer
+                    audioUrl={audioUrl}
+                    onRemove={removeAudio}
+                    onDurationChange={(dur) => setAudioDuration(dur)}
+                    showRemove={true}
+                  />
                 ) : (
                   <div
                     onDrop={(e) => {
