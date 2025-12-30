@@ -1,8 +1,8 @@
 import React from 'react';
-import { FileText, Image as ImageIcon, Video, Film, Folder, LucideIcon } from 'lucide-react';
+import { FileText, Image as ImageIcon, Video, Film, Folder, Mic, LucideIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-export type FileType = 'first_frame' | 'talking_head' | 'script' | 'clips' | 'b_roll' | 'folder';
+export type FileType = 'first_frame' | 'talking_head' | 'script' | 'clips' | 'b_roll' | 'folder' | 'lip_sync' | 'audio' | 'voice' | 'veo3';
 
 interface FileTypeIconProps {
   fileType: FileType;
@@ -21,9 +21,19 @@ const FILE_TYPE_CONFIG: Record<FileType, { icon: LucideIcon; label: string; colo
     label: 'Talking Head',
     color: 'text-primary',
   },
+  lip_sync: {
+    icon: Video,
+    label: 'Lip Sync',
+    color: 'text-primary',
+  },
   clips: {
     icon: Film,
     label: 'Clips',
+    color: 'text-primary',
+  },
+  veo3: {
+    icon: Film,
+    label: 'Veo3',
     color: 'text-primary',
   },
   b_roll: {
@@ -35,6 +45,16 @@ const FILE_TYPE_CONFIG: Record<FileType, { icon: LucideIcon; label: string; colo
     icon: FileText,
     label: 'Script',
     color: 'text-muted-foreground',
+  },
+  audio: {
+    icon: Mic,
+    label: 'Audio',
+    color: 'text-violet-500',
+  },
+  voice: {
+    icon: Mic,
+    label: 'Voice',
+    color: 'text-violet-500',
   },
   folder: {
     icon: Folder,
