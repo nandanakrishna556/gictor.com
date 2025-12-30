@@ -12,6 +12,7 @@ import Projects from "./pages/Projects";
 import ProjectDetail from "./pages/ProjectDetail";
 import Settings from "./pages/Settings";
 import Billing from "./pages/Billing";
+import Actors from "./pages/Actors";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -72,6 +73,14 @@ const App = () => (
                 element={
                   <ProtectedRoute>
                     <Billing />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/actors"
+                element={
+                  <ProtectedRoute>
+                    <Actors />
                   </ProtectedRoute>
                 }
               />
