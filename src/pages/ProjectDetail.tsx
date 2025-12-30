@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import MainLayout from '@/components/layout/MainLayout';
 import AppHeader from '@/components/layout/AppHeader';
+import { ProjectDetailSkeleton } from '@/components/files/ProjectDetailSkeleton';
 import FileGrid from '@/components/files/FileGrid';
 import CreateNewModal from '@/components/modals/CreateNewModal';
 import CreateFolderDialog from '@/components/modals/CreateFolderDialog';
@@ -378,14 +379,7 @@ export default function ProjectDetail() {
 
         <div className="flex-1 overflow-y-auto p-3 sm:p-4 md:p-6">
           {isLoading ? (
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-              {[...Array(4)].map((_, i) => (
-                <div
-                  key={i}
-                  className="h-48 animate-pulse rounded-2xl bg-secondary"
-                />
-              ))}
-            </div>
+            <ProjectDetailSkeleton />
           ) : viewMode === 'kanban' ? (
             // Always show FileGrid for kanban view (so pipeline controls are visible even when empty)
             <FileGrid
