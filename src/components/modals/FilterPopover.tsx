@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Filter, Plus, Tag, Trash2, ChevronDown, ChevronRight } from 'lucide-react';
+import { SlidersHorizontal, Plus, Tag, Trash2, ChevronDown, ChevronRight } from 'lucide-react';
 import {
   Popover,
   PopoverContent,
@@ -94,7 +94,7 @@ export default function FilterPopover({
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <Button variant="ghost" size="sm" className="gap-2 text-muted-foreground">
-          <Filter className="h-4 w-4" />
+          <SlidersHorizontal className="h-4 w-4" strokeWidth={1.5} />
           Filters
           {activeFiltersCount > 0 && (
             <Badge variant="secondary" className="ml-1 h-5 w-5 rounded-full p-0 text-xs">
@@ -125,9 +125,9 @@ export default function FilterPopover({
             <CollapsibleTrigger className="flex w-full items-center justify-between py-1">
               <h4 className="text-sm font-medium text-muted-foreground">Status</h4>
               {statusOpen ? (
-                <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                <ChevronDown className="h-4 w-4 text-muted-foreground" strokeWidth={1.5} />
               ) : (
-                <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                <ChevronRight className="h-4 w-4 text-muted-foreground" strokeWidth={1.5} />
               )}
             </CollapsibleTrigger>
             <CollapsibleContent className="space-y-1 pt-1">
@@ -156,9 +156,9 @@ export default function FilterPopover({
             <CollapsibleTrigger className="flex w-full items-center justify-between py-1">
               <h4 className="text-sm font-medium text-muted-foreground">File Type</h4>
               {fileTypeOpen ? (
-                <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                <ChevronDown className="h-4 w-4 text-muted-foreground" strokeWidth={1.5} />
               ) : (
-                <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                <ChevronRight className="h-4 w-4 text-muted-foreground" strokeWidth={1.5} />
               )}
             </CollapsibleTrigger>
             <CollapsibleContent className="space-y-1 pt-1">
@@ -194,13 +194,13 @@ export default function FilterPopover({
                   }}
                   className="flex items-center gap-1 text-xs text-primary hover:underline"
                 >
-                  <Plus className="h-3 w-3" />
+                  <Plus className="h-3 w-3" strokeWidth={1.5} />
                   New tag
                 </button>
                 {tagsOpen ? (
-                  <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                  <ChevronDown className="h-4 w-4 text-muted-foreground" strokeWidth={1.5} />
                 ) : (
-                  <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                  <ChevronRight className="h-4 w-4 text-muted-foreground" strokeWidth={1.5} />
                 )}
               </div>
             </CollapsibleTrigger>
@@ -221,7 +221,7 @@ export default function FilterPopover({
                       onCheckedChange={() => toggleTag(tag.id)}
                       onClick={(e) => e.stopPropagation()}
                     />
-                    <Tag className="h-3 w-3 flex-shrink-0" style={{ color: tag.color }} />
+                    <Tag className="h-3 w-3 flex-shrink-0" style={{ color: tag.color }} strokeWidth={1.5} />
                     <span className="flex-1 text-sm truncate">{tag.tag_name}</span>
                     {onDeleteTag && (
                       <button
@@ -232,7 +232,7 @@ export default function FilterPopover({
                         className="rounded p-0.5 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
                         title="Delete tag"
                       >
-                        <Trash2 className="h-3.5 w-3.5" />
+                        <Trash2 className="h-3.5 w-3.5" strokeWidth={1.5} />
                       </button>
                     )}
                   </div>

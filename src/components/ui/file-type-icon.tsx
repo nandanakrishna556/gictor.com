@@ -59,7 +59,8 @@ export function FileTypeIcon({ fileType, className, size = 'md' }: FileTypeIconP
         SIZE_CLASSES[size],
         config.color,
         className
-      )} 
+      )}
+      strokeWidth={1.5}
     />
   );
 }
