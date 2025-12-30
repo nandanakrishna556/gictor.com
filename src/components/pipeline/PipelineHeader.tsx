@@ -74,8 +74,9 @@ export default function PipelineHeader({
       
       <Select value={displayStatus} onValueChange={onStatusChange}>
         <SelectTrigger className={cn(
-          "h-7 w-fit rounded-md text-xs border-0 px-3 py-1 text-white gap-1",
-          currentStatusOption.color
+          "h-7 w-fit rounded-md text-xs border-0 px-3 py-1 gap-1",
+          currentStatusOption.color,
+          "text-primary-foreground"
         )}>
           <SelectValue />
         </SelectTrigger>

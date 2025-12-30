@@ -42,7 +42,7 @@ export default function PipelineTabNavigation({
                 "flex-1 flex items-center justify-center gap-2 px-4 py-3 transition-all relative",
                 isAccessible ? "cursor-pointer" : "cursor-not-allowed opacity-50",
                 isActive 
-                  ? "bg-[hsl(24,100%,60%)] text-white" 
+                  ? "bg-primary text-primary-foreground" 
                   : "bg-muted/30 hover:bg-muted/50 text-muted-foreground"
               )}
             >

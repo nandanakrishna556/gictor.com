@@ -85,7 +85,7 @@ export const FileCard: React.FC<FileCardProps> = ({
                 e.currentTarget.currentTime = 0;
               }}
             />
-            <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/20">
+            <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-foreground/10">
               <div className="w-12 h-12 rounded-full bg-primary/90 flex items-center justify-center">
                 <Play className="h-6 w-6 text-primary-foreground ml-0.5" strokeWidth={1.5} />
               </div>
