@@ -53,6 +53,13 @@ async function executeGeneration(
       description: `Pipeline ${type.replace('pipeline_', '')} generation`
     });
 
+    // Ensure we have a fresh session before calling edge function
+    const { data: sessionData } = await supabase.auth.getSession();
+    if (!sessionData?.session) {
+      // Try to refresh the session
+      await supabase.auth.refreshSession();
+    }
+
     // Call secure edge function (n8n API key stays server-side)
     const { data, error } = await supabase.functions.invoke('trigger-generation', {
       body: { 
