@@ -89,10 +89,10 @@ export default {
         },
       },
       borderRadius: {
-        lg: "var(--radius-lg)",
-        md: "var(--radius-md)",
-        sm: "var(--radius-sm)",
-        xs: "var(--radius-xs)",
+        lg: "0.75rem",
+        md: "0.625rem",
+        sm: "0.375rem",
+        xs: "0.375rem",
       },
       boxShadow: {
         'card': '0 1px 3px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04)',
