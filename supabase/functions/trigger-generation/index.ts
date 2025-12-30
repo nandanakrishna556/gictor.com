@@ -137,24 +137,28 @@ serve(async (req) => {
     }
 
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-    const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
+    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     
-    console.log('Supabase URL:', supabaseUrl);
-    console.log('Anon key present:', !!supabaseAnonKey);
-    
-    // Create client with user's auth token
-    const supabase = createClient(supabaseUrl, supabaseAnonKey, {
-      global: { headers: { Authorization: authHeader } }
-    });
+    // Use service role key to bypass RLS and validate the token
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    const { data: userData, error: authError } = await supabase.auth.getUser();
+    // Extract token from header
+    const token = authHeader.replace('Bearer ', '');
     
-    console.log('Auth result:', { hasUser: !!userData?.user, userId: userData?.user?.id, error: authError?.message });
+    // Get user from token directly
+    const { data: userData, error: authError } = await supabase.auth.getUser(token);
+    
+    console.log('Auth debug:', { 
+      hasToken: !!token, 
+      tokenPrefix: token?.substring(0, 20),
+      userId: userData?.user?.id, 
+      authError: authError?.message 
+    });
     
     if (authError || !userData?.user) {
       console.error('Auth error:', authError);
       return new Response(
-        JSON.stringify({ success: false, error: 'Unauthorized - invalid token', details: authError?.message }),
+        JSON.stringify({ success: false, error: 'Unauthorized', details: authError?.message }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
