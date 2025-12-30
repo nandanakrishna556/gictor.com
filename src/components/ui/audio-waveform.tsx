@@ -54,6 +54,11 @@ export function AudioWaveform({
       wavesurferRef.current.destroy();
     }
 
+    // Create audio element with CORS support for cross-origin audio files
+    const audio = new Audio();
+    audio.crossOrigin = 'anonymous';
+    audio.src = audioUrl;
+
     const wavesurfer = WaveSurfer.create({
       container: containerRef.current,
       waveColor: 'hsl(240, 4%, 46%)',
@@ -65,12 +70,10 @@ export function AudioWaveform({
       barGap: 2,
       barRadius: 2,
       normalize: true,
-      backend: 'WebAudio',
+      media: audio, // Use pre-created audio element with CORS
     });
 
     wavesurferRef.current = wavesurfer;
-
-    wavesurfer.load(audioUrl);
 
     wavesurfer.on('ready', () => {
       const dur = wavesurfer.getDuration();
