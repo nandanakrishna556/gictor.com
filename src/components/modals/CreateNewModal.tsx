@@ -10,7 +10,7 @@ import {
 } from '@/components/ui/dialog';
 import PipelineModal from '@/components/pipeline/PipelineModal';
 import ClipsPipelineModal from '@/components/pipeline/ClipsPipelineModal';
-import LipSyncModal from '@/components/modals/LipSyncModal';
+import TalkingHeadModal from '@/components/modals/TalkingHeadModal';
 import { usePipeline } from '@/hooks/usePipeline';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -35,7 +35,7 @@ interface CreateNewModalProps {
 }
 
 type PipelineType = 'talking_head' | 'clips';
-type QuickGenType = 'lip_sync' | 'audio' | 'first_frame' | 'veo3' | 'script';
+type QuickGenType = 'talking_head' | 'audio' | 'first_frame' | 'b_roll' | 'script';
 
 const contentTypes = [
   {
@@ -46,9 +46,9 @@ const contentTypes = [
     isFolder: true,
   },
   {
-    id: 'lip_sync' as const,
+    id: 'talking_head' as const,
     icon: Video,
-    title: 'Lip Sync',
+    title: 'Talking Head',
     description: 'Sync audio to face',
     isQuickGen: true,
   },
@@ -67,10 +67,10 @@ const contentTypes = [
     isQuickGen: true,
   },
   {
-    id: 'veo3' as const,
+    id: 'b_roll' as const,
     icon: Film,
-    title: 'Veo3',
-    description: 'Generate video clip',
+    title: 'B-Roll',
+    description: 'Generate video from image',
     isQuickGen: true,
   },
   {
@@ -82,9 +82,9 @@ const contentTypes = [
   },
   // TEMPORARILY HIDDEN - Re-enable by uncommenting:
   // {
-  //   id: 'talking_head' as const,
+  //   id: 'talking_head_pipeline' as const,
   //   icon: Video,
-  //   title: 'Talking Head',
+  //   title: 'Talking Head Pipeline',
   //   description: 'Create with AI pipeline',
   //   isPipeline: true,
   //   pipelineType: 'talking_head' as PipelineType,
@@ -111,7 +111,7 @@ export default function CreateNewModal({
   const queryClient = useQueryClient();
   const [pipelineModalOpen, setPipelineModalOpen] = useState(false);
   const [bRollModalOpen, setBRollModalOpen] = useState(false);
-  const [lipSyncModalOpen, setLipSyncModalOpen] = useState(false);
+  const [talkingHeadModalOpen, setTalkingHeadModalOpen] = useState(false);
   const [createdPipelineId, setCreatedPipelineId] = useState<string | null>(null);
   const [createdFileId, setCreatedFileId] = useState<string | null>(null);
   const [isCreatingPipeline, setIsCreatingPipeline] = useState(false);
@@ -133,7 +133,7 @@ export default function CreateNewModal({
       onCreateFolder?.(initialStatus);
     } else if ('isQuickGen' in type && type.isQuickGen) {
       // Handle quick generation types - create file record first
-      if (type.id === 'lip_sync') {
+      if (type.id === 'talking_head') {
         setIsCreatingPipeline(true);
         setCreatingType(type.id);
         pipelineInitialStatusRef.current = initialStatus;
@@ -149,7 +149,7 @@ export default function CreateNewModal({
               project_id: projectId,
               folder_id: folderId || null,
               name: 'Untitled',
-              file_type: 'lip_sync',
+              file_type: 'talking_head',
               status: initialStatus || 'draft',
               generation_params: {},
             });
@@ -162,7 +162,7 @@ export default function CreateNewModal({
           onOpenChange(false);
           setIsCreatingPipeline(false);
           setCreatingType(null);
-          setLipSyncModalOpen(true);
+          setTalkingHeadModalOpen(true);
           
           queryClient.invalidateQueries({ queryKey: ['files', projectId] });
         } catch (error) {
@@ -233,7 +233,7 @@ export default function CreateNewModal({
   const handlePipelineClose = () => {
     setPipelineModalOpen(false);
     setBRollModalOpen(false);
-    setLipSyncModalOpen(false);
+    setTalkingHeadModalOpen(false);
     setCreatedPipelineId(null);
     setCreatedFileId(null);
     pipelineInitialStatusRef.current = undefined;
@@ -319,10 +319,10 @@ export default function CreateNewModal({
         />
       )}
 
-      {/* Lip Sync Modal */}
-      {createdFileId && lipSyncModalOpen && (
-        <LipSyncModal
-          open={lipSyncModalOpen}
+      {/* Talking Head Modal */}
+      {createdFileId && talkingHeadModalOpen && (
+        <TalkingHeadModal
+          open={talkingHeadModalOpen}
           onClose={handlePipelineClose}
           fileId={createdFileId}
           projectId={projectId}

@@ -27,7 +27,7 @@ interface StatusOption {
   color: string;
 }
 
-interface LipSyncModalProps {
+interface TalkingHeadModalProps {
   open: boolean;
   onClose: () => void;
   fileId: string;
@@ -49,7 +49,7 @@ const MIN_AUDIO_SECONDS = 5;
 const MAX_AUDIO_SECONDS = 600; // 10 minutes
 const CREDIT_COST = 1.0;
 
-export default function LipSyncModal({
+export default function TalkingHeadModal({
   open,
   onClose,
   fileId,
@@ -58,7 +58,7 @@ export default function LipSyncModal({
   initialStatus,
   onSuccess,
   statusOptions = DEFAULT_STATUS_OPTIONS,
-}: LipSyncModalProps) {
+}: TalkingHeadModalProps) {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const { tags, createTag } = useTags();
@@ -327,7 +327,7 @@ export default function LipSyncModal({
       // Call edge function
       const { data, error } = await supabase.functions.invoke('trigger-generation', {
         body: {
-          type: 'lip_sync',
+          type: 'talking_head',
           payload: {
             file_id: fileId,
             user_id: user.id,
@@ -502,7 +502,7 @@ export default function LipSyncModal({
             <Button variant="ghost" size="icon" className="h-8 w-8" onClick={handleClose}>
               <ArrowLeft className="h-4 w-4" strokeWidth={1.5} />
             </Button>
-            <h2 className="text-lg font-semibold">Lip Sync</h2>
+            <h2 className="text-lg font-semibold">Talking Head</h2>
             
             <div className="h-5 w-px bg-border" />
             

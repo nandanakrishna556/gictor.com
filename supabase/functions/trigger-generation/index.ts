@@ -84,7 +84,7 @@ const PipelinePayloadSchema = z.object({
 });
 
 const FilePayloadSchema = z.object({
-  type: z.enum(['first_frame', 'talking_head', 'script']),
+  type: z.enum(['first_frame', 'talking_head', 'script', 'audio', 'b_roll']),
   payload: z.object({
     file_id: z.string().uuid(),
     project_id: z.string().uuid(),
@@ -99,6 +99,8 @@ const FilePayloadSchema = z.object({
     script: z.string().max(10000).optional(),
     voice_id: z.string().optional(),
     image_url: z.string().url().optional(),
+    audio_url: z.string().url().optional(),
+    audio_duration: z.number().positive().max(600).optional(),
     resolution: z.enum(['480p', '720p', '1080p']).optional(),
     description: z.string().max(2000).optional(),
     script_type: z.enum(['sales', 'educational', 'entertainment', 'tutorial', 'story', 'other']).optional(),

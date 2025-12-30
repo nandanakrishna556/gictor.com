@@ -1,6 +1,6 @@
 import { supabase } from '@/integrations/supabase/client';
 
-export type GenerationType = 'first_frame' | 'talking_head' | 'script' | 'lip_sync';
+export type GenerationType = 'first_frame' | 'talking_head' | 'script' | 'audio' | 'b_roll';
 
 // Error types for better user messaging
 export type GenerationErrorType = 
@@ -67,19 +67,20 @@ interface ScriptPayload extends BasePayload {
   duration_seconds: number;
 }
 
-interface LipSyncPayload extends BasePayload {
+interface TalkingHeadQuickPayload extends BasePayload {
   image_url: string;
   audio_url: string;
   audio_duration: number;
 }
 
-type GenerationPayload = FirstFramePayload | TalkingHeadPayload | ScriptPayload | LipSyncPayload;
+type GenerationPayload = FirstFramePayload | TalkingHeadPayload | ScriptPayload | TalkingHeadQuickPayload;
 
 export const CREDIT_COSTS = {
   first_frame: 0.25,
   talking_head: 1.0,
   script: 0.5,
-  lip_sync: 1.0,
+  audio: 0.5,
+  b_roll: 2.0,
 };
 
 export interface GenerationResult {
