@@ -2,10 +2,10 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { useQueryClient, useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { v4 as uuidv4 } from 'uuid';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTags } from '@/hooks/useTags';
-import { useProjects } from '@/hooks/useProjects';
+import { useProfile } from '@/hooks/useProfile';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -30,6 +30,7 @@ interface StatusOption {
 interface LipSyncModalProps {
   open: boolean;
   onClose: () => void;
+  fileId: string;
   projectId: string;
   folderId?: string;
   initialStatus?: string;
@@ -48,32 +49,10 @@ const MIN_AUDIO_SECONDS = 5;
 const MAX_AUDIO_SECONDS = 600; // 10 minutes
 const CREDIT_COST = 1.0;
 
-// Hook to subscribe to single file updates
-function useSingleFileRealtime(fileId: string | null) {
-  const queryClient = useQueryClient();
-  
-  const { data: file } = useQuery({
-    queryKey: ['file', fileId],
-    queryFn: async () => {
-      if (!fileId) return null;
-      const { data, error } = await supabase
-        .from('files')
-        .select('*')
-        .eq('id', fileId)
-        .single();
-      if (error) throw error;
-      return data;
-    },
-    enabled: !!fileId,
-    refetchInterval: fileId ? 2000 : false, // Poll every 2 seconds when generating
-  });
-  
-  return { file };
-}
-
 export default function LipSyncModal({
   open,
   onClose,
+  fileId,
   projectId,
   folderId,
   initialStatus,
@@ -83,14 +62,24 @@ export default function LipSyncModal({
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const { tags, createTag } = useTags();
-  const { projects } = useProjects();
+  const { profile } = useProfile();
+  
+  // Core state
+  const initialStatusRef = useRef(initialStatus);
+  initialStatusRef.current = initialStatus;
+  const fileLoadedRef = useRef(false);
   
   const [name, setName] = useState('Untitled');
   const [currentProjectId, setCurrentProjectId] = useState(projectId);
   const [currentFolderId, setCurrentFolderId] = useState(folderId);
   const [displayStatus, setDisplayStatus] = useState(initialStatus || 'draft');
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [showUnsavedWarning, setShowUnsavedWarning] = useState(false);
+  
+  // Auto-save state
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
+  const autoSaveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   
   // Input state
   const [imageUrl, setImageUrl] = useState<string | undefined>();
@@ -106,11 +95,23 @@ export default function LipSyncModal({
   
   // Generation state
   const [isGenerating, setIsGenerating] = useState(false);
-  const [fileId, setFileId] = useState<string | null>(null);
   const [generationProgress, setGenerationProgress] = useState(0);
   
-  // Subscribe to file updates
-  const { file: generatedFile } = useSingleFileRealtime(isGenerating ? fileId : null);
+  // Fetch file data
+  const { data: file } = useQuery({
+    queryKey: ['file', fileId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('files')
+        .select('*')
+        .eq('id', fileId)
+        .single();
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!fileId,
+    refetchInterval: isGenerating ? 2000 : false,
+  });
   
   // Get current status option
   const currentStatusOption = statusOptions.find(s => s.value === displayStatus) || statusOptions[0];
@@ -122,23 +123,98 @@ export default function LipSyncModal({
     color: t.color || '#8E8E93',
   })) || [];
   
-  // Update progress when file updates
+  // Sync file data when loaded
   useEffect(() => {
-    if (generatedFile) {
-      if (generatedFile.status === 'complete' && generatedFile.download_url) {
+    if (file && !fileLoadedRef.current) {
+      fileLoadedRef.current = true;
+      setName(file.name);
+      setDisplayStatus(file.status || initialStatusRef.current || 'draft');
+      setSelectedTags(file.tags || []);
+      
+      // Restore generation params if any
+      const params = file.generation_params as any;
+      if (params?.image_url) setImageUrl(params.image_url);
+      if (params?.audio_url) {
+        setAudioUrl(params.audio_url);
+        setAudioDuration(params.audio_duration || 0);
+      }
+      
+      // Check if generation is in progress
+      if (file.status === 'processing') {
+        setIsGenerating(true);
+        setGenerationProgress(file.progress || 0);
+      }
+    }
+  }, [file]);
+  
+  // Update progress when file updates during generation
+  useEffect(() => {
+    if (file && isGenerating) {
+      if (file.status === 'completed' && file.download_url) {
         setIsGenerating(false);
         setGenerationProgress(100);
         toast.success('Lip sync video generated!');
         onSuccess?.();
-      } else if (generatedFile.status === 'failed') {
+      } else if (file.status === 'failed') {
         setIsGenerating(false);
         setGenerationProgress(0);
-        toast.error(generatedFile.error_message || 'Generation failed');
-      } else if (generatedFile.progress) {
-        setGenerationProgress(generatedFile.progress);
+        toast.error(file.error_message || 'Generation failed');
+      } else if (file.progress) {
+        setGenerationProgress(file.progress);
       }
     }
-  }, [generatedFile, onSuccess]);
+  }, [file, isGenerating, onSuccess]);
+  
+  // Auto-save functionality
+  const triggerAutoSave = useCallback(() => {
+    if (!fileId || !hasUnsavedChanges) return;
+    
+    if (autoSaveTimeoutRef.current) {
+      clearTimeout(autoSaveTimeoutRef.current);
+    }
+    
+    autoSaveTimeoutRef.current = setTimeout(async () => {
+      try {
+        setSaveStatus('saving');
+        
+        await supabase
+          .from('files')
+          .update({
+            name,
+            status: displayStatus,
+            tags: selectedTags,
+            generation_params: {
+              image_url: imageUrl,
+              audio_url: audioUrl,
+              audio_duration: audioDuration,
+            },
+          })
+          .eq('id', fileId);
+        
+        setHasUnsavedChanges(false);
+        setSaveStatus('saved');
+        setTimeout(() => setSaveStatus('idle'), 2000);
+        
+        queryClient.invalidateQueries({ queryKey: ['files', currentProjectId] });
+      } catch (error) {
+        console.error('Auto-save error:', error);
+        setSaveStatus('idle');
+      }
+    }, 2000);
+  }, [fileId, hasUnsavedChanges, name, displayStatus, selectedTags, imageUrl, audioUrl, audioDuration, queryClient, currentProjectId]);
+  
+  // Trigger auto-save when unsaved changes occur
+  useEffect(() => {
+    if (hasUnsavedChanges && fileLoadedRef.current) {
+      triggerAutoSave();
+    }
+    
+    return () => {
+      if (autoSaveTimeoutRef.current) {
+        clearTimeout(autoSaveTimeoutRef.current);
+      }
+    };
+  }, [hasUnsavedChanges, name, displayStatus, selectedTags, imageUrl, audioUrl, triggerAutoSave]);
   
   // Validate audio duration
   const validateAudioDuration = (duration: number): string | null => {
@@ -152,8 +228,8 @@ export default function LipSyncModal({
   };
   
   // Handle audio file upload
-  const handleAudioUpload = async (file: File) => {
-    const validation = validateFile(file, { 
+  const handleAudioUpload = async (uploadedFile: File) => {
+    const validation = validateFile(uploadedFile, { 
       allowedTypes: ['audio/mpeg', 'audio/wav', 'audio/mp3', 'audio/m4a', 'audio/aac', 'audio/ogg'],
       maxSize: 50 * 1024 * 1024 // 50MB
     });
@@ -167,8 +243,7 @@ export default function LipSyncModal({
     setAudioError(null);
     
     try {
-      // Get duration before uploading
-      const duration = await getAudioFileDuration(file);
+      const duration = await getAudioFileDuration(uploadedFile);
       const durationError = validateAudioDuration(duration);
       
       if (durationError) {
@@ -177,10 +252,11 @@ export default function LipSyncModal({
         return;
       }
       
-      const url = await uploadToR2(file, { folder: 'audio' });
+      const url = await uploadToR2(uploadedFile, { folder: 'audio' });
       setAudioUrl(url);
       setAudioDuration(duration);
       setAudioError(null);
+      setHasUnsavedChanges(true);
     } catch (err) {
       setAudioError((err as Error).message);
     } finally {
@@ -189,14 +265,14 @@ export default function LipSyncModal({
   };
   
   // Get audio file duration
-  const getAudioFileDuration = (file: File): Promise<number> => {
+  const getAudioFileDuration = (audioFile: File): Promise<number> => {
     return new Promise((resolve, reject) => {
       const audio = new Audio();
       audio.onloadedmetadata = () => {
         resolve(audio.duration);
       };
       audio.onerror = () => reject(new Error('Failed to load audio'));
-      audio.src = URL.createObjectURL(file);
+      audio.src = URL.createObjectURL(audioFile);
     });
   };
   
@@ -231,6 +307,13 @@ export default function LipSyncModal({
     setAudioError(null);
     setIsAudioPlaying(false);
     setAudioCurrentTime(0);
+    setHasUnsavedChanges(true);
+  };
+  
+  // Handle image change
+  const handleImageChange = (url: string | undefined) => {
+    setImageUrl(url);
+    setHasUnsavedChanges(true);
   };
   
   // Handle generation
@@ -244,34 +327,22 @@ export default function LipSyncModal({
     setGenerationProgress(0);
     
     try {
-      const newFileId = uuidv4();
-      
-      // Create file record
-      const { error: dbError } = await supabase.from('files').insert({
-        id: newFileId,
-        name,
-        file_type: 'lip_sync',
+      // Update file record to processing
+      await supabase.from('files').update({
         status: 'processing',
-        project_id: currentProjectId,
-        folder_id: currentFolderId || null,
-        tags: selectedTags,
         generation_params: {
           image_url: imageUrl,
           audio_url: audioUrl,
           audio_duration: audioDuration,
         },
-      });
-      
-      if (dbError) throw dbError;
-      
-      setFileId(newFileId);
+      }).eq('id', fileId);
       
       // Call edge function
       const { data, error } = await supabase.functions.invoke('trigger-generation', {
         body: {
           type: 'lip_sync',
           payload: {
-            file_id: newFileId,
+            file_id: fileId,
             user_id: user.id,
             project_id: currentProjectId,
             folder_id: currentFolderId,
@@ -292,14 +363,28 @@ export default function LipSyncModal({
         throw new Error(data?.error || 'Generation failed');
       }
       
-      // Invalidate queries
       queryClient.invalidateQueries({ queryKey: ['files', currentProjectId] });
     } catch (err) {
       console.error('Generation error:', err);
       toast.error((err as Error).message || 'Failed to start generation');
       setIsGenerating(false);
       setGenerationProgress(0);
+      
+      // Revert file status
+      await supabase.from('files').update({ status: displayStatus }).eq('id', fileId);
     }
+  };
+  
+  // Handle name change
+  const handleNameChange = (newName: string) => {
+    setName(newName);
+    setHasUnsavedChanges(true);
+  };
+  
+  // Handle status change
+  const handleStatusChange = (newStatus: string) => {
+    setDisplayStatus(newStatus);
+    setHasUnsavedChanges(true);
   };
   
   // Handle tag toggle
@@ -309,17 +394,86 @@ export default function LipSyncModal({
         ? prev.filter(id => id !== tagId)
         : [...prev, tagId]
     );
+    setHasUnsavedChanges(true);
   };
   
   // Handle create tag
   const handleCreateTag = async (tagName: string, color: string) => {
-    await createTag({ name: tagName, color });
+    const { data, error } = await supabase
+      .from('user_tags')
+      .insert({
+        user_id: profile?.id,
+        tag_name: tagName,
+        color,
+      })
+      .select()
+      .single();
+    
+    if (!error && data) {
+      setSelectedTags(prev => [...prev, data.id]);
+      setHasUnsavedChanges(true);
+      queryClient.invalidateQueries({ queryKey: ['tags'] });
+      toast.success('Tag created');
+    }
   };
   
   // Handle location change
   const handleLocationChange = (newProjectId: string, newFolderId?: string) => {
     setCurrentProjectId(newProjectId);
     setCurrentFolderId(newFolderId);
+    setHasUnsavedChanges(true);
+  };
+  
+  // Handle save
+  const handleSave = async () => {
+    try {
+      setSaveStatus('saving');
+      
+      await supabase
+        .from('files')
+        .update({
+          name,
+          status: displayStatus,
+          tags: selectedTags,
+          generation_params: {
+            image_url: imageUrl,
+            audio_url: audioUrl,
+            audio_duration: audioDuration,
+          },
+        })
+        .eq('id', fileId);
+      
+      setHasUnsavedChanges(false);
+      setSaveStatus('saved');
+      setTimeout(() => setSaveStatus('idle'), 2000);
+      
+      queryClient.invalidateQueries({ queryKey: ['files', currentProjectId] });
+      onSuccess?.();
+    } catch (error) {
+      setSaveStatus('idle');
+      toast.error('Failed to save changes');
+    }
+  };
+  
+  // Handle close
+  const handleClose = () => {
+    if (hasUnsavedChanges) {
+      setShowUnsavedWarning(true);
+    } else {
+      onClose();
+    }
+  };
+  
+  const handleConfirmClose = () => {
+    setShowUnsavedWarning(false);
+    setHasUnsavedChanges(false);
+    onClose();
+  };
+  
+  const handleSaveAndClose = async () => {
+    await handleSave();
+    setShowUnsavedWarning(false);
+    onClose();
   };
   
   // Format duration
@@ -330,262 +484,302 @@ export default function LipSyncModal({
   };
   
   const canGenerate = imageUrl && audioUrl && !audioError && !isGenerating;
-  const hasOutput = generatedFile?.status === 'complete' && generatedFile?.download_url;
+  const hasOutput = file?.status === 'completed' && file?.download_url;
+  
+  // Show nothing until file data is loaded
+  if (!file && fileId) {
+    return null;
+  }
   
   return (
-    <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="max-w-6xl h-[90vh] p-0 gap-0 overflow-hidden">
-        {/* Header */}
-        <div className="flex items-center gap-3 border-b bg-muted/30 px-6 py-3 flex-wrap">
-          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={onClose}>
-            <ArrowLeft className="h-4 w-4" strokeWidth={1.5} />
-          </Button>
-          <h2 className="text-lg font-semibold">Lip Sync</h2>
-          
-          <div className="h-5 w-px bg-border" />
-          
-          <Input
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            className="w-28 h-7 text-sm"
-          />
-          
-          <LocationSelector
-            projectId={currentProjectId}
-            folderId={currentFolderId}
-            onLocationChange={handleLocationChange}
-          />
-          
-          <Select value={displayStatus} onValueChange={setDisplayStatus}>
-            <SelectTrigger className={cn(
-              "h-7 w-fit rounded-md text-xs border-0 px-3 py-1 text-white gap-1",
-              currentStatusOption.color
-            )}>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {statusOptions.map((opt) => (
-                <SelectItem key={opt.value} value={opt.value}>
-                  <div className="flex items-center gap-2">
-                    <div className={cn('h-2 w-2 rounded-full', opt.color)} />
-                    {opt.label}
-                  </div>
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+    <>
+      <AlertDialog open={showUnsavedWarning} onOpenChange={setShowUnsavedWarning}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Unsaved changes</AlertDialogTitle>
+            <AlertDialogDescription>
+              You have unsaved changes. Would you like to save them before closing?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={handleConfirmClose}>Don't save</AlertDialogCancel>
+            <AlertDialogAction onClick={handleSaveAndClose}>Save changes</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
-          <Popover>
-            <PopoverTrigger asChild>
-              <div className="flex items-center gap-1 cursor-pointer hover:bg-secondary/50 rounded-md px-2 py-1 transition-colors">
-                {selectedTags.length > 0 ? (
-                  <TagList 
-                    tags={tagData} 
-                    selectedTagIds={selectedTags} 
-                    maxVisible={1} 
-                    size="sm"
-                  />
-                ) : (
-                  <span className="text-xs text-muted-foreground">+ Add tag</span>
-                )}
-              </div>
-            </PopoverTrigger>
-            <PopoverContent align="start" className="w-52 bg-popover">
-              <h4 className="text-sm font-medium mb-2">Tags</h4>
-              <TagSelector
-                tags={tagData}
-                selectedTagIds={selectedTags}
-                onToggleTag={handleToggleTag}
-                onCreateTag={handleCreateTag}
-                enableDragDrop
-              />
-            </PopoverContent>
-          </Popover>
-          
-          <div className="flex-1" />
-          
-          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={onClose}>
-            <X className="h-4 w-4" strokeWidth={1.5} />
-          </Button>
-        </div>
-        
-        {/* Content - Two column layout */}
-        <div className="flex-1 flex overflow-hidden">
-          {/* Input Section */}
-          <div className="w-1/2 border-r overflow-y-auto p-6 space-y-6">
-            <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">Input</h3>
+      <Dialog open={open} onOpenChange={handleClose}>
+        <DialogContent className="max-w-[900px] h-[85vh] p-0 gap-0 overflow-hidden rounded-lg">
+          {/* Header */}
+          <div className="flex items-center gap-3 border-b bg-muted/30 px-6 py-3 flex-wrap">
+            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={handleClose}>
+              <ArrowLeft className="h-4 w-4" strokeWidth={1.5} />
+            </Button>
+            <h2 className="text-lg font-semibold">Lip Sync</h2>
             
-            {/* First Frame Upload */}
-            <div className="space-y-2">
-              <label className="text-sm font-medium">First Frame (Required)</label>
-              <SingleImageUpload
-                value={imageUrl}
-                onChange={setImageUrl}
-                aspectRatio="video"
-                placeholder="Drag & drop image or"
-                showGenerateLink={false}
-              />
-            </div>
+            <div className="h-5 w-px bg-border" />
             
-            {/* Audio Upload */}
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Audio File (Required)</label>
-              <p className="text-xs text-muted-foreground">
-                Min {MIN_AUDIO_SECONDS}s, Max {MAX_AUDIO_SECONDS / 60} minutes
-              </p>
-              
-              {audioUrl ? (
-                <div className="relative group rounded-xl border border-border bg-secondary/30 p-4 space-y-3">
-                  <audio
-                    ref={audioRef}
-                    src={audioUrl}
-                    onTimeUpdate={handleAudioTimeUpdate}
-                    onEnded={() => setIsAudioPlaying(false)}
-                  />
-                  
-                  <AudioWaveform
-                    audioUrl={audioUrl}
-                    isPlaying={isAudioPlaying}
-                    currentTime={audioCurrentTime}
-                    onSeek={handleAudioSeek}
-                  />
-                  
-                  <div className="flex items-center justify-between">
+            <Input
+              value={name}
+              onChange={(e) => handleNameChange(e.target.value)}
+              className="w-28 h-7 text-sm"
+            />
+            
+            <LocationSelector
+              projectId={currentProjectId}
+              folderId={currentFolderId}
+              onLocationChange={handleLocationChange}
+            />
+            
+            <Select value={displayStatus} onValueChange={handleStatusChange}>
+              <SelectTrigger className={cn(
+                "h-7 w-fit rounded-md text-xs border-0 px-3 py-1 text-white gap-1",
+                currentStatusOption.color
+              )}>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {statusOptions.map((opt) => (
+                  <SelectItem key={opt.value} value={opt.value}>
                     <div className="flex items-center gap-2">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8"
-                        onClick={toggleAudioPlayback}
-                      >
-                        {isAudioPlaying ? (
-                          <Pause className="h-4 w-4" strokeWidth={1.5} />
-                        ) : (
-                          <Play className="h-4 w-4" strokeWidth={1.5} />
-                        )}
-                      </Button>
-                      <span className="text-sm text-muted-foreground">
-                        {formatDuration(audioCurrentTime)} / {formatDuration(audioDuration)}
-                      </span>
+                      <div className={cn('h-2 w-2 rounded-full', opt.color)} />
+                      {opt.label}
                     </div>
-                  </div>
-                  
-                  <button
-                    type="button"
-                    onClick={removeAudio}
-                    className="absolute -left-2 -top-2 z-10 rounded-full bg-foreground/80 p-1.5 text-background backdrop-blur transition-all duration-200 hover:bg-foreground opacity-0 group-hover:opacity-100"
-                  >
-                    <X className="h-4 w-4" />
-                  </button>
-                </div>
-              ) : (
-                <div
-                  onDrop={(e) => {
-                    e.preventDefault();
-                    const file = e.dataTransfer.files[0];
-                    if (file) handleAudioUpload(file);
-                  }}
-                  onDragOver={(e) => e.preventDefault()}
-                  onClick={() => document.getElementById('audio-upload-input')?.click()}
-                  className={cn(
-                    'flex cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed p-8 transition-all duration-200',
-                    'border-border hover:border-primary/50 hover:bg-secondary/50',
-                    audioError && 'border-destructive bg-destructive/5'
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            <Popover>
+              <PopoverTrigger asChild>
+                <div className="flex items-center gap-1 cursor-pointer hover:bg-secondary/50 rounded-md px-2 py-1 transition-colors">
+                  {selectedTags.length > 0 ? (
+                    <TagList 
+                      tags={tagData} 
+                      selectedTagIds={selectedTags} 
+                      maxVisible={1} 
+                      size="sm"
+                    />
+                  ) : (
+                    <span className="text-xs text-muted-foreground">+ Add tag</span>
                   )}
-                >
-                  {isUploadingAudio ? (
-                    <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                </div>
+              </PopoverTrigger>
+              <PopoverContent align="start" className="w-52 bg-popover">
+                <h4 className="text-sm font-medium mb-2">Tags</h4>
+                <TagSelector
+                  tags={tagData}
+                  selectedTagIds={selectedTags}
+                  onToggleTag={handleToggleTag}
+                  onCreateTag={handleCreateTag}
+                  enableDragDrop
+                />
+              </PopoverContent>
+            </Popover>
+            
+            <div className="flex-1" />
+            
+            {/* Auto-save indicator */}
+            <div className="flex items-center gap-3">
+              {saveStatus !== 'idle' && (
+                <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                  {saveStatus === 'saving' ? (
+                    <>
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                      <span>Saving...</span>
+                    </>
                   ) : (
                     <>
-                      <Mic className="mb-2 h-8 w-8 text-muted-foreground" strokeWidth={1.5} />
-                      <p className="text-sm text-muted-foreground">
-                        Drag & drop audio or <span className="font-medium text-primary">browse</span>
-                      </p>
-                      <p className="mt-1 text-xs text-muted-foreground">
-                        MP3, WAV, M4A, AAC • Max 50MB
-                      </p>
+                      <Check className="h-3.5 w-3.5 text-emerald-500" />
+                      <span className="text-emerald-500">Saved</span>
                     </>
                   )}
-                  <input
-                    id="audio-upload-input"
-                    type="file"
-                    accept="audio/*"
-                    className="hidden"
-                    onChange={(e) => e.target.files?.[0] && handleAudioUpload(e.target.files[0])}
-                  />
                 </div>
               )}
-              
-              {audioError && (
-                <div className="flex items-center gap-2 text-sm text-destructive">
-                  <AlertCircle className="h-4 w-4" strokeWidth={1.5} />
-                  {audioError}
-                </div>
-              )}
-            </div>
-            
-            {/* Generate Button */}
-            <div className="pt-4 border-t">
-              <Button
-                onClick={handleGenerate}
-                disabled={!canGenerate}
-                className="w-full"
-              >
-                {isGenerating ? (
-                  <>
-                    <Loader2 className="h-4 w-4 animate-spin mr-2" strokeWidth={1.5} />
-                    Generating...
-                  </>
-                ) : (
-                  <>Generate • {CREDIT_COST} credits</>
-                )}
+              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={handleClose}>
+                <X className="h-4 w-4" strokeWidth={1.5} />
               </Button>
             </div>
           </div>
           
-          {/* Output Section */}
-          <div className="w-1/2 overflow-y-auto p-6 space-y-6 bg-muted/10">
-            <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">Output</h3>
-            
-            {isGenerating && (
-              <div className="space-y-4">
-                <div className="aspect-video rounded-xl bg-secondary/50 flex items-center justify-center">
-                  <div className="text-center space-y-3">
-                    <Loader2 className="h-10 w-10 animate-spin text-primary mx-auto" strokeWidth={1.5} />
-                    <p className="text-sm text-muted-foreground">Generating lip sync video...</p>
-                  </div>
-                </div>
-                <Progress value={generationProgress} className="h-2" />
-                <p className="text-center text-sm text-muted-foreground">
-                  {generationProgress}% complete
-                </p>
-              </div>
-            )}
-            
-            {hasOutput && generatedFile?.download_url && (
-              <div className="space-y-4">
-                <VideoPlayer
-                  src={generatedFile.download_url}
-                  poster={imageUrl}
-                  title={name}
+          {/* Content - Two column layout */}
+          <div className="flex-1 flex overflow-hidden">
+            {/* Input Section */}
+            <div className="w-1/2 border-r overflow-y-auto p-6 space-y-6">
+              <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">Input</h3>
+              
+              {/* First Frame Upload */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium">First Frame (Required)</label>
+                <SingleImageUpload
+                  value={imageUrl}
+                  onChange={handleImageChange}
+                  aspectRatio="video"
+                  placeholder="Drag & drop image or"
+                  showGenerateLink={false}
                 />
-                <Button variant="secondary" className="w-full" asChild>
-                  <a href={generatedFile.download_url} download={`${name}.mp4`}>
-                    <Download className="h-4 w-4 mr-2" strokeWidth={1.5} />
-                    Download Video
-                  </a>
+              </div>
+              
+              {/* Audio Upload */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Audio File (Required)</label>
+                <p className="text-xs text-muted-foreground">
+                  Min {MIN_AUDIO_SECONDS}s, Max {MAX_AUDIO_SECONDS / 60} minutes
+                </p>
+                
+                {audioUrl ? (
+                  <div className="relative group rounded-xl border border-border bg-secondary/30 p-4 space-y-3">
+                    <audio
+                      ref={audioRef}
+                      src={audioUrl}
+                      onTimeUpdate={handleAudioTimeUpdate}
+                      onEnded={() => setIsAudioPlaying(false)}
+                    />
+                    
+                    <AudioWaveform
+                      audioUrl={audioUrl}
+                      isPlaying={isAudioPlaying}
+                      currentTime={audioCurrentTime}
+                      onSeek={handleAudioSeek}
+                    />
+                    
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8"
+                          onClick={toggleAudioPlayback}
+                        >
+                          {isAudioPlaying ? (
+                            <Pause className="h-4 w-4" strokeWidth={1.5} />
+                          ) : (
+                            <Play className="h-4 w-4" strokeWidth={1.5} />
+                          )}
+                        </Button>
+                        <span className="text-sm text-muted-foreground">
+                          {formatDuration(audioCurrentTime)} / {formatDuration(audioDuration)}
+                        </span>
+                      </div>
+                    </div>
+                    
+                    <button
+                      type="button"
+                      onClick={removeAudio}
+                      className="absolute -left-2 -top-2 z-10 rounded-full bg-foreground/80 p-1.5 text-background backdrop-blur transition-all duration-200 hover:bg-foreground opacity-0 group-hover:opacity-100"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  </div>
+                ) : (
+                  <div
+                    onDrop={(e) => {
+                      e.preventDefault();
+                      const droppedFile = e.dataTransfer.files[0];
+                      if (droppedFile) handleAudioUpload(droppedFile);
+                    }}
+                    onDragOver={(e) => e.preventDefault()}
+                    onClick={() => document.getElementById('audio-upload-input')?.click()}
+                    className={cn(
+                      'flex cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed p-8 transition-all duration-200',
+                      'border-border hover:border-primary/50 hover:bg-secondary/50',
+                      audioError && 'border-destructive bg-destructive/5'
+                    )}
+                  >
+                    {isUploadingAudio ? (
+                      <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                    ) : (
+                      <>
+                        <Mic className="mb-2 h-8 w-8 text-muted-foreground" strokeWidth={1.5} />
+                        <p className="text-sm text-muted-foreground">
+                          Drag & drop audio or <span className="font-medium text-primary">browse</span>
+                        </p>
+                        <p className="mt-1 text-xs text-muted-foreground">
+                          MP3, WAV, M4A, AAC • Max 50MB
+                        </p>
+                      </>
+                    )}
+                    <input
+                      id="audio-upload-input"
+                      type="file"
+                      accept="audio/*"
+                      className="hidden"
+                      onChange={(e) => e.target.files?.[0] && handleAudioUpload(e.target.files[0])}
+                    />
+                  </div>
+                )}
+                
+                {audioError && (
+                  <div className="flex items-center gap-2 text-sm text-destructive">
+                    <AlertCircle className="h-4 w-4" strokeWidth={1.5} />
+                    {audioError}
+                  </div>
+                )}
+              </div>
+              
+              {/* Generate Button */}
+              <div className="pt-4 border-t">
+                <Button
+                  onClick={handleGenerate}
+                  disabled={!canGenerate}
+                  className="w-full"
+                >
+                  {isGenerating ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin mr-2" strokeWidth={1.5} />
+                      Generating...
+                    </>
+                  ) : (
+                    <>Generate • {CREDIT_COST} credits</>
+                  )}
                 </Button>
               </div>
-            )}
+            </div>
             
-            {!isGenerating && !hasOutput && (
-              <div className="aspect-video rounded-xl bg-secondary/30 border-2 border-dashed border-border flex items-center justify-center">
-                <p className="text-muted-foreground text-sm">No output yet</p>
-              </div>
-            )}
+            {/* Output Section */}
+            <div className="w-1/2 overflow-y-auto p-6 space-y-6 bg-muted/10">
+              <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">Output</h3>
+              
+              {isGenerating && (
+                <div className="space-y-4">
+                  <div className="aspect-video rounded-xl bg-secondary/50 flex items-center justify-center">
+                    <div className="text-center space-y-3">
+                      <Loader2 className="h-10 w-10 animate-spin text-primary mx-auto" strokeWidth={1.5} />
+                      <p className="text-sm text-muted-foreground">Generating lip sync video...</p>
+                    </div>
+                  </div>
+                  <Progress value={generationProgress} className="h-2" />
+                  <p className="text-center text-sm text-muted-foreground">
+                    {generationProgress}% complete
+                  </p>
+                </div>
+              )}
+              
+              {hasOutput && file?.download_url && (
+                <div className="space-y-4">
+                  <VideoPlayer
+                    src={file.download_url}
+                    poster={imageUrl}
+                    title={name}
+                  />
+                  <Button variant="secondary" className="w-full" asChild>
+                    <a href={file.download_url} download={`${name}.mp4`}>
+                      <Download className="h-4 w-4 mr-2" strokeWidth={1.5} />
+                      Download Video
+                    </a>
+                  </Button>
+                </div>
+              )}
+              
+              {!isGenerating && !hasOutput && (
+                <div className="aspect-video rounded-xl bg-secondary/30 border-2 border-dashed border-border flex items-center justify-center">
+                  <p className="text-muted-foreground text-sm">No output yet</p>
+                </div>
+              )}
+            </div>
           </div>
-        </div>
-      </DialogContent>
-    </Dialog>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }

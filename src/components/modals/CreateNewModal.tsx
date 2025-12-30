@@ -1,6 +1,7 @@
 import { useState, useRef } from 'react';
 import { Video, FolderPlus, X, Loader2, Film, Mic, Image, FileText } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
+import { v4 as uuidv4 } from 'uuid';
 import {
   Dialog,
   DialogContent,
@@ -112,6 +113,7 @@ export default function CreateNewModal({
   const [bRollModalOpen, setBRollModalOpen] = useState(false);
   const [lipSyncModalOpen, setLipSyncModalOpen] = useState(false);
   const [createdPipelineId, setCreatedPipelineId] = useState<string | null>(null);
+  const [createdFileId, setCreatedFileId] = useState<string | null>(null);
   const [isCreatingPipeline, setIsCreatingPipeline] = useState(false);
   const [creatingType, setCreatingType] = useState<string | null>(null);
   
@@ -130,11 +132,45 @@ export default function CreateNewModal({
       onOpenChange(false);
       onCreateFolder?.(initialStatus);
     } else if ('isQuickGen' in type && type.isQuickGen) {
-      // Handle quick generation types
+      // Handle quick generation types - create file record first
       if (type.id === 'lip_sync') {
+        setIsCreatingPipeline(true);
+        setCreatingType(type.id);
         pipelineInitialStatusRef.current = initialStatus;
-        onOpenChange(false);
-        setLipSyncModalOpen(true);
+        
+        try {
+          const newFileId = uuidv4();
+          
+          // Create file record immediately (like pipeline pattern)
+          const { error: fileError } = await supabase
+            .from('files')
+            .insert({
+              id: newFileId,
+              project_id: projectId,
+              folder_id: folderId || null,
+              name: 'Untitled',
+              file_type: 'lip_sync',
+              status: initialStatus || 'draft',
+              generation_params: {},
+            });
+          
+          if (fileError) {
+            throw fileError;
+          }
+          
+          setCreatedFileId(newFileId);
+          onOpenChange(false);
+          setIsCreatingPipeline(false);
+          setCreatingType(null);
+          setLipSyncModalOpen(true);
+          
+          queryClient.invalidateQueries({ queryKey: ['files', projectId] });
+        } catch (error) {
+          console.error('Failed to create file entry:', error);
+          toast.error('Failed to create file');
+          setIsCreatingPipeline(false);
+          setCreatingType(null);
+        }
       } else {
         // Coming soon for other quick gen types
         toast.info(`${type.title} generation coming soon!`);
@@ -199,6 +235,7 @@ export default function CreateNewModal({
     setBRollModalOpen(false);
     setLipSyncModalOpen(false);
     setCreatedPipelineId(null);
+    setCreatedFileId(null);
     pipelineInitialStatusRef.current = undefined;
   };
 
@@ -283,15 +320,18 @@ export default function CreateNewModal({
       )}
 
       {/* Lip Sync Modal */}
-      <LipSyncModal
-        open={lipSyncModalOpen}
-        onClose={handlePipelineClose}
-        projectId={projectId}
-        folderId={folderId}
-        initialStatus={pipelineInitialStatusRef.current}
-        onSuccess={handlePipelineSuccess}
-        statusOptions={statusOptions}
-      />
+      {createdFileId && lipSyncModalOpen && (
+        <LipSyncModal
+          open={lipSyncModalOpen}
+          onClose={handlePipelineClose}
+          fileId={createdFileId}
+          projectId={projectId}
+          folderId={folderId}
+          initialStatus={pipelineInitialStatusRef.current}
+          onSuccess={handlePipelineSuccess}
+          statusOptions={statusOptions}
+        />
+      )}
     </>
   );
 }
