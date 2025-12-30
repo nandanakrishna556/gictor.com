@@ -330,25 +330,40 @@ export default function TalkingHeadModal({
         },
       }).eq('id', fileId);
       
-      // Call edge function with fresh session
-      const { data, error } = await supabase.functions.invoke('trigger-generation', {
-        body: {
-          type: 'talking_head',
-          payload: {
-            file_id: fileId,
-            user_id: sessionData.session.user.id,
-            project_id: currentProjectId,
-            folder_id: currentFolderId,
-            file_name: name,
-            image_url: imageUrl,
-            audio_url: audioUrl,
-            audio_duration: audioDuration,
-            credits_cost: CREDIT_COST,
-          },
+      // Prepare payload for edge function
+      const requestPayload = {
+        type: 'talking_head',
+        payload: {
+          file_id: fileId,
+          user_id: sessionData.session.user.id,
+          project_id: currentProjectId,
+          folder_id: currentFolderId,
+          file_name: name,
+          image_url: imageUrl,
+          audio_url: audioUrl,
+          audio_duration: audioDuration,
+          credits_cost: CREDIT_COST,
         },
-      });
+      };
+      
+      console.log('Calling trigger-generation with:', requestPayload);
+      
+      // Call edge function with fresh session
+      let data, error;
+      try {
+        const response = await supabase.functions.invoke('trigger-generation', {
+          body: requestPayload,
+        });
+        data = response.data;
+        error = response.error;
+        console.log('Edge function response:', { data, error });
+      } catch (invokeError) {
+        console.error('Invoke error:', invokeError);
+        throw invokeError;
+      }
       
       if (error) {
+        console.error('Edge function error details:', error);
         throw error;
       }
       
