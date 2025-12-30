@@ -229,8 +229,22 @@ export default function LipSyncModal({
   
   // Handle audio file upload
   const handleAudioUpload = async (uploadedFile: File) => {
+    const audioAllowedTypes = [
+      'audio/mpeg',
+      'audio/mp3',
+      'audio/wav',
+      'audio/wave',
+      'audio/x-wav',
+      'audio/m4a',
+      'audio/x-m4a',
+      'audio/mp4',
+      'audio/aac',
+      'audio/ogg',
+      'audio/webm'
+    ];
+    
     const validation = validateFile(uploadedFile, { 
-      allowedTypes: ['audio/mpeg', 'audio/wav', 'audio/mp3', 'audio/m4a', 'audio/aac', 'audio/ogg'],
+      allowedTypes: audioAllowedTypes,
       maxSize: 50 * 1024 * 1024 // 50MB
     });
     
@@ -252,7 +266,11 @@ export default function LipSyncModal({
         return;
       }
       
-      const url = await uploadToR2(uploadedFile, { folder: 'audio' });
+      const url = await uploadToR2(uploadedFile, { 
+        folder: 'lip-sync-audio',
+        allowedTypes: audioAllowedTypes,
+        maxSize: 50 * 1024 * 1024
+      });
       setAudioUrl(url);
       setAudioDuration(duration);
       setAudioError(null);
