@@ -14,7 +14,7 @@ import ConfirmDeleteDialog from '@/components/modals/ConfirmDeleteDialog';
 import { FileDetailModalEnhanced } from '@/components/files/FileDetailModalEnhanced';
 import PipelineModal from '@/components/pipeline/PipelineModal';
 import ClipsPipelineModal from '@/components/pipeline/ClipsPipelineModal';
-import LipSyncModal from '@/components/modals/LipSyncModal';
+import TalkingHeadModal from '@/components/modals/TalkingHeadModal';
 import { useFiles, Folder, File } from '@/hooks/useFiles';
 import { useFileRealtime } from '@/hooks/useFileRealtime';
 import { usePipelines, Pipeline, PipelineStage, DEFAULT_STAGES } from '@/hooks/usePipelines';
@@ -56,9 +56,9 @@ export default function ProjectDetail() {
   const [brollPipelineModalOpen, setBrollPipelineModalOpen] = useState(false);
   const [openBrollPipelineId, setOpenBrollPipelineId] = useState<string | null>(null);
   
-  // Lip Sync modal state
-  const [lipSyncModalOpen, setLipSyncModalOpen] = useState(false);
-  const [openLipSyncFileId, setOpenLipSyncFileId] = useState<string | null>(null);
+  // Talking Head modal state
+  const [talkingHeadModalOpen, setTalkingHeadModalOpen] = useState(false);
+  const [openTalkingHeadFileId, setOpenTalkingHeadFileId] = useState<string | null>(null);
 
   // Fetch project details
   const { data: project } = useQuery({
@@ -312,10 +312,10 @@ export default function ProjectDetail() {
         // Fallback to file detail modal if no pipeline_id
         setSelectedFile(file);
       }
-    } else if (file.file_type === 'lip_sync') {
-      // Open Lip Sync modal
-      setOpenLipSyncFileId(file.id);
-      setLipSyncModalOpen(true);
+    } else if (file.file_type === 'talking_head') {
+      // Open Talking Head modal
+      setOpenTalkingHeadFileId(file.id);
+      setTalkingHeadModalOpen(true);
     } else {
       setSelectedFile(file);
     }
@@ -609,15 +609,15 @@ export default function ProjectDetail() {
         statusOptions={currentStatusOptions}
       />
 
-      {/* Lip Sync Modal */}
-      {openLipSyncFileId && (
-        <LipSyncModal
-          open={lipSyncModalOpen}
+      {/* Talking Head Modal */}
+      {openTalkingHeadFileId && (
+        <TalkingHeadModal
+          open={talkingHeadModalOpen}
           onClose={() => {
-            setLipSyncModalOpen(false);
-            setOpenLipSyncFileId(null);
+            setTalkingHeadModalOpen(false);
+            setOpenTalkingHeadFileId(null);
           }}
-          fileId={openLipSyncFileId}
+          fileId={openTalkingHeadFileId}
           projectId={projectId}
           folderId={folderId}
           onSuccess={() => {
