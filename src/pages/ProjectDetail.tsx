@@ -290,17 +290,19 @@ export default function ProjectDetail() {
     setSelectedTags((prev) => prev.filter((t) => t !== id));
   };
 
-  // Handle file click - open pipeline modal for talking_head/clips files, otherwise file detail modal
+  // Handle file click - open appropriate modal based on file type
   const handleFileClick = (file: File) => {
     if (file.file_type === 'talking_head') {
-      // Extract pipeline_id from generation_params
+      // Check if it's a pipeline-based talking head or quick-gen talking head
       const params = file.generation_params as { pipeline_id?: string } | null;
       if (params?.pipeline_id) {
+        // Pipeline-based talking head - open pipeline modal
         setOpenPipelineId(params.pipeline_id);
         setPipelineModalOpen(true);
       } else {
-        // Fallback to file detail modal if no pipeline_id
-        setSelectedFile(file);
+        // Quick-gen talking head - open TalkingHeadModal
+        setOpenTalkingHeadFileId(file.id);
+        setTalkingHeadModalOpen(true);
       }
     } else if (file.file_type === 'clips' || file.file_type === 'b_roll') {
       // Extract pipeline_id from generation_params for Clips
@@ -312,10 +314,6 @@ export default function ProjectDetail() {
         // Fallback to file detail modal if no pipeline_id
         setSelectedFile(file);
       }
-    } else if (file.file_type === 'talking_head') {
-      // Open Talking Head modal
-      setOpenTalkingHeadFileId(file.id);
-      setTalkingHeadModalOpen(true);
     } else {
       setSelectedFile(file);
     }
