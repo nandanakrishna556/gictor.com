@@ -515,7 +515,7 @@ export default function TalkingHeadModal({
       </AlertDialog>
 
       <Dialog open={open} onOpenChange={handleClose}>
-        <DialogContent className="max-w-[900px] h-[85vh] p-0 gap-0 overflow-hidden rounded-lg">
+        <DialogContent className="max-w-[900px] max-h-[85vh] flex flex-col p-0 gap-0 overflow-hidden rounded-lg">
           {/* Header */}
           <PipelineHeader
             title="Talking Head"
@@ -537,9 +537,9 @@ export default function TalkingHeadModal({
           />
           
           {/* Content - Two column layout */}
-          <div className="flex-1 flex overflow-hidden">
+          <div className="flex-1 flex overflow-hidden min-h-0">
             {/* Input Section */}
-            <div className="w-1/2 border-r overflow-y-auto p-6 space-y-6">
+            <div className="w-1/2 border-r overflow-y-auto p-5 space-y-5">
               <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">Input</h3>
               
               {/* First Frame Upload */}
@@ -634,7 +634,7 @@ export default function TalkingHeadModal({
             </div>
             
             {/* Output Section */}
-            <div className="w-1/2 overflow-y-auto p-6 space-y-6 bg-muted/10">
+            <div className="w-1/2 overflow-y-auto p-5 space-y-5 bg-muted/10">
               <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">Output</h3>
               
               {isGenerating && (
@@ -654,16 +654,32 @@ export default function TalkingHeadModal({
               
               {hasOutput && file?.download_url && (
                 <div className="space-y-4">
-                  <VideoPlayer
-                    src={file.download_url}
-                    poster={imageUrl}
-                    title={name}
-                  />
-                  <Button variant="secondary" className="w-full" asChild>
-                    <a href={file.download_url} download={`${name}.mp4`}>
-                      <Download className="h-4 w-4 mr-2" strokeWidth={1.5} />
-                      Download Video
-                    </a>
+                  <div className="aspect-video bg-black rounded-lg overflow-hidden flex items-center justify-center">
+                    <video
+                      src={file.download_url}
+                      controls
+                      className="max-w-full max-h-full object-contain"
+                      poster={imageUrl}
+                    />
+                  </div>
+                  <Button 
+                    variant="outline" 
+                    className="w-full"
+                    onClick={() => {
+                      if (file?.download_url) {
+                        const link = document.createElement('a');
+                        link.href = file.download_url;
+                        link.download = `${name || 'talking-head'}.mp4`;
+                        link.target = '_blank';
+                        link.rel = 'noopener noreferrer';
+                        document.body.appendChild(link);
+                        link.click();
+                        document.body.removeChild(link);
+                      }
+                    }}
+                  >
+                    <Download className="h-4 w-4 mr-2" strokeWidth={1.5} />
+                    Download Video
                   </Button>
                 </div>
               )}
