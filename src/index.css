@@ -125,6 +125,46 @@
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
+
+  /* Ensure consistent border-radius across the app - prevents hydration flash */
+  .rounded-lg {
+    border-radius: 0.75rem !important;
+  }
+
+  .rounded-xl {
+    border-radius: 1rem !important;
+  }
+
+  .rounded-md {
+    border-radius: 0.625rem !important;
+  }
+
+  .rounded-sm {
+    border-radius: 0.375rem !important;
+  }
+
+  /* Card and button base styles */
+  [class*="Card"], 
+  [class*="card"],
+  .bg-card {
+    border-radius: 0.625rem;
+  }
+
+  button:not([class*="rounded-none"]):not([class*="rounded-full"]) {
+    border-radius: 0.375rem;
+  }
+
+  input:not([class*="rounded-none"]):not([class*="rounded-full"]) {
+    border-radius: 0.375rem;
+  }
+
+  textarea:not([class*="rounded-none"]) {
+    border-radius: 0.375rem;
+  }
+
+  select:not([class*="rounded-none"]) {
+    border-radius: 0.375rem;
+  }
 }
 
 @layer utilities {
