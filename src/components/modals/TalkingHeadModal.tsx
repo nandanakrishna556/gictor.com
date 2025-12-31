@@ -493,7 +493,7 @@ export default function TalkingHeadModal({
   };
   
   const canGenerate = imageUrl && audioUrl && !audioError && !isGenerating;
-  const hasOutput = file?.status === 'completed' && file?.download_url;
+  const hasOutput = !!file?.download_url;
   
   // Show nothing until file data is loaded
   if (!file && fileId) {
