@@ -1301,7 +1301,7 @@ function FileCard({
       </div>
 
       {/* Download button */}
-      {file.status === 'completed' && file.download_url && (
+      {file.download_url && (
         <a
           href={file.download_url}
           download
@@ -1623,7 +1623,7 @@ function KanbanCard({
       </div>
 
       {/* Download button for completed files */}
-      {file?.status === 'completed' && file?.download_url && (
+      {file?.download_url && (
         <a
           href={file.download_url}
           download
