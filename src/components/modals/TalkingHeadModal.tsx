@@ -520,7 +520,7 @@ export default function TalkingHeadModal({
       <Dialog open={open} onOpenChange={handleClose}>
         <DialogContent className="max-w-[900px] h-[85vh] p-0 gap-0 overflow-hidden rounded-lg">
           {/* Header */}
-          <div className="flex items-center gap-3 border-b bg-background px-6 py-3 flex-wrap relative z-10">
+          <div className="flex items-center gap-3 border-b bg-background px-4 h-[52px] flex-nowrap shrink-0 relative z-10">
             <Button variant="ghost" size="icon" className="h-8 w-8" onClick={handleClose}>
               <ArrowLeft className="h-4 w-4" strokeWidth={1.5} />
             </Button>
@@ -589,23 +589,21 @@ export default function TalkingHeadModal({
             
             <div className="flex-1" />
             
-            {/* Auto-save indicator */}
+            {/* Auto-save indicator - use min-width to prevent layout shift */}
             <div className="flex items-center gap-3">
-              {saveStatus !== 'idle' && (
-                <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
-                  {saveStatus === 'saving' ? (
-                    <>
-                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                      <span>Saving...</span>
-                    </>
-                  ) : (
-                    <>
-                      <Check className="h-3.5 w-3.5 text-emerald-500" />
-                      <span className="text-emerald-500">Saved</span>
-                    </>
-                  )}
-                </div>
-              )}
+              <div className="flex items-center gap-1.5 text-sm text-muted-foreground min-w-[70px]">
+                {saveStatus === 'saving' ? (
+                  <>
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    <span>Saving...</span>
+                  </>
+                ) : saveStatus === 'saved' ? (
+                  <>
+                    <Check className="h-3.5 w-3.5 text-emerald-500" />
+                    <span className="text-emerald-500">Saved</span>
+                  </>
+                ) : null}
+              </div>
               <Button variant="ghost" size="icon" className="h-8 w-8" onClick={handleClose}>
                 <X className="h-4 w-4" strokeWidth={1.5} />
               </Button>
