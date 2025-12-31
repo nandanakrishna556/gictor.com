@@ -295,7 +295,7 @@ export const FileDetailModalEnhanced: React.FC<FileDetailModalEnhancedProps> = (
             </div>
 
             {/* Actions */}
-            {file.status === 'completed' && (file.preview_url || file.download_url) && (
+            {(file.preview_url || file.download_url) && (
               <div className="flex flex-wrap gap-2 p-4 border-t border-border">
                 <Button onClick={handleDownload} disabled={isDownloading} className="gap-2">
                   {isDownloading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
