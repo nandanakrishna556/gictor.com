@@ -518,9 +518,9 @@ export default function TalkingHeadModal({
       </AlertDialog>
 
       <Dialog open={open} onOpenChange={handleClose}>
-        <DialogContent className="max-w-[900px] h-[85vh] p-0 gap-0 overflow-hidden rounded-lg">
+        <DialogContent className="max-w-[900px] h-[85vh] p-0 gap-0 overflow-hidden rounded-lg flex flex-col [&>button]:hidden">
           {/* Header */}
-          <div className="flex items-center gap-3 border-b bg-background px-4 h-[52px] flex-nowrap shrink-0 relative z-10">
+          <div className="flex items-center gap-3 border-b bg-background px-4 h-[52px] flex-nowrap shrink-0 relative z-10 mt-0">
             <Button variant="ghost" size="icon" className="h-8 w-8" onClick={handleClose}>
               <ArrowLeft className="h-4 w-4" strokeWidth={1.5} />
             </Button>
