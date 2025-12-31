@@ -589,20 +589,22 @@ export default function TalkingHeadModal({
             
             <div className="flex-1" />
             
-            {/* Auto-save indicator - use min-width to prevent layout shift */}
+            {/* Auto-save indicator - always reserve space */}
             <div className="flex items-center gap-3">
-              <div className="flex items-center gap-1.5 text-sm text-muted-foreground min-w-[70px]">
+              <div className="flex items-center gap-1.5 text-sm min-w-[70px] justify-end">
                 {saveStatus === 'saving' ? (
                   <>
-                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                    <span>Saving...</span>
+                    <Loader2 className="h-3.5 w-3.5 animate-spin text-muted-foreground" />
+                    <span className="text-muted-foreground">Saving...</span>
                   </>
                 ) : saveStatus === 'saved' ? (
                   <>
                     <Check className="h-3.5 w-3.5 text-emerald-500" />
                     <span className="text-emerald-500">Saved</span>
                   </>
-                ) : null}
+                ) : (
+                  <span className="invisible">Saved</span>
+                )}
               </div>
               <Button variant="ghost" size="icon" className="h-8 w-8" onClick={handleClose}>
                 <X className="h-4 w-4" strokeWidth={1.5} />
