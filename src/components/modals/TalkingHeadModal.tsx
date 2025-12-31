@@ -8,13 +8,16 @@ import { useProfile } from '@/hooks/useProfile';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Progress } from '@/components/ui/progress';
 import { SingleImageUpload } from '@/components/ui/single-image-upload';
 import { VideoPlayer } from '@/components/ui/video-player';
 import { AudioPlayer } from '@/components/ui/audio-player';
-import PipelineHeader from '@/components/pipeline/PipelineHeader';
-import { TagData } from '@/components/ui/tag-badge';
-import { Loader2, Mic, Download, AlertCircle } from 'lucide-react';
+import LocationSelector from '@/components/forms/LocationSelector';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { TagList, TagSelector, TagData } from '@/components/ui/tag-badge';
+import { ArrowLeft, X, Check, Loader2, Mic, Download, AlertCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { uploadToR2, validateFile } from '@/lib/cloudflare-upload';
 
@@ -515,31 +518,104 @@ export default function TalkingHeadModal({
       </AlertDialog>
 
       <Dialog open={open} onOpenChange={handleClose}>
-        <DialogContent className="max-w-[900px] max-h-[85vh] flex flex-col p-0 gap-0 overflow-hidden rounded-lg">
+        <DialogContent className="max-w-[900px] h-[85vh] p-0 gap-0 overflow-hidden rounded-lg">
           {/* Header */}
-          <PipelineHeader
-            title="Talking Head"
-            name={name}
-            onNameChange={handleNameChange}
-            projectId={currentProjectId}
-            folderId={currentFolderId}
-            onLocationChange={handleLocationChange}
-            displayStatus={displayStatus}
-            onStatusChange={handleStatusChange}
-            statusOptions={statusOptions}
-            currentStatusOption={currentStatusOption}
-            tags={tagData}
-            selectedTags={selectedTags}
-            onToggleTag={handleToggleTag}
-            onCreateTag={handleCreateTag}
-            saveStatus={saveStatus}
-            onClose={handleClose}
-          />
+          <div className="flex items-center gap-3 border-b bg-muted/30 px-6 py-3 flex-wrap">
+            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={handleClose}>
+              <ArrowLeft className="h-4 w-4" strokeWidth={1.5} />
+            </Button>
+            <h2 className="text-lg font-semibold">Talking Head</h2>
+            
+            <div className="h-5 w-px bg-border" />
+            
+            <Input
+              value={name}
+              onChange={(e) => handleNameChange(e.target.value)}
+              className="w-28 h-7 text-sm"
+            />
+            
+            <LocationSelector
+              projectId={currentProjectId}
+              folderId={currentFolderId}
+              onLocationChange={handleLocationChange}
+            />
+            
+            <Select value={displayStatus} onValueChange={handleStatusChange}>
+              <SelectTrigger className={cn(
+                "h-7 w-fit rounded-md text-xs border-0 px-3 py-1 gap-1",
+                currentStatusOption.color,
+                "text-primary-foreground"
+              )}>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {statusOptions.map((opt) => (
+                  <SelectItem key={opt.value} value={opt.value}>
+                    <div className="flex items-center gap-2">
+                      <div className={cn('h-2 w-2 rounded-full', opt.color)} />
+                      {opt.label}
+                    </div>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            <Popover>
+              <PopoverTrigger asChild>
+                <div className="flex items-center gap-1 cursor-pointer hover:bg-secondary/50 rounded-md px-2 py-1 transition-colors">
+                  {selectedTags.length > 0 ? (
+                    <TagList 
+                      tags={tagData} 
+                      selectedTagIds={selectedTags} 
+                      maxVisible={1} 
+                      size="sm"
+                    />
+                  ) : (
+                    <span className="text-xs text-muted-foreground">+ Add tag</span>
+                  )}
+                </div>
+              </PopoverTrigger>
+              <PopoverContent align="start" className="w-52 bg-popover">
+                <h4 className="text-sm font-medium mb-2">Tags</h4>
+                <TagSelector
+                  tags={tagData}
+                  selectedTagIds={selectedTags}
+                  onToggleTag={handleToggleTag}
+                  onCreateTag={handleCreateTag}
+                  enableDragDrop
+                />
+              </PopoverContent>
+            </Popover>
+            
+            <div className="flex-1" />
+            
+            {/* Auto-save indicator */}
+            <div className="flex items-center gap-3">
+              {saveStatus !== 'idle' && (
+                <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                  {saveStatus === 'saving' ? (
+                    <>
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                      <span>Saving...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Check className="h-3.5 w-3.5 text-emerald-500" />
+                      <span className="text-emerald-500">Saved</span>
+                    </>
+                  )}
+                </div>
+              )}
+              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={handleClose}>
+                <X className="h-4 w-4" strokeWidth={1.5} />
+              </Button>
+            </div>
+          </div>
           
           {/* Content - Two column layout */}
-          <div className="flex-1 flex overflow-hidden min-h-0">
+          <div className="flex-1 flex overflow-hidden">
             {/* Input Section */}
-            <div className="w-1/2 border-r overflow-y-auto p-5 space-y-5">
+            <div className="w-1/2 border-r overflow-y-auto p-6 space-y-6">
               <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">Input</h3>
               
               {/* First Frame Upload */}
@@ -634,7 +710,7 @@ export default function TalkingHeadModal({
             </div>
             
             {/* Output Section */}
-            <div className="w-1/2 overflow-y-auto p-5 space-y-5 bg-muted/10">
+            <div className="w-1/2 overflow-y-auto p-6 space-y-6 bg-muted/10">
               <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">Output</h3>
               
               {isGenerating && (
@@ -654,32 +730,16 @@ export default function TalkingHeadModal({
               
               {hasOutput && file?.download_url && (
                 <div className="space-y-4">
-                  <div className="aspect-video bg-black rounded-lg overflow-hidden flex items-center justify-center">
-                    <video
-                      src={file.download_url}
-                      controls
-                      className="max-w-full max-h-full object-contain"
-                      poster={imageUrl}
-                    />
-                  </div>
-                  <Button 
-                    variant="outline" 
-                    className="w-full"
-                    onClick={() => {
-                      if (file?.download_url) {
-                        const link = document.createElement('a');
-                        link.href = file.download_url;
-                        link.download = `${name || 'talking-head'}.mp4`;
-                        link.target = '_blank';
-                        link.rel = 'noopener noreferrer';
-                        document.body.appendChild(link);
-                        link.click();
-                        document.body.removeChild(link);
-                      }
-                    }}
-                  >
-                    <Download className="h-4 w-4 mr-2" strokeWidth={1.5} />
-                    Download Video
+                  <VideoPlayer
+                    src={file.download_url}
+                    poster={imageUrl}
+                    title={name}
+                  />
+                  <Button variant="secondary" className="w-full" asChild>
+                    <a href={file.download_url} download={`${name}.mp4`}>
+                      <Download className="h-4 w-4 mr-2" strokeWidth={1.5} />
+                      Download Video
+                    </a>
                   </Button>
                 </div>
               )}

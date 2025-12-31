@@ -51,23 +51,19 @@ export default function PipelineHeader({
   saveStatus,
   onClose,
 }: PipelineHeaderProps) {
-  // Ensure we always have a valid status option
-  const safeDisplayStatus = displayStatus || 'draft';
-  const safeCurrentStatusOption = currentStatusOption || statusOptions[0] || { value: 'draft', label: 'Draft', color: 'bg-zinc-500' };
-
   return (
-    <div className="flex items-center gap-2 border-b bg-muted/30 px-4 py-2 flex-wrap">
-      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={onClose}>
-        <ArrowLeft className="h-3.5 w-3.5" />
+    <div className="flex items-center gap-3 border-b bg-muted/30 px-6 py-3 flex-wrap">
+      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={onClose}>
+        <ArrowLeft className="h-4 w-4" />
       </Button>
-      <h2 className="text-base font-semibold">{title}</h2>
+      <h2 className="text-lg font-semibold">{title}</h2>
       
-      <div className="h-4 w-px bg-border" />
+      <div className="h-5 w-px bg-border" />
       
       <Input
         value={name}
         onChange={(e) => onNameChange(e.target.value)}
-        className="w-24 h-6 text-xs"
+        className="w-28 h-7 text-sm"
       />
       
       <LocationSelector
@@ -76,15 +72,15 @@ export default function PipelineHeader({
         onLocationChange={onLocationChange}
       />
       
-      <Select value={safeDisplayStatus} onValueChange={onStatusChange}>
+      <Select value={displayStatus} onValueChange={onStatusChange}>
         <SelectTrigger className={cn(
-          "h-6 w-fit rounded-md text-xs border-0 px-2 py-0.5 gap-1",
-          safeCurrentStatusOption.color,
+          "h-7 w-fit rounded-md text-xs border-0 px-3 py-1 gap-1",
+          currentStatusOption.color,
           "text-primary-foreground"
         )}>
           <SelectValue />
         </SelectTrigger>
-        <SelectContent className="bg-popover">
+        <SelectContent>
           {statusOptions.map((opt) => (
             <SelectItem key={opt.value} value={opt.value}>
               <div className="flex items-center gap-2">
@@ -127,24 +123,24 @@ export default function PipelineHeader({
       <div className="flex-1" />
       
       {/* Auto-save indicator and Close button */}
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-3">
         {saveStatus !== 'idle' && (
-          <div className="flex items-center gap-1 text-xs text-muted-foreground">
+          <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
             {saveStatus === 'saving' ? (
               <>
-                <Loader2 className="h-3 w-3 animate-spin" />
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
                 <span>Saving...</span>
               </>
             ) : (
               <>
-                <Check className="h-3 w-3 text-emerald-500" />
+                <Check className="h-3.5 w-3.5 text-emerald-500" />
                 <span className="text-emerald-500">Saved</span>
               </>
             )}
           </div>
         )}
-        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={onClose}>
-          <X className="h-3.5 w-3.5" />
+        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={onClose}>
+          <X className="h-4 w-4" />
         </Button>
       </div>
     </div>
