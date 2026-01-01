@@ -10,12 +10,13 @@ export interface Actor {
   user_id: string;
   name: string;
   status: 'processing' | 'completed' | 'failed';
-  age: string | null;
+  mode: 'generate' | 'upload' | null;
+  age: number | null;
   gender: string | null;
+  language: string | null;
   accent: string | null;
-  physical_details: Record<string, string>;
-  personality_details: Record<string, string>;
-  voice_details: Record<string, string>;
+  dialect: string | null;
+  other_instructions: string | null;
   custom_image_url: string | null;
   custom_audio_url: string | null;
   sora_prompt: string | null;
@@ -31,12 +32,13 @@ export interface Actor {
 
 export interface CreateActorInput {
   name: string;
-  age?: string;
+  mode: 'generate' | 'upload';
+  age?: number;
   gender?: string;
+  language?: string;
   accent?: string;
-  physical_details?: Record<string, string>;
-  personality_details?: Record<string, string>;
-  voice_details?: Record<string, string>;
+  dialect?: string;
+  other_instructions?: string;
   custom_image_url?: string;
   custom_audio_url?: string;
 }
@@ -56,11 +58,10 @@ export function useActors() {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      return data as Actor[];
+      return data as unknown as Actor[];
     },
     enabled: !!user,
     refetchInterval: (query) => {
-      // Auto-refresh every 5 seconds if any actors are processing
       const data = query.state.data as Actor[] | undefined;
       const hasProcessing = data?.some(actor => actor.status === 'processing');
       return hasProcessing ? 5000 : false;
@@ -105,12 +106,13 @@ export function useActors() {
         .insert({
           user_id: user.id,
           name: input.name,
+          mode: input.mode,
           age: input.age || null,
           gender: input.gender || null,
+          language: input.language || null,
           accent: input.accent || null,
-          physical_details: input.physical_details || {},
-          personality_details: input.personality_details || {},
-          voice_details: input.voice_details || {},
+          dialect: input.dialect || null,
+          other_instructions: input.other_instructions || null,
           custom_image_url: input.custom_image_url || null,
           custom_audio_url: input.custom_audio_url || null,
           status: 'processing',
@@ -156,13 +158,14 @@ export function useActors() {
             payload: {
               actor_id: actor.id,
               user_id: user.id,
+              mode: input.mode,
               name: input.name,
               age: input.age,
               gender: input.gender,
+              language: input.language,
               accent: input.accent,
-              physical_details: input.physical_details,
-              personality_details: input.personality_details,
-              voice_details: input.voice_details,
+              dialect: input.dialect,
+              other_instructions: input.other_instructions,
               custom_image_url: input.custom_image_url,
               custom_audio_url: input.custom_audio_url,
               credits_cost: 1,
@@ -175,10 +178,9 @@ export function useActors() {
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
         console.error('Trigger generation error:', errorData);
-        // Don't throw - actor is created, n8n will process it
       }
 
-      return actor as Actor;
+      return actor as unknown as Actor;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['actors'] });
