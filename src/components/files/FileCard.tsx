@@ -74,13 +74,14 @@ export const FileCard: React.FC<FileCardProps> = ({
 
         {status === 'completed' && hasVideoThumbnail && (
           <div className="relative w-full h-full bg-secondary">
-            <div className="absolute inset-0 shimmer" />
+            <div className="absolute inset-0 skeleton-shimmer" />
             <video 
               src={`${previewUrl}#t=0.1`}
-              className="relative w-full h-full object-contain"
+              className="relative w-full h-full object-contain opacity-0"
               muted
               playsInline
               preload="metadata"
+              onLoadedData={(e) => e.currentTarget.classList.add('animate-fade-in-content')}
               onMouseEnter={(e) => e.currentTarget.play()}
               onMouseLeave={(e) => {
                 e.currentTarget.pause();
