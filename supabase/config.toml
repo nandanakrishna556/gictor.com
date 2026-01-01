@@ -8,3 +8,6 @@ verify_jwt = false
 
 [functions.trigger-generation]
 verify_jwt = false
+
+[functions.update-actor-status]
+verify_jwt = false
