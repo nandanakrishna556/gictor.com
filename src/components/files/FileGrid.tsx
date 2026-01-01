@@ -1164,23 +1164,25 @@ function FileCard({
       <div className="relative flex flex-1 items-center justify-center bg-secondary overflow-hidden">
         {hasVideoThumbnail ? (
           <div className="relative h-full w-full bg-secondary">
-            <div className="absolute inset-0 shimmer" />
+            <div className="absolute inset-0 skeleton-shimmer" />
             <video
               src={`${file.preview_url || file.download_url}#t=0.1`}
-              className="relative h-full w-full object-contain"
+              className="relative h-full w-full object-contain opacity-0"
               muted
               preload="metadata"
               playsInline
+              onLoadedData={(e) => e.currentTarget.classList.add('animate-fade-in-content')}
             />
           </div>
         ) : file.preview_url ? (
           <img
             src={file.preview_url}
             alt={file.name}
-            className="h-full w-full object-contain"
+            className="h-full w-full object-contain opacity-0"
+            onLoad={(e) => e.currentTarget.classList.add('animate-fade-in-content')}
           />
         ) : isProcessing ? (
-          <div className="shimmer h-full w-full" />
+          <div className="skeleton-shimmer h-full w-full" />
         ) : (
           <div className="flex items-center justify-center h-full w-full">
             <FileTypeIcon fileType={file.file_type as FileType} size="lg" className="h-12 w-12 opacity-50" />
@@ -1531,24 +1533,26 @@ function KanbanCard({
           </div>
         ) : hasVideoThumbnail ? (
           <div className="relative h-full w-full bg-secondary">
-            <div className="absolute inset-0 shimmer" />
+            <div className="absolute inset-0 skeleton-shimmer" />
             <video
               src={`${file?.preview_url || file?.download_url}#t=0.1`}
-              className="relative h-full w-full object-contain"
+              className="relative h-full w-full object-contain opacity-0"
               muted
               preload="metadata"
               playsInline
+              onLoadedData={(e) => e.currentTarget.classList.add('animate-fade-in-content')}
             />
           </div>
         ) : file?.preview_url ? (
           <img
             src={file.preview_url}
             alt={file.name}
-            className="h-full w-full object-contain"
+            className="h-full w-full object-contain opacity-0"
+            onLoad={(e) => e.currentTarget.classList.add('animate-fade-in-content')}
           />
         ) : isProcessing ? (
           <>
-            <div className="shimmer h-full w-full" />
+            <div className="skeleton-shimmer h-full w-full" />
             <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-background/90 to-transparent p-3">
               <FileProgress progress={file?.progress || 0} status={file?.status || 'processing'} />
             </div>
