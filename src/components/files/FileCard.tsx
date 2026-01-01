@@ -1,5 +1,5 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { Loader2, Play, AlertCircle, MoreHorizontal, Trash2, Pencil, FileText, Film, Mic, Video, Download } from 'lucide-react';
+import React from 'react';
+import { Loader2, Play, AlertCircle, MoreHorizontal, Trash2, Pencil, FileText, Film, Mic, Video } from 'lucide-react';
 import { 
   DropdownMenu, 
   DropdownMenuContent, 
@@ -18,8 +18,6 @@ interface FileCardProps {
   fileType: FileType;
   status: 'processing' | 'completed' | 'failed';
   previewUrl?: string | null;
-  downloadUrl?: string | null;
-  generationParams?: { image_url?: string } | null;
   errorMessage?: string | null;
   tags?: string[];
   onClick: () => void;
@@ -39,8 +37,6 @@ export const FileCard: React.FC<FileCardProps> = ({
   fileType, 
   status, 
   previewUrl, 
-  downloadUrl,
-  generationParams,
   errorMessage, 
   tags = [], 
   onClick, 
@@ -49,21 +45,6 @@ export const FileCard: React.FC<FileCardProps> = ({
 }) => {
   const isVideoType = VIDEO_FILE_TYPES.includes(fileType);
   const isAudioType = AUDIO_FILE_TYPES.includes(fileType);
-  const [isHovering, setIsHovering] = useState(false);
-  const videoRef = useRef<HTMLVideoElement>(null);
-
-  // Handle hover preview for videos
-  useEffect(() => {
-    if (isHovering && videoRef.current && downloadUrl) {
-      videoRef.current.play().catch(() => {});
-    } else if (videoRef.current) {
-      videoRef.current.pause();
-      videoRef.current.currentTime = 0;
-    }
-  }, [isHovering, downloadUrl]);
-
-  // Get poster image from preview URL or generation params
-  const posterImage = previewUrl || generationParams?.image_url;
 
   return (
     <div 
@@ -74,11 +55,7 @@ export const FileCard: React.FC<FileCardProps> = ({
       onClick={onClick}
     >
       {/* Preview area */}
-      <div 
-        className="aspect-square bg-muted relative overflow-hidden"
-        onMouseEnter={() => setIsHovering(true)}
-        onMouseLeave={() => setIsHovering(false)}
-      >
+      <div className="aspect-video bg-muted relative overflow-hidden">
         {status === 'processing' && (
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-muted">
             <Loader2 className="h-8 w-8 animate-spin text-primary" strokeWidth={1.5} />
@@ -94,33 +71,26 @@ export const FileCard: React.FC<FileCardProps> = ({
           />
         )}
 
-        {status === 'completed' && downloadUrl && isVideoType && (
-          <>
+        {status === 'completed' && previewUrl && isVideoType && (
+          <div className="relative w-full h-full">
             <video 
-              ref={videoRef}
-              src={downloadUrl} 
+              src={previewUrl} 
               className="w-full h-full object-cover"
               muted
               loop
               playsInline
-              poster={posterImage || undefined}
+              onMouseEnter={(e) => e.currentTarget.play()}
+              onMouseLeave={(e) => {
+                e.currentTarget.pause();
+                e.currentTarget.currentTime = 0;
+              }}
             />
-            {!isHovering && (
-              <div className="absolute inset-0 flex items-center justify-center bg-black/20">
-                <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center">
-                  <Play className="h-5 w-5 text-primary-foreground fill-primary-foreground ml-0.5" strokeWidth={1.5} />
-                </div>
+            <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-foreground/10">
+              <div className="w-12 h-12 rounded-full bg-primary/90 flex items-center justify-center">
+                <Play className="h-6 w-6 text-primary-foreground ml-0.5" strokeWidth={1.5} />
               </div>
-            )}
-          </>
-        )}
-
-        {status === 'completed' && !downloadUrl && isVideoType && posterImage && (
-          <img 
-            src={posterImage} 
-            alt={name}
-            className="w-full h-full object-cover"
-          />
+            </div>
+          </div>
         )}
 
         {status === 'completed' && fileType === 'script' && (
@@ -137,7 +107,7 @@ export const FileCard: React.FC<FileCardProps> = ({
           </div>
         )}
 
-        {status === 'completed' && !downloadUrl && !posterImage && isVideoType && (
+        {status === 'completed' && !previewUrl && isVideoType && (
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-muted">
             <Video className="h-12 w-12 text-muted-foreground/50" strokeWidth={1.5} />
             <span className="text-sm text-muted-foreground">Video Ready</span>
@@ -152,19 +122,6 @@ export const FileCard: React.FC<FileCardProps> = ({
             </span>
             <span className="text-xs text-muted-foreground">Credits refunded</span>
           </div>
-        )}
-
-        {/* Download button */}
-        {downloadUrl && (
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              window.open(downloadUrl, '_blank');
-            }}
-            className="absolute bottom-2 right-2 p-1.5 rounded-md bg-background/80 hover:bg-background transition-colors opacity-0 group-hover:opacity-100"
-          >
-            <Download className="h-4 w-4" strokeWidth={1.5} />
-          </button>
         )}
 
         {/* Actions menu */}

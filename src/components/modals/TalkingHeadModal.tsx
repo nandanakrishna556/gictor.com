@@ -616,10 +616,11 @@ export default function TalkingHeadModal({
           <div className="flex-1 flex overflow-hidden">
             {/* Input Section */}
             <div className="w-1/2 border-r overflow-y-auto p-6 space-y-6">
-              <h3 className="text-sm font-medium">First Frame (Required)</h3>
+              <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">Input</h3>
               
               {/* First Frame Upload */}
               <div className="space-y-2">
+                <label className="text-sm font-medium">First Frame (Required)</label>
                 <SingleImageUpload
                   value={imageUrl}
                   onChange={handleImageChange}
@@ -710,18 +711,14 @@ export default function TalkingHeadModal({
             
             {/* Output Section */}
             <div className="w-1/2 overflow-y-auto p-6 space-y-6 bg-muted/10">
-              <h3 className="text-sm font-medium">Talking Head Video</h3>
+              <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">Output</h3>
               
               {isGenerating && (
                 <div className="space-y-4">
-                  <div className="aspect-square rounded-xl bg-secondary/50 flex items-center justify-center">
+                  <div className="aspect-video rounded-xl bg-secondary/50 flex items-center justify-center">
                     <div className="text-center space-y-3">
-                      <div className="relative">
-                        <div className="w-16 h-16 border-4 border-primary/20 rounded-full"></div>
-                        <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin absolute top-0 left-0"></div>
-                      </div>
-                      <p className="text-sm font-medium">Generating video...</p>
-                      <p className="text-xs text-muted-foreground">1-3 minutes</p>
+                      <Loader2 className="h-10 w-10 animate-spin text-primary mx-auto" strokeWidth={1.5} />
+                      <p className="text-sm text-muted-foreground">Generating lip sync video...</p>
                     </div>
                   </div>
                   <Progress value={generationProgress} className="h-2" />
@@ -733,15 +730,12 @@ export default function TalkingHeadModal({
               
               {hasOutput && file?.download_url && (
                 <div className="space-y-4">
-                  <div className="aspect-square bg-black rounded-lg overflow-hidden flex items-center justify-center">
-                    <video
-                      src={file.download_url}
-                      controls
-                      className="w-full h-full object-contain"
-                      poster={imageUrl}
-                    />
-                  </div>
-                  <Button variant="outline" className="w-full" asChild>
+                  <VideoPlayer
+                    src={file.download_url}
+                    poster={imageUrl}
+                    title={name}
+                  />
+                  <Button variant="secondary" className="w-full" asChild>
                     <a href={file.download_url} download={`${name}.mp4`}>
                       <Download className="h-4 w-4 mr-2" strokeWidth={1.5} />
                       Download Video
@@ -751,7 +745,7 @@ export default function TalkingHeadModal({
               )}
               
               {!isGenerating && !hasOutput && (
-                <div className="aspect-square rounded-xl bg-secondary/30 border-2 border-dashed border-border flex items-center justify-center">
+                <div className="aspect-video rounded-xl bg-secondary/30 border-2 border-dashed border-border flex items-center justify-center">
                   <p className="text-muted-foreground text-sm">No output yet</p>
                 </div>
               )}
