@@ -79,7 +79,7 @@ export default function AppHeader({
   };
 
   return (
-    <header className="flex h-14 items-center justify-between border-b border-border/50 bg-gradient-to-r from-card via-card to-muted/10 px-4 sm:px-5">
+    <header className="flex h-14 items-center justify-between border-b border-border bg-card px-4 sm:px-5">
       {/* Breadcrumbs */}
       <nav className="flex min-w-0 flex-1 items-center overflow-x-auto pr-3 ml-10 md:ml-0">
         <div className="flex items-center gap-1 text-sm whitespace-nowrap">
