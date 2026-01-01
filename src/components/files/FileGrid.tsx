@@ -1163,16 +1163,13 @@ function FileCard({
       {/* Preview Area - contained with object-contain to prevent cutoff */}
       <div className="relative flex flex-1 items-center justify-center bg-secondary overflow-hidden">
         {hasVideoThumbnail ? (
-          <div className="relative h-full w-full bg-secondary">
-            <div className="absolute inset-0 shimmer" />
-            <video
-              src={`${file.preview_url || file.download_url}#t=0.1`}
-              className="relative h-full w-full object-contain"
-              muted
-              preload="metadata"
-              playsInline
-            />
-          </div>
+          <video
+            src={`${file.preview_url || file.download_url}#t=0.1`}
+            className="h-full w-full object-contain"
+            muted
+            preload="metadata"
+            playsInline
+          />
         ) : file.preview_url ? (
           <img
             src={file.preview_url}
@@ -1530,16 +1527,13 @@ function KanbanCard({
             </svg>
           </div>
         ) : hasVideoThumbnail ? (
-          <div className="relative h-full w-full bg-secondary">
-            <div className="absolute inset-0 shimmer" />
-            <video
-              src={`${file?.preview_url || file?.download_url}#t=0.1`}
-              className="relative h-full w-full object-contain"
-              muted
-              preload="metadata"
-              playsInline
-            />
-          </div>
+          <video
+            src={`${file?.preview_url || file?.download_url}#t=0.1`}
+            className="h-full w-full object-contain"
+            muted
+            preload="metadata"
+            playsInline
+          />
         ) : file?.preview_url ? (
           <img
             src={file.preview_url}
