@@ -1078,6 +1078,10 @@ function FileCard({
   const effectiveStatus = file.status || stages[0]?.id || 'processing';
   const currentStage = stages.find((s) => s.id === effectiveStatus) || stages[0];
   const fileTags = file.tags || [];
+  
+  // Video thumbnail support
+  const isVideoType = ['talking_head', 'clips', 'b_roll', 'lip_sync', 'veo3'].includes(file.file_type || '');
+  const hasVideoThumbnail = isVideoType && (file.preview_url || file.download_url);
 
   const toggleTag = (tagId: string) => {
     if (fileTags.includes(tagId)) {
@@ -1158,7 +1162,15 @@ function FileCard({
 
       {/* Preview Area - contained with object-contain to prevent cutoff */}
       <div className="relative flex flex-1 items-center justify-center bg-secondary overflow-hidden">
-        {file.preview_url ? (
+        {hasVideoThumbnail ? (
+          <video
+            src={`${file.preview_url || file.download_url}#t=0.1`}
+            className="h-full w-full object-contain"
+            muted
+            preload="metadata"
+            playsInline
+          />
+        ) : file.preview_url ? (
           <img
             src={file.preview_url}
             alt={file.name}
@@ -1517,7 +1529,7 @@ function KanbanCard({
         ) : hasVideoThumbnail ? (
           <video
             src={`${file?.preview_url || file?.download_url}#t=0.1`}
-            className="h-full w-full object-cover"
+            className="h-full w-full object-contain"
             muted
             preload="metadata"
             playsInline

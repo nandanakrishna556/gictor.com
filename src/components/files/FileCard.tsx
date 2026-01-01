@@ -76,7 +76,7 @@ export const FileCard: React.FC<FileCardProps> = ({
           <div className="relative w-full h-full">
             <video 
               src={`${previewUrl}#t=0.1`}
-              className="w-full h-full object-cover"
+              className="w-full h-full object-contain"
               muted
               playsInline
               preload="metadata"
