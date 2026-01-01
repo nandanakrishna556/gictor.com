@@ -1391,6 +1391,8 @@ function KanbanCard({
   const isFile = item.itemType === 'file';
   const file = isFile ? (item as File) : null;
   const isProcessing = file?.status === 'processing';
+  const isVideoType = ['talking_head', 'clips', 'b_roll', 'lip_sync', 'veo3'].includes(file?.file_type || '');
+  const hasVideoThumbnail = isVideoType && (file?.preview_url || file?.download_url);
 
   const toggleTag = (tagId: string) => {
     if (itemTags.includes(tagId)) {
@@ -1512,6 +1514,14 @@ function KanbanCard({
               />
             </svg>
           </div>
+        ) : hasVideoThumbnail ? (
+          <video
+            src={`${file?.preview_url || file?.download_url}#t=0.1`}
+            className="h-full w-full object-cover"
+            muted
+            preload="metadata"
+            playsInline
+          />
         ) : file?.preview_url ? (
           <img
             src={file.preview_url}
