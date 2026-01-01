@@ -88,6 +88,25 @@ const PipelinePayloadSchema = z.object({
   }),
 });
 
+const ActorPayloadSchema = z.object({
+  type: z.literal('create_actor'),
+  payload: z.object({
+    actor_id: z.string().uuid(),
+    user_id: z.string().uuid(),
+    name: z.string().max(255),
+    age: z.string().optional(),
+    gender: z.string().optional(),
+    accent: z.string().optional(),
+    physical_details: z.record(z.string()).optional(),
+    personality_details: z.record(z.string()).optional(),
+    voice_details: z.record(z.string()).optional(),
+    custom_image_url: z.string().url().optional(),
+    custom_audio_url: z.string().url().optional(),
+    credits_cost: z.number().positive(),
+    supabase_url: z.string().url(),
+  }),
+});
+
 const FilePayloadSchema = z.object({
   type: z.enum(['first_frame', 'talking_head', 'script', 'audio', 'b_roll']),
   payload: z.object({
@@ -193,6 +212,20 @@ serve(async (req) => {
     let validatedBody: any;
     if (type?.startsWith('pipeline_')) {
       const parseResult = PipelinePayloadSchema.safeParse(body);
+      if (!parseResult.success) {
+        console.error('Validation error:', parseResult.error.issues);
+        return new Response(
+          JSON.stringify({ 
+            success: false, 
+            error: 'Invalid request', 
+            details: parseResult.error.issues 
+          }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+      validatedBody = parseResult.data;
+    } else if (type === 'create_actor') {
+      const parseResult = ActorPayloadSchema.safeParse(body);
       if (!parseResult.success) {
         console.error('Validation error:', parseResult.error.issues);
         return new Response(

@@ -14,6 +14,86 @@ export type Database = {
   }
   public: {
     Tables: {
+      actors: {
+        Row: {
+          accent: string | null
+          age: string | null
+          created_at: string
+          credits_cost: number | null
+          custom_audio_url: string | null
+          custom_image_url: string | null
+          error_message: string | null
+          gender: string | null
+          id: string
+          name: string
+          personality_details: Json | null
+          physical_details: Json | null
+          profile_image_url: string | null
+          progress: number | null
+          sora_prompt: string | null
+          sora_video_url: string | null
+          status: string
+          updated_at: string
+          user_id: string
+          voice_details: Json | null
+          voice_url: string | null
+        }
+        Insert: {
+          accent?: string | null
+          age?: string | null
+          created_at?: string
+          credits_cost?: number | null
+          custom_audio_url?: string | null
+          custom_image_url?: string | null
+          error_message?: string | null
+          gender?: string | null
+          id?: string
+          name?: string
+          personality_details?: Json | null
+          physical_details?: Json | null
+          profile_image_url?: string | null
+          progress?: number | null
+          sora_prompt?: string | null
+          sora_video_url?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+          voice_details?: Json | null
+          voice_url?: string | null
+        }
+        Update: {
+          accent?: string | null
+          age?: string | null
+          created_at?: string
+          credits_cost?: number | null
+          custom_audio_url?: string | null
+          custom_image_url?: string | null
+          error_message?: string | null
+          gender?: string | null
+          id?: string
+          name?: string
+          personality_details?: Json | null
+          physical_details?: Json | null
+          profile_image_url?: string | null
+          progress?: number | null
+          sora_prompt?: string | null
+          sora_video_url?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+          voice_details?: Json | null
+          voice_url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "actors_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       credit_transactions: {
         Row: {
           amount: number
