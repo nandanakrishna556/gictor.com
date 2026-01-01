@@ -1165,7 +1165,7 @@ function FileCard({
         {hasVideoThumbnail ? (
           <video
             src={`${file.preview_url || file.download_url}#t=0.1`}
-            className="h-full w-full object-contain"
+            className="h-full w-full object-contain animate-fade-in"
             muted
             preload="metadata"
             playsInline
@@ -1174,7 +1174,7 @@ function FileCard({
           <img
             src={file.preview_url}
             alt={file.name}
-            className="h-full w-full object-contain"
+            className="h-full w-full object-contain animate-fade-in"
           />
         ) : isProcessing ? (
           <div className="shimmer h-full w-full" />
@@ -1529,7 +1529,7 @@ function KanbanCard({
         ) : hasVideoThumbnail ? (
           <video
             src={`${file?.preview_url || file?.download_url}#t=0.1`}
-            className="h-full w-full object-contain"
+            className="h-full w-full object-contain animate-fade-in"
             muted
             preload="metadata"
             playsInline
@@ -1538,7 +1538,7 @@ function KanbanCard({
           <img
             src={file.preview_url}
             alt={file.name}
-            className="h-full w-full object-contain"
+            className="h-full w-full object-contain animate-fade-in"
           />
         ) : isProcessing ? (
           <>
