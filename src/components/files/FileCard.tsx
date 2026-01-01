@@ -73,10 +73,11 @@ export const FileCard: React.FC<FileCardProps> = ({
         )}
 
         {status === 'completed' && hasVideoThumbnail && (
-          <div className="relative w-full h-full">
+          <div className="relative w-full h-full bg-secondary">
+            <div className="absolute inset-0 shimmer" />
             <video 
               src={`${previewUrl}#t=0.1`}
-              className="w-full h-full object-contain"
+              className="relative w-full h-full object-contain"
               muted
               playsInline
               preload="metadata"
