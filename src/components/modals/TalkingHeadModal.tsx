@@ -715,7 +715,7 @@ export default function TalkingHeadModal({
               
               {isGenerating && (
                 <div className="space-y-4">
-                  <div className="aspect-video rounded-xl bg-secondary/50 flex items-center justify-center">
+                  <div className="aspect-square rounded-xl bg-secondary/50 flex items-center justify-center">
                     <div className="text-center space-y-3">
                       <Loader2 className="h-10 w-10 animate-spin text-primary mx-auto" strokeWidth={1.5} />
                       <p className="text-sm text-muted-foreground">Generating lip sync video...</p>
@@ -730,11 +730,14 @@ export default function TalkingHeadModal({
               
               {hasOutput && file?.download_url && (
                 <div className="space-y-4">
-                  <VideoPlayer
-                    src={file.download_url}
-                    poster={imageUrl}
-                    title={name}
-                  />
+                  <div className="aspect-square bg-black rounded-lg overflow-hidden flex items-center justify-center">
+                    <video
+                      src={file.download_url}
+                      controls
+                      className="w-full h-full object-contain"
+                      poster={imageUrl}
+                    />
+                  </div>
                   <Button variant="secondary" className="w-full" asChild>
                     <a href={file.download_url} download={`${name}.mp4`}>
                       <Download className="h-4 w-4 mr-2" strokeWidth={1.5} />
@@ -745,7 +748,7 @@ export default function TalkingHeadModal({
               )}
               
               {!isGenerating && !hasOutput && (
-                <div className="aspect-video rounded-xl bg-secondary/30 border-2 border-dashed border-border flex items-center justify-center">
+                <div className="aspect-square rounded-xl bg-secondary/30 border-2 border-dashed border-border flex items-center justify-center">
                   <p className="text-muted-foreground text-sm">No output yet</p>
                 </div>
               )}

@@ -45,6 +45,7 @@ export const FileCard: React.FC<FileCardProps> = ({
 }) => {
   const isVideoType = VIDEO_FILE_TYPES.includes(fileType);
   const isAudioType = AUDIO_FILE_TYPES.includes(fileType);
+  const hasVideoThumbnail = isVideoType && previewUrl;
 
   return (
     <div 
@@ -71,14 +72,14 @@ export const FileCard: React.FC<FileCardProps> = ({
           />
         )}
 
-        {status === 'completed' && previewUrl && isVideoType && (
+        {status === 'completed' && hasVideoThumbnail && (
           <div className="relative w-full h-full">
             <video 
-              src={previewUrl} 
+              src={`${previewUrl}#t=0.1`}
               className="w-full h-full object-cover"
               muted
-              loop
               playsInline
+              preload="metadata"
               onMouseEnter={(e) => e.currentTarget.play()}
               onMouseLeave={(e) => {
                 e.currentTarget.pause();
@@ -107,7 +108,7 @@ export const FileCard: React.FC<FileCardProps> = ({
           </div>
         )}
 
-        {status === 'completed' && !previewUrl && isVideoType && (
+        {status === 'completed' && !hasVideoThumbnail && isVideoType && (
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-muted">
             <Video className="h-12 w-12 text-muted-foreground/50" strokeWidth={1.5} />
             <span className="text-sm text-muted-foreground">Video Ready</span>
