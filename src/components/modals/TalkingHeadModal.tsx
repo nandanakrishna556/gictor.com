@@ -729,7 +729,7 @@ export default function TalkingHeadModal({
               )}
               
               {hasOutput && file?.download_url && (
-                <div className="space-y-4">
+                <div className="space-y-4 animate-fade-in">
                   <div className="aspect-square bg-black rounded-lg overflow-hidden flex items-center justify-center">
                     <video
                       src={file.download_url}
