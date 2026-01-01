@@ -17,15 +17,19 @@ export type Database = {
       actors: {
         Row: {
           accent: string | null
-          age: string | null
+          age: number | null
           created_at: string
           credits_cost: number | null
           custom_audio_url: string | null
           custom_image_url: string | null
+          dialect: string | null
           error_message: string | null
           gender: string | null
           id: string
+          language: string | null
+          mode: string | null
           name: string
+          other_instructions: string | null
           personality_details: Json | null
           physical_details: Json | null
           profile_image_url: string | null
@@ -40,15 +44,19 @@ export type Database = {
         }
         Insert: {
           accent?: string | null
-          age?: string | null
+          age?: number | null
           created_at?: string
           credits_cost?: number | null
           custom_audio_url?: string | null
           custom_image_url?: string | null
+          dialect?: string | null
           error_message?: string | null
           gender?: string | null
           id?: string
+          language?: string | null
+          mode?: string | null
           name?: string
+          other_instructions?: string | null
           personality_details?: Json | null
           physical_details?: Json | null
           profile_image_url?: string | null
@@ -63,15 +71,19 @@ export type Database = {
         }
         Update: {
           accent?: string | null
-          age?: string | null
+          age?: number | null
           created_at?: string
           credits_cost?: number | null
           custom_audio_url?: string | null
           custom_image_url?: string | null
+          dialect?: string | null
           error_message?: string | null
           gender?: string | null
           id?: string
+          language?: string | null
+          mode?: string | null
           name?: string
+          other_instructions?: string | null
           personality_details?: Json | null
           physical_details?: Json | null
           profile_image_url?: string | null

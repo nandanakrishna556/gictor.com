@@ -82,8 +82,6 @@ export default function Actors() {
       <CreateActorModal
         open={createModalOpen}
         onOpenChange={setCreateModalOpen}
-        onSubmit={createActor}
-        isCreating={isCreating}
       />
 
       <ConfirmDeleteDialog

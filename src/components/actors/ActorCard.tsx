@@ -56,7 +56,7 @@ export function ActorCard({ actor, onDelete }: ActorCardProps) {
         {isFailed && (
           <div className="flex h-full w-full flex-col items-center justify-center gap-2 p-4">
             <AlertCircle className="h-8 w-8 text-destructive" />
-            <span className="text-sm text-center text-destructive">
+            <span className="text-sm text-center text-destructive line-clamp-2">
               {actor.error_message || 'Failed to create actor'}
             </span>
           </div>
@@ -105,7 +105,7 @@ export function ActorCard({ actor, onDelete }: ActorCardProps) {
           <h3 className="truncate text-sm font-medium text-foreground">{actor.name}</h3>
           {(actor.gender || actor.age) && (
             <p className="text-xs text-muted-foreground">
-              {[actor.gender, actor.age].filter(Boolean).join(' • ')}
+              {[actor.gender, actor.age ? `${actor.age}y` : null].filter(Boolean).join(' • ')}
             </p>
           )}
         </div>
