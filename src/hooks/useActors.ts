@@ -15,7 +15,7 @@ export interface Actor {
   gender: string | null;
   language: string | null;
   accent: string | null;
-  dialect: string | null;
+  
   other_instructions: string | null;
   custom_image_url: string | null;
   custom_audio_url: string | null;
@@ -37,7 +37,6 @@ export interface CreateActorInput {
   gender?: string;
   language?: string;
   accent?: string;
-  dialect?: string;
   other_instructions?: string;
   custom_image_url?: string;
   custom_audio_url?: string;
@@ -111,7 +110,6 @@ export function useActors() {
           gender: input.gender || null,
           language: input.language || null,
           accent: input.accent || null,
-          dialect: input.dialect || null,
           other_instructions: input.other_instructions || null,
           custom_image_url: input.custom_image_url || null,
           custom_audio_url: input.custom_audio_url || null,
@@ -164,7 +162,6 @@ export function useActors() {
               gender: input.gender,
               language: input.language,
               accent: input.accent,
-              dialect: input.dialect,
               other_instructions: input.other_instructions,
               custom_image_url: input.custom_image_url,
               custom_audio_url: input.custom_audio_url,
