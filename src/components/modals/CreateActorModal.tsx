@@ -46,6 +46,7 @@ export default function CreateActorModal({ open, onOpenChange }: CreateActorModa
   const [customAudioUrl, setCustomAudioUrl] = useState<string>();
   const [audioFileName, setAudioFileName] = useState('');
   const [isUploadingAudio, setIsUploadingAudio] = useState(false);
+  const [isDraggingAudio, setIsDraggingAudio] = useState(false);
 
   const resetForm = () => {
     setStep('choose');
@@ -330,10 +331,30 @@ export default function CreateActorModal({ open, onOpenChange }: CreateActorModa
                 ) : (
                   <div
                     onClick={() => !isUploadingAudio && document.getElementById(audioInputId)?.click()}
+                    onDragOver={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      setIsDraggingAudio(true);
+                    }}
+                    onDragLeave={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      setIsDraggingAudio(false);
+                    }}
+                    onDrop={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      setIsDraggingAudio(false);
+                      const file = e.dataTransfer.files?.[0];
+                      if (file && file.type.startsWith('audio/')) {
+                        handleAudioUpload(file);
+                      }
+                    }}
                     className={cn(
-                      'relative aspect-square rounded-xl border-2 border-dashed border-border bg-muted/30',
+                      'relative aspect-square rounded-xl border-2 border-dashed bg-muted/30',
                       'flex flex-col items-center justify-center gap-2 cursor-pointer',
-                      'hover:border-primary hover:bg-primary/5 transition-all'
+                      'hover:border-primary hover:bg-primary/5 transition-all',
+                      isDraggingAudio ? 'border-primary bg-primary/10' : 'border-border'
                     )}
                   >
                     {isUploadingAudio ? (
@@ -342,7 +363,7 @@ export default function CreateActorModal({ open, onOpenChange }: CreateActorModa
                       <>
                         <Upload className="h-8 w-8 text-muted-foreground" />
                         <span className="text-xs text-muted-foreground text-center">
-                          MP3, WAV, M4A
+                          {isDraggingAudio ? 'Drop audio file' : 'MP3, WAV, M4A'}
                         </span>
                       </>
                     )}
