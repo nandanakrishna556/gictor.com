@@ -15,7 +15,9 @@ export interface UploadOptions {
 }
 
 const DEFAULT_MAX_SIZE = 10 * 1024 * 1024; // 10MB
-const DEFAULT_ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+const DEFAULT_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+const DEFAULT_AUDIO_TYPES = ['audio/mpeg', 'audio/wav', 'audio/mp3', 'audio/m4a', 'audio/x-m4a', 'audio/ogg'];
+const DEFAULT_ALLOWED_TYPES = [...DEFAULT_IMAGE_TYPES, ...DEFAULT_AUDIO_TYPES];
 
 /**
  * Upload a single image to Cloudflare R2
