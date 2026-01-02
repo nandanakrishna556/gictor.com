@@ -20,7 +20,7 @@ import {
 import { SingleImageUpload } from '@/components/ui/single-image-upload';
 import { uploadToR2, validateFile } from '@/lib/cloudflare-upload';
 import { useActors, CreateActorInput } from '@/hooks/useActors';
-import { LANGUAGES, getAccentsForLanguage, getDialectsForAccent } from '@/constants/languages';
+import { LANGUAGES } from '@/constants/languages';
 import { cn } from '@/lib/utils';
 
 interface CreateActorModalProps {
@@ -41,7 +41,6 @@ export default function CreateActorModal({ open, onOpenChange }: CreateActorModa
   const [gender, setGender] = useState('');
   const [language, setLanguage] = useState('');
   const [accent, setAccent] = useState('');
-  const [dialect, setDialect] = useState('');
   const [otherInstructions, setOtherInstructions] = useState('');
   const [customImageUrl, setCustomImageUrl] = useState<string>();
   const [customAudioUrl, setCustomAudioUrl] = useState<string>();
@@ -55,7 +54,6 @@ export default function CreateActorModal({ open, onOpenChange }: CreateActorModa
     setGender('');
     setLanguage('');
     setAccent('');
-    setDialect('');
     setOtherInstructions('');
     setCustomImageUrl(undefined);
     setCustomAudioUrl(undefined);
@@ -77,7 +75,6 @@ export default function CreateActorModal({ open, onOpenChange }: CreateActorModa
       gender: gender || undefined,
       language: language || undefined,
       accent: accent || undefined,
-      dialect: dialect || undefined,
       other_instructions: otherInstructions || undefined,
       custom_image_url: customImageUrl,
       custom_audio_url: customAudioUrl,
@@ -90,20 +87,6 @@ export default function CreateActorModal({ open, onOpenChange }: CreateActorModa
       // Error handled by hook
     }
   };
-
-  const handleLanguageChange = (value: string) => {
-    setLanguage(value);
-    setAccent('');
-    setDialect('');
-  };
-
-  const handleAccentChange = (value: string) => {
-    setAccent(value);
-    setDialect('');
-  };
-
-  const accents = language ? getAccentsForLanguage(language) : [];
-  const dialects = accent ? getDialectsForAccent(language, accent) : [];
 
   const handleAudioUpload = async (file: File) => {
     const validation = validateFile(file, {
@@ -154,7 +137,7 @@ export default function CreateActorModal({ open, onOpenChange }: CreateActorModa
           <div className="grid grid-cols-2 gap-4 py-4">
             <button
               onClick={() => setStep('generate')}
-              className="flex flex-col items-center gap-3 p-6 rounded-xl border-2 border-border bg-card hover:border-primary hover:bg-muted/50 transition-all"
+              className="flex flex-col items-center gap-3 p-6 rounded-xl border-2 border-border bg-card shadow-subtle hover:shadow-elevated hover:border-primary hover:bg-muted/50 transition-all"
             >
               <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
                 <Sparkles className="h-6 w-6 text-primary" />
@@ -167,7 +150,7 @@ export default function CreateActorModal({ open, onOpenChange }: CreateActorModa
 
             <button
               onClick={() => setStep('upload')}
-              className="flex flex-col items-center gap-3 p-6 rounded-xl border-2 border-border bg-card hover:border-primary hover:bg-muted/50 transition-all"
+              className="flex flex-col items-center gap-3 p-6 rounded-xl border-2 border-border bg-card shadow-subtle hover:shadow-elevated hover:border-primary hover:bg-muted/50 transition-all"
             >
               <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
                 <Upload className="h-6 w-6 text-primary" />
@@ -244,13 +227,13 @@ export default function CreateActorModal({ open, onOpenChange }: CreateActorModa
               </div>
             </div>
 
-            {/* Language + Accent + Dialect */}
-            <div className="grid grid-cols-3 gap-3">
+            {/* Language + Accent - 2 columns */}
+            <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Language</Label>
-                <Select value={language} onValueChange={handleLanguageChange}>
+                <Select value={language} onValueChange={setLanguage}>
                   <SelectTrigger>
-                    <SelectValue placeholder="Select" />
+                    <SelectValue placeholder="Select language" />
                   </SelectTrigger>
                   <SelectContent>
                     {LANGUAGES.map((lang) => (
@@ -261,37 +244,13 @@ export default function CreateActorModal({ open, onOpenChange }: CreateActorModa
                   </SelectContent>
                 </Select>
               </div>
-
               <div className="space-y-2">
-                <Label>Accent</Label>
-                <Select value={accent} onValueChange={handleAccentChange} disabled={!language}>
-                  <SelectTrigger>
-                    <SelectValue placeholder={language ? 'Select' : '—'} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {accents.map((acc) => (
-                      <SelectItem key={acc} value={acc}>
-                        {acc}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label>Dialect</Label>
-                <Select value={dialect} onValueChange={setDialect} disabled={!accent}>
-                  <SelectTrigger>
-                    <SelectValue placeholder={accent ? 'Select' : '—'} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {dialects.map((d) => (
-                      <SelectItem key={d} value={d}>
-                        {d}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <Label>Accent <span className="text-muted-foreground font-normal">(Optional)</span></Label>
+                <Input
+                  placeholder="e.g., Southern American, British RP"
+                  value={accent}
+                  onChange={(e) => setAccent(e.target.value)}
+                />
               </div>
             </div>
 
@@ -372,9 +331,9 @@ export default function CreateActorModal({ open, onOpenChange }: CreateActorModa
                   <div
                     onClick={() => !isUploadingAudio && document.getElementById(audioInputId)?.click()}
                     className={cn(
-                      'relative aspect-square rounded-xl border-2 border-dashed border-border bg-muted/50',
+                      'relative aspect-square rounded-xl border-2 border-dashed border-border bg-muted/30',
                       'flex flex-col items-center justify-center gap-2 cursor-pointer',
-                      'hover:border-primary hover:bg-muted/70 transition-colors'
+                      'hover:border-primary hover:bg-primary/5 transition-all'
                     )}
                   >
                     {isUploadingAudio ? (

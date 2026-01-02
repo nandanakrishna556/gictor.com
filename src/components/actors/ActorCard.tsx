@@ -40,7 +40,7 @@ export function ActorCard({ actor, onDelete }: ActorCardProps) {
   const isCompleted = actor.status === 'completed';
 
   return (
-    <div className="group relative flex flex-col overflow-hidden rounded-xl border bg-card shadow-subtle transition-shadow duration-200 hover:shadow-elevated">
+    <div className="group relative flex flex-col overflow-hidden rounded-xl border bg-card shadow-subtle transition-all duration-200 hover:shadow-elevated">
       {/* Thumbnail Area */}
       <div className="relative aspect-square bg-muted/50 overflow-hidden">
         {isProcessing && (
@@ -68,14 +68,20 @@ export function ActorCard({ actor, onDelete }: ActorCardProps) {
               <img
                 src={actor.profile_image_url}
                 alt={actor.name}
-                className="h-full w-full object-contain animate-fade-in"
-                onLoad={(e) => e.currentTarget.classList.add('animate-fade-in')}
+                className="h-full w-full object-contain opacity-0 transition-opacity duration-300"
+                onLoad={(e) => {
+                  e.currentTarget.classList.remove('opacity-0');
+                  e.currentTarget.classList.add('animate-fade-in');
+                }}
               />
             ) : (
               <div className="flex h-full w-full items-center justify-center">
                 <UserCircle className="h-16 w-16 text-muted-foreground" strokeWidth={1} />
               </div>
             )}
+
+            {/* Hover gradient overlay */}
+            <div className="absolute inset-0 bg-gradient-to-t from-foreground/5 to-transparent dark:from-black/30 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
 
             {/* Play voice overlay */}
             {actor.voice_url && (
@@ -133,11 +139,11 @@ export function ActorCard({ actor, onDelete }: ActorCardProps) {
 
 export function ActorCardSkeleton() {
   return (
-    <div className="flex flex-col overflow-hidden rounded-xl border bg-card">
+    <div className="flex flex-col overflow-hidden rounded-xl border border-border bg-card">
       <div className="aspect-square skeleton" />
       <div className="p-3 space-y-2">
-        <div className="h-4 w-2/3 skeleton" />
-        <div className="h-3 w-1/3 skeleton" />
+        <div className="h-4 w-2/3 skeleton rounded" />
+        <div className="h-3 w-1/3 skeleton rounded" />
       </div>
     </div>
   );

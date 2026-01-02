@@ -22,7 +22,6 @@ export type Database = {
           credits_cost: number | null
           custom_audio_url: string | null
           custom_image_url: string | null
-          dialect: string | null
           error_message: string | null
           gender: string | null
           id: string
@@ -49,7 +48,6 @@ export type Database = {
           credits_cost?: number | null
           custom_audio_url?: string | null
           custom_image_url?: string | null
-          dialect?: string | null
           error_message?: string | null
           gender?: string | null
           id?: string
@@ -76,7 +74,6 @@ export type Database = {
           credits_cost?: number | null
           custom_audio_url?: string | null
           custom_image_url?: string | null
-          dialect?: string | null
           error_message?: string | null
           gender?: string | null
           id?: string
