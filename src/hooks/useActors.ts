@@ -11,18 +11,26 @@ export interface Actor {
   name: string;
   status: 'processing' | 'completed' | 'failed';
   mode: 'generate' | 'upload' | null;
+  
+  // Actor details (for AI generated)
   age: number | null;
   gender: string | null;
   language: string | null;
   accent: string | null;
-  
   other_instructions: string | null;
+  
+  // User uploaded assets (for upload mode)
   custom_image_url: string | null;
   custom_audio_url: string | null;
+  
+  // Generated assets
+  profile_image_url: string | null;      // Front-facing thumbnail for cards
+  profile_360_url: string | null;        // Full 360° grid
+  voice_url: string | null;              // Index TTS generated voice
+  sora_video_url: string | null;         // Sora 2 video (generate mode only)
   sora_prompt: string | null;
-  sora_video_url: string | null;
-  voice_url: string | null;
-  profile_image_url: string | null;
+  
+  // Status
   error_message: string | null;
   progress: number;
   credits_cost: number;
