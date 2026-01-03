@@ -8,6 +8,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { ActorDetailsModal } from '@/components/modals/ActorDetailsModal';
 
 interface ActorCardProps {
   actor: Actor;
@@ -16,9 +17,11 @@ interface ActorCardProps {
 
 export function ActorCard({ actor, onDelete }: ActorCardProps) {
   const [isPlaying, setIsPlaying] = useState(false);
+  const [showDetails, setShowDetails] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
-  const handlePlayVoice = () => {
+  const handlePlayVoice = (e: React.MouseEvent) => {
+    e.stopPropagation();
     if (!actor.voice_url) return;
 
     if (isPlaying && audioRef.current) {
@@ -35,12 +38,26 @@ export function ActorCard({ actor, onDelete }: ActorCardProps) {
     }
   };
 
+  const handleCardClick = () => {
+    if (isCompleted) {
+      setShowDetails(true);
+    }
+  };
+
   const isProcessing = actor.status === 'processing';
   const isFailed = actor.status === 'failed';
   const isCompleted = actor.status === 'completed';
 
   return (
-    <div className="group relative flex flex-col overflow-hidden rounded-xl border bg-card shadow-subtle transition-all duration-200 hover:shadow-elevated">
+    <>
+    <div
+      onClick={handleCardClick}
+      className={cn(
+        "group relative flex flex-col overflow-hidden rounded-xl border bg-card shadow-subtle transition-all duration-200 hover:shadow-elevated",
+        isCompleted && "cursor-pointer"
+      )}
+    >
+    
       {/* Thumbnail Area */}
       <div className="relative aspect-square bg-muted/50 overflow-hidden">
         {isProcessing && (
@@ -134,6 +151,13 @@ export function ActorCard({ actor, onDelete }: ActorCardProps) {
         </DropdownMenu>
       </div>
     </div>
+
+    <ActorDetailsModal
+      actor={actor}
+      open={showDetails}
+      onOpenChange={setShowDetails}
+    />
+    </>
   );
 }
 
