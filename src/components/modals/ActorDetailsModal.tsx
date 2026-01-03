@@ -7,6 +7,7 @@ import {
 import { useState, useRef, useEffect } from 'react';
 import { Actor } from '@/hooks/useActors';
 import { cn } from '@/lib/utils';
+import { AudioPlayer } from '@/components/ui/AudioPlayer';
 
 interface ActorDetailsModalProps {
   actor: Actor | null;
@@ -233,13 +234,8 @@ export function ActorDetailsModal({ actor, open, onOpenChange }: ActorDetailsMod
                   Actor Voice
                 </label>
                 {actor.voice_url ? (
-                  <div className="rounded-xl border border-border/50 bg-muted/20 p-1">
-                    <audio
-                      src={actor.voice_url}
-                      controls
-                      className="w-full h-10"
-                      preload="none"
-                    />
+                  <div className="rounded-xl border border-border/50 overflow-hidden">
+                    <AudioPlayer src={actor.voice_url} />
                   </div>
                 ) : (
                   <div className="p-4 rounded-xl bg-muted/20 border border-border/50 text-center">
