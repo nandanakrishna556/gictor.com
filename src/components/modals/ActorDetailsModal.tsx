@@ -1,6 +1,6 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
-import { Play, Pause, User, Calendar, Globe, MessageSquare } from 'lucide-react';
+import { Play, Pause, User, Calendar, Globe, MessageSquare, Video } from 'lucide-react';
 import { useState, useRef } from 'react';
 import { Actor } from '@/hooks/useActors';
 import { cn } from '@/lib/utils';
@@ -34,17 +34,27 @@ export function ActorDetailsModal({ actor, open, onOpenChange }: ActorDetailsMod
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg">
+      <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{actor.name}</DialogTitle>
         </DialogHeader>
 
         <div className="space-y-6">
-          {/* Profile Image Section */}
+          {/* Profile Image & Video Section */}
           <div className="space-y-2">
-            <p className="text-sm font-medium text-muted-foreground">360° Profile</p>
+            <p className="text-sm font-medium text-muted-foreground">
+              {actor.sora_video_url ? '360° Profile Video' : '360° Profile'}
+            </p>
             <div className="aspect-square w-full max-w-[280px] mx-auto rounded-xl overflow-hidden bg-muted/50 border">
-              {actor.profile_image_url ? (
+              {actor.sora_video_url ? (
+                <video
+                  src={actor.sora_video_url}
+                  className="h-full w-full object-contain animate-fade-in"
+                  controls
+                  loop
+                  playsInline
+                />
+              ) : actor.profile_image_url ? (
                 <img
                   src={actor.profile_image_url}
                   alt={actor.name}
