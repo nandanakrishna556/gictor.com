@@ -76,7 +76,7 @@ export default function AppSidebar() {
           <span>Dashboard</span>
         </Link>
 
-        {/* Actor */}
+        {/* Actors */}
         <Link
           to="/actors"
           className={cn(
@@ -87,7 +87,7 @@ export default function AppSidebar() {
           )}
         >
           <UserCircle className="h-[18px] w-[18px]" strokeWidth={1.5} />
-          <span>Actor</span>
+          <span>Actors</span>
         </Link>
 
         {/* Projects Collapsible */}

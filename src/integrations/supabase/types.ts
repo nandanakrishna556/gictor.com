@@ -31,6 +31,7 @@ export type Database = {
           other_instructions: string | null
           personality_details: Json | null
           physical_details: Json | null
+          profile_360_url: string | null
           profile_image_url: string | null
           progress: number | null
           sora_prompt: string | null
@@ -57,6 +58,7 @@ export type Database = {
           other_instructions?: string | null
           personality_details?: Json | null
           physical_details?: Json | null
+          profile_360_url?: string | null
           profile_image_url?: string | null
           progress?: number | null
           sora_prompt?: string | null
@@ -83,6 +85,7 @@ export type Database = {
           other_instructions?: string | null
           personality_details?: Json | null
           physical_details?: Json | null
+          profile_360_url?: string | null
           profile_image_url?: string | null
           progress?: number | null
           sora_prompt?: string | null
