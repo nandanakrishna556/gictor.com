@@ -1,5 +1,5 @@
 import { useState, useId } from 'react';
-import { ArrowLeft, Sparkles, Upload, Minus, Plus, Loader2, Music, X } from 'lucide-react';
+import { ArrowLeft, Wand2, FolderUp, Minus, Plus, Loader2, Music, X } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -175,7 +175,7 @@ export default function CreateActorModal({ open, onOpenChange }: CreateActorModa
               >
                 {/* Icon Container */}
                 <div className="flex h-16 w-16 sm:h-20 sm:w-20 items-center justify-center rounded-2xl bg-primary/10 mb-4 group-hover:bg-primary/20 group-hover:scale-105 transition-all duration-300">
-                  <Sparkles className="h-8 w-8 sm:h-10 sm:w-10 text-primary" strokeWidth={1.5} />
+                  <Wand2 className="h-8 w-8 sm:h-10 sm:w-10 text-primary" strokeWidth={1.5} />
                 </div>
                 
                 {/* Text */}
@@ -205,8 +205,8 @@ export default function CreateActorModal({ open, onOpenChange }: CreateActorModa
                 )}
               >
                 {/* Icon Container */}
-                <div className="flex h-16 w-16 sm:h-20 sm:w-20 items-center justify-center rounded-2xl bg-primary/10 mb-4 group-hover:bg-primary/20 group-hover:scale-105 transition-all duration-300">
-                  <Upload className="h-8 w-8 sm:h-10 sm:w-10 text-primary" strokeWidth={1.5} />
+                <div className="flex h-16 w-16 sm:h-20 sm:w-20 items-center justify-center rounded-2xl bg-orange-500/10 mb-4 group-hover:bg-orange-500/20 group-hover:scale-105 transition-all duration-300">
+                  <FolderUp className="h-8 w-8 sm:h-10 sm:w-10 text-orange-500" strokeWidth={1.5} />
                 </div>
                 
                 {/* Text */}
@@ -450,7 +450,7 @@ export default function CreateActorModal({ open, onOpenChange }: CreateActorModa
                         <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
                       ) : (
                         <>
-                          <Upload className="h-8 w-8 text-muted-foreground" />
+                          <FolderUp className="h-8 w-8 text-muted-foreground" />
                           <span className="text-xs text-muted-foreground text-center">
                             {isDraggingAudio ? 'Drop audio file' : 'MP3, WAV, M4A'}
                           </span>

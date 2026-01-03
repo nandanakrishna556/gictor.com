@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react';
-import { MoreHorizontal, Trash2, Play, Pause, AlertCircle, Loader2, UserCircle, Volume2 } from 'lucide-react';
+import { MoreHorizontal, Trash2, AlertCircle, Loader2, UserCircle } from 'lucide-react';
 import { Actor } from '@/hooks/useActors';
 import { cn } from '@/lib/utils';
 import {
@@ -16,27 +16,8 @@ interface ActorCardProps {
 }
 
 export function ActorCard({ actor, onDelete }: ActorCardProps) {
-  const [isPlaying, setIsPlaying] = useState(false);
   const [showDetails, setShowDetails] = useState(false);
-  const audioRef = useRef<HTMLAudioElement | null>(null);
-
-  const handlePlayVoice = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (!actor.voice_url) return;
-
-    if (isPlaying && audioRef.current) {
-      audioRef.current.pause();
-      audioRef.current.currentTime = 0;
-      setIsPlaying(false);
-    } else {
-      if (!audioRef.current) {
-        audioRef.current = new Audio(actor.voice_url);
-        audioRef.current.onended = () => setIsPlaying(false);
-      }
-      audioRef.current.play();
-      setIsPlaying(true);
-    }
-  };
+  const audioRef = useRef<HTMLAudioElement>(null);
 
   const handleCardClick = () => {
     if (isCompleted) {
@@ -162,52 +143,34 @@ export function ActorCard({ actor, onDelete }: ActorCardProps) {
             )}
           </div>
 
-          {/* Voice Player - Only show when completed and has voice */}
+          {/* Voice Player - Native audio element */}
           {isCompleted && actor.voice_url && (
-            <button
-              onClick={handlePlayVoice}
-              className={cn(
-                "flex items-center gap-2.5 w-full p-2.5 rounded-xl mt-auto",
-                "bg-muted/50 hover:bg-muted transition-colors",
-                isPlaying && "bg-primary/10 hover:bg-primary/15"
-              )}
-            >
-              <div className={cn(
-                "flex h-9 w-9 shrink-0 items-center justify-center rounded-full transition-all",
-                isPlaying 
-                  ? "bg-primary text-primary-foreground" 
-                  : "bg-primary/10 text-primary"
-              )}>
-                {isPlaying ? (
-                  <Pause className="h-4 w-4" fill="currentColor" />
-                ) : (
-                  <Play className="h-4 w-4 ml-0.5" fill="currentColor" />
-                )}
+            <div className="mt-auto">
+              <div className="rounded-lg border border-border/50 bg-muted/30 p-1">
+                <audio
+                  ref={audioRef}
+                  src={actor.voice_url}
+                  controls
+                  className="w-full h-8"
+                  preload="none"
+                />
               </div>
-              <div className="min-w-0 text-left flex-1">
-                <p className="text-xs font-medium text-foreground truncate">Voice Preview</p>
-                <p className="text-[10px] text-muted-foreground">
-                  {isPlaying ? 'Playing...' : 'Tap to play'}
-                </p>
-              </div>
-              <Volume2 className={cn(
-                "h-4 w-4 shrink-0 transition-colors",
-                isPlaying ? "text-primary" : "text-muted-foreground/50"
-              )} />
-            </button>
+            </div>
           )}
 
           {/* No voice fallback for completed */}
           {isCompleted && !actor.voice_url && (
-            <div className="py-2.5 text-center mt-auto rounded-xl bg-muted/30">
-              <p className="text-xs text-muted-foreground">No voice available</p>
+            <div className="mt-auto">
+              <p className="text-xs text-muted-foreground text-center py-2">
+                No voice available
+              </p>
             </div>
           )}
 
           {/* Processing/Failed state placeholder */}
           {!isCompleted && (
-            <div className="py-2.5 text-center mt-auto rounded-xl bg-muted/30">
-              <p className="text-xs text-muted-foreground">
+            <div className="mt-auto">
+              <p className="text-xs text-muted-foreground text-center py-2">
                 {isProcessing ? 'Generating voice...' : 'Voice unavailable'}
               </p>
             </div>
