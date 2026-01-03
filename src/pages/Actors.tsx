@@ -48,7 +48,7 @@ export default function Actors() {
 
         {/* Content */}
         {isLoading ? (
-          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6">
             {Array.from({ length: 8 }).map((_, i) => (
               <ActorCardSkeleton key={i} />
             ))}
@@ -70,7 +70,7 @@ export default function Actors() {
             </Button>
           </div>
         ) : (
-          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6">
             {actors.map((actor) => (
               <ActorCard key={actor.id} actor={actor} onDelete={handleDeleteClick} />
             ))}
