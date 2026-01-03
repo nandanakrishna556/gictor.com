@@ -3,7 +3,6 @@ import { ArrowLeft, Sparkles, Upload, Minus, Plus, Loader2, Music, X } from 'luc
 import {
   Dialog,
   DialogContent,
-  DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -37,7 +36,7 @@ export default function CreateActorModal({ open, onOpenChange }: CreateActorModa
 
   // Form state
   const [name, setName] = useState('');
-  const [age, setAge] = useState<number | undefined>(undefined);
+  const [age, setAge] = useState<number>(25);
   const [gender, setGender] = useState('');
   const [language, setLanguage] = useState('');
   const [accent, setAccent] = useState('');
@@ -51,7 +50,7 @@ export default function CreateActorModal({ open, onOpenChange }: CreateActorModa
   const resetForm = () => {
     setStep('choose');
     setName('');
-    setAge(undefined);
+    setAge(25);
     setGender('');
     setLanguage('');
     setAccent('');
@@ -62,8 +61,9 @@ export default function CreateActorModal({ open, onOpenChange }: CreateActorModa
   };
 
   const handleClose = () => {
-    resetForm();
     onOpenChange(false);
+    // Reset step after modal closes
+    setTimeout(() => resetForm(), 300);
   };
 
   const handleCreate = async () => {
@@ -114,289 +114,395 @@ export default function CreateActorModal({ open, onOpenChange }: CreateActorModa
     setAudioFileName('');
   };
 
+  const isGenerateFormValid = name.trim() && gender && language;
+  const isUploadFormValid = name.trim();
+
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          {step !== 'choose' && (
-            <button
-              onClick={() => setStep('choose')}
-              className="absolute left-4 top-4 p-1 rounded-md hover:bg-muted"
-            >
-              <ArrowLeft className="h-4 w-4" />
-            </button>
-          )}
-          <DialogTitle className="text-center">
-            {step === 'choose' && 'Create Actor'}
-            {step === 'generate' && 'Generate AI Actor'}
-            {step === 'upload' && 'Upload Your Actor'}
-          </DialogTitle>
-        </DialogHeader>
-
-        {/* Step 1: Choose Path */}
-        {step === 'choose' && (
-          <div className="grid grid-cols-2 gap-4 py-4">
-            <button
-              onClick={() => setStep('generate')}
-              className="flex flex-col items-center gap-3 p-6 rounded-xl border-2 border-border bg-card shadow-subtle hover:shadow-elevated hover:border-primary hover:bg-muted/50 transition-all"
-            >
-              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
-                <Sparkles className="h-6 w-6 text-primary" />
-              </div>
-              <div className="text-center">
-                <h3 className="font-medium text-foreground">Generate AI Actor</h3>
-                <p className="text-xs text-muted-foreground mt-1">AI creates the actor</p>
-              </div>
-            </button>
-
-            <button
-              onClick={() => setStep('upload')}
-              className="flex flex-col items-center gap-3 p-6 rounded-xl border-2 border-border bg-card shadow-subtle hover:shadow-elevated hover:border-primary hover:bg-muted/50 transition-all"
-            >
-              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
-                <Upload className="h-6 w-6 text-primary" />
-              </div>
-              <div className="text-center">
-                <h3 className="font-medium text-foreground">Upload Your Own</h3>
-                <p className="text-xs text-muted-foreground mt-1">Use your own media</p>
-              </div>
-            </button>
+      <DialogContent 
+        className="sm:max-w-lg max-h-[90vh] overflow-y-auto p-0"
+        onInteractOutside={(e) => e.preventDefault()}
+      >
+        {/* ===== HEADER ===== */}
+        <div className="flex items-center justify-between px-6 py-4 border-b border-border/50">
+          <div className="flex items-center gap-3">
+            {step !== 'choose' && (
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setStep('choose')}
+                className="h-9 w-9 rounded-xl hover:bg-muted/80 transition-colors"
+              >
+                <ArrowLeft className="h-4 w-4" />
+              </Button>
+            )}
+            <DialogTitle className="text-lg font-semibold">
+              {step === 'choose' && 'Create Actor'}
+              {step === 'generate' && 'Generate AI Actor'}
+              {step === 'upload' && 'Upload Your Actor'}
+            </DialogTitle>
           </div>
-        )}
+          
+          {/* CLOSE BUTTON */}
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={handleClose}
+            className="h-9 w-9 rounded-xl hover:bg-muted/80 transition-colors"
+          >
+            <X className="h-4 w-4" />
+          </Button>
+        </div>
 
-        {/* Step 2A: Generate AI Actor */}
-        {step === 'generate' && (
-          <div className="space-y-4 py-4">
-            {/* Actor Name */}
-            <div className="space-y-2">
-              <Label htmlFor="name">Actor Name</Label>
-              <Input
-                id="name"
-                placeholder="Enter actor name"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-              />
+        {/* ===== CONTENT ===== */}
+        <div className="p-6">
+          {/* STEP 1: Choose Mode */}
+          {step === 'choose' && (
+            <div className="grid grid-cols-2 gap-4 animate-fade-in">
+              {/* Generate AI Actor Card */}
+              <button
+                onClick={() => setStep('generate')}
+                className={cn(
+                  "group relative flex flex-col items-center justify-center",
+                  "p-6 sm:p-8 rounded-2xl",
+                  "bg-gradient-to-b from-background to-muted/50",
+                  "border-2 border-border/60",
+                  "hover:border-primary/50 hover:shadow-2xl hover:shadow-primary/10",
+                  "transition-all duration-300 ease-out",
+                  "hover:-translate-y-1",
+                  "focus:outline-none focus:ring-2 focus:ring-primary/30 focus:ring-offset-2 focus:ring-offset-background"
+                )}
+              >
+                {/* Icon Container */}
+                <div className="flex h-16 w-16 sm:h-20 sm:w-20 items-center justify-center rounded-2xl bg-primary/10 mb-4 group-hover:bg-primary/20 group-hover:scale-105 transition-all duration-300">
+                  <Sparkles className="h-8 w-8 sm:h-10 sm:w-10 text-primary" strokeWidth={1.5} />
+                </div>
+                
+                {/* Text */}
+                <h3 className="font-semibold text-base sm:text-lg text-foreground mb-1">
+                  Generate AI Actor
+                </h3>
+                <p className="text-xs sm:text-sm text-muted-foreground text-center">
+                  AI creates the actor for you
+                </p>
+                
+                {/* Hover Glow */}
+                <div className="absolute inset-0 rounded-2xl bg-gradient-to-t from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
+              </button>
+
+              {/* Upload Your Own Card */}
+              <button
+                onClick={() => setStep('upload')}
+                className={cn(
+                  "group relative flex flex-col items-center justify-center",
+                  "p-6 sm:p-8 rounded-2xl",
+                  "bg-gradient-to-b from-background to-muted/50",
+                  "border-2 border-border/60",
+                  "hover:border-primary/50 hover:shadow-2xl hover:shadow-primary/10",
+                  "transition-all duration-300 ease-out",
+                  "hover:-translate-y-1",
+                  "focus:outline-none focus:ring-2 focus:ring-primary/30 focus:ring-offset-2 focus:ring-offset-background"
+                )}
+              >
+                {/* Icon Container */}
+                <div className="flex h-16 w-16 sm:h-20 sm:w-20 items-center justify-center rounded-2xl bg-primary/10 mb-4 group-hover:bg-primary/20 group-hover:scale-105 transition-all duration-300">
+                  <Upload className="h-8 w-8 sm:h-10 sm:w-10 text-primary" strokeWidth={1.5} />
+                </div>
+                
+                {/* Text */}
+                <h3 className="font-semibold text-base sm:text-lg text-foreground mb-1">
+                  Upload Your Own
+                </h3>
+                <p className="text-xs sm:text-sm text-muted-foreground text-center">
+                  Use your own media files
+                </p>
+                
+                {/* Hover Glow */}
+                <div className="absolute inset-0 rounded-2xl bg-gradient-to-t from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
+              </button>
             </div>
+          )}
 
-            {/* Age + Gender */}
-            <div className="grid grid-cols-2 gap-4">
+          {/* STEP 2A: Generate Form */}
+          {step === 'generate' && (
+            <div className="space-y-5 animate-fade-in">
+              {/* Actor Name */}
               <div className="space-y-2">
-                <Label>Age</Label>
-                <div className="flex items-center gap-2">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="icon"
-                    className="h-9 w-9"
-                    onClick={() => setAge((a) => Math.max(1, (a || 25) - 1))}
-                  >
-                    <Minus className="h-4 w-4" />
-                  </Button>
-                  <Input
-                    type="number"
-                    min={1}
-                    max={120}
-                    value={age ?? ''}
-                    onChange={(e) => setAge(e.target.value ? parseInt(e.target.value) : undefined)}
-                    className="text-center"
-                    placeholder="—"
-                  />
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="icon"
-                    className="h-9 w-9"
-                    onClick={() => setAge((a) => Math.min(120, (a || 25) + 1))}
-                  >
-                    <Plus className="h-4 w-4" />
-                  </Button>
+                <Label htmlFor="name" className="text-sm font-medium">
+                  Actor Name
+                </Label>
+                <Input
+                  id="name"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="Enter actor name"
+                  className="h-12 rounded-xl bg-muted/40 border-border/60 focus:border-primary/50 focus:bg-background focus:ring-2 focus:ring-primary/20 transition-all"
+                />
+              </div>
+
+              {/* Age & Gender Row */}
+              <div className="grid grid-cols-2 gap-4">
+                {/* Age */}
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium">Age</Label>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="icon"
+                      onClick={() => setAge(Math.max(1, age - 1))}
+                      className="h-12 w-12 rounded-xl border-border/60 hover:bg-muted/80 shrink-0"
+                    >
+                      <Minus className="h-4 w-4" />
+                    </Button>
+                    <Input
+                      type="number"
+                      value={age}
+                      onChange={(e) => setAge(parseInt(e.target.value) || 25)}
+                      className="h-12 rounded-xl bg-muted/40 border-border/60 text-center font-semibold text-lg"
+                      min={1}
+                      max={100}
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="icon"
+                      onClick={() => setAge(Math.min(100, age + 1))}
+                      className="h-12 w-12 rounded-xl border-border/60 hover:bg-muted/80 shrink-0"
+                    >
+                      <Plus className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+
+                {/* Gender */}
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium">Gender</Label>
+                  <Select value={gender} onValueChange={setGender}>
+                    <SelectTrigger className="h-12 rounded-xl bg-muted/40 border-border/60 focus:border-primary/50 focus:ring-2 focus:ring-primary/20">
+                      <SelectValue placeholder="Select gender" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Male">Male</SelectItem>
+                      <SelectItem value="Female">Female</SelectItem>
+                      <SelectItem value="Non-binary">Non-binary</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
 
+              {/* Language & Accent Row */}
+              <div className="grid grid-cols-2 gap-4">
+                {/* Language */}
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium">Language</Label>
+                  <Select value={language} onValueChange={setLanguage}>
+                    <SelectTrigger className="h-12 rounded-xl bg-muted/40 border-border/60 focus:border-primary/50 focus:ring-2 focus:ring-primary/20">
+                      <SelectValue placeholder="Select language" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {LANGUAGES.map((lang) => (
+                        <SelectItem key={lang} value={lang}>
+                          {lang}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Accent */}
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium text-muted-foreground">
+                    Accent (Optional)
+                  </Label>
+                  <Input
+                    value={accent}
+                    onChange={(e) => setAccent(e.target.value)}
+                    placeholder="e.g., British, Southern"
+                    className="h-12 rounded-xl bg-muted/40 border-border/60 focus:border-primary/50 focus:bg-background focus:ring-2 focus:ring-primary/20 transition-all"
+                  />
+                </div>
+              </div>
+
+              {/* Other Instructions */}
               <div className="space-y-2">
-                <Label>Gender</Label>
-                <Select value={gender} onValueChange={setGender}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select gender" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Male">Male</SelectItem>
-                    <SelectItem value="Female">Female</SelectItem>
-                    <SelectItem value="Non-binary">Non-binary</SelectItem>
-                  </SelectContent>
-                </Select>
+                <Label className="text-sm font-medium text-muted-foreground">
+                  Other Instructions (Optional)
+                </Label>
+                <Textarea
+                  value={otherInstructions}
+                  onChange={(e) => setOtherInstructions(e.target.value)}
+                  placeholder="Describe appearance, personality, voice style, clothing, background setting..."
+                  className="min-h-[100px] rounded-xl bg-muted/40 border-border/60 focus:border-primary/50 focus:bg-background focus:ring-2 focus:ring-primary/20 resize-none transition-all"
+                />
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex gap-3 pt-3">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handleClose}
+                  className="flex-1 h-12 rounded-xl border-border/60 font-medium hover:bg-muted/80 transition-all"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={handleCreate}
+                  disabled={!isGenerateFormValid || isCreating}
+                  className={cn(
+                    "flex-1 h-12 rounded-xl font-medium",
+                    "bg-gradient-to-r from-primary to-primary/90",
+                    "hover:from-primary/95 hover:to-primary/85",
+                    "shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30",
+                    "disabled:opacity-50 disabled:shadow-none",
+                    "transition-all duration-300"
+                  )}
+                >
+                  {isCreating ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Creating...
+                    </>
+                  ) : (
+                    'Create Actor • 1 credit'
+                  )}
+                </Button>
               </div>
             </div>
+          )}
 
-            {/* Language + Accent - 2 columns */}
-            <div className="grid grid-cols-2 gap-4">
+          {/* STEP 2B: Upload Form */}
+          {step === 'upload' && (
+            <div className="space-y-5 animate-fade-in">
+              {/* Actor Name */}
               <div className="space-y-2">
-                <Label>Language</Label>
-                <Select value={language} onValueChange={setLanguage}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select language" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {LANGUAGES.map((lang) => (
-                      <SelectItem key={lang} value={lang}>
-                        {lang}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label>Accent <span className="text-muted-foreground font-normal">(Optional)</span></Label>
+                <Label htmlFor="upload-name" className="text-sm font-medium">
+                  Actor Name
+                </Label>
                 <Input
-                  placeholder="e.g., Southern American, British RP"
-                  value={accent}
-                  onChange={(e) => setAccent(e.target.value)}
-                />
-              </div>
-            </div>
-
-            {/* Other Instructions */}
-            <div className="space-y-2">
-              <Label htmlFor="instructions">Other Instructions (Optional)</Label>
-              <Textarea
-                id="instructions"
-                placeholder="Describe appearance, personality, voice style..."
-                value={otherInstructions}
-                onChange={(e) => setOtherInstructions(e.target.value)}
-                rows={3}
-              />
-            </div>
-
-            {/* Footer */}
-            <div className="flex justify-between pt-4">
-              <Button variant="outline" onClick={handleClose}>
-                Cancel
-              </Button>
-              <Button onClick={handleCreate} disabled={!name.trim() || isCreating}>
-                {isCreating ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Creating...
-                  </>
-                ) : (
-                  'Create Actor • 1 credit'
-                )}
-              </Button>
-            </div>
-          </div>
-        )}
-
-        {/* Step 2B: Upload Your Own */}
-        {step === 'upload' && (
-          <div className="space-y-4 py-4">
-            {/* Actor Name */}
-            <div className="space-y-2">
-              <Label htmlFor="upload-name">Actor Name</Label>
-              <Input
-                id="upload-name"
-                placeholder="Enter actor name"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-              />
-            </div>
-
-            {/* Image + Audio Upload */}
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>Base Image</Label>
-                <SingleImageUpload
-                  value={customImageUrl}
-                  onChange={setCustomImageUrl}
-                  aspectRatio="square"
-                  showGenerateLink={false}
-                  placeholder="Drop image or"
+                  id="upload-name"
+                  placeholder="Enter actor name"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  className="h-12 rounded-xl bg-muted/40 border-border/60 focus:border-primary/50 focus:bg-background focus:ring-2 focus:ring-primary/20 transition-all"
                 />
               </div>
 
-              <div className="space-y-2">
-                <Label>Base Voice</Label>
-                {customAudioUrl ? (
-                  <div className="relative aspect-square rounded-xl border-2 border-dashed border-border bg-muted/50 flex flex-col items-center justify-center gap-2">
-                    <Music className="h-8 w-8 text-muted-foreground" />
-                    <span className="text-xs text-muted-foreground text-center px-2 truncate max-w-full">
-                      {audioFileName || 'Audio uploaded'}
-                    </span>
-                    <button
-                      onClick={removeAudio}
-                      className="absolute top-2 left-2 h-6 w-6 rounded-full bg-foreground/80 text-background flex items-center justify-center hover:bg-foreground transition-colors"
+              {/* Image + Audio Upload */}
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium">Base Image</Label>
+                  <SingleImageUpload
+                    value={customImageUrl}
+                    onChange={setCustomImageUrl}
+                    aspectRatio="square"
+                    showGenerateLink={false}
+                    placeholder="Drop image or"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium">Base Voice</Label>
+                  {customAudioUrl ? (
+                    <div className="relative aspect-square rounded-xl border-2 border-dashed border-primary/30 bg-primary/5 flex flex-col items-center justify-center gap-2">
+                      <Music className="h-8 w-8 text-primary" />
+                      <span className="text-xs text-muted-foreground text-center px-2 truncate max-w-full">
+                        {audioFileName || 'Audio uploaded'}
+                      </span>
+                      <button
+                        onClick={removeAudio}
+                        className="absolute top-2 left-2 h-6 w-6 rounded-full bg-foreground/80 text-background flex items-center justify-center hover:bg-foreground transition-colors"
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    </div>
+                  ) : (
+                    <div
+                      onClick={() => !isUploadingAudio && document.getElementById(audioInputId)?.click()}
+                      onDragOver={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        setIsDraggingAudio(true);
+                      }}
+                      onDragLeave={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        setIsDraggingAudio(false);
+                      }}
+                      onDrop={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        setIsDraggingAudio(false);
+                        const file = e.dataTransfer.files?.[0];
+                        if (file && file.type.startsWith('audio/')) {
+                          handleAudioUpload(file);
+                        }
+                      }}
+                      className={cn(
+                        'relative aspect-square rounded-xl border-2 border-dashed',
+                        'flex flex-col items-center justify-center gap-2 cursor-pointer',
+                        'hover:border-primary hover:bg-primary/5 transition-all duration-200',
+                        isDraggingAudio ? 'border-primary bg-primary/10' : 'border-border/60 bg-muted/30'
+                      )}
                     >
-                      <X className="h-3 w-3" />
-                    </button>
-                  </div>
-                ) : (
-                  <div
-                    onClick={() => !isUploadingAudio && document.getElementById(audioInputId)?.click()}
-                    onDragOver={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      setIsDraggingAudio(true);
-                    }}
-                    onDragLeave={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      setIsDraggingAudio(false);
-                    }}
-                    onDrop={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      setIsDraggingAudio(false);
-                      const file = e.dataTransfer.files?.[0];
-                      if (file && file.type.startsWith('audio/')) {
-                        handleAudioUpload(file);
-                      }
-                    }}
-                    className={cn(
-                      'relative aspect-square rounded-xl border-2 border-dashed bg-muted/30',
-                      'flex flex-col items-center justify-center gap-2 cursor-pointer',
-                      'hover:border-primary hover:bg-primary/5 transition-all',
-                      isDraggingAudio ? 'border-primary bg-primary/10' : 'border-border'
-                    )}
-                  >
-                    {isUploadingAudio ? (
-                      <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-                    ) : (
-                      <>
-                        <Upload className="h-8 w-8 text-muted-foreground" />
-                        <span className="text-xs text-muted-foreground text-center">
-                          {isDraggingAudio ? 'Drop audio file' : 'MP3, WAV, M4A'}
-                        </span>
-                      </>
-                    )}
-                    <input
-                      id={audioInputId}
-                      type="file"
-                      accept="audio/mp3,audio/wav,audio/m4a,audio/mpeg,audio/x-m4a"
-                      className="hidden"
-                      onChange={(e) => e.target.files?.[0] && handleAudioUpload(e.target.files[0])}
-                    />
-                  </div>
-                )}
+                      {isUploadingAudio ? (
+                        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                      ) : (
+                        <>
+                          <Upload className="h-8 w-8 text-muted-foreground" />
+                          <span className="text-xs text-muted-foreground text-center">
+                            {isDraggingAudio ? 'Drop audio file' : 'MP3, WAV, M4A'}
+                          </span>
+                        </>
+                      )}
+                      <input
+                        id={audioInputId}
+                        type="file"
+                        accept="audio/mp3,audio/wav,audio/m4a,audio/mpeg,audio/x-m4a"
+                        className="hidden"
+                        onChange={(e) => e.target.files?.[0] && handleAudioUpload(e.target.files[0])}
+                      />
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex gap-3 pt-3">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handleClose}
+                  className="flex-1 h-12 rounded-xl border-border/60 font-medium hover:bg-muted/80 transition-all"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={handleCreate}
+                  disabled={!isUploadFormValid || isCreating}
+                  className={cn(
+                    "flex-1 h-12 rounded-xl font-medium",
+                    "bg-gradient-to-r from-primary to-primary/90",
+                    "hover:from-primary/95 hover:to-primary/85",
+                    "shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30",
+                    "disabled:opacity-50 disabled:shadow-none",
+                    "transition-all duration-300"
+                  )}
+                >
+                  {isCreating ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Creating...
+                    </>
+                  ) : (
+                    'Create Actor • 1 credit'
+                  )}
+                </Button>
               </div>
             </div>
-
-            {/* Footer */}
-            <div className="flex justify-between pt-4">
-              <Button variant="outline" onClick={handleClose}>
-                Cancel
-              </Button>
-              <Button onClick={handleCreate} disabled={!name.trim() || isCreating}>
-                {isCreating ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Creating...
-                  </>
-                ) : (
-                  'Create Actor • 1 credit'
-                )}
-              </Button>
-            </div>
-          </div>
-        )}
+          )}
+        </div>
       </DialogContent>
     </Dialog>
   );
