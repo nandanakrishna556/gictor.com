@@ -17,7 +17,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { TagList, TagSelector, TagData } from '@/components/ui/tag-badge';
-import { ArrowLeft, X, Check, Loader2, Download, AlertCircle, User, Search, Volume2 } from 'lucide-react';
+import { ArrowLeft, X, Check, Loader2, Download, AlertCircle, User, Search, Play, Pause } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { AudioPlayer } from '@/components/ui/AudioPlayer';
 
@@ -86,6 +86,7 @@ export default function SpeechModal({
   const [script, setScript] = useState('');
   const [selectedActorId, setSelectedActorId] = useState<string | null>(null);
   const [actorSearchOpen, setActorSearchOpen] = useState(false);
+  const [playingAudioId, setPlayingAudioId] = useState<string | null>(null);
   
   // Generation state
   const [isGenerating, setIsGenerating] = useState(false);
@@ -435,36 +436,34 @@ export default function SpeechModal({
       </AlertDialog>
 
       <Dialog open={open} onOpenChange={handleClose}>
-        <DialogContent className="max-w-5xl h-[90vh] p-0 flex flex-col [&>button]:hidden">
+        <DialogContent className="max-w-[900px] h-[85vh] p-0 gap-0 overflow-hidden rounded-lg flex flex-col [&>button]:hidden">
           {/* Header */}
-          <div className="h-[52px] flex-shrink-0 flex flex-nowrap items-center gap-3 border-b border-border px-4 mt-0">
-            <button
-              onClick={handleClose}
-              className="rounded-lg p-1.5 text-muted-foreground hover:bg-secondary transition-apple"
-            >
+          <div className="flex items-center gap-3 border-b bg-background px-4 h-[52px] flex-nowrap shrink-0 relative z-10 mt-0">
+            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={handleClose}>
               <ArrowLeft className="h-4 w-4" strokeWidth={1.5} />
-            </button>
-            <span className="text-sm font-medium text-foreground">Speech</span>
+            </Button>
+            <h2 className="text-lg font-semibold">Speech</h2>
             
-            <div className="w-px h-5 bg-border" />
+            <div className="h-5 w-px bg-border" />
             
-            <LocationSelector
-              projectId={currentProjectId}
-              folderId={currentFolderId}
-              onLocationChange={handleLocationChange}
-            />
-
             <Input
               value={name}
               onChange={(e) => handleNameChange(e.target.value)}
               className="w-28 h-7 text-sm"
             />
             
-            <div className="w-px h-5 bg-border" />
+            <LocationSelector
+              projectId={currentProjectId}
+              folderId={currentFolderId}
+              onLocationChange={handleLocationChange}
+            />
             
             <Select value={displayStatus} onValueChange={handleStatusChange}>
-              <SelectTrigger className="w-auto h-7 gap-2 border-0 bg-transparent px-2">
-                <div className={cn('h-2 w-2 rounded-full', currentStatusOption.color)} />
+              <SelectTrigger className={cn(
+                "h-7 w-fit rounded-md text-xs border-0 px-3 py-1 gap-1",
+                currentStatusOption.color,
+                "text-primary-foreground"
+              )}>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -481,55 +480,53 @@ export default function SpeechModal({
 
             <Popover>
               <PopoverTrigger asChild>
-                <button className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors">
+                <div className="flex items-center gap-1 cursor-pointer hover:bg-secondary/50 rounded-md px-2 py-1 transition-colors">
                   {selectedTags.length > 0 ? (
-                    <TagList tags={tagData.filter(t => selectedTags.includes(t.id))} size="sm" />
+                    <TagList 
+                      tags={tagData} 
+                      selectedTagIds={selectedTags} 
+                      maxVisible={1} 
+                      size="sm"
+                    />
                   ) : (
-                    <span className="text-xs">+ Add tag</span>
+                    <span className="text-xs text-muted-foreground">+ Add tag</span>
                   )}
-                </button>
+                </div>
               </PopoverTrigger>
-              <PopoverContent className="w-64 p-3" align="start">
-                <p className="text-xs font-medium text-muted-foreground mb-2">Tags</p>
+              <PopoverContent align="start" className="w-52 bg-popover">
+                <h4 className="text-sm font-medium mb-2">Tags</h4>
                 <TagSelector
                   tags={tagData}
                   selectedTagIds={selectedTags}
                   onToggleTag={handleToggleTag}
                   onCreateTag={handleCreateTag}
+                  enableDragDrop
                 />
               </PopoverContent>
             </Popover>
             
             <div className="flex-1" />
             
-            {/* Auto-save indicator */}
-            <div className="flex items-center gap-2">
-              <span className={cn(
-                'text-xs min-w-[70px] text-right',
-                saveStatus === 'saving' ? 'text-muted-foreground' : 
-                saveStatus === 'saved' ? 'text-emerald-500' : 
-                'text-muted-foreground invisible'
-              )}>
+            {/* Auto-save indicator - always reserve space */}
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-1.5 text-sm min-w-[70px] justify-end">
                 {saveStatus === 'saving' ? (
                   <>
-                    <Loader2 className="h-3 w-3 animate-spin inline mr-1" strokeWidth={1.5} />
-                    Saving...
+                    <Loader2 className="h-3.5 w-3.5 animate-spin text-muted-foreground" />
+                    <span className="text-muted-foreground">Saving...</span>
                   </>
                 ) : saveStatus === 'saved' ? (
                   <>
-                    <Check className="h-3 w-3 inline mr-1" strokeWidth={1.5} />
-                    Saved
+                    <Check className="h-3.5 w-3.5 text-emerald-500" strokeWidth={1.5} />
+                    <span className="text-emerald-500">Saved</span>
                   </>
                 ) : (
-                  'Saved'
+                  <span className="text-muted-foreground invisible">Saved</span>
                 )}
-              </span>
-              <button
-                onClick={handleClose}
-                className="rounded-lg p-1.5 text-muted-foreground hover:bg-secondary transition-apple"
-              >
+              </div>
+              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={handleClose}>
                 <X className="h-4 w-4" strokeWidth={1.5} />
-              </button>
+              </Button>
             </div>
           </div>
           
@@ -654,16 +651,23 @@ export default function SpeechModal({
                                             (a as HTMLAudioElement).pause();
                                             (a as HTMLAudioElement).currentTime = 0;
                                           });
+                                          setPlayingAudioId(actor.id);
                                           audio.play();
+                                          audio.onended = () => setPlayingAudioId(null);
                                         } else {
                                           audio.pause();
                                           audio.currentTime = 0;
+                                          setPlayingAudioId(null);
                                         }
                                       }
                                     }}
                                     className="h-8 w-8 rounded-full bg-primary/10 hover:bg-primary/20 flex items-center justify-center shrink-0 transition-colors"
                                   >
-                                    <Volume2 className="h-4 w-4 text-primary" />
+                                    {playingAudioId === actor.id ? (
+                                      <Pause className="h-4 w-4 text-primary" />
+                                    ) : (
+                                      <Play className="h-4 w-4 text-primary" />
+                                    )}
                                   </button>
                                 )}
                                 {selectedActorId === actor.id && (
