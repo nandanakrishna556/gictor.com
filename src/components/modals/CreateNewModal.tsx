@@ -247,7 +247,7 @@ export default function CreateNewModal({
   return (
     <>
       <Dialog open={open} onOpenChange={handleClose}>
-        <DialogContent className="gap-0 p-0 max-w-lg rounded-2xl border-border">
+        <DialogContent className="gap-0 p-0 max-w-2xl rounded-2xl border-border">
           <DialogHeader className="border-b border-border px-6 py-5">
             <div className="flex items-center justify-between">
               <DialogTitle className="text-lg font-semibold">
