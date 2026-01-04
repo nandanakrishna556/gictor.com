@@ -541,7 +541,7 @@ export default function LipSyncForm({
           ) : (
             <>
               <Sparkles className="h-4 w-4" />
-              Generate Lip Sync • {creditCost} Credits
+              Generate Talking Head • {creditCost} Credits
             </>
           )}
         </Button>
