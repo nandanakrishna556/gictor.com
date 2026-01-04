@@ -111,7 +111,7 @@ export default function CreateNewModal({
   const queryClient = useQueryClient();
   const [pipelineModalOpen, setPipelineModalOpen] = useState(false);
   const [bRollModalOpen, setBRollModalOpen] = useState(false);
-  const [talkingHeadModalOpen, setTalkingHeadModalOpen] = useState(false);
+  const [lipSyncModalOpen, setLipSyncModalOpen] = useState(false);
   const [createdPipelineId, setCreatedPipelineId] = useState<string | null>(null);
   const [createdFileId, setCreatedFileId] = useState<string | null>(null);
   const [isCreatingPipeline, setIsCreatingPipeline] = useState(false);
@@ -162,7 +162,7 @@ export default function CreateNewModal({
           onOpenChange(false);
           setIsCreatingPipeline(false);
           setCreatingType(null);
-          setTalkingHeadModalOpen(true);
+          setLipSyncModalOpen(true);
           
           queryClient.invalidateQueries({ queryKey: ['files', projectId] });
         } catch (error) {
@@ -233,7 +233,7 @@ export default function CreateNewModal({
   const handlePipelineClose = () => {
     setPipelineModalOpen(false);
     setBRollModalOpen(false);
-    setTalkingHeadModalOpen(false);
+    setLipSyncModalOpen(false);
     setCreatedPipelineId(null);
     setCreatedFileId(null);
     pipelineInitialStatusRef.current = undefined;
@@ -262,25 +262,25 @@ export default function CreateNewModal({
             </div>
           </DialogHeader>
 
-          <div className="grid grid-cols-3 gap-2.5 p-5">
+          <div className="grid grid-cols-3 gap-3 p-6">
             {contentTypes.map((type) => (
               <button
                 key={type.id}
                 onClick={() => handleTypeSelect(type)}
                 disabled={isCreatingPipeline}
-                className="flex flex-col items-center rounded-lg border border-border bg-card p-4 text-center transition-apple hover:border-primary hover:bg-primary/5 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex flex-col items-center rounded-xl border border-border bg-card p-6 text-center transition-apple hover:border-primary hover:bg-primary/5 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                <div className="mb-2 flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
+                <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10">
                   {isCreatingPipeline && creatingType === type.id ? (
-                    <Loader2 className="h-5 w-5 text-primary animate-spin" />
+                    <Loader2 className="h-6 w-6 text-primary animate-spin" />
                   ) : (
-                    <type.icon className="h-5 w-5 text-primary" />
+                    <type.icon className="h-6 w-6 text-primary" />
                   )}
                 </div>
-                <h3 className="text-sm font-medium text-foreground">
+                <h3 className="font-medium text-foreground">
                   {type.title}
                 </h3>
-                <p className="mt-0.5 text-xs text-muted-foreground line-clamp-1">
+                <p className="mt-1 text-sm text-muted-foreground">
                   {isCreatingPipeline && creatingType === type.id
                     ? 'Creating...' 
                     : type.description}
@@ -320,9 +320,9 @@ export default function CreateNewModal({
       )}
 
       {/* Lip Sync Modal */}
-      {createdFileId && talkingHeadModalOpen && (
+      {createdFileId && lipSyncModalOpen && (
         <LipSyncModal
-          open={talkingHeadModalOpen}
+          open={lipSyncModalOpen}
           onClose={handlePipelineClose}
           fileId={createdFileId}
           projectId={projectId}
