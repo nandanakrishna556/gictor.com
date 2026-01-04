@@ -18,13 +18,13 @@ const FILE_TYPE_CONFIG: Record<FileType, { icon: LucideIcon; label: string; colo
   },
   talking_head: {
     icon: Video,
-    label: 'Talking Head',
+    label: 'Lip Sync',
     color: 'text-primary',
   },
   // Legacy: lip_sync now maps to talking_head display
   lip_sync: {
     icon: Video,
-    label: 'Talking Head',
+    label: 'Lip Sync',
     color: 'text-primary',
   },
   clips: {

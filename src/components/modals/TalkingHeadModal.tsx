@@ -524,7 +524,7 @@ export default function TalkingHeadModal({
             <Button variant="ghost" size="icon" className="h-8 w-8" onClick={handleClose}>
               <ArrowLeft className="h-4 w-4" strokeWidth={1.5} />
             </Button>
-            <h2 className="text-lg font-semibold">Talking Head</h2>
+            <h2 className="text-lg font-semibold">Lip Sync</h2>
             
             <div className="h-5 w-px bg-border" />
             

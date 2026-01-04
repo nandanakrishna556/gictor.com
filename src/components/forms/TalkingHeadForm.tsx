@@ -541,7 +541,7 @@ export default function TalkingHeadForm({
           ) : (
             <>
               <Sparkles className="h-4 w-4" />
-              Generate Talking Head • {creditCost} Credits
+              Generate Lip Sync • {creditCost} Credits
             </>
           )}
         </Button>

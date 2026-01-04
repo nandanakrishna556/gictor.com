@@ -33,7 +33,7 @@ const fileTypeIcons: Record<string, React.ComponentType<{ className?: string }>>
 
 const fileTypeLabels: Record<string, string> = {
   first_frame: 'First Frame',
-  talking_head: 'Talking Head',
+  talking_head: 'Lip Sync',
   script: 'Script',
 };
 
