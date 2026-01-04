@@ -39,7 +39,7 @@ interface StatusOption {
   color: string;
 }
 
-interface TalkingHeadFormProps {
+interface LipSyncFormProps {
   projectId: string;
   folderId?: string;
   onSuccess: () => void;
@@ -67,7 +67,7 @@ const defaultStatusOptions: StatusOption[] = [
   { value: 'approved', label: 'Approved', color: 'bg-emerald-500' },
 ];
 
-export default function TalkingHeadForm({
+export default function LipSyncForm({
   projectId,
   folderId,
   onSuccess,
@@ -75,7 +75,7 @@ export default function TalkingHeadForm({
   tags = [],
   onCreateTag,
   statusOptions,
-}: TalkingHeadFormProps) {
+}: LipSyncFormProps) {
   const [currentProjectId, setCurrentProjectId] = useState(projectId);
   const [currentFolderId, setCurrentFolderId] = useState(folderId);
   

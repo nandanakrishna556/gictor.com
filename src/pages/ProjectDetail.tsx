@@ -56,9 +56,9 @@ export default function ProjectDetail() {
   const [brollPipelineModalOpen, setBrollPipelineModalOpen] = useState(false);
   const [openBrollPipelineId, setOpenBrollPipelineId] = useState<string | null>(null);
   
-  // Talking Head modal state
-  const [talkingHeadModalOpen, setTalkingHeadModalOpen] = useState(false);
-  const [openTalkingHeadFileId, setOpenTalkingHeadFileId] = useState<string | null>(null);
+  // Lip Sync modal state
+  const [lipSyncModalOpen, setLipSyncModalOpen] = useState(false);
+  const [openLipSyncFileId, setOpenLipSyncFileId] = useState<string | null>(null);
 
   // Fetch project details
   const { data: project } = useQuery({
@@ -300,9 +300,9 @@ export default function ProjectDetail() {
         setOpenPipelineId(params.pipeline_id);
         setPipelineModalOpen(true);
       } else {
-        // Quick-gen talking head - open TalkingHeadModal
-        setOpenTalkingHeadFileId(file.id);
-        setTalkingHeadModalOpen(true);
+        // Quick-gen lip sync - open LipSyncModal
+        setOpenLipSyncFileId(file.id);
+        setLipSyncModalOpen(true);
       }
     } else if (file.file_type === 'clips' || file.file_type === 'b_roll') {
       // Extract pipeline_id from generation_params for Clips
@@ -608,14 +608,14 @@ export default function ProjectDetail() {
       />
 
       {/* Lip Sync Modal */}
-      {openTalkingHeadFileId && (
+      {openLipSyncFileId && (
         <LipSyncModal
-          open={talkingHeadModalOpen}
+          open={lipSyncModalOpen}
           onClose={() => {
-            setTalkingHeadModalOpen(false);
-            setOpenTalkingHeadFileId(null);
+            setLipSyncModalOpen(false);
+            setOpenLipSyncFileId(null);
           }}
-          fileId={openTalkingHeadFileId}
+          fileId={openLipSyncFileId}
           projectId={projectId}
           folderId={folderId}
           onSuccess={() => {
