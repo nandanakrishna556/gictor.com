@@ -52,22 +52,21 @@ export function ActorDetailsModal({ actor, open, onOpenChange }: ActorDetailsMod
             <div className="space-y-5 animate-fade-in">
               {/* Header with Profile Picture */}
               <div className="flex items-center gap-3">
-                {/* Profile Avatar */}
                 {actor.profile_image_url ? (
                   <img
                     src={actor.profile_image_url}
                     alt={actor.name}
-                    className="h-12 w-12 rounded-xl object-cover border border-border/50"
+                    className="h-12 w-12 rounded-full object-cover"
                   />
                 ) : (
-                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary border border-border/50">
-                    <Settings2 className="h-5 w-5" strokeWidth={1.5} />
+                  <div className="h-12 w-12 rounded-full bg-muted flex items-center justify-center shrink-0">
+                    <User className="h-5 w-5 text-muted-foreground" />
                   </div>
                 )}
                 <div>
-                  <p className="font-semibold text-foreground">Input Details</p>
+                  <h2 className="font-semibold text-foreground">{actor.name}</h2>
                   <p className="text-xs text-muted-foreground">
-                    {isGenerateMode ? 'AI generation parameters' : 'Uploaded assets'}
+                    Input details & generation info
                   </p>
                 </div>
               </div>
