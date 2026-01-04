@@ -48,14 +48,14 @@ const contentTypes = [
   {
     id: 'talking_head' as const,
     icon: Video,
-    title: 'Talking Head',
+    title: 'Lip Sync',
     description: 'Sync audio to face',
     isQuickGen: true,
   },
   {
     id: 'audio' as const,
     icon: Mic,
-    title: 'Audio',
+    title: 'Speech',
     description: 'Generate voice audio',
     isQuickGen: true,
   },
@@ -247,7 +247,7 @@ export default function CreateNewModal({
   return (
     <>
       <Dialog open={open} onOpenChange={handleClose}>
-        <DialogContent className="gap-0 p-0 max-w-md rounded-2xl border-border">
+        <DialogContent className="gap-0 p-0 max-w-lg rounded-2xl border-border">
           <DialogHeader className="border-b border-border px-6 py-5">
             <div className="flex items-center justify-between">
               <DialogTitle className="text-lg font-semibold">
@@ -262,7 +262,7 @@ export default function CreateNewModal({
             </div>
           </DialogHeader>
 
-          <div className="grid grid-cols-2 gap-4 p-6">
+          <div className="grid grid-cols-3 gap-3 p-6">
             {contentTypes.map((type) => (
               <button
                 key={type.id}

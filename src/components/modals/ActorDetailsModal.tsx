@@ -2,7 +2,7 @@ import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { X, Globe, MessageSquare, Mic, ImageIcon, User, Calendar } from 'lucide-react';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Actor } from '@/hooks/useActors';
 import { AudioPlayer } from '@/components/ui/AudioPlayer';
 
@@ -13,9 +13,11 @@ interface ActorDetailsModalProps {
 }
 
 export function ActorDetailsModal({ actor, open, onOpenChange }: ActorDetailsModalProps) {
+  const [lightboxOpen, setLightboxOpen] = useState(false);
+
   useEffect(() => {
     if (!open) {
-      // Reset any state when modal closes
+      setLightboxOpen(false);
     }
   }, [open]);
 
@@ -68,7 +70,13 @@ export function ActorDetailsModal({ actor, open, onOpenChange }: ActorDetailsMod
               <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
                 360° Profile
               </label>
-              <div className="rounded-xl overflow-hidden border border-border/50 bg-muted/20">
+              <div 
+                className="rounded-xl overflow-hidden border border-border/50 bg-muted/20 cursor-pointer transition-all hover:border-primary/50 hover:shadow-md"
+                onClick={() => {
+                  const imageUrl = actor.profile_360_url || actor.profile_image_url;
+                  if (imageUrl) setLightboxOpen(true);
+                }}
+              >
                 {actor.profile_360_url ? (
                   <img
                     src={actor.profile_360_url}
@@ -88,6 +96,29 @@ export function ActorDetailsModal({ actor, open, onOpenChange }: ActorDetailsMod
                 )}
               </div>
             </div>
+
+            {/* Lightbox */}
+            {lightboxOpen && (actor.profile_360_url || actor.profile_image_url) && (
+              <div 
+                className="fixed inset-0 z-[100] bg-black/90 flex items-center justify-center p-4"
+                onClick={() => setLightboxOpen(false)}
+              >
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setLightboxOpen(false)}
+                  className="absolute top-4 right-4 h-10 w-10 rounded-full bg-white/10 hover:bg-white/20 text-white"
+                >
+                  <X className="h-5 w-5" />
+                </Button>
+                <img
+                  src={actor.profile_360_url || actor.profile_image_url || ''}
+                  alt={`${actor.name} 360° profile`}
+                  className="max-w-[90vw] max-h-[90vh] object-contain rounded-lg"
+                  onClick={(e) => e.stopPropagation()}
+                />
+              </div>
+            )}
 
             {/* 3. Actor Voice */}
             <div className="space-y-2">
