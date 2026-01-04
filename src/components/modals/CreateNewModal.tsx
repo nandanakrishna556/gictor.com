@@ -262,7 +262,7 @@ export default function CreateNewModal({
             </div>
           </DialogHeader>
 
-          <div className="grid grid-cols-3 gap-3 p-6">
+          <div className="grid grid-cols-3 gap-4 p-8">
             {contentTypes.map((type) => (
               <button
                 key={type.id}
