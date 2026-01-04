@@ -254,13 +254,7 @@ export default function AppSidebar() {
           </div>
           <Switch
             checked={theme === 'dark'}
-            onCheckedChange={(checked) => {
-              document.documentElement.classList.add('theme-transition');
-              setTheme(checked ? 'dark' : 'light');
-              setTimeout(() => {
-                document.documentElement.classList.remove('theme-transition');
-              }, 300);
-            }}
+            onCheckedChange={(checked) => setTheme(checked ? 'dark' : 'light')}
           />
         </div>
       </div>
