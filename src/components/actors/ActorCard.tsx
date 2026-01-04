@@ -99,24 +99,22 @@ export function ActorCard({ actor, onDelete }: ActorCardProps) {
         <div className="flex flex-col gap-2 p-3 bg-card">
           {/* Profile Picture + Name Row */}
           <div className="flex items-center gap-2.5">
-            {/* Small Profile Avatar */}
             {isCompleted && actor.profile_image_url ? (
               <img
                 src={actor.profile_image_url}
                 alt={actor.name}
-                className="w-8 h-8 rounded-full object-cover shrink-0 border border-border/50"
+                className="w-8 h-8 rounded-full object-cover shrink-0"
               />
             ) : (
-              <div className="w-8 h-8 rounded-full bg-muted/50 flex items-center justify-center shrink-0 border border-border/50">
-                <User className="w-4 h-4 text-muted-foreground/50" />
+              <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center shrink-0">
+                <User className="w-4 h-4 text-muted-foreground" />
               </div>
             )}
-            
-            {/* Name & Details */}
+
             <div className="min-w-0 flex-1">
               <h3 className="truncate text-sm font-semibold text-foreground">{actor.name}</h3>
-              <p className="text-xs text-muted-foreground">
-                {[actor.gender, actor.age ? `${actor.age}y` : null].filter(Boolean).join(' • ')}
+              <p className="text-xs text-muted-foreground truncate">
+                {[actor.gender, actor.age && `${actor.age}y`].filter(Boolean).join(" • ")}
               </p>
             </div>
           </div>
