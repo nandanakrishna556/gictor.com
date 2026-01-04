@@ -26,21 +26,20 @@ export function ActorDetailsModal({ actor, open, onOpenChange }: ActorDetailsMod
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-lg p-0 gap-0 overflow-hidden [&>button]:hidden">
-        {/* Close Button */}
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => onOpenChange(false)}
-          className="absolute top-3 right-3 z-50 h-8 w-8 rounded-lg bg-background/80 backdrop-blur-sm hover:bg-background shadow-sm border border-border/50"
-        >
-          <X className="h-4 w-4" />
-        </Button>
-
         {/* Single Column Layout */}
         <div className="flex flex-col">
 
           {/* 1. Header - Profile Picture + Name */}
-          <div className="p-6 pb-4 border-b border-border/50 bg-muted/30">
+          <div className="relative p-6 pb-4 border-b border-border/50 bg-muted/30">
+            {/* Close Button */}
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => onOpenChange(false)}
+              className="absolute top-3 right-3 h-8 w-8 rounded-lg hover:bg-muted"
+            >
+              <X className="h-4 w-4" />
+            </Button>
             <div className="flex items-center gap-4">
               {actor.profile_image_url ? (
                 <img
