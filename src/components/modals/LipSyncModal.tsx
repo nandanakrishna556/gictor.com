@@ -27,7 +27,7 @@ interface StatusOption {
   color: string;
 }
 
-interface TalkingHeadModalProps {
+interface LipSyncModalProps {
   open: boolean;
   onClose: () => void;
   fileId: string;
@@ -49,7 +49,7 @@ const MIN_AUDIO_SECONDS = 5;
 const MAX_AUDIO_SECONDS = 600; // 10 minutes
 const CREDIT_COST = 1.0;
 
-export default function TalkingHeadModal({
+export default function LipSyncModal({
   open,
   onClose,
   fileId,
@@ -58,7 +58,7 @@ export default function TalkingHeadModal({
   initialStatus,
   onSuccess,
   statusOptions = DEFAULT_STATUS_OPTIONS,
-}: TalkingHeadModalProps) {
+}: LipSyncModalProps) {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const { tags, createTag } = useTags();

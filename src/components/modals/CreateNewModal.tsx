@@ -10,7 +10,7 @@ import {
 } from '@/components/ui/dialog';
 import PipelineModal from '@/components/pipeline/PipelineModal';
 import ClipsPipelineModal from '@/components/pipeline/ClipsPipelineModal';
-import TalkingHeadModal from '@/components/modals/TalkingHeadModal';
+import LipSyncModal from '@/components/modals/LipSyncModal';
 import { usePipeline } from '@/hooks/usePipeline';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -319,9 +319,9 @@ export default function CreateNewModal({
         />
       )}
 
-      {/* Talking Head Modal */}
+      {/* Lip Sync Modal */}
       {createdFileId && talkingHeadModalOpen && (
-        <TalkingHeadModal
+        <LipSyncModal
           open={talkingHeadModalOpen}
           onClose={handlePipelineClose}
           fileId={createdFileId}
