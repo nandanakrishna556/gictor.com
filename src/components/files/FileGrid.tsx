@@ -91,6 +91,7 @@ interface FileGridProps {
 const fileTypeLabels: Record<string, string> = {
   first_frame: 'First Frame',
   talking_head: 'Lip Sync',
+  speech: 'Speech',
   clips: 'Clips',
   b_roll: 'Clips',
   script: 'Script',

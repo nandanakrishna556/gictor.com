@@ -11,6 +11,7 @@ import {
 import PipelineModal from '@/components/pipeline/PipelineModal';
 import ClipsPipelineModal from '@/components/pipeline/ClipsPipelineModal';
 import LipSyncModal from '@/components/modals/LipSyncModal';
+import SpeechModal from '@/components/modals/SpeechModal';
 import { usePipeline } from '@/hooks/usePipeline';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -112,6 +113,7 @@ export default function CreateNewModal({
   const [pipelineModalOpen, setPipelineModalOpen] = useState(false);
   const [bRollModalOpen, setBRollModalOpen] = useState(false);
   const [lipSyncModalOpen, setLipSyncModalOpen] = useState(false);
+  const [speechModalOpen, setSpeechModalOpen] = useState(false);
   const [createdPipelineId, setCreatedPipelineId] = useState<string | null>(null);
   const [createdFileId, setCreatedFileId] = useState<string | null>(null);
   const [isCreatingPipeline, setIsCreatingPipeline] = useState(false);
@@ -163,6 +165,44 @@ export default function CreateNewModal({
           setIsCreatingPipeline(false);
           setCreatingType(null);
           setLipSyncModalOpen(true);
+          
+          queryClient.invalidateQueries({ queryKey: ['files', projectId] });
+        } catch (error) {
+          console.error('Failed to create file entry:', error);
+          toast.error('Failed to create file');
+          setIsCreatingPipeline(false);
+          setCreatingType(null);
+        }
+      } else if (type.id === 'audio') {
+        // Handle Speech generation
+        setIsCreatingPipeline(true);
+        setCreatingType(type.id);
+        pipelineInitialStatusRef.current = initialStatus;
+        
+        try {
+          const newFileId = uuidv4();
+          
+          const { error: fileError } = await supabase
+            .from('files')
+            .insert({
+              id: newFileId,
+              project_id: projectId,
+              folder_id: folderId || null,
+              name: 'Untitled',
+              file_type: 'speech',
+              status: initialStatus || 'draft',
+              generation_params: {},
+            });
+          
+          if (fileError) {
+            throw fileError;
+          }
+          
+          setCreatedFileId(newFileId);
+          onOpenChange(false);
+          setIsCreatingPipeline(false);
+          setCreatingType(null);
+          setSpeechModalOpen(true);
           
           queryClient.invalidateQueries({ queryKey: ['files', projectId] });
         } catch (error) {
@@ -234,6 +274,7 @@ export default function CreateNewModal({
     setPipelineModalOpen(false);
     setBRollModalOpen(false);
     setLipSyncModalOpen(false);
+    setSpeechModalOpen(false);
     setCreatedPipelineId(null);
     setCreatedFileId(null);
     pipelineInitialStatusRef.current = undefined;
@@ -323,6 +364,20 @@ export default function CreateNewModal({
       {createdFileId && lipSyncModalOpen && (
         <LipSyncModal
           open={lipSyncModalOpen}
+          onClose={handlePipelineClose}
+          fileId={createdFileId}
+          projectId={projectId}
+          folderId={folderId}
+          initialStatus={pipelineInitialStatusRef.current}
+          onSuccess={handlePipelineSuccess}
+          statusOptions={statusOptions}
+        />
+      )}
+
+      {/* Speech Modal */}
+      {createdFileId && speechModalOpen && (
+        <SpeechModal
+          open={speechModalOpen}
           onClose={handlePipelineClose}
           fileId={createdFileId}
           projectId={projectId}
