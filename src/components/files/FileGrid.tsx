@@ -1142,7 +1142,7 @@ function FileCard({
       )}
 
       {/* Card Name at Top with Icon */}
-      <div className="p-3 sm:p-4 pb-2" onClick={(e) => e.stopPropagation()}>
+      <div className="p-3 sm:p-4 pb-2">
         {isRenaming ? (
           <Input
             value={renameValue}
@@ -1151,6 +1151,7 @@ function FileCard({
             onBlur={handleRenameBlur}
             className="h-8 text-sm font-medium"
             autoFocus
+            onClick={(e) => e.stopPropagation()}
           />
         ) : (
           <div className="flex items-center gap-2 min-w-0">
@@ -1466,7 +1467,7 @@ function KanbanCard({
       )}
 
       {/* Card Name at Top with Icon */}
-      <div className="p-3 pb-2" onClick={(e) => e.stopPropagation()}>
+      <div className="p-3 pb-2">
         {isRenaming ? (
           <Input
             value={renameValue}
@@ -1475,6 +1476,7 @@ function KanbanCard({
             onBlur={handleRenameBlur}
             className="h-8 text-sm font-medium"
             autoFocus
+            onClick={(e) => e.stopPropagation()}
           />
         ) : (
           <div className="flex items-center gap-2 min-w-0">

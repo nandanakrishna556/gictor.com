@@ -68,7 +68,11 @@ export const FileCard: React.FC<FileCardProps> = ({
           <img 
             src={previewUrl} 
             alt={name} 
-            className="w-full h-full object-cover"
+            className="w-full h-full object-cover opacity-0"
+            onLoad={(e) => {
+              e.currentTarget.classList.remove('opacity-0');
+              e.currentTarget.classList.add('animate-image-fade-in');
+            }}
           />
         )}
 
@@ -76,10 +80,14 @@ export const FileCard: React.FC<FileCardProps> = ({
           <div className="relative w-full h-full">
             <video 
               src={`${previewUrl}#t=0.1`}
-              className="w-full h-full object-contain"
+              className="w-full h-full object-contain opacity-0"
               muted
               playsInline
               preload="metadata"
+              onLoadedData={(e) => {
+                e.currentTarget.classList.remove('opacity-0');
+                e.currentTarget.classList.add('animate-image-fade-in');
+              }}
               onMouseEnter={(e) => e.currentTarget.play()}
               onMouseLeave={(e) => {
                 e.currentTarget.pause();
