@@ -2,11 +2,10 @@ import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
-  X, Grid3X3, UserCircle, Settings2, FolderUp, Globe, MessageSquare, Mic, ImageIcon, User, Calendar, Video, Layers
+  X, Globe, MessageSquare, Mic, ImageIcon, User, Calendar, Layers
 } from 'lucide-react';
-import { useState, useRef, useEffect } from 'react';
+import { useEffect } from 'react';
 import { Actor } from '@/hooks/useActors';
-import { cn } from '@/lib/utils';
 import { AudioPlayer } from '@/components/ui/AudioPlayer';
 
 interface ActorDetailsModalProps {
@@ -16,16 +15,9 @@ interface ActorDetailsModalProps {
 }
 
 export function ActorDetailsModal({ actor, open, onOpenChange }: ActorDetailsModalProps) {
-  const [showFullGrid, setShowFullGrid] = useState(false);
-  const videoRef = useRef<HTMLVideoElement | null>(null);
-
   useEffect(() => {
     if (!open) {
-      setShowFullGrid(false);
-      if (videoRef.current) {
-        videoRef.current.pause();
-        videoRef.current.currentTime = 0;
-      }
+      // Reset any state when modal closes
     }
   }, [open]);
 
@@ -36,7 +28,7 @@ export function ActorDetailsModal({ actor, open, onOpenChange }: ActorDetailsMod
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-4xl p-0 gap-0 overflow-hidden">
-        {/* Close Button - Always visible */}
+        {/* Close Button */}
         <Button
           variant="ghost"
           size="icon"
@@ -172,7 +164,7 @@ export function ActorDetailsModal({ actor, open, onOpenChange }: ActorDetailsMod
                         <Mic className="h-3 w-3" /> Uploaded Voice
                       </p>
                       <div className="p-3.5 rounded-xl border border-border/60 bg-background">
-                        <audio src={actor.custom_audio_url} controls className="w-full h-10" />
+                        <AudioPlayer src={actor.custom_audio_url} />
                       </div>
                     </div>
                   )}
@@ -216,13 +208,19 @@ export function ActorDetailsModal({ actor, open, onOpenChange }: ActorDetailsMod
                 </div>
               </div>
 
-              {/* 1. ACTOR IMAGE (Middle Frame) */}
+              {/* ACTOR IMAGE - Now shows 360° Profile Grid */}
               <div className="space-y-2">
                 <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-                  Actor Image
+                  Actor Image (360° Profile)
                 </label>
                 <div className="rounded-xl overflow-hidden border border-border/50 bg-muted/20">
-                  {actor.profile_image_url ? (
+                  {actor.profile_360_url ? (
+                    <img
+                      src={actor.profile_360_url}
+                      alt={`${actor.name} 360° profile`}
+                      className="w-full object-contain"
+                    />
+                  ) : actor.profile_image_url ? (
                     <img
                       src={actor.profile_image_url}
                       alt={actor.name}
@@ -236,7 +234,7 @@ export function ActorDetailsModal({ actor, open, onOpenChange }: ActorDetailsMod
                 </div>
               </div>
 
-              {/* 2. ACTOR AUDIO */}
+              {/* ACTOR VOICE */}
               <div className="space-y-2">
                 <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
                   Actor Voice
@@ -251,46 +249,6 @@ export function ActorDetailsModal({ actor, open, onOpenChange }: ActorDetailsMod
                   </div>
                 )}
               </div>
-
-              {/* 3. SORA 2 VIDEO (Generate mode only) */}
-              {actor.mode === 'generate' && (
-                <div className="space-y-2">
-                  <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-                    Sample Video
-                  </label>
-                  {actor.sora_video_url ? (
-                    <div className="rounded-xl overflow-hidden border border-border/50 bg-black">
-                      <video
-                        ref={videoRef}
-                        src={actor.sora_video_url}
-                        controls
-                        className="w-full aspect-video"
-                        preload="none"
-                      />
-                    </div>
-                  ) : (
-                    <div className="p-4 rounded-xl bg-muted/20 border border-border/50 text-center aspect-video flex items-center justify-center">
-                      <p className="text-sm text-muted-foreground">No video generated</p>
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* 360° Grid (optional, collapsible) */}
-              {actor.profile_360_url && (
-                <details className="group">
-                  <summary className="text-xs font-medium text-muted-foreground uppercase tracking-wide cursor-pointer hover:text-foreground transition-colors">
-                    360° Profile Grid
-                  </summary>
-                  <div className="mt-2 rounded-xl overflow-hidden border border-border/50 bg-muted/20">
-                    <img
-                      src={actor.profile_360_url}
-                      alt="360° profile"
-                      className="w-full object-contain"
-                    />
-                  </div>
-                </details>
-              )}
             </div>
           </div>
         </div>
