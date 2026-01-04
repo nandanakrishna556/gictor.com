@@ -14,7 +14,7 @@ import ConfirmDeleteDialog from '@/components/modals/ConfirmDeleteDialog';
 import { FileDetailModalEnhanced } from '@/components/files/FileDetailModalEnhanced';
 import PipelineModal from '@/components/pipeline/PipelineModal';
 import ClipsPipelineModal from '@/components/pipeline/ClipsPipelineModal';
-import TalkingHeadModal from '@/components/modals/TalkingHeadModal';
+import LipSyncModal from '@/components/modals/LipSyncModal';
 import { useFiles, Folder, File } from '@/hooks/useFiles';
 import { useFileRealtime } from '@/hooks/useFileRealtime';
 import { usePipelines, Pipeline, PipelineStage, DEFAULT_STAGES } from '@/hooks/usePipelines';
@@ -607,9 +607,9 @@ export default function ProjectDetail() {
         statusOptions={currentStatusOptions}
       />
 
-      {/* Talking Head Modal */}
+      {/* Lip Sync Modal */}
       {openTalkingHeadFileId && (
-        <TalkingHeadModal
+        <LipSyncModal
           open={talkingHeadModalOpen}
           onClose={() => {
             setTalkingHeadModalOpen(false);
