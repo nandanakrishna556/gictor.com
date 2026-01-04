@@ -77,7 +77,7 @@ export const FileCard: React.FC<FileCardProps> = ({
         )}
 
         {status === 'completed' && hasVideoThumbnail && (
-          <div className="relative w-full h-full">
+          <div className="relative w-full h-full pointer-events-none">
             <video 
               src={`${previewUrl}#t=0.1`}
               className="w-full h-full object-contain opacity-0"
@@ -87,11 +87,6 @@ export const FileCard: React.FC<FileCardProps> = ({
               onLoadedData={(e) => {
                 e.currentTarget.classList.remove('opacity-0');
                 e.currentTarget.classList.add('animate-image-fade-in');
-              }}
-              onMouseEnter={(e) => e.currentTarget.play()}
-              onMouseLeave={(e) => {
-                e.currentTarget.pause();
-                e.currentTarget.currentTime = 0;
               }}
             />
             <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-foreground/10">
