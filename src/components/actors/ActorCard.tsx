@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { MoreHorizontal, Trash2, AlertCircle, Loader2, UserCircle } from 'lucide-react';
+import { MoreHorizontal, Trash2, AlertCircle, Loader2, UserCircle, User } from 'lucide-react';
 import { Actor } from '@/hooks/useActors';
 import { cn } from '@/lib/utils';
 import {
@@ -95,14 +95,30 @@ export function ActorCard({ actor, onDelete }: ActorCardProps) {
           </div>
         </div>
 
-        {/* Info Section */}
+        {/* Info Section with Profile Picture */}
         <div className="flex flex-col gap-2 p-3 bg-card">
-          {/* Name & Details */}
-          <div className="min-w-0">
-            <h3 className="truncate text-sm font-semibold text-foreground">{actor.name}</h3>
-            <p className="text-xs text-muted-foreground">
-              {[actor.gender, actor.age ? `${actor.age}y` : null].filter(Boolean).join(' • ')}
-            </p>
+          {/* Profile Picture + Name Row */}
+          <div className="flex items-center gap-2.5">
+            {/* Small Profile Avatar */}
+            {isCompleted && actor.profile_image_url ? (
+              <img
+                src={actor.profile_image_url}
+                alt={actor.name}
+                className="w-8 h-8 rounded-full object-cover shrink-0 border border-border/50"
+              />
+            ) : (
+              <div className="w-8 h-8 rounded-full bg-muted/50 flex items-center justify-center shrink-0 border border-border/50">
+                <User className="w-4 h-4 text-muted-foreground/50" />
+              </div>
+            )}
+            
+            {/* Name & Details */}
+            <div className="min-w-0 flex-1">
+              <h3 className="truncate text-sm font-semibold text-foreground">{actor.name}</h3>
+              <p className="text-xs text-muted-foreground">
+                {[actor.gender, actor.age ? `${actor.age}y` : null].filter(Boolean).join(' • ')}
+              </p>
+            </div>
           </div>
 
           {/* Audio Player */}
@@ -134,8 +150,13 @@ export function ActorCardSkeleton() {
     <div className="flex flex-col overflow-hidden rounded-xl border border-border bg-card aspect-[9/16]">
       <div className="flex-1 skeleton" />
       <div className="p-3 space-y-2">
-        <div className="h-4 w-2/3 skeleton rounded" />
-        <div className="h-3 w-1/3 skeleton rounded" />
+        <div className="flex items-center gap-2.5">
+          <div className="w-8 h-8 rounded-full skeleton shrink-0" />
+          <div className="flex-1 space-y-1.5">
+            <div className="h-4 w-3/4 skeleton rounded" />
+            <div className="h-3 w-1/2 skeleton rounded" />
+          </div>
+        </div>
         <div className="flex items-center gap-2.5 p-2 rounded-xl bg-muted/30">
           <div className="h-8 w-8 rounded-full skeleton shrink-0" />
           <div className="flex-1 h-1.5 skeleton rounded-full" />

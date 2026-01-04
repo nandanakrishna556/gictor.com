@@ -12,49 +12,80 @@ export function AudioPlayer({ src, className, compact = false }: AudioPlayerProp
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
+  const [isLoaded, setIsLoaded] = useState(false);
   const audioRef = useRef<HTMLAudioElement>(null);
+  const progressRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const audio = audioRef.current;
     if (!audio) return;
 
-    const handleTimeUpdate = () => setCurrentTime(audio.currentTime);
-    const handleLoadedMetadata = () => setDuration(audio.duration);
-    const handleEnded = () => setIsPlaying(false);
+    const handleLoadedMetadata = () => {
+      setDuration(audio.duration);
+      setIsLoaded(true);
+    };
+    
+    const handleTimeUpdate = () => {
+      setCurrentTime(audio.currentTime);
+    };
+    
+    const handleEnded = () => {
+      setIsPlaying(false);
+      setCurrentTime(0);
+    };
 
-    audio.addEventListener('timeupdate', handleTimeUpdate);
+    const handleCanPlay = () => {
+      setIsLoaded(true);
+    };
+
     audio.addEventListener('loadedmetadata', handleLoadedMetadata);
+    audio.addEventListener('timeupdate', handleTimeUpdate);
     audio.addEventListener('ended', handleEnded);
+    audio.addEventListener('canplay', handleCanPlay);
+
+    audio.load();
 
     return () => {
-      audio.removeEventListener('timeupdate', handleTimeUpdate);
       audio.removeEventListener('loadedmetadata', handleLoadedMetadata);
+      audio.removeEventListener('timeupdate', handleTimeUpdate);
       audio.removeEventListener('ended', handleEnded);
+      audio.removeEventListener('canplay', handleCanPlay);
     };
-  }, []);
+  }, [src]);
 
-  const togglePlay = () => {
+  const togglePlay = async () => {
     const audio = audioRef.current;
     if (!audio) return;
 
-    if (isPlaying) {
-      audio.pause();
-    } else {
-      audio.play().catch(console.error);
+    try {
+      if (isPlaying) {
+        audio.pause();
+        setIsPlaying(false);
+      } else {
+        await audio.play();
+        setIsPlaying(true);
+      }
+    } catch (error) {
+      console.error('Audio playback error:', error);
     }
-    setIsPlaying(!isPlaying);
   };
 
-  const handleSeek = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleProgressClick = (e: React.MouseEvent<HTMLDivElement>) => {
     const audio = audioRef.current;
-    if (!audio) return;
-    const time = parseFloat(e.target.value);
-    audio.currentTime = time;
-    setCurrentTime(time);
+    const progress = progressRef.current;
+    if (!audio || !progress || !duration) return;
+
+    const rect = progress.getBoundingClientRect();
+    const clickX = e.clientX - rect.left;
+    const percentage = clickX / rect.width;
+    const newTime = percentage * duration;
+    
+    audio.currentTime = newTime;
+    setCurrentTime(newTime);
   };
 
   const formatTime = (time: number) => {
-    if (!isFinite(time)) return '0:00';
+    if (!isFinite(time) || isNaN(time)) return '0:00';
     const mins = Math.floor(time / 60);
     const secs = Math.floor(time % 60);
     return `${mins}:${secs.toString().padStart(2, '0')}`;
@@ -83,7 +114,7 @@ export function AudioPlayer({ src, className, compact = false }: AudioPlayerProp
         )}
       </button>
 
-      {/* Progress Bar */}
+      {/* Time & Progress */}
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2">
           <span className={cn(
@@ -92,20 +123,18 @@ export function AudioPlayer({ src, className, compact = false }: AudioPlayerProp
           )}>
             {formatTime(currentTime)}
           </span>
-          <div className="flex-1 relative h-1.5 bg-border rounded-full overflow-hidden">
+          
+          <div 
+            ref={progressRef}
+            onClick={handleProgressClick}
+            className="flex-1 relative h-1.5 bg-border rounded-full overflow-hidden cursor-pointer"
+          >
             <div 
               className="absolute inset-y-0 left-0 bg-primary rounded-full transition-all duration-100"
               style={{ width: `${progress}%` }}
             />
-            <input
-              type="range"
-              min={0}
-              max={duration || 0}
-              value={currentTime}
-              onChange={handleSeek}
-              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-            />
           </div>
+          
           <span className={cn(
             "text-muted-foreground tabular-nums shrink-0",
             compact ? "text-[10px]" : "text-xs"
@@ -115,6 +144,7 @@ export function AudioPlayer({ src, className, compact = false }: AudioPlayerProp
         </div>
       </div>
 
+      {/* Hidden Audio Element */}
       <audio ref={audioRef} src={src} preload="metadata" />
     </div>
   );
