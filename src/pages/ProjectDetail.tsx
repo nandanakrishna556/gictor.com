@@ -15,6 +15,7 @@ import { FileDetailModalEnhanced } from '@/components/files/FileDetailModalEnhan
 import PipelineModal from '@/components/pipeline/PipelineModal';
 import ClipsPipelineModal from '@/components/pipeline/ClipsPipelineModal';
 import LipSyncModal from '@/components/modals/LipSyncModal';
+import SpeechModal from '@/components/modals/SpeechModal';
 import { useFiles, Folder, File } from '@/hooks/useFiles';
 import { useFileRealtime } from '@/hooks/useFileRealtime';
 import { usePipelines, Pipeline, PipelineStage, DEFAULT_STAGES } from '@/hooks/usePipelines';
@@ -59,6 +60,10 @@ export default function ProjectDetail() {
   // Lip Sync modal state
   const [lipSyncModalOpen, setLipSyncModalOpen] = useState(false);
   const [openLipSyncFileId, setOpenLipSyncFileId] = useState<string | null>(null);
+  
+  // Speech modal state
+  const [speechModalOpen, setSpeechModalOpen] = useState(false);
+  const [openSpeechFileId, setOpenSpeechFileId] = useState<string | null>(null);
 
   // Fetch project details
   const { data: project } = useQuery({
@@ -304,6 +309,10 @@ export default function ProjectDetail() {
         setOpenLipSyncFileId(file.id);
         setLipSyncModalOpen(true);
       }
+    } else if (file.file_type === 'speech') {
+      // Open Speech modal
+      setOpenSpeechFileId(file.id);
+      setSpeechModalOpen(true);
     } else if (file.file_type === 'clips' || file.file_type === 'b_roll') {
       // Extract pipeline_id from generation_params for Clips
       const params = file.generation_params as { pipeline_id?: string } | null;
@@ -616,6 +625,24 @@ export default function ProjectDetail() {
             setOpenLipSyncFileId(null);
           }}
           fileId={openLipSyncFileId}
+          projectId={projectId}
+          folderId={folderId}
+          onSuccess={() => {
+            // Refresh files after save
+          }}
+          statusOptions={currentStatusOptions}
+        />
+      )}
+
+      {/* Speech Modal */}
+      {openSpeechFileId && (
+        <SpeechModal
+          open={speechModalOpen}
+          onClose={() => {
+            setSpeechModalOpen(false);
+            setOpenSpeechFileId(null);
+          }}
+          fileId={openSpeechFileId}
           projectId={projectId}
           folderId={folderId}
           onSuccess={() => {

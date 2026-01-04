@@ -17,8 +17,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { TagList, TagSelector, TagData } from '@/components/ui/tag-badge';
-import { ArrowLeft, X, Check, Loader2, Download, AlertCircle, User, Search } from 'lucide-react';
+import { ArrowLeft, X, Check, Loader2, Download, AlertCircle, User, Search, Volume2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { AudioPlayer } from '@/components/ui/AudioPlayer';
 
 interface StatusOption {
   value: string;
@@ -446,6 +447,12 @@ export default function SpeechModal({
             <span className="text-sm font-medium text-foreground">Speech</span>
             
             <div className="w-px h-5 bg-border" />
+            
+            <LocationSelector
+              projectId={currentProjectId}
+              folderId={currentFolderId}
+              onLocationChange={handleLocationChange}
+            />
 
             <Input
               value={name}
@@ -615,7 +622,7 @@ export default function SpeechModal({
                               key={actor.id}
                               value={actor.name}
                               onSelect={() => handleActorSelect(actor.id)}
-                              className="cursor-pointer"
+                              className="cursor-pointer py-3"
                             >
                               <div className="flex items-center gap-3 w-full">
                                 {actor.profile_image_url ? (
@@ -635,8 +642,35 @@ export default function SpeechModal({
                                     {[actor.gender, actor.age && `${actor.age}y`, actor.language].filter(Boolean).join(' • ')}
                                   </p>
                                 </div>
+                                {actor.voice_url && (
+                                  <button
+                                    type="button"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      const audio = document.getElementById(`preview-audio-${actor.id}`) as HTMLAudioElement;
+                                      if (audio) {
+                                        if (audio.paused) {
+                                          document.querySelectorAll('audio[id^="preview-audio-"]').forEach((a) => {
+                                            (a as HTMLAudioElement).pause();
+                                            (a as HTMLAudioElement).currentTime = 0;
+                                          });
+                                          audio.play();
+                                        } else {
+                                          audio.pause();
+                                          audio.currentTime = 0;
+                                        }
+                                      }
+                                    }}
+                                    className="h-8 w-8 rounded-full bg-primary/10 hover:bg-primary/20 flex items-center justify-center shrink-0 transition-colors"
+                                  >
+                                    <Volume2 className="h-4 w-4 text-primary" />
+                                  </button>
+                                )}
                                 {selectedActorId === actor.id && (
                                   <Check className="h-4 w-4 text-primary" />
+                                )}
+                                {actor.voice_url && (
+                                  <audio id={`preview-audio-${actor.id}`} src={actor.voice_url} preload="none" className="hidden" />
                                 )}
                               </div>
                             </CommandItem>
@@ -647,6 +681,30 @@ export default function SpeechModal({
                   </PopoverContent>
                 </Popover>
               </div>
+              
+              {/* Selected Actor Voice Preview */}
+              {selectedActor && selectedActor.voice_url && (
+                <div className="rounded-xl border border-border bg-card p-4 space-y-3">
+                  <div className="flex items-center gap-3">
+                    {selectedActor.profile_image_url ? (
+                      <img
+                        src={selectedActor.profile_image_url}
+                        alt={selectedActor.name}
+                        className="h-10 w-10 rounded-full object-cover"
+                      />
+                    ) : (
+                      <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center">
+                        <User className="h-5 w-5 text-muted-foreground" />
+                      </div>
+                    )}
+                    <div>
+                      <p className="font-medium text-sm">{selectedActor.name}</p>
+                      <p className="text-xs text-muted-foreground">Voice Preview</p>
+                    </div>
+                  </div>
+                  <AudioPlayer src={selectedActor.voice_url} />
+                </div>
+              )}
               
               {/* Generate Button */}
               <div className="pt-4 border-t space-y-3">
