@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { MoreHorizontal, Trash2, AlertCircle, UserCircle, User } from 'lucide-react';
 import { Actor } from '@/hooks/useActors';
 import { cn } from '@/lib/utils';
@@ -16,12 +16,54 @@ interface ActorCardProps {
   onDelete: (id: string) => void;
 }
 
+// Fake progress hook - simulates loading progress to keep users engaged
+function useFakeProgress(isProcessing: boolean, realProgress: number) {
+  const [fakeProgress, setFakeProgress] = useState(realProgress || 0);
+  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+
+  useEffect(() => {
+    if (!isProcessing) {
+      setFakeProgress(0);
+      if (intervalRef.current) clearInterval(intervalRef.current);
+      return;
+    }
+
+    // Use real progress if it's higher
+    if (realProgress > fakeProgress) {
+      setFakeProgress(realProgress);
+    }
+
+    // Start fake progress simulation
+    intervalRef.current = setInterval(() => {
+      setFakeProgress(prev => {
+        // If real progress is higher, use it
+        if (realProgress > prev) return realProgress;
+        
+        // Slow down as we approach 90% (never reach 100% without real completion)
+        if (prev >= 90) return prev; // Cap at 90%
+        if (prev >= 80) return prev + 0.1; // Very slow after 80%
+        if (prev >= 60) return prev + 0.3; // Slow after 60%
+        if (prev >= 30) return prev + 0.5; // Medium speed 30-60%
+        return prev + 1; // Fast at start
+      });
+    }, 200);
+
+    return () => {
+      if (intervalRef.current) clearInterval(intervalRef.current);
+    };
+  }, [isProcessing, realProgress]);
+
+  return Math.min(fakeProgress, 90); // Never show more than 90% for fake progress
+}
+
 export function ActorCard({ actor, onDelete }: ActorCardProps) {
   const [showDetails, setShowDetails] = useState(false);
 
   const isProcessing = actor.status === 'processing';
   const isFailed = actor.status === 'failed';
   const isCompleted = actor.status === 'completed';
+  
+  const displayProgress = useFakeProgress(isProcessing, actor.progress || 0);
 
   return (
     <>
@@ -56,12 +98,12 @@ export function ActorCard({ actor, onDelete }: ActorCardProps) {
                     fill="none"
                     className="stroke-primary transition-all duration-300"
                     strokeWidth="2"
-                    strokeDasharray={`${(actor.progress || 0) * 100.53} 100.53`}
+                    strokeDasharray={`${displayProgress * 100.53 / 100} 100.53`}
                     strokeLinecap="round"
                   />
                 </svg>
                 <span className="absolute inset-0 flex items-center justify-center text-sm font-medium text-foreground">
-                  {Math.round(actor.progress || 0)}%
+                  {Math.round(displayProgress)}%
                 </span>
               </div>
               <span className="text-xs text-muted-foreground font-medium">Creating...</span>
