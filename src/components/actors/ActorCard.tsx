@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { MoreHorizontal, Trash2, AlertCircle, Loader2, UserCircle, User } from 'lucide-react';
+import { MoreHorizontal, Trash2, AlertCircle, UserCircle, User } from 'lucide-react';
 import { Actor } from '@/hooks/useActors';
 import { cn } from '@/lib/utils';
 import {
@@ -36,10 +36,34 @@ export function ActorCard({ actor, onDelete }: ActorCardProps) {
       >
         {/* Thumbnail - Takes most of the space */}
         <div className="relative flex-1 bg-muted/50 overflow-hidden">
-          {/* Processing State */}
+          {/* Processing State with Progress */}
           {isProcessing && (
-            <div className="flex h-full w-full flex-col items-center justify-center gap-2 p-4">
-              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            <div className="flex h-full w-full flex-col items-center justify-center gap-3 p-4">
+              <div className="relative">
+                <svg className="h-16 w-16 -rotate-90" viewBox="0 0 36 36">
+                  <circle
+                    cx="18"
+                    cy="18"
+                    r="16"
+                    fill="none"
+                    className="stroke-muted"
+                    strokeWidth="2"
+                  />
+                  <circle
+                    cx="18"
+                    cy="18"
+                    r="16"
+                    fill="none"
+                    className="stroke-primary transition-all duration-300"
+                    strokeWidth="2"
+                    strokeDasharray={`${(actor.progress || 0) * 100.53} 100.53`}
+                    strokeLinecap="round"
+                  />
+                </svg>
+                <span className="absolute inset-0 flex items-center justify-center text-sm font-medium text-foreground">
+                  {Math.round(actor.progress || 0)}%
+                </span>
+              </div>
               <span className="text-xs text-muted-foreground font-medium">Creating...</span>
             </div>
           )}
