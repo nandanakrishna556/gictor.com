@@ -10,7 +10,7 @@ interface FileDetailModalProps {
   file: {
     id: string;
     name: string;
-    file_type: 'first_frame' | 'talking_head' | 'script';
+    file_type: 'first_frame' | 'lip_sync' | 'talking_head' | 'script' | 'speech';
     status: 'processing' | 'completed' | 'failed';
     preview_url?: string | null;
     download_url?: string | null;
@@ -34,7 +34,7 @@ export const FileDetailModal: React.FC<FileDetailModalProps> = ({ file, isOpen, 
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      const ext = file.file_type === 'talking_head' ? 'mp4' : file.file_type === 'script' ? 'txt' : 'jpg';
+      const ext = (file.file_type === 'lip_sync' || file.file_type === 'talking_head') ? 'mp4' : file.file_type === 'script' ? 'txt' : 'jpg';
       a.download = `${file.name}.${ext}`;
       document.body.appendChild(a);
       a.click();
@@ -113,8 +113,8 @@ export const FileDetailModal: React.FC<FileDetailModalProps> = ({ file, isOpen, 
           </div>
         )}
 
-        {/* Talking Head Completed */}
-        {file.status === 'completed' && file.file_type === 'talking_head' && file.preview_url && (
+        {/* Lip Sync / Talking Head Completed */}
+        {file.status === 'completed' && (file.file_type === 'lip_sync' || file.file_type === 'talking_head') && file.preview_url && (
           <div className="space-y-4">
             <VideoPlayer src={file.preview_url} title={file.name} />
             <Button onClick={handleDownload} disabled={isDownloading} className="gap-2">
