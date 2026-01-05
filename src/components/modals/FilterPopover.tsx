@@ -42,7 +42,7 @@ const statusOptions = [
 
 const fileTypeOptions = [
   { value: 'first_frame', label: 'First Frame' },
-  { value: 'talking_head', label: 'Lip Sync' },
+  { value: 'lip_sync', label: 'Lip Sync' },
   { value: 'speech', label: 'Speech' },
   { value: 'script', label: 'Script' },
   { value: 'folder', label: 'Folder' },

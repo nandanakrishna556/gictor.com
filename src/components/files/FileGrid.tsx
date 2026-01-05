@@ -90,7 +90,8 @@ interface FileGridProps {
 
 const fileTypeLabels: Record<string, string> = {
   first_frame: 'First Frame',
-  talking_head: 'Lip Sync',
+  lip_sync: 'Lip Sync',
+  talking_head: 'Lip Sync', // backward compatibility
   speech: 'Speech',
   clips: 'Clips',
   b_roll: 'Clips',
@@ -1081,7 +1082,7 @@ function FileCard({
   const fileTags = file.tags || [];
   
   // Video thumbnail support
-  const isVideoType = ['talking_head', 'clips', 'b_roll', 'lip_sync', 'veo3'].includes(file.file_type || '');
+  const isVideoType = ['lip_sync', 'talking_head', 'clips', 'b_roll', 'veo3'].includes(file.file_type || '');
   const hasVideoThumbnail = isVideoType && (file.preview_url || file.download_url);
 
   const toggleTag = (tagId: string) => {
@@ -1405,7 +1406,7 @@ function KanbanCard({
   const isFile = item.itemType === 'file';
   const file = isFile ? (item as File) : null;
   const isProcessing = file?.status === 'processing';
-  const isVideoType = ['talking_head', 'clips', 'b_roll', 'lip_sync', 'veo3'].includes(file?.file_type || '');
+  const isVideoType = ['lip_sync', 'talking_head', 'clips', 'b_roll', 'veo3'].includes(file?.file_type || '');
   const hasVideoThumbnail = isVideoType && (file?.preview_url || file?.download_url);
 
   const toggleTag = (tagId: string) => {

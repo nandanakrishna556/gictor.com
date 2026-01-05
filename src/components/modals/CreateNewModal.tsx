@@ -35,8 +35,8 @@ interface CreateNewModalProps {
   statusOptions?: StatusOption[];
 }
 
-type PipelineType = 'talking_head' | 'clips';
-type QuickGenType = 'talking_head' | 'audio' | 'first_frame' | 'b_roll' | 'script';
+type PipelineType = 'lip_sync' | 'clips';
+type QuickGenType = 'lip_sync' | 'speech' | 'first_frame' | 'b_roll' | 'script';
 
 const contentTypes = [
   {
@@ -47,14 +47,14 @@ const contentTypes = [
     isFolder: true,
   },
   {
-    id: 'talking_head' as const,
+    id: 'lip_sync' as const,
     icon: Video,
     title: 'Lip Sync',
     description: 'Sync audio to face',
     isQuickGen: true,
   },
   {
-    id: 'audio' as const,
+    id: 'speech' as const,
     icon: Mic,
     title: 'Speech',
     description: 'Generate voice audio',
@@ -83,12 +83,12 @@ const contentTypes = [
   },
   // TEMPORARILY HIDDEN - Re-enable by uncommenting:
   // {
-  //   id: 'talking_head_pipeline' as const,
+  //   id: 'lip_sync_pipeline' as const,
   //   icon: Video,
-  //   title: 'Talking Head Pipeline',
+  //   title: 'Lip Sync Pipeline',
   //   description: 'Create with AI pipeline',
   //   isPipeline: true,
-  //   pipelineType: 'talking_head' as PipelineType,
+  //   pipelineType: 'lip_sync' as PipelineType,
   // },
   // {
   //   id: 'clips' as const,
@@ -135,7 +135,7 @@ export default function CreateNewModal({
       onCreateFolder?.(initialStatus);
     } else if ('isQuickGen' in type && type.isQuickGen) {
       // Handle quick generation types - create file record first
-      if (type.id === 'talking_head') {
+      if (type.id === 'lip_sync') {
         setIsCreatingPipeline(true);
         setCreatingType(type.id);
         pipelineInitialStatusRef.current = initialStatus;
@@ -151,7 +151,7 @@ export default function CreateNewModal({
               project_id: projectId,
               folder_id: folderId || null,
               name: 'Untitled',
-              file_type: 'talking_head',
+              file_type: 'lip_sync',
               status: initialStatus || 'draft',
               generation_params: {},
             });
@@ -173,7 +173,7 @@ export default function CreateNewModal({
           setIsCreatingPipeline(false);
           setCreatingType(null);
         }
-      } else if (type.id === 'audio') {
+      } else if (type.id === 'speech') {
         // Handle Speech generation
         setIsCreatingPipeline(true);
         setCreatingType(type.id);
@@ -222,7 +222,7 @@ export default function CreateNewModal({
       setCreatingType(type.id);
       pipelineInitialStatusRef.current = initialStatus;
       
-      const fileType = pipelineType === 'clips' ? 'clips' : 'talking_head';
+      const fileType = pipelineType === 'clips' ? 'clips' : 'lip_sync';
       
       try {
         const newPipeline = await createPipeline({

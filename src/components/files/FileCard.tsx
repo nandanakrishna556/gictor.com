@@ -26,10 +26,10 @@ interface FileCardProps {
 }
 
 // Video file types that should show video preview
-const VIDEO_FILE_TYPES = ['talking_head', 'clips', 'b_roll', 'lip_sync', 'veo3'];
+const VIDEO_FILE_TYPES = ['lip_sync', 'talking_head', 'clips', 'b_roll', 'veo3'];
 
 // Audio file types
-const AUDIO_FILE_TYPES = ['audio', 'voice'];
+const AUDIO_FILE_TYPES = ['speech', 'audio', 'voice'];
 
 export const FileCard: React.FC<FileCardProps> = ({ 
   id, 

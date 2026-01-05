@@ -118,7 +118,7 @@ export default function LipSyncForm({
   const isOverLimit = characterCount > maxChars;
   
   const estimatedDuration = Math.max(SECONDS_PER_BLOCK, Math.ceil(characterCount / CHARS_PER_BLOCK) * SECONDS_PER_BLOCK);
-  const creditCost = CREDIT_COSTS.talking_head;
+  const creditCost = CREDIT_COSTS.lip_sync;
   const hasEnoughCredits = (profile?.credits ?? 0) >= creditCost;
 
   const currentStatusOption = availableStatusOptions.find(s => s.value === selectedStatus) || availableStatusOptions[0];
@@ -181,7 +181,7 @@ export default function LipSyncForm({
     setIsSubmitting(true);
 
     try {
-      const result = await startGeneration('talking_head', {
+      const result = await startGeneration('lip_sync', {
         file_id: uuidv4(),
         user_id: user.id,
         project_id: currentProjectId,

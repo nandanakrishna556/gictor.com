@@ -27,13 +27,17 @@ interface FileDetailModalEnhancedProps {
 
 const fileTypeIcons: Record<string, React.ComponentType<{ className?: string }>> = {
   first_frame: Image,
-  talking_head: Video,
+  lip_sync: Video,
+  talking_head: Video, // backward compatibility
+  speech: FileText,
   script: FileText,
 };
 
 const fileTypeLabels: Record<string, string> = {
   first_frame: 'First Frame',
-  talking_head: 'Lip Sync',
+  lip_sync: 'Lip Sync',
+  talking_head: 'Lip Sync', // backward compatibility
+  speech: 'Speech',
   script: 'Script',
 };
 
