@@ -1,6 +1,6 @@
 export type PipelineStage = 'first_frame' | 'script' | 'voice' | 'final_video';
 
-export type PipelineType = 'lip_sync' | 'clips';
+export type PipelineType = 'lip_sync' | 'talking_head' | 'clips';
 
 export type StageMode = 'generate' | 'upload' | 'paste';
 

@@ -242,7 +242,7 @@ async function handlePipelineUpdate(
               project_id: pipeline.project_id,
               folder_id: pipeline.folder_id,
               name: pipeline.name,
-              file_type: pipeline.pipeline_type || 'lip_sync',
+              file_type: pipeline.pipeline_type || 'talking_head',
               status: 'completed',
               tags: pipeline.tags,
               preview_url: output.url,
