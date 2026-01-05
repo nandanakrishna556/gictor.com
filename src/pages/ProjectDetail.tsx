@@ -297,7 +297,7 @@ export default function ProjectDetail() {
 
   // Handle file click - open appropriate modal based on file type
   const handleFileClick = (file: File) => {
-    if (file.file_type === 'talking_head') {
+    if (file.file_type === 'lip_sync' || file.file_type === 'talking_head') {
       // Check if it's a pipeline-based talking head or quick-gen talking head
       const params = file.generation_params as { pipeline_id?: string } | null;
       if (params?.pipeline_id) {

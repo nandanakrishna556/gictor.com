@@ -2,7 +2,7 @@ import React from 'react';
 import { FileText, Image as ImageIcon, Video, Film, Folder, Mic, LucideIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-export type FileType = 'first_frame' | 'talking_head' | 'script' | 'clips' | 'b_roll' | 'folder' | 'lip_sync' | 'audio' | 'voice' | 'veo3' | 'speech';
+export type FileType = 'first_frame' | 'lip_sync' | 'talking_head' | 'script' | 'clips' | 'b_roll' | 'folder' | 'speech' | 'audio' | 'voice' | 'veo3';
 
 interface FileTypeIconProps {
   fileType: FileType;
@@ -16,13 +16,13 @@ const FILE_TYPE_CONFIG: Record<FileType, { icon: LucideIcon; label: string; colo
     label: 'First Frame',
     color: 'text-blue-500',
   },
-  talking_head: {
+  lip_sync: {
     icon: Video,
     label: 'Lip Sync',
     color: 'text-primary',
   },
-  // Legacy: lip_sync now maps to talking_head display
-  lip_sync: {
+  // Legacy: talking_head maps to lip_sync display
+  talking_head: {
     icon: Video,
     label: 'Lip Sync',
     color: 'text-primary',
