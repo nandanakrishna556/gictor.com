@@ -109,12 +109,13 @@ const ActorPayloadSchema = z.object({
 });
 
 const FilePayloadSchema = z.object({
-  type: z.enum(['first_frame', 'talking_head', 'script', 'audio', 'b_roll']),
+  type: z.enum(['first_frame', 'talking_head', 'script', 'audio', 'b_roll', 'speech']),
   payload: z.object({
     file_id: z.string().uuid(),
-    project_id: z.string().uuid(),
+    project_id: z.string().uuid().optional(),
+    user_id: z.string().uuid().optional(),
     folder_id: z.string().uuid().nullable().optional(),
-    file_name: z.string().max(255),
+    file_name: z.string().max(255).optional(),
     tags: z.array(z.string()).optional(),
     credits_cost: z.number().positive(),
     prompt: z.string().max(2000).optional(),
@@ -130,6 +131,9 @@ const FilePayloadSchema = z.object({
     description: z.string().max(2000).optional(),
     script_type: z.enum(['sales', 'educational', 'entertainment', 'tutorial', 'story', 'other']).optional(),
     duration_seconds: z.number().positive().max(300).optional(),
+    // Speech-specific fields
+    actor_voice_url: z.string().url().optional(),
+    supabase_url: z.string().url().optional(),
   }),
 });
 
