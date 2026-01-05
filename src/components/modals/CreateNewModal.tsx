@@ -272,8 +272,8 @@ export default function CreateNewModal({
   return (
     <>
       <Dialog open={open} onOpenChange={handleClose}>
-        <DialogContent className="gap-0 p-0 max-w-2xl rounded-2xl border-border">
-          <DialogHeader className="border-b border-border px-6 py-5">
+        <DialogContent className="gap-0 p-0 max-w-2xl max-h-[85vh] rounded-2xl border-border flex flex-col">
+          <DialogHeader className="border-b border-border px-6 py-5 shrink-0">
             <div className="flex items-center justify-between">
               <DialogTitle className="text-lg font-semibold">
                 Create New
@@ -287,7 +287,7 @@ export default function CreateNewModal({
             </div>
           </DialogHeader>
 
-          <div className="p-8 space-y-8">
+          <div className="flex-1 overflow-y-auto p-6 space-y-6">
             {/* Workflows Section */}
             <div>
               <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-4">
