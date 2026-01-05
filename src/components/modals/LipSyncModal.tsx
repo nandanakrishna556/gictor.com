@@ -332,7 +332,7 @@ export default function LipSyncModal({
       
       // Prepare payload for edge function
       const requestPayload = {
-        type: 'talking_head',
+        type: 'lip_sync',
         payload: {
           file_id: fileId,
           user_id: sessionData.session.user.id,
