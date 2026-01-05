@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react';
-import { Video, FolderPlus, X, Loader2, Film, Mic, Image, FileText } from 'lucide-react';
+import { Video, FolderPlus, X, Loader2, Film, Mic, Image, FileText, Sparkles, RefreshCw } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
 import { v4 as uuidv4 } from 'uuid';
 import {
@@ -35,69 +35,76 @@ interface CreateNewModalProps {
   statusOptions?: StatusOption[];
 }
 
-type PipelineType = 'lip_sync' | 'clips';
-type QuickGenType = 'lip_sync' | 'speech' | 'first_frame' | 'b_roll' | 'script';
+type WorkflowType = 'talking_head' | 'b_roll' | 'motion_graphics';
+type ElementType = 'folder' | 'lip_sync' | 'speech' | 'first_frame' | 'last_frame' | 'script' | 'swap';
 
-const contentTypes = [
+const workflows = [
   {
-    id: 'folder' as const,
+    id: 'talking_head' as WorkflowType,
+    icon: Video,
+    title: 'Talking Head',
+    description: 'Create talking head video',
+  },
+  {
+    id: 'b_roll' as WorkflowType,
+    icon: Film,
+    title: 'B-Roll',
+    description: 'Generate video clips',
+  },
+  {
+    id: 'motion_graphics' as WorkflowType,
+    icon: Sparkles,
+    title: 'Motion Graphics',
+    description: 'Generate motion graphics',
+    comingSoon: true,
+  },
+];
+
+const elements = [
+  {
+    id: 'folder' as ElementType,
     icon: FolderPlus,
     title: 'Folder',
     description: 'Organize your content',
-    isFolder: true,
   },
   {
-    id: 'lip_sync' as const,
+    id: 'lip_sync' as ElementType,
     icon: Video,
     title: 'Lip Sync',
     description: 'Sync audio to face',
-    isQuickGen: true,
   },
   {
-    id: 'speech' as const,
+    id: 'speech' as ElementType,
     icon: Mic,
     title: 'Speech',
     description: 'Generate voice audio',
-    isQuickGen: true,
   },
   {
-    id: 'first_frame' as const,
+    id: 'first_frame' as ElementType,
     icon: Image,
     title: 'First Frame',
     description: 'Generate AI image',
-    isQuickGen: true,
   },
   {
-    id: 'b_roll' as const,
-    icon: Film,
-    title: 'B-Roll',
-    description: 'Generate video from image',
-    isQuickGen: true,
+    id: 'last_frame' as ElementType,
+    icon: Image,
+    title: 'Last Frame',
+    description: 'Generate ending image',
+    comingSoon: true,
   },
   {
-    id: 'script' as const,
+    id: 'script' as ElementType,
     icon: FileText,
     title: 'Script',
     description: 'Generate script',
-    isQuickGen: true,
   },
-  // TEMPORARILY HIDDEN - Re-enable by uncommenting:
-  // {
-  //   id: 'lip_sync_pipeline' as const,
-  //   icon: Video,
-  //   title: 'Lip Sync Pipeline',
-  //   description: 'Create with AI pipeline',
-  //   isPipeline: true,
-  //   pipelineType: 'lip_sync' as PipelineType,
-  // },
-  // {
-  //   id: 'clips' as const,
-  //   icon: Film,
-  //   title: 'Clips',
-  //   description: 'Generate video clips',
-  //   isPipeline: true,
-  //   pipelineType: 'clips' as PipelineType,
-  // },
+  {
+    id: 'swap' as ElementType,
+    icon: RefreshCw,
+    title: 'Swap',
+    description: 'Face swap',
+    comingSoon: true,
+  },
 ];
 
 export default function CreateNewModal({
@@ -110,177 +117,154 @@ export default function CreateNewModal({
   statusOptions,
 }: CreateNewModalProps) {
   const queryClient = useQueryClient();
-  const [pipelineModalOpen, setPipelineModalOpen] = useState(false);
-  const [bRollModalOpen, setBRollModalOpen] = useState(false);
+  const [talkingHeadWorkflowOpen, setTalkingHeadWorkflowOpen] = useState(false);
+  const [bRollWorkflowOpen, setBRollWorkflowOpen] = useState(false);
   const [lipSyncModalOpen, setLipSyncModalOpen] = useState(false);
   const [speechModalOpen, setSpeechModalOpen] = useState(false);
   const [createdPipelineId, setCreatedPipelineId] = useState<string | null>(null);
   const [createdFileId, setCreatedFileId] = useState<string | null>(null);
-  const [isCreatingPipeline, setIsCreatingPipeline] = useState(false);
+  const [isCreating, setIsCreating] = useState(false);
   const [creatingType, setCreatingType] = useState<string | null>(null);
   
-  // Store the status in a ref to preserve it between modal transitions
-  const pipelineInitialStatusRef = useRef<string | undefined>(undefined);
+  const initialStatusRef = useRef<string | undefined>(undefined);
   
-  // Get createPipeline from hook (null ID means no fetch, just get the create function)
   const { createPipeline } = usePipeline(null);
 
   const handleClose = () => {
     onOpenChange(false);
   };
 
-  const handleTypeSelect = async (type: typeof contentTypes[0]) => {
-    if (type.id === 'folder') {
-      onOpenChange(false);
-      onCreateFolder?.(initialStatus);
-    } else if ('isQuickGen' in type && type.isQuickGen) {
-      // Handle quick generation types - create file record first
-      if (type.id === 'lip_sync') {
-        setIsCreatingPipeline(true);
-        setCreatingType(type.id);
-        pipelineInitialStatusRef.current = initialStatus;
-        
-        try {
-          const newFileId = uuidv4();
-          
-          // Create file record immediately (like pipeline pattern)
-          const { error: fileError } = await supabase
-            .from('files')
-            .insert({
-              id: newFileId,
-              project_id: projectId,
-              folder_id: folderId || null,
-              name: 'Untitled',
-              file_type: 'lip_sync',
-              status: initialStatus || 'draft',
-              generation_params: {},
-            });
-          
-          if (fileError) {
-            throw fileError;
-          }
-          
-          setCreatedFileId(newFileId);
-          onOpenChange(false);
-          setIsCreatingPipeline(false);
-          setCreatingType(null);
-          setLipSyncModalOpen(true);
-          
-          queryClient.invalidateQueries({ queryKey: ['files', projectId] });
-        } catch (error) {
-          console.error('Failed to create file entry:', error);
-          toast.error('Failed to create file');
-          setIsCreatingPipeline(false);
-          setCreatingType(null);
-        }
-      } else if (type.id === 'speech') {
-        // Handle Speech generation
-        setIsCreatingPipeline(true);
-        setCreatingType(type.id);
-        pipelineInitialStatusRef.current = initialStatus;
-        
-        try {
-          const newFileId = uuidv4();
-          
-          const { error: fileError } = await supabase
-            .from('files')
-            .insert({
-              id: newFileId,
-              project_id: projectId,
-              folder_id: folderId || null,
-              name: 'Untitled',
-              file_type: 'speech',
-              status: initialStatus || 'draft',
-              generation_params: {},
-            });
-          
-          if (fileError) {
-            throw fileError;
-          }
-          
-          setCreatedFileId(newFileId);
-          onOpenChange(false);
-          setIsCreatingPipeline(false);
-          setCreatingType(null);
-          setSpeechModalOpen(true);
-          
-          queryClient.invalidateQueries({ queryKey: ['files', projectId] });
-        } catch (error) {
-          console.error('Failed to create file entry:', error);
-          toast.error('Failed to create file');
-          setIsCreatingPipeline(false);
-          setCreatingType(null);
-        }
-      } else {
-        // Coming soon for other quick gen types
-        toast.info(`${type.title} generation coming soon!`);
-      }
-    } else if ('isPipeline' in type && (type as any).isPipeline) {
-      // Handle pipeline types (currently hidden)
-      const pipelineType = (type as any).pipelineType as PipelineType;
-      setIsCreatingPipeline(true);
-      setCreatingType(type.id);
-      pipelineInitialStatusRef.current = initialStatus;
-      
-      const fileType = pipelineType === 'clips' ? 'clips' : 'lip_sync';
-      
-      try {
-        const newPipeline = await createPipeline({
-          projectId,
-          folderId,
+  const handleWorkflowSelect = async (workflow: typeof workflows[0]) => {
+    if (workflow.comingSoon) {
+      toast.info(`${workflow.title} workflow coming soon!`);
+      return;
+    }
+
+    setIsCreating(true);
+    setCreatingType(workflow.id);
+    initialStatusRef.current = initialStatus;
+
+    try {
+      // talking_head workflow uses lip_sync pipeline type
+      // b_roll workflow uses clips pipeline type
+      const pipelineType = workflow.id === 'talking_head' ? 'lip_sync' : 'clips';
+      const fileType = workflow.id === 'talking_head' ? 'lip_sync' : 'clips';
+
+      const newPipeline = await createPipeline({
+        projectId,
+        folderId,
+        name: 'Untitled',
+        status: 'draft',
+        displayStatus: initialStatus,
+        pipelineType: pipelineType,
+      });
+
+      const { error: fileError } = await supabase
+        .from('files')
+        .insert({
+          project_id: projectId,
+          folder_id: folderId || null,
           name: 'Untitled',
-          status: 'draft',
-          displayStatus: initialStatus,
-          pipelineType: pipelineType,
+          file_type: fileType,
+          status: initialStatus || 'draft',
+          generation_params: { pipeline_id: newPipeline.id, pipeline_type: pipelineType },
         });
-        
-        const { error: fileError } = await supabase
-          .from('files')
-          .insert({
-            project_id: projectId,
-            folder_id: folderId || null,
-            name: 'Untitled',
-            file_type: fileType,
-            status: initialStatus || 'draft',
-            generation_params: { pipeline_id: newPipeline.id, pipeline_type: pipelineType },
-          });
-        
-        if (fileError) {
-          console.error('Failed to create file entry:', fileError);
-        }
-        
-        setCreatedPipelineId(newPipeline.id);
-        onOpenChange(false);
-        setIsCreatingPipeline(false);
-        setCreatingType(null);
-        
-        if (pipelineType === 'clips') {
-          setBRollModalOpen(true);
-        } else {
-          setPipelineModalOpen(true);
-        }
-        
-        queryClient.invalidateQueries({ queryKey: ['files', projectId] });
-      } catch (error) {
-        console.error('Failed to create pipeline:', error);
-        toast.error('Failed to create pipeline');
-        setIsCreatingPipeline(false);
-        setCreatingType(null);
+
+      if (fileError) {
+        console.error('Failed to create file entry:', fileError);
       }
+
+      setCreatedPipelineId(newPipeline.id);
+      onOpenChange(false);
+      setIsCreating(false);
+      setCreatingType(null);
+
+      if (workflow.id === 'b_roll') {
+        setBRollWorkflowOpen(true);
+      } else {
+        setTalkingHeadWorkflowOpen(true);
+      }
+
+      queryClient.invalidateQueries({ queryKey: ['files', projectId] });
+    } catch (error) {
+      console.error('Failed to create workflow:', error);
+      toast.error('Failed to create workflow');
+      setIsCreating(false);
+      setCreatingType(null);
     }
   };
 
-  const handlePipelineClose = () => {
-    setPipelineModalOpen(false);
-    setBRollModalOpen(false);
+  const handleElementSelect = async (element: typeof elements[0]) => {
+    if (element.comingSoon) {
+      toast.info(`${element.title} coming soon!`);
+      return;
+    }
+
+    if (element.id === 'folder') {
+      onOpenChange(false);
+      onCreateFolder?.(initialStatus);
+      return;
+    }
+
+    if (element.id === 'lip_sync' || element.id === 'speech') {
+      setIsCreating(true);
+      setCreatingType(element.id);
+      initialStatusRef.current = initialStatus;
+
+      try {
+        const newFileId = uuidv4();
+
+        const { error: fileError } = await supabase
+          .from('files')
+          .insert({
+            id: newFileId,
+            project_id: projectId,
+            folder_id: folderId || null,
+            name: 'Untitled',
+            file_type: element.id,
+            status: initialStatus || 'draft',
+            generation_params: {},
+          });
+
+        if (fileError) {
+          throw fileError;
+        }
+
+        setCreatedFileId(newFileId);
+        onOpenChange(false);
+        setIsCreating(false);
+        setCreatingType(null);
+
+        if (element.id === 'lip_sync') {
+          setLipSyncModalOpen(true);
+        } else if (element.id === 'speech') {
+          setSpeechModalOpen(true);
+        }
+
+        queryClient.invalidateQueries({ queryKey: ['files', projectId] });
+      } catch (error) {
+        console.error('Failed to create file entry:', error);
+        toast.error('Failed to create file');
+        setIsCreating(false);
+        setCreatingType(null);
+      }
+    } else {
+      // Other elements coming soon
+      toast.info(`${element.title} coming soon!`);
+    }
+  };
+
+  const handleModalClose = () => {
+    setTalkingHeadWorkflowOpen(false);
+    setBRollWorkflowOpen(false);
     setLipSyncModalOpen(false);
     setSpeechModalOpen(false);
     setCreatedPipelineId(null);
     setCreatedFileId(null);
-    pipelineInitialStatusRef.current = undefined;
+    initialStatusRef.current = undefined;
   };
 
-  const handlePipelineSuccess = () => {
+  const handleSuccess = () => {
     queryClient.invalidateQueries({ queryKey: ['files', projectId] });
     queryClient.invalidateQueries({ queryKey: ['pipelines', projectId] });
   };
@@ -303,59 +287,113 @@ export default function CreateNewModal({
             </div>
           </DialogHeader>
 
-          <div className="grid grid-cols-3 gap-4 p-8">
-            {contentTypes.map((type) => (
-              <button
-                key={type.id}
-                onClick={() => handleTypeSelect(type)}
-                disabled={isCreatingPipeline}
-                className="flex flex-col items-center rounded-xl border border-border bg-card p-6 text-center transition-apple hover:border-primary hover:bg-primary/5 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10">
-                  {isCreatingPipeline && creatingType === type.id ? (
-                    <Loader2 className="h-6 w-6 text-primary animate-spin" />
-                  ) : (
-                    <type.icon className="h-6 w-6 text-primary" />
-                  )}
-                </div>
-                <h3 className="font-medium text-foreground">
-                  {type.title}
-                </h3>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  {isCreatingPipeline && creatingType === type.id
-                    ? 'Creating...' 
-                    : type.description}
-                </p>
-              </button>
-            ))}
+          <div className="p-8 space-y-8">
+            {/* Workflows Section */}
+            <div>
+              <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-4">
+                Workflows
+              </h3>
+              <div className="grid grid-cols-3 gap-4">
+                {workflows.map((workflow) => (
+                  <button
+                    key={workflow.id}
+                    onClick={() => handleWorkflowSelect(workflow)}
+                    disabled={isCreating || workflow.comingSoon}
+                    className="relative flex flex-col items-center rounded-xl border border-border bg-card p-6 text-center transition-apple hover:border-primary hover:bg-primary/5 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {workflow.comingSoon && (
+                      <span className="absolute top-2 right-2 text-[10px] font-medium bg-muted px-1.5 py-0.5 rounded text-muted-foreground">
+                        Soon
+                      </span>
+                    )}
+                    <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10">
+                      {isCreating && creatingType === workflow.id ? (
+                        <Loader2 className="h-6 w-6 text-primary animate-spin" />
+                      ) : (
+                        <workflow.icon className="h-6 w-6 text-primary" />
+                      )}
+                    </div>
+                    <h3 className="font-medium text-foreground">
+                      {workflow.title}
+                    </h3>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      {isCreating && creatingType === workflow.id
+                        ? 'Creating...'
+                        : workflow.description}
+                    </p>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Divider */}
+            <div className="border-t border-border" />
+
+            {/* Elements Section */}
+            <div>
+              <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-4">
+                Elements
+              </h3>
+              <div className="grid grid-cols-3 gap-4">
+                {elements.map((element) => (
+                  <button
+                    key={element.id}
+                    onClick={() => handleElementSelect(element)}
+                    disabled={isCreating || element.comingSoon}
+                    className="relative flex flex-col items-center rounded-xl border border-border bg-card p-6 text-center transition-apple hover:border-primary hover:bg-primary/5 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {element.comingSoon && (
+                      <span className="absolute top-2 right-2 text-[10px] font-medium bg-muted px-1.5 py-0.5 rounded text-muted-foreground">
+                        Soon
+                      </span>
+                    )}
+                    <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10">
+                      {isCreating && creatingType === element.id ? (
+                        <Loader2 className="h-6 w-6 text-primary animate-spin" />
+                      ) : (
+                        <element.icon className="h-6 w-6 text-primary" />
+                      )}
+                    </div>
+                    <h3 className="font-medium text-foreground">
+                      {element.title}
+                    </h3>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      {isCreating && creatingType === element.id
+                        ? 'Creating...'
+                        : element.description}
+                    </p>
+                  </button>
+                ))}
+              </div>
+            </div>
           </div>
         </DialogContent>
       </Dialog>
 
-      {/* Talking Head Pipeline Modal */}
-      {createdPipelineId && pipelineModalOpen && (
+      {/* Talking Head Workflow Modal */}
+      {createdPipelineId && talkingHeadWorkflowOpen && (
         <PipelineModal
-          open={pipelineModalOpen}
-          onClose={handlePipelineClose}
+          open={talkingHeadWorkflowOpen}
+          onClose={handleModalClose}
           pipelineId={createdPipelineId}
           projectId={projectId}
           folderId={folderId}
-          initialStatus={pipelineInitialStatusRef.current}
-          onSuccess={handlePipelineSuccess}
+          initialStatus={initialStatusRef.current}
+          onSuccess={handleSuccess}
           statusOptions={statusOptions}
         />
       )}
 
-      {/* Clips Pipeline Modal */}
-      {createdPipelineId && bRollModalOpen && (
+      {/* B-Roll Workflow Modal */}
+      {createdPipelineId && bRollWorkflowOpen && (
         <ClipsPipelineModal
-          open={bRollModalOpen}
-          onClose={handlePipelineClose}
+          open={bRollWorkflowOpen}
+          onClose={handleModalClose}
           pipelineId={createdPipelineId}
           projectId={projectId}
           folderId={folderId}
-          initialStatus={pipelineInitialStatusRef.current}
-          onSuccess={handlePipelineSuccess}
+          initialStatus={initialStatusRef.current}
+          onSuccess={handleSuccess}
           statusOptions={statusOptions}
         />
       )}
@@ -364,12 +402,12 @@ export default function CreateNewModal({
       {createdFileId && lipSyncModalOpen && (
         <LipSyncModal
           open={lipSyncModalOpen}
-          onClose={handlePipelineClose}
+          onClose={handleModalClose}
           fileId={createdFileId}
           projectId={projectId}
           folderId={folderId}
-          initialStatus={pipelineInitialStatusRef.current}
-          onSuccess={handlePipelineSuccess}
+          initialStatus={initialStatusRef.current}
+          onSuccess={handleSuccess}
           statusOptions={statusOptions}
         />
       )}
@@ -378,12 +416,12 @@ export default function CreateNewModal({
       {createdFileId && speechModalOpen && (
         <SpeechModal
           open={speechModalOpen}
-          onClose={handlePipelineClose}
+          onClose={handleModalClose}
           fileId={createdFileId}
           projectId={projectId}
           folderId={folderId}
-          initialStatus={pipelineInitialStatusRef.current}
-          onSuccess={handlePipelineSuccess}
+          initialStatus={initialStatusRef.current}
+          onSuccess={handleSuccess}
           statusOptions={statusOptions}
         />
       )}
