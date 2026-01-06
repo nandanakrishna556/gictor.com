@@ -1,8 +1,9 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useQueryClient, useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useAuth } from '@/contexts/AuthContext';
+import { useTags } from '@/hooks/useTags';
 import { useProfile } from '@/hooks/useProfile';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
@@ -12,8 +13,17 @@ import { Textarea } from '@/components/ui/textarea';
 import { Progress } from '@/components/ui/progress';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ArrowLeft, X, Loader2, Download, Upload, Film } from 'lucide-react';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { TagList, TagSelector, TagData } from '@/components/ui/tag-badge';
+import LocationSelector from '@/components/forms/LocationSelector';
+import { ArrowLeft, X, Loader2, Download, Upload, Film, Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
+
+interface StatusOption {
+  value: string;
+  label: string;
+  color: string;
+}
 
 interface AnimateModalProps {
   open: boolean;
@@ -23,7 +33,15 @@ interface AnimateModalProps {
   folderId?: string;
   initialStatus?: string;
   onSuccess?: () => void;
+  statusOptions?: StatusOption[];
 }
+
+const DEFAULT_STATUS_OPTIONS: StatusOption[] = [
+  { value: 'draft', label: 'Draft', color: 'bg-zinc-500' },
+  { value: 'in_progress', label: 'In Progress', color: 'bg-blue-500' },
+  { value: 'review', label: 'Review', color: 'bg-amber-500' },
+  { value: 'complete', label: 'Complete', color: 'bg-emerald-500' },
+];
 
 const CREDIT_COST = 1;
 
@@ -35,17 +53,29 @@ export default function AnimateModal({
   folderId,
   initialStatus,
   onSuccess,
+  statusOptions = DEFAULT_STATUS_OPTIONS,
 }: AnimateModalProps) {
   const { user } = useAuth();
   const queryClient = useQueryClient();
+  const { tags } = useTags();
   const { profile } = useProfile();
   
   // Core state
+  const initialStatusRef = useRef(initialStatus);
+  initialStatusRef.current = initialStatus;
   const fileLoadedRef = useRef(false);
   
   const [name, setName] = useState('Untitled');
+  const [currentProjectId, setCurrentProjectId] = useState(projectId);
+  const [currentFolderId, setCurrentFolderId] = useState(folderId);
+  const [displayStatus, setDisplayStatus] = useState(initialStatus || 'draft');
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [showUnsavedWarning, setShowUnsavedWarning] = useState(false);
+  
+  // Auto-save state
+  const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
+  const autoSaveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   
   // Input state - 9:16 is default
   const [firstFrameUrl, setFirstFrameUrl] = useState('');
@@ -78,6 +108,16 @@ export default function AnimateModal({
     refetchInterval: isGenerating ? 2000 : false,
   });
   
+  // Get current status option
+  const currentStatusOption = statusOptions.find(s => s.value === displayStatus) || statusOptions[0];
+  
+  // Convert tags to TagData format
+  const tagData: TagData[] = tags?.map(t => ({
+    id: t.id,
+    tag_name: t.tag_name,
+    color: t.color || '#8E8E93',
+  })) || [];
+  
   // Validation
   const isMotionGraphics = animationType === 'motion_graphics';
   const hasRequiredInputs = firstFrameUrl && (!isMotionGraphics || lastFrameUrl);
@@ -89,6 +129,8 @@ export default function AnimateModal({
     if (file && !fileLoadedRef.current) {
       fileLoadedRef.current = true;
       setName(file.name);
+      setDisplayStatus(file.status || initialStatusRef.current || 'draft');
+      setSelectedTags(file.tags || []);
       
       // Restore generation params if any
       const params = file.generation_params as Record<string, unknown> | null;
@@ -104,7 +146,7 @@ export default function AnimateModal({
         setGenerationProgress(file.progress || 0);
       }
     }
-  }, [file, initialStatus]);
+  }, [file]);
   
   // Update progress when file updates during generation
   useEffect(() => {
@@ -123,6 +165,61 @@ export default function AnimateModal({
       }
     }
   }, [file, isGenerating, onSuccess]);
+  
+  // Auto-save functionality
+  const triggerAutoSave = useCallback(() => {
+    if (!fileId || !hasUnsavedChanges) return;
+    
+    if (autoSaveTimeoutRef.current) {
+      clearTimeout(autoSaveTimeoutRef.current);
+    }
+    
+    autoSaveTimeoutRef.current = setTimeout(async () => {
+      try {
+        setSaveStatus('saving');
+        
+        await supabase
+          .from('files')
+          .update({
+            name,
+            status: displayStatus,
+            tags: selectedTags,
+            project_id: currentProjectId,
+            folder_id: currentFolderId || null,
+            generation_params: {
+              first_frame_url: firstFrameUrl,
+              last_frame_url: lastFrameUrl || null,
+              prompt,
+              aspect_ratio: aspectRatio,
+              animation_type: animationType,
+            },
+          })
+          .eq('id', fileId);
+        
+        setHasUnsavedChanges(false);
+        setSaveStatus('saved');
+        setTimeout(() => setSaveStatus('idle'), 2000);
+        
+        queryClient.invalidateQueries({ queryKey: ['files', currentProjectId] });
+      } catch (error) {
+        console.error('Auto-save error:', error);
+        setSaveStatus('idle');
+      }
+    }, 2000);
+  }, [fileId, hasUnsavedChanges, name, displayStatus, selectedTags, firstFrameUrl, lastFrameUrl, prompt, aspectRatio, animationType, queryClient, currentProjectId, currentFolderId]);
+  
+  // Trigger auto-save when unsaved changes occur
+  useEffect(() => {
+    if (hasUnsavedChanges && fileLoadedRef.current) {
+      triggerAutoSave();
+    }
+    
+    return () => {
+      if (autoSaveTimeoutRef.current) {
+        clearTimeout(autoSaveTimeoutRef.current);
+      }
+    };
+  }, [hasUnsavedChanges, name, displayStatus, selectedTags, firstFrameUrl, lastFrameUrl, triggerAutoSave]);
 
   // Handle file upload to Supabase storage
   const handleFileUpload = async (uploadedFile: globalThis.File, isFirstFrame: boolean) => {
@@ -200,8 +297,8 @@ export default function AnimateModal({
         payload: {
           file_id: fileId,
           user_id: sessionData.session.user.id,
-          project_id: projectId,
-          folder_id: folderId,
+          project_id: currentProjectId,
+          folder_id: currentFolderId,
           file_name: name,
           first_frame_url: firstFrameUrl,
           last_frame_url: lastFrameUrl || null,
@@ -231,7 +328,7 @@ export default function AnimateModal({
       
       toast.success('Generation started! This may take a few minutes.');
       queryClient.invalidateQueries({ queryKey: ['profile'] });
-      queryClient.invalidateQueries({ queryKey: ['files', projectId] });
+      queryClient.invalidateQueries({ queryKey: ['files', currentProjectId] });
       
     } catch (error) {
       console.error('Generation error:', error);
@@ -246,6 +343,90 @@ export default function AnimateModal({
     }
   };
   
+  // Handle name change
+  const handleNameChange = (newName: string) => {
+    setName(newName);
+    setHasUnsavedChanges(true);
+  };
+  
+  // Handle status change
+  const handleStatusChange = (newStatus: string) => {
+    setDisplayStatus(newStatus);
+    setHasUnsavedChanges(true);
+  };
+  
+  // Handle tag toggle
+  const handleToggleTag = (tagId: string) => {
+    setSelectedTags(prev => 
+      prev.includes(tagId) 
+        ? prev.filter(id => id !== tagId)
+        : [...prev, tagId]
+    );
+    setHasUnsavedChanges(true);
+  };
+  
+  // Handle create tag
+  const handleCreateTag = async (tagName: string, color: string) => {
+    const { data, error } = await supabase
+      .from('user_tags')
+      .insert({
+        user_id: profile?.id,
+        tag_name: tagName,
+        color,
+      })
+      .select()
+      .single();
+    
+    if (!error && data) {
+      setSelectedTags(prev => [...prev, data.id]);
+      setHasUnsavedChanges(true);
+      queryClient.invalidateQueries({ queryKey: ['tags'] });
+      toast.success('Tag created');
+    }
+  };
+  
+  // Handle location change
+  const handleLocationChange = (newProjectId: string, newFolderId?: string) => {
+    setCurrentProjectId(newProjectId);
+    setCurrentFolderId(newFolderId);
+    setHasUnsavedChanges(true);
+  };
+  
+  // Handle save
+  const handleSave = async () => {
+    try {
+      setSaveStatus('saving');
+      
+      await supabase
+        .from('files')
+        .update({
+          name,
+          status: displayStatus,
+          tags: selectedTags,
+          project_id: currentProjectId,
+          folder_id: currentFolderId || null,
+          generation_params: {
+            first_frame_url: firstFrameUrl,
+            last_frame_url: lastFrameUrl || null,
+            prompt,
+            aspect_ratio: aspectRatio,
+            animation_type: animationType,
+          },
+        })
+        .eq('id', fileId);
+      
+      setHasUnsavedChanges(false);
+      setSaveStatus('saved');
+      setTimeout(() => setSaveStatus('idle'), 2000);
+      
+      queryClient.invalidateQueries({ queryKey: ['files', currentProjectId] });
+      onSuccess?.();
+    } catch (error) {
+      setSaveStatus('idle');
+      toast.error('Failed to save changes');
+    }
+  };
+  
   // Handle close
   const handleClose = () => {
     if (hasUnsavedChanges) {
@@ -254,49 +435,134 @@ export default function AnimateModal({
       onClose();
     }
   };
+  
+  const handleConfirmClose = () => {
+    setShowUnsavedWarning(false);
+    setHasUnsavedChanges(false);
+    onClose();
+  };
+  
+  const handleSaveAndClose = async () => {
+    await handleSave();
+    setShowUnsavedWarning(false);
+    onClose();
+  };
+  
+  // Show nothing until file data is loaded
+  if (!file && fileId) {
+    return null;
+  }
 
   return (
     <>
       <AlertDialog open={showUnsavedWarning} onOpenChange={setShowUnsavedWarning}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Unsaved Changes</AlertDialogTitle>
+            <AlertDialogTitle>Unsaved changes</AlertDialogTitle>
             <AlertDialogDescription>
-              You have unsaved changes. Are you sure you want to close?
+              You have unsaved changes. Would you like to save them before closing?
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={onClose}>Discard Changes</AlertDialogAction>
+            <AlertDialogCancel onClick={handleConfirmClose}>Don't save</AlertDialogCancel>
+            <AlertDialogAction onClick={handleSaveAndClose}>Save changes</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
 
       <Dialog open={open} onOpenChange={handleClose}>
-        <DialogContent className="max-w-[900px] h-[85vh] p-0 gap-0 overflow-hidden flex flex-col">
-          {/* Header */}
-          <div className="flex items-center justify-between border-b px-6 h-[52px] shrink-0">
-            <div className="flex items-center gap-3">
-              <button onClick={handleClose} className="text-muted-foreground hover:text-foreground transition-colors">
-                <ArrowLeft className="h-5 w-5" strokeWidth={1.5} />
-              </button>
-              <div className="flex items-center gap-2">
-                <Film className="h-4 w-4 text-blue-500" strokeWidth={1.5} />
-                <span className="text-sm text-muted-foreground">Animate</span>
-              </div>
-              <Input
-                value={name}
-                onChange={(e) => {
-                  setName(e.target.value);
-                  setHasUnsavedChanges(true);
-                }}
-                className="h-8 w-40 text-sm"
-              />
-            </div>
+        <DialogContent className="max-w-[900px] h-[85vh] p-0 gap-0 overflow-hidden rounded-lg flex flex-col [&>button]:hidden">
+          {/* Header - Same pattern as LipSyncModal */}
+          <div className="flex items-center gap-3 border-b bg-background px-4 h-[52px] flex-nowrap shrink-0 relative z-10 mt-0">
+            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={handleClose}>
+              <ArrowLeft className="h-4 w-4" strokeWidth={1.5} />
+            </Button>
+            <h2 className="text-lg font-semibold">Animate</h2>
+            
+            <div className="h-5 w-px bg-border" />
+            
+            <Input
+              value={name}
+              onChange={(e) => handleNameChange(e.target.value)}
+              className="w-28 h-7 text-sm"
+            />
+            
+            <LocationSelector
+              projectId={currentProjectId}
+              folderId={currentFolderId}
+              onLocationChange={handleLocationChange}
+            />
+            
+            <Select value={displayStatus} onValueChange={handleStatusChange}>
+              <SelectTrigger className={cn(
+                "h-7 w-fit rounded-md text-xs border-0 px-3 py-1 gap-1",
+                currentStatusOption.color,
+                "text-primary-foreground"
+              )}>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {statusOptions.map((opt) => (
+                  <SelectItem key={opt.value} value={opt.value}>
+                    <div className="flex items-center gap-2">
+                      <div className={cn('h-2 w-2 rounded-full', opt.color)} />
+                      {opt.label}
+                    </div>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
 
-            <button onClick={handleClose} className="text-muted-foreground hover:text-foreground transition-colors">
-              <X className="h-5 w-5" strokeWidth={1.5} />
-            </button>
+            <Popover>
+              <PopoverTrigger asChild>
+                <div className="flex items-center gap-1 cursor-pointer hover:bg-secondary/50 rounded-md px-2 py-1 transition-colors">
+                  {selectedTags.length > 0 ? (
+                    <TagList 
+                      tags={tagData} 
+                      selectedTagIds={selectedTags} 
+                      maxVisible={1} 
+                      size="sm"
+                    />
+                  ) : (
+                    <span className="text-xs text-muted-foreground">+ Add tag</span>
+                  )}
+                </div>
+              </PopoverTrigger>
+              <PopoverContent align="start" className="w-52 bg-popover">
+                <h4 className="text-sm font-medium mb-2">Tags</h4>
+                <TagSelector
+                  tags={tagData}
+                  selectedTagIds={selectedTags}
+                  onToggleTag={handleToggleTag}
+                  onCreateTag={handleCreateTag}
+                  enableDragDrop
+                />
+              </PopoverContent>
+            </Popover>
+            
+            <div className="flex-1" />
+            
+            {/* Auto-save indicator - always reserve space */}
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-1.5 text-sm min-w-[70px] justify-end">
+                {saveStatus === 'saving' ? (
+                  <>
+                    <Loader2 className="h-3.5 w-3.5 animate-spin text-muted-foreground" />
+                    <span className="text-muted-foreground">Saving...</span>
+                  </>
+                ) : saveStatus === 'saved' ? (
+                  <>
+                    <Check className="h-3.5 w-3.5 text-emerald-500" />
+                    <span className="text-emerald-500">Saved</span>
+                  </>
+                ) : (
+                  <span className="invisible">Saved</span>
+                )}
+              </div>
+              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={handleClose}>
+                <X className="h-4 w-4" strokeWidth={1.5} />
+              </Button>
+            </div>
           </div>
           
           {/* Content */}
