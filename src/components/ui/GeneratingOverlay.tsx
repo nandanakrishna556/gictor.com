@@ -1,6 +1,5 @@
 import { cn } from '@/lib/utils';
 import { useGenerationProgress } from '@/hooks/useGenerationProgress';
-import { getTimeRemaining } from '@/utils/generationEstimates';
 
 interface GeneratingOverlayProps {
   status: string;
@@ -22,10 +21,6 @@ export function GeneratingOverlay({
     generationStartedAt,
     estimatedDurationSeconds,
   });
-
-  const timeRemaining = generationStartedAt && estimatedDurationSeconds
-    ? getTimeRemaining(generationStartedAt, estimatedDurationSeconds)
-    : null;
 
   // Circumference for SVG circle (2 * PI * r where r=16)
   const circumference = 100.53;
@@ -70,11 +65,6 @@ export function GeneratingOverlay({
       
       {/* Label */}
       <span className="text-xs text-muted-foreground font-medium">{label}</span>
-      
-      {/* Time remaining */}
-      {timeRemaining && (
-        <span className="text-xs text-muted-foreground/70">{timeRemaining}</span>
-      )}
     </div>
   );
 }
