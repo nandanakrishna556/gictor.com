@@ -298,12 +298,17 @@ export default function SpeechModal({
         throw new Error('Session expired. Please log in again.');
       }
       
-      // Update file status to processing
+      // Calculate estimated duration based on script length
+      const estimatedDuration = Math.max(10, Math.ceil((script.length / 20) * 5));
+      
+      // Update file status to processing with generation timing
       await supabase
         .from('files')
         .update({
           status: 'processing',
           progress: 0,
+          generation_started_at: new Date().toISOString(),
+          estimated_duration_seconds: estimatedDuration,
           generation_params: {
             script,
             actor_id: selectedActorId,

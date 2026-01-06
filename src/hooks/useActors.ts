@@ -4,6 +4,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useProfile } from '@/hooks/useProfile';
 import { toast } from 'sonner';
 import { useEffect } from 'react';
+import { getEstimatedDuration } from '@/utils/generationEstimates';
 
 export interface Actor {
   id: string;
@@ -34,6 +35,11 @@ export interface Actor {
   error_message: string | null;
   progress: number;
   credits_cost: number;
+  
+  // Generation timing
+  generation_started_at: string | null;
+  estimated_duration_seconds: number | null;
+  
   created_at: string;
   updated_at: string;
 }
@@ -107,7 +113,10 @@ export function useActors() {
         throw new Error('Insufficient credits');
       }
 
-      // Create the actor record
+      // Calculate estimated duration for actor creation
+      const estimatedDuration = getEstimatedDuration({ type: 'create_actor' });
+
+      // Create the actor record with generation timing
       const { data: actor, error: createError } = await supabase
         .from('actors')
         .insert({
@@ -124,6 +133,8 @@ export function useActors() {
           status: 'processing',
           progress: 0,
           credits_cost: 1,
+          generation_started_at: new Date().toISOString(),
+          estimated_duration_seconds: estimatedDuration,
         })
         .select()
         .single();

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Loader2, Play, AlertCircle, MoreHorizontal, Trash2, Pencil, FileText, Film, Mic, Video } from 'lucide-react';
+import { Play, AlertCircle, MoreHorizontal, Trash2, Pencil, FileText, Mic, Video } from 'lucide-react';
 import { 
   DropdownMenu, 
   DropdownMenuContent, 
@@ -11,6 +11,7 @@ import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { FileTypeIcon, FileType } from '@/components/ui/file-type-icon';
 import { StatusBadge } from '@/components/ui/status-badge';
+import { GeneratingOverlay } from '@/components/ui/GeneratingOverlay';
 
 interface FileCardProps {
   id: string;
@@ -20,6 +21,8 @@ interface FileCardProps {
   previewUrl?: string | null;
   errorMessage?: string | null;
   tags?: string[];
+  generationStartedAt?: string | null;
+  estimatedDurationSeconds?: number | null;
   onClick: () => void;
   onDelete: () => void;
   onRename: () => void;
@@ -31,6 +34,26 @@ const VIDEO_FILE_TYPES = ['lip_sync', 'talking_head', 'clips', 'b_roll', 'veo3']
 // Audio file types
 const AUDIO_FILE_TYPES = ['speech', 'audio', 'voice'];
 
+const getGeneratingLabel = (fileType: string) => {
+  switch (fileType) {
+    case 'lip_sync': 
+    case 'talking_head':
+      return 'Generating video...';
+    case 'speech': 
+    case 'audio':
+      return 'Generating audio...';
+    case 'first_frame': 
+      return 'Generating image...';
+    case 'script': 
+      return 'Writing script...';
+    case 'b_roll':
+    case 'clips':
+      return 'Generating B-Roll...';
+    default: 
+      return 'Generating...';
+  }
+};
+
 export const FileCard: React.FC<FileCardProps> = ({ 
   id, 
   name, 
@@ -39,6 +62,8 @@ export const FileCard: React.FC<FileCardProps> = ({
   previewUrl, 
   errorMessage, 
   tags = [], 
+  generationStartedAt,
+  estimatedDurationSeconds,
   onClick, 
   onDelete, 
   onRename 
@@ -58,10 +83,12 @@ export const FileCard: React.FC<FileCardProps> = ({
       {/* Preview area */}
       <div className="aspect-video bg-muted relative overflow-hidden">
         {status === 'processing' && (
-          <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-muted">
-            <Loader2 className="h-8 w-8 animate-spin text-primary" strokeWidth={1.5} />
-            <span className="text-sm text-muted-foreground">Generating...</span>
-          </div>
+          <GeneratingOverlay
+            status={status}
+            generationStartedAt={generationStartedAt ?? null}
+            estimatedDurationSeconds={estimatedDurationSeconds ?? null}
+            label={getGeneratingLabel(fileType)}
+          />
         )}
 
         {status === 'completed' && previewUrl && fileType === 'first_frame' && (

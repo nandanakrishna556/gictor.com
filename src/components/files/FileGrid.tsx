@@ -22,7 +22,7 @@ import {
   FolderInput,
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
-import { FileProgress } from '@/components/ui/file-progress';
+import { GeneratingOverlay } from '@/components/ui/GeneratingOverlay';
 import { cn } from '@/lib/utils';
 import {
   DropdownMenu,
@@ -97,6 +97,26 @@ const fileTypeLabels: Record<string, string> = {
   b_roll: 'Clips',
   script: 'Script',
   folder: 'Folder',
+};
+
+const getFileGeneratingLabel = (fileType: string) => {
+  switch (fileType) {
+    case 'lip_sync':
+    case 'talking_head':
+      return 'Generating video...';
+    case 'speech':
+    case 'audio':
+      return 'Generating audio...';
+    case 'first_frame':
+      return 'Generating image...';
+    case 'script':
+      return 'Writing script...';
+    case 'b_roll':
+    case 'clips':
+      return 'Generating B-Roll...';
+    default:
+      return 'Generating...';
+  }
 };
 
 const defaultStatusOptions = [
@@ -1180,17 +1200,15 @@ function FileCard({
             className="h-full w-full object-contain animate-fade-in"
           />
         ) : isProcessing ? (
-          <div className="shimmer h-full w-full" />
+          <GeneratingOverlay
+            status={file.status}
+            generationStartedAt={file.generation_started_at}
+            estimatedDurationSeconds={file.estimated_duration_seconds}
+            label={getFileGeneratingLabel(file.file_type)}
+          />
         ) : (
           <div className="flex items-center justify-center h-full w-full">
             <FileTypeIcon fileType={file.file_type as FileType} size="lg" className="h-12 w-12 opacity-50" />
-          </div>
-        )}
-        
-        {/* Progress Overlay */}
-        {isProcessing && (
-          <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-background/90 to-transparent p-3">
-            <FileProgress progress={file.progress || 0} status={file.status} />
           </div>
         )}
       </div>
@@ -1545,12 +1563,12 @@ function KanbanCard({
             className="h-full w-full object-contain animate-fade-in"
           />
         ) : isProcessing ? (
-          <>
-            <div className="shimmer h-full w-full" />
-            <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-background/90 to-transparent p-3">
-              <FileProgress progress={file?.progress || 0} status={file?.status || 'processing'} />
-            </div>
-          </>
+          <GeneratingOverlay
+            status={file?.status || 'processing'}
+            generationStartedAt={file?.generation_started_at || null}
+            estimatedDurationSeconds={file?.estimated_duration_seconds || null}
+            label={getFileGeneratingLabel(file?.file_type || 'script')}
+          />
         ) : (
           <div className="flex h-full items-center justify-center">
             <FileTypeIcon fileType={(file?.file_type || 'script') as FileType} size="lg" className="h-12 w-12 opacity-50" />

@@ -18,6 +18,8 @@ export interface File {
   error_message: string | null;
   metadata: Json;
   generation_params: Json;
+  generation_started_at: string | null;
+  estimated_duration_seconds: number | null;
   created_at: string;
   updated_at: string;
 }
