@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react';
-import { Video, FolderPlus, X, Loader2, Film, Mic, Image, FileText, Sparkles, RefreshCw } from 'lucide-react';
+import { Video, FolderPlus, X, Loader2, Film, Mic, Image, FileText, Sparkles, RefreshCw, Clapperboard } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
 import { v4 as uuidv4 } from 'uuid';
 import {
@@ -12,6 +12,7 @@ import PipelineModal from '@/components/pipeline/PipelineModal';
 import ClipsPipelineModal from '@/components/pipeline/ClipsPipelineModal';
 import LipSyncModal from '@/components/modals/LipSyncModal';
 import SpeechModal from '@/components/modals/SpeechModal';
+import AnimateModal from '@/components/modals/AnimateModal';
 import { usePipeline } from '@/hooks/usePipeline';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -36,7 +37,7 @@ interface CreateNewModalProps {
 }
 
 type WorkflowType = 'talking_head' | 'b_roll' | 'motion_graphics';
-type ElementType = 'folder' | 'lip_sync' | 'speech' | 'first_frame' | 'last_frame' | 'script' | 'swap';
+type ElementType = 'folder' | 'lip_sync' | 'speech' | 'first_frame' | 'last_frame' | 'script' | 'swap' | 'animate';
 
 const workflows = [
   {
@@ -80,6 +81,12 @@ const elements = [
     description: 'Generate voice audio',
   },
   {
+    id: 'animate' as ElementType,
+    icon: Clapperboard,
+    title: 'Animate',
+    description: 'Animate images to video',
+  },
+  {
     id: 'first_frame' as ElementType,
     icon: Image,
     title: 'First Frame',
@@ -121,6 +128,7 @@ export default function CreateNewModal({
   const [bRollWorkflowOpen, setBRollWorkflowOpen] = useState(false);
   const [lipSyncModalOpen, setLipSyncModalOpen] = useState(false);
   const [speechModalOpen, setSpeechModalOpen] = useState(false);
+  const [animateModalOpen, setAnimateModalOpen] = useState(false);
   const [createdPipelineId, setCreatedPipelineId] = useState<string | null>(null);
   const [createdFileId, setCreatedFileId] = useState<string | null>(null);
   const [isCreating, setIsCreating] = useState(false);
@@ -206,7 +214,7 @@ export default function CreateNewModal({
       return;
     }
 
-    if (element.id === 'lip_sync' || element.id === 'speech') {
+    if (element.id === 'lip_sync' || element.id === 'speech' || element.id === 'animate') {
       setIsCreating(true);
       setCreatingType(element.id);
       initialStatusRef.current = initialStatus;
@@ -239,6 +247,8 @@ export default function CreateNewModal({
           setLipSyncModalOpen(true);
         } else if (element.id === 'speech') {
           setSpeechModalOpen(true);
+        } else if (element.id === 'animate') {
+          setAnimateModalOpen(true);
         }
 
         queryClient.invalidateQueries({ queryKey: ['files', projectId] });
@@ -259,6 +269,7 @@ export default function CreateNewModal({
     setBRollWorkflowOpen(false);
     setLipSyncModalOpen(false);
     setSpeechModalOpen(false);
+    setAnimateModalOpen(false);
     setCreatedPipelineId(null);
     setCreatedFileId(null);
     initialStatusRef.current = undefined;
@@ -423,6 +434,19 @@ export default function CreateNewModal({
           initialStatus={initialStatusRef.current}
           onSuccess={handleSuccess}
           statusOptions={statusOptions}
+        />
+      )}
+
+      {/* Animate Modal */}
+      {createdFileId && animateModalOpen && (
+        <AnimateModal
+          open={animateModalOpen}
+          onClose={handleModalClose}
+          fileId={createdFileId}
+          projectId={projectId}
+          folderId={folderId}
+          initialStatus={initialStatusRef.current}
+          onSuccess={handleSuccess}
         />
       )}
     </>
