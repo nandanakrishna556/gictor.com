@@ -14,6 +14,7 @@ interface FileDetailModalEnhancedProps {
     name: string;
     file_type: string;
     status: string;
+    generation_status?: string | null;
     preview_url?: string | null;
     download_url?: string | null;
     error_message?: string | null;
@@ -242,7 +243,7 @@ export const FileDetailModalEnhanced: React.FC<FileDetailModalEnhancedProps> = (
             {/* Content */}
             <div className="flex-1 overflow-y-auto p-4 md:p-6">
               {/* Processing State */}
-              {file.status === 'processing' && (
+              {file.generation_status === 'processing' && (
                 <div className="flex flex-col items-center justify-center h-64 gap-4">
                   <Loader2 className="h-12 w-12 animate-spin text-primary" />
                   <h3 className="text-lg font-medium">Generating...</h3>
@@ -251,7 +252,7 @@ export const FileDetailModalEnhanced: React.FC<FileDetailModalEnhancedProps> = (
               )}
 
               {/* Failed State */}
-              {file.status === 'failed' && (
+              {file.generation_status === 'failed' && (
                 <div className="flex flex-col items-center justify-center h-64 gap-4">
                   <div className="w-16 h-16 rounded-full bg-destructive/10 flex items-center justify-center">
                     <AlertCircle className="h-8 w-8 text-destructive" />
@@ -269,7 +270,7 @@ export const FileDetailModalEnhanced: React.FC<FileDetailModalEnhancedProps> = (
               )}
 
               {/* Completed - Image */}
-              {file.status === 'completed' && file.file_type === 'first_frame' && file.preview_url && (
+              {file.generation_status === 'completed' && file.file_type === 'first_frame' && file.preview_url && (
                 <div className="space-y-4">
                   <div className="rounded-lg overflow-hidden border bg-secondary/30">
                     <img 
@@ -282,14 +283,14 @@ export const FileDetailModalEnhanced: React.FC<FileDetailModalEnhancedProps> = (
               )}
 
               {/* Completed - Video */}
-              {file.status === 'completed' && file.file_type === 'talking_head' && file.preview_url && (
+              {file.generation_status === 'completed' && file.file_type === 'talking_head' && file.preview_url && (
                 <div className="space-y-4">
                   <VideoPlayer src={file.preview_url} title={file.name} />
                 </div>
               )}
 
               {/* Completed - Script */}
-              {file.status === 'completed' && file.file_type === 'script' && metadata?.script_content && (
+              {file.generation_status === 'completed' && file.file_type === 'script' && metadata?.script_content && (
                 <ScriptViewer 
                   scriptContent={metadata.script_content} 
                   metadata={metadata}
