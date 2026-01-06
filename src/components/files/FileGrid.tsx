@@ -98,6 +98,7 @@ const fileTypeLabels: Record<string, string> = {
   b_roll: 'Clips',
   script: 'Script',
   folder: 'Folder',
+  animate: 'Animate',
 };
 
 const getFileGeneratingLabel = (fileType: string) => {
@@ -115,6 +116,8 @@ const getFileGeneratingLabel = (fileType: string) => {
     case 'b_roll':
     case 'clips':
       return 'Generating B-Roll...';
+    case 'animate':
+      return 'Generating animation...';
     default:
       return 'Generating...';
   }
@@ -1202,6 +1205,29 @@ function FileCard({
               </div>
             </div>
           )
+        ) : file.file_type === 'animate' ? (
+          isProcessing ? (
+            <GeneratingOverlay
+              status={file.generation_status || 'processing'}
+              generationStartedAt={file.generation_started_at}
+              estimatedDurationSeconds={file.estimated_duration_seconds}
+              label={getFileGeneratingLabel(file.file_type)}
+            />
+          ) : hasVideoThumbnail ? (
+            <video
+              src={`${file.preview_url || file.download_url}#t=0.1`}
+              className="h-full w-full object-contain animate-fade-in"
+              muted
+              preload="metadata"
+              playsInline
+            />
+          ) : (
+            <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 to-indigo-500/10 flex items-center justify-center">
+              <div className="h-16 w-16 rounded-full bg-blue-500/20 flex items-center justify-center">
+                <Film className="h-8 w-8 text-blue-500" strokeWidth={1.5} />
+              </div>
+            </div>
+          )
         ) : hasVideoThumbnail ? (
           <video
             src={`${file.preview_url || file.download_url}#t=0.1`}
@@ -1577,6 +1603,29 @@ function KanbanCard({
             <div className="absolute inset-0 bg-gradient-to-br from-orange-500/10 to-amber-500/10 flex items-center justify-center">
               <div className="h-16 w-16 rounded-full bg-orange-500/20 flex items-center justify-center">
                 <Mic className="h-8 w-8 text-orange-500" strokeWidth={1.5} />
+              </div>
+            </div>
+          )
+        ) : file?.file_type === 'animate' ? (
+          isProcessing ? (
+            <GeneratingOverlay
+              status={file?.generation_status || 'processing'}
+              generationStartedAt={file?.generation_started_at || null}
+              estimatedDurationSeconds={file?.estimated_duration_seconds || null}
+              label={getFileGeneratingLabel(file?.file_type || 'script')}
+            />
+          ) : hasVideoThumbnail ? (
+            <video
+              src={`${file?.preview_url || file?.download_url}#t=0.1`}
+              className="h-full w-full object-contain animate-fade-in"
+              muted
+              preload="metadata"
+              playsInline
+            />
+          ) : (
+            <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 to-indigo-500/10 flex items-center justify-center">
+              <div className="h-16 w-16 rounded-full bg-blue-500/20 flex items-center justify-center">
+                <Film className="h-8 w-8 text-blue-500" strokeWidth={1.5} />
               </div>
             </div>
           )

@@ -109,7 +109,7 @@ const ActorPayloadSchema = z.object({
 });
 
 const FilePayloadSchema = z.object({
-  type: z.enum(['first_frame', 'lip_sync', 'talking_head', 'script', 'speech', 'audio', 'b_roll']),
+  type: z.enum(['first_frame', 'lip_sync', 'talking_head', 'script', 'speech', 'audio', 'b_roll', 'animate']),
   payload: z.object({
     file_id: z.string().uuid(),
     project_id: z.string().uuid().optional(),
@@ -134,6 +134,10 @@ const FilePayloadSchema = z.object({
     // Speech-specific fields
     actor_voice_url: z.string().url().optional(),
     supabase_url: z.string().url().optional(),
+    // Animate-specific fields
+    first_frame_url: z.string().url().optional(),
+    last_frame_url: z.string().url().optional(),
+    animation_type: z.enum(['broll', 'motion_graphics']).optional(),
   }),
 });
 

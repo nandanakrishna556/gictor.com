@@ -16,6 +16,7 @@ import PipelineModal from '@/components/pipeline/PipelineModal';
 import ClipsPipelineModal from '@/components/pipeline/ClipsPipelineModal';
 import LipSyncModal from '@/components/modals/LipSyncModal';
 import SpeechModal from '@/components/modals/SpeechModal';
+import AnimateModal from '@/components/modals/AnimateModal';
 import { useFiles, Folder, File } from '@/hooks/useFiles';
 import { useFileRealtime } from '@/hooks/useFileRealtime';
 import { usePipelines, Pipeline, PipelineStage, DEFAULT_STAGES } from '@/hooks/usePipelines';
@@ -64,6 +65,10 @@ export default function ProjectDetail() {
   // Speech modal state
   const [speechModalOpen, setSpeechModalOpen] = useState(false);
   const [openSpeechFileId, setOpenSpeechFileId] = useState<string | null>(null);
+  
+  // Animate modal state
+  const [animateModalOpen, setAnimateModalOpen] = useState(false);
+  const [openAnimateFileId, setOpenAnimateFileId] = useState<string | null>(null);
 
   // Fetch project details
   const { data: project } = useQuery({
@@ -313,6 +318,10 @@ export default function ProjectDetail() {
       // Open Speech modal
       setOpenSpeechFileId(file.id);
       setSpeechModalOpen(true);
+    } else if (file.file_type === 'animate') {
+      // Open Animate modal
+      setOpenAnimateFileId(file.id);
+      setAnimateModalOpen(true);
     } else if (file.file_type === 'clips' || file.file_type === 'b_roll') {
       // Extract pipeline_id from generation_params for Clips
       const params = file.generation_params as { pipeline_id?: string } | null;
@@ -649,6 +658,23 @@ export default function ProjectDetail() {
             // Refresh files after save
           }}
           statusOptions={currentStatusOptions}
+        />
+      )}
+
+      {/* Animate Modal */}
+      {openAnimateFileId && (
+        <AnimateModal
+          open={animateModalOpen}
+          onClose={() => {
+            setAnimateModalOpen(false);
+            setOpenAnimateFileId(null);
+          }}
+          fileId={openAnimateFileId}
+          projectId={projectId}
+          folderId={folderId}
+          onSuccess={() => {
+            // Refresh files after save
+          }}
         />
       )}
     </MainLayout>
