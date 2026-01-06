@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
 import {
@@ -1094,9 +1094,13 @@ function FileCard({
   onMove?: () => void;
 }) {
   const [renameValue, setRenameValue] = useState(file.name);
+  const [thumbnailError, setThumbnailError] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  
   const isProcessing = file.status === 'processing';
   const isFailed = file.status === 'failed';
-  // Default status to first stage if not set
   const effectiveStatus = file.status || stages[0]?.id || 'processing';
   const currentStage = stages.find((s) => s.id === effectiveStatus) || stages[0];
   const fileTags = file.tags || [];
@@ -1107,12 +1111,47 @@ function FileCard({
   const hasVideoThumbnail = isVideoType && file.status === 'completed' && (file.preview_url || file.download_url);
   const speechThumbnail = isSpeechType ? (file.generation_params as any)?.actor_profile_image : null;
   const imageThumbnail = file.file_type === 'first_frame' && file.preview_url ? file.preview_url : null;
-  const [thumbnailError, setThumbnailError] = useState(false);
 
-  // Reset error on file change
   useEffect(() => {
     setThumbnailError(false);
   }, [file.id, file.preview_url]);
+
+  const handlePlayClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
+    
+    if (isVideoType && videoRef.current) {
+      if (isPlaying) {
+        videoRef.current.pause();
+        videoRef.current.currentTime = 0;
+      } else {
+        videoRef.current.play();
+      }
+      setIsPlaying(!isPlaying);
+    } else if (isSpeechType && file?.download_url) {
+      if (isPlaying && audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current.currentTime = 0;
+        setIsPlaying(false);
+      } else if (!audioRef.current) {
+        const audio = new Audio(file.download_url);
+        audioRef.current = audio;
+        audio.play();
+        audio.onended = () => setIsPlaying(false);
+        setIsPlaying(true);
+      } else {
+        audioRef.current.play();
+        setIsPlaying(true);
+      }
+    }
+  };
+
+  const handleMediaEnded = () => {
+    setIsPlaying(false);
+    if (videoRef.current) {
+      videoRef.current.currentTime = 0;
+    }
+  };
 
   const toggleTag = (tagId: string) => {
     if (fileTags.includes(tagId)) {
@@ -1124,6 +1163,7 @@ function FileCard({
 
   const handleCardClick = (e: React.MouseEvent) => {
     if (isRenaming) return;
+    if (isPlaying) return;
     if (bulkMode) {
       e.preventDefault();
       onSelect();
@@ -1192,41 +1232,130 @@ function FileCard({
         )}
       </div>
 
-      {/* Preview Area - contained with object-contain to prevent cutoff */}
-      <div className="relative flex flex-1 items-center justify-center bg-secondary overflow-hidden">
+      {/* Preview Area */}
+      <div className="relative flex flex-1 items-center justify-center bg-secondary overflow-hidden group/preview">
         {hasVideoThumbnail && !thumbnailError ? (
-          <video
-            src={`${file.preview_url || file.download_url}#t=0.1`}
-            className="h-full w-full object-contain animate-fade-in pointer-events-none"
-            muted
-            preload="metadata"
-            playsInline
-            onError={() => setThumbnailError(true)}
-          />
+          <>
+            <video
+              ref={videoRef}
+              src={`${file.preview_url || file.download_url}#t=0.1`}
+              className="h-full w-full object-contain pointer-events-none"
+              muted
+              preload="metadata"
+              playsInline
+              onError={() => setThumbnailError(true)}
+              onEnded={handleMediaEnded}
+            />
+            {!isPlaying && (
+              <button
+                onClick={handlePlayClick}
+                className="absolute inset-0 flex items-center justify-center bg-black/20 opacity-0 group-hover/preview:opacity-100 transition-opacity"
+              >
+                <div className="w-12 h-12 rounded-full bg-white/90 flex items-center justify-center shadow-lg transform transition-transform hover:scale-110">
+                  <svg className="w-5 h-5 text-foreground ml-0.5" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M8 5v14l11-7z" />
+                  </svg>
+                </div>
+              </button>
+            )}
+            {isPlaying && (
+              <button
+                onClick={handlePlayClick}
+                className="absolute inset-0 flex items-center justify-center"
+              >
+                <div className="absolute bottom-2 left-2 flex items-center gap-1 px-2 py-1 bg-black/60 rounded-full">
+                  <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse" />
+                  <span className="text-xs text-white font-medium">Playing</span>
+                </div>
+              </button>
+            )}
+          </>
         ) : speechThumbnail && !thumbnailError ? (
           <div className="relative h-full w-full">
             <img
               src={speechThumbnail}
               alt={file.name}
-              className="h-full w-full object-cover animate-fade-in pointer-events-none"
+              className="h-full w-full object-cover pointer-events-none"
               onError={() => setThumbnailError(true)}
             />
-            {/* Audio waveform overlay */}
             <div className="absolute bottom-2 left-2 right-2 flex items-center gap-0.5 pointer-events-none">
               {Array.from({ length: 30 }).map((_, i) => (
                 <div
                   key={i}
-                  className="flex-1 bg-primary/60 rounded-full"
+                  className={cn("flex-1 rounded-full", isPlaying ? "bg-orange-500 animate-pulse" : "bg-primary/60")}
                   style={{ height: `${Math.random() * 16 + 4}px` }}
                 />
               ))}
             </div>
+            {file?.download_url && !isPlaying && (
+              <button
+                onClick={handlePlayClick}
+                className="absolute inset-0 flex items-center justify-center bg-black/10 opacity-0 group-hover/preview:opacity-100 transition-opacity"
+              >
+                <div className="w-12 h-12 rounded-full bg-orange-500/90 flex items-center justify-center shadow-lg transform transition-transform hover:scale-110">
+                  <svg className="w-5 h-5 text-white ml-0.5" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M8 5v14l11-7z" />
+                  </svg>
+                </div>
+              </button>
+            )}
+            {isPlaying && (
+              <button
+                onClick={handlePlayClick}
+                className="absolute inset-0 flex items-center justify-center"
+              >
+                <div className="w-12 h-12 rounded-full bg-orange-500 flex items-center justify-center shadow-lg animate-pulse">
+                  <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
+                    <rect x="6" y="5" width="4" height="14" />
+                    <rect x="14" y="5" width="4" height="14" />
+                  </svg>
+                </div>
+              </button>
+            )}
+          </div>
+        ) : isSpeechType ? (
+          <div className="relative flex flex-col h-full w-full items-center justify-center bg-gradient-to-br from-orange-100 to-orange-50 dark:from-orange-950/30 dark:to-orange-900/20">
+            <FileTypeIcon fileType="speech" size="lg" className="h-12 w-12 text-orange-500 opacity-70 pointer-events-none" />
+            <div className="absolute bottom-4 left-4 right-4 flex items-end gap-0.5 h-8 pointer-events-none">
+              {Array.from({ length: 40 }).map((_, i) => (
+                <div
+                  key={i}
+                  className={cn("flex-1 rounded-full", isPlaying ? "bg-orange-500 animate-pulse" : "bg-orange-400/60")}
+                  style={{ height: `${Math.sin(i * 0.3) * 50 + 50}%` }}
+                />
+              ))}
+            </div>
+            {file?.download_url && !isPlaying && (
+              <button
+                onClick={handlePlayClick}
+                className="absolute inset-0 flex items-center justify-center opacity-0 group-hover/preview:opacity-100 transition-opacity"
+              >
+                <div className="w-12 h-12 rounded-full bg-orange-500/90 flex items-center justify-center shadow-lg transform transition-transform hover:scale-110">
+                  <svg className="w-5 h-5 text-white ml-0.5" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M8 5v14l11-7z" />
+                  </svg>
+                </div>
+              </button>
+            )}
+            {isPlaying && (
+              <button
+                onClick={handlePlayClick}
+                className="absolute inset-0 flex items-center justify-center"
+              >
+                <div className="w-12 h-12 rounded-full bg-orange-500 flex items-center justify-center shadow-lg animate-pulse">
+                  <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
+                    <rect x="6" y="5" width="4" height="14" />
+                    <rect x="14" y="5" width="4" height="14" />
+                  </svg>
+                </div>
+              </button>
+            )}
           </div>
         ) : imageThumbnail && !thumbnailError ? (
           <img
             src={imageThumbnail}
             alt={file.name}
-            className="h-full w-full object-contain animate-fade-in pointer-events-none"
+            className="h-full w-full object-contain pointer-events-none"
             onError={() => setThumbnailError(true)}
           />
         ) : isProcessing ? (
@@ -1449,6 +1578,11 @@ function KanbanCard({
 }) {
   const navigate = useNavigate();
   const [renameValue, setRenameValue] = useState(item.name);
+  const [thumbnailError, setThumbnailError] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  
   const itemTags = item.tags || [];
   const isFolder = item.itemType === 'folder';
   const isFile = item.itemType === 'file';
@@ -1459,12 +1593,47 @@ function KanbanCard({
   const hasVideoThumbnail = isVideoType && file?.status === 'completed' && (file?.preview_url || file?.download_url);
   const speechThumbnail = isSpeechType ? (file?.generation_params as any)?.actor_profile_image : null;
   const imageThumbnail = file?.file_type === 'first_frame' && file?.preview_url ? file.preview_url : null;
-  const [thumbnailError, setThumbnailError] = useState(false);
 
-  // Reset error on file change
   useEffect(() => {
     setThumbnailError(false);
   }, [file?.id, file?.preview_url]);
+
+  const handlePlayClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
+    
+    if (isVideoType && videoRef.current) {
+      if (isPlaying) {
+        videoRef.current.pause();
+        videoRef.current.currentTime = 0;
+      } else {
+        videoRef.current.play();
+      }
+      setIsPlaying(!isPlaying);
+    } else if (isSpeechType && file?.download_url) {
+      if (isPlaying && audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current.currentTime = 0;
+        setIsPlaying(false);
+      } else if (!audioRef.current) {
+        const audio = new Audio(file.download_url);
+        audioRef.current = audio;
+        audio.play();
+        audio.onended = () => setIsPlaying(false);
+        setIsPlaying(true);
+      } else {
+        audioRef.current.play();
+        setIsPlaying(true);
+      }
+    }
+  };
+
+  const handleMediaEnded = () => {
+    setIsPlaying(false);
+    if (videoRef.current) {
+      videoRef.current.currentTime = 0;
+    }
+  };
 
   const toggleTag = (tagId: string) => {
     if (itemTags.includes(tagId)) {
@@ -1476,6 +1645,7 @@ function KanbanCard({
 
   const handleClick = () => {
     if (isRenaming) return;
+    if (isPlaying) return;
     if (bulkMode) {
       onSelect();
     } else if (isFolder) {
@@ -1561,7 +1731,7 @@ function KanbanCard({
       </div>
 
       {/* Preview Area */}
-      <div className="relative aspect-[4/3] w-full bg-secondary overflow-hidden">
+      <div className="relative aspect-[4/3] w-full bg-secondary overflow-hidden group/preview">
         {isFolder ? (
           <div className="flex h-full items-center justify-center">
             <svg
@@ -1588,38 +1758,127 @@ function KanbanCard({
             </svg>
           </div>
         ) : hasVideoThumbnail && !thumbnailError ? (
-          <video
-            src={`${file?.preview_url || file?.download_url}#t=0.1`}
-            className="h-full w-full object-contain animate-fade-in pointer-events-none"
-            muted
-            preload="metadata"
-            playsInline
-            onError={() => setThumbnailError(true)}
-          />
+          <>
+            <video
+              ref={videoRef}
+              src={`${file?.preview_url || file?.download_url}#t=0.1`}
+              className="h-full w-full object-contain pointer-events-none"
+              muted
+              preload="metadata"
+              playsInline
+              onError={() => setThumbnailError(true)}
+              onEnded={handleMediaEnded}
+            />
+            {!isPlaying && (
+              <button
+                onClick={handlePlayClick}
+                className="absolute inset-0 flex items-center justify-center bg-black/20 opacity-0 group-hover/preview:opacity-100 transition-opacity"
+              >
+                <div className="w-12 h-12 rounded-full bg-white/90 flex items-center justify-center shadow-lg transform transition-transform hover:scale-110">
+                  <svg className="w-5 h-5 text-foreground ml-0.5" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M8 5v14l11-7z" />
+                  </svg>
+                </div>
+              </button>
+            )}
+            {isPlaying && (
+              <button
+                onClick={handlePlayClick}
+                className="absolute inset-0 flex items-center justify-center"
+              >
+                <div className="absolute bottom-2 left-2 flex items-center gap-1 px-2 py-1 bg-black/60 rounded-full">
+                  <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse" />
+                  <span className="text-xs text-white font-medium">Playing</span>
+                </div>
+              </button>
+            )}
+          </>
         ) : speechThumbnail && !thumbnailError ? (
           <div className="relative h-full w-full">
             <img
               src={speechThumbnail}
               alt={file?.name || 'Speech'}
-              className="h-full w-full object-cover animate-fade-in pointer-events-none"
+              className="h-full w-full object-cover pointer-events-none"
               onError={() => setThumbnailError(true)}
             />
-            {/* Audio waveform overlay */}
             <div className="absolute bottom-2 left-2 right-2 flex items-center gap-0.5 pointer-events-none">
               {Array.from({ length: 30 }).map((_, i) => (
                 <div
                   key={i}
-                  className="flex-1 bg-primary/60 rounded-full"
+                  className={cn("flex-1 rounded-full", isPlaying ? "bg-orange-500 animate-pulse" : "bg-primary/60")}
                   style={{ height: `${Math.random() * 16 + 4}px` }}
                 />
               ))}
             </div>
+            {file?.download_url && !isPlaying && (
+              <button
+                onClick={handlePlayClick}
+                className="absolute inset-0 flex items-center justify-center bg-black/10 opacity-0 group-hover/preview:opacity-100 transition-opacity"
+              >
+                <div className="w-12 h-12 rounded-full bg-orange-500/90 flex items-center justify-center shadow-lg transform transition-transform hover:scale-110">
+                  <svg className="w-5 h-5 text-white ml-0.5" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M8 5v14l11-7z" />
+                  </svg>
+                </div>
+              </button>
+            )}
+            {isPlaying && (
+              <button
+                onClick={handlePlayClick}
+                className="absolute inset-0 flex items-center justify-center"
+              >
+                <div className="w-12 h-12 rounded-full bg-orange-500 flex items-center justify-center shadow-lg animate-pulse">
+                  <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
+                    <rect x="6" y="5" width="4" height="14" />
+                    <rect x="14" y="5" width="4" height="14" />
+                  </svg>
+                </div>
+              </button>
+            )}
+          </div>
+        ) : isSpeechType ? (
+          <div className="relative flex flex-col h-full w-full items-center justify-center bg-gradient-to-br from-orange-100 to-orange-50 dark:from-orange-950/30 dark:to-orange-900/20">
+            <FileTypeIcon fileType="speech" size="lg" className="h-12 w-12 text-orange-500 opacity-70 pointer-events-none" />
+            <div className="absolute bottom-4 left-4 right-4 flex items-end gap-0.5 h-8 pointer-events-none">
+              {Array.from({ length: 40 }).map((_, i) => (
+                <div
+                  key={i}
+                  className={cn("flex-1 rounded-full", isPlaying ? "bg-orange-500 animate-pulse" : "bg-orange-400/60")}
+                  style={{ height: `${Math.sin(i * 0.3) * 50 + 50}%` }}
+                />
+              ))}
+            </div>
+            {file?.download_url && !isPlaying && (
+              <button
+                onClick={handlePlayClick}
+                className="absolute inset-0 flex items-center justify-center opacity-0 group-hover/preview:opacity-100 transition-opacity"
+              >
+                <div className="w-12 h-12 rounded-full bg-orange-500/90 flex items-center justify-center shadow-lg transform transition-transform hover:scale-110">
+                  <svg className="w-5 h-5 text-white ml-0.5" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M8 5v14l11-7z" />
+                  </svg>
+                </div>
+              </button>
+            )}
+            {isPlaying && (
+              <button
+                onClick={handlePlayClick}
+                className="absolute inset-0 flex items-center justify-center"
+              >
+                <div className="w-12 h-12 rounded-full bg-orange-500 flex items-center justify-center shadow-lg animate-pulse">
+                  <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
+                    <rect x="6" y="5" width="4" height="14" />
+                    <rect x="14" y="5" width="4" height="14" />
+                  </svg>
+                </div>
+              </button>
+            )}
           </div>
         ) : imageThumbnail && !thumbnailError ? (
           <img
             src={imageThumbnail}
             alt={file?.name || 'Image'}
-            className="h-full w-full object-contain animate-fade-in pointer-events-none"
+            className="h-full w-full object-contain pointer-events-none"
             onError={() => setThumbnailError(true)}
           />
         ) : isProcessing ? (
