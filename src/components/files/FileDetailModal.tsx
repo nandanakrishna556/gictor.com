@@ -11,7 +11,8 @@ interface FileDetailModalProps {
     id: string;
     name: string;
     file_type: 'first_frame' | 'talking_head' | 'script';
-    status: 'processing' | 'completed' | 'failed';
+    status: string;
+    generation_status?: string | null;
     preview_url?: string | null;
     download_url?: string | null;
     error_message?: string | null;
@@ -62,7 +63,7 @@ export const FileDetailModal: React.FC<FileDetailModalProps> = ({ file, isOpen, 
         </div>
 
         {/* Processing State */}
-        {file.status === 'processing' && (
+        {file.generation_status === 'processing' && (
           <div className="flex flex-col items-center justify-center py-16 gap-4">
             <Loader2 className="h-12 w-12 animate-spin text-primary" />
             <h3 className="text-lg font-medium">Generating...</h3>
@@ -71,7 +72,7 @@ export const FileDetailModal: React.FC<FileDetailModalProps> = ({ file, isOpen, 
         )}
 
         {/* Failed State */}
-        {file.status === 'failed' && (
+        {file.generation_status === 'failed' && (
           <div className="flex flex-col items-center justify-center py-16 gap-4">
             <div className="w-16 h-16 rounded-full bg-destructive/10 flex items-center justify-center">
               <AlertCircle className="h-8 w-8 text-destructive" />
@@ -89,7 +90,7 @@ export const FileDetailModal: React.FC<FileDetailModalProps> = ({ file, isOpen, 
         )}
 
         {/* First Frame Completed */}
-        {file.status === 'completed' && file.file_type === 'first_frame' && file.preview_url && (
+        {file.generation_status === 'completed' && file.file_type === 'first_frame' && file.preview_url && (
           <div className="space-y-4">
             <div className="rounded-lg overflow-hidden border">
               <img 
@@ -114,7 +115,7 @@ export const FileDetailModal: React.FC<FileDetailModalProps> = ({ file, isOpen, 
         )}
 
         {/* Talking Head Completed */}
-        {file.status === 'completed' && file.file_type === 'talking_head' && file.preview_url && (
+        {file.generation_status === 'completed' && file.file_type === 'talking_head' && file.preview_url && (
           <div className="space-y-4">
             <VideoPlayer src={file.preview_url} title={file.name} />
             <Button onClick={handleDownload} disabled={isDownloading} className="gap-2">
@@ -125,7 +126,7 @@ export const FileDetailModal: React.FC<FileDetailModalProps> = ({ file, isOpen, 
         )}
 
         {/* Script Completed */}
-        {file.status === 'completed' && file.file_type === 'script' && file.metadata?.script_content && (
+        {file.generation_status === 'completed' && file.file_type === 'script' && file.metadata?.script_content && (
           <ScriptViewer 
             scriptContent={file.metadata.script_content} 
             metadata={file.metadata}

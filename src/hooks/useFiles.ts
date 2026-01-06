@@ -102,12 +102,12 @@ export function useFiles(projectId: string, folderId?: string) {
 
           if (payload.eventType === 'UPDATE') {
             const file = payload.new as File;
-            if (file.status === 'completed') {
+            if (file.generation_status === 'completed') {
               toast({
                 title: 'Generation complete',
                 description: `"${file.name}" is ready.`,
               });
-            } else if (file.status === 'failed') {
+            } else if (file.generation_status === 'failed') {
               toast({
                 title: 'Generation failed',
                 description: `Failed to generate "${file.name}".`,

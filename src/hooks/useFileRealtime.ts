@@ -22,9 +22,9 @@ export function useFileRealtime(projectId: string | undefined) {
         (payload) => {
           const file = payload.new as any;
           
-          if (file.status === 'completed') {
+          if (file.generation_status === 'completed') {
             toast.success('Generation complete!', { description: `${file.name} is ready` });
-          } else if (file.status === 'failed') {
+          } else if (file.generation_status === 'failed') {
             toast.error('Generation failed', { description: file.error_message || 'Please try again' });
             // Refresh profile to get updated credits (refund should have happened)
             queryClient.invalidateQueries({ queryKey: ['profile'] });
