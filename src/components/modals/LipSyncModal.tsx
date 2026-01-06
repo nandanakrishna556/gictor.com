@@ -320,9 +320,14 @@ export default function LipSyncModal({
         throw new Error('Session expired. Please log in again.');
       }
       
-      // Update file record to processing
+      // Calculate estimated duration: 4 minutes per 8 seconds of audio
+      const estimatedDuration = Math.max(120, Math.ceil((audioDuration / 8) * 240));
+      
+      // Update file record to processing with generation timing
       await supabase.from('files').update({
         status: 'processing',
+        generation_started_at: new Date().toISOString(),
+        estimated_duration_seconds: estimatedDuration,
         generation_params: {
           image_url: imageUrl,
           audio_url: audioUrl,

@@ -23,7 +23,9 @@ export type Database = {
           custom_audio_url: string | null
           custom_image_url: string | null
           error_message: string | null
+          estimated_duration_seconds: number | null
           gender: string | null
+          generation_started_at: string | null
           id: string
           language: string | null
           mode: string | null
@@ -50,7 +52,9 @@ export type Database = {
           custom_audio_url?: string | null
           custom_image_url?: string | null
           error_message?: string | null
+          estimated_duration_seconds?: number | null
           gender?: string | null
+          generation_started_at?: string | null
           id?: string
           language?: string | null
           mode?: string | null
@@ -77,7 +81,9 @@ export type Database = {
           custom_audio_url?: string | null
           custom_image_url?: string | null
           error_message?: string | null
+          estimated_duration_seconds?: number | null
           gender?: string | null
+          generation_started_at?: string | null
           id?: string
           language?: string | null
           mode?: string | null
@@ -146,9 +152,11 @@ export type Database = {
           created_at: string | null
           download_url: string | null
           error_message: string | null
+          estimated_duration_seconds: number | null
           file_type: string
           folder_id: string | null
           generation_params: Json | null
+          generation_started_at: string | null
           id: string
           metadata: Json | null
           name: string
@@ -163,9 +171,11 @@ export type Database = {
           created_at?: string | null
           download_url?: string | null
           error_message?: string | null
+          estimated_duration_seconds?: number | null
           file_type: string
           folder_id?: string | null
           generation_params?: Json | null
+          generation_started_at?: string | null
           id?: string
           metadata?: Json | null
           name: string
@@ -180,9 +190,11 @@ export type Database = {
           created_at?: string | null
           download_url?: string | null
           error_message?: string | null
+          estimated_duration_seconds?: number | null
           file_type?: string
           folder_id?: string | null
           generation_params?: Json | null
+          generation_started_at?: string | null
           id?: string
           metadata?: Json | null
           name?: string
