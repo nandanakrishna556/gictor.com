@@ -20,6 +20,7 @@ import {
   Film,
   MousePointer2,
   FolderInput,
+  Mic,
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { GeneratingOverlay } from '@/components/ui/GeneratingOverlay';
@@ -1206,6 +1207,12 @@ function FileCard({
             estimatedDurationSeconds={file.estimated_duration_seconds}
             label={getFileGeneratingLabel(file.file_type)}
           />
+        ) : file.file_type === 'speech' ? (
+          <div className="absolute inset-0 bg-gradient-to-br from-orange-500/10 to-amber-500/10 flex items-center justify-center">
+            <div className="h-16 w-16 rounded-full bg-orange-500/20 flex items-center justify-center">
+              <Mic className="h-8 w-8 text-orange-500" strokeWidth={1.5} />
+            </div>
+          </div>
         ) : (
           <div className="flex items-center justify-center h-full w-full">
             <FileTypeIcon fileType={file.file_type as FileType} size="lg" className="h-12 w-12 opacity-50" />
@@ -1569,6 +1576,12 @@ function KanbanCard({
             estimatedDurationSeconds={file?.estimated_duration_seconds || null}
             label={getFileGeneratingLabel(file?.file_type || 'script')}
           />
+        ) : file?.file_type === 'speech' ? (
+          <div className="absolute inset-0 bg-gradient-to-br from-orange-500/10 to-amber-500/10 flex items-center justify-center">
+            <div className="h-16 w-16 rounded-full bg-orange-500/20 flex items-center justify-center">
+              <Mic className="h-8 w-8 text-orange-500" strokeWidth={1.5} />
+            </div>
+          </div>
         ) : (
           <div className="flex h-full items-center justify-center">
             <FileTypeIcon fileType={(file?.file_type || 'script') as FileType} size="lg" className="h-12 w-12 opacity-50" />
