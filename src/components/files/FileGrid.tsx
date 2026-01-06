@@ -1164,15 +1164,6 @@ function FileCard({
         </div>
       )}
 
-      {/* Completed Badge */}
-      {file.generation_status === 'completed' && (
-        <div className="absolute right-3 top-3 z-10">
-          <div className="h-5 w-5 rounded-full bg-green-500 flex items-center justify-center shadow-sm">
-            <Check className="h-3 w-3 text-white" strokeWidth={3} />
-          </div>
-        </div>
-      )}
-
       {/* Card Name at Top with Icon */}
       <div className="p-3 sm:p-4 pb-2">
         {isRenaming ? (
@@ -1509,15 +1500,6 @@ function KanbanCard({
       {bulkMode && (
         <div className="absolute left-3 top-3 z-10">
           <Checkbox checked={isSelected} onClick={(e) => e.stopPropagation()} />
-        </div>
-      )}
-
-      {/* Completed Badge (files only) */}
-      {!isFolder && file?.generation_status === 'completed' && (
-        <div className="absolute right-3 top-3 z-10">
-          <div className="h-5 w-5 rounded-full bg-green-500 flex items-center justify-center shadow-sm">
-            <Check className="h-3 w-3 text-white" strokeWidth={3} />
-          </div>
         </div>
       )}
 
