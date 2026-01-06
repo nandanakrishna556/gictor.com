@@ -332,7 +332,6 @@ export default function LipSyncModal({
           image_url: imageUrl,
           audio_url: audioUrl,
           audio_duration: audioDuration,
-          first_frame_url: imageUrl,
         },
       }).eq('id', fileId);
       

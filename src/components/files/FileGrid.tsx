@@ -1101,18 +1101,9 @@ function FileCard({
   const currentStage = stages.find((s) => s.id === effectiveStatus) || stages[0];
   const fileTags = file.tags || [];
   
-  // Thumbnail support
+  // Video thumbnail support
   const isVideoType = ['lip_sync', 'talking_head', 'clips', 'b_roll', 'veo3'].includes(file.file_type || '');
-  const isSpeechType = file.file_type === 'speech';
-  const hasVideoThumbnail = isVideoType && file.status === 'completed' && (file.preview_url || file.download_url);
-  const speechThumbnail = isSpeechType ? (file.generation_params as any)?.actor_profile_image : null;
-  const imageThumbnail = file.file_type === 'first_frame' && file.preview_url ? file.preview_url : null;
-  const [thumbnailError, setThumbnailError] = useState(false);
-
-  // Reset error on file change
-  useEffect(() => {
-    setThumbnailError(false);
-  }, [file.id, file.preview_url]);
+  const hasVideoThumbnail = isVideoType && (file.preview_url || file.download_url);
 
   const toggleTag = (tagId: string) => {
     if (fileTags.includes(tagId)) {
@@ -1194,40 +1185,19 @@ function FileCard({
 
       {/* Preview Area - contained with object-contain to prevent cutoff */}
       <div className="relative flex flex-1 items-center justify-center bg-secondary overflow-hidden">
-        {hasVideoThumbnail && !thumbnailError ? (
+        {hasVideoThumbnail ? (
           <video
             src={`${file.preview_url || file.download_url}#t=0.1`}
-            className="h-full w-full object-contain animate-fade-in pointer-events-none"
+            className="h-full w-full object-contain animate-fade-in"
             muted
             preload="metadata"
             playsInline
-            onError={() => setThumbnailError(true)}
           />
-        ) : speechThumbnail && !thumbnailError ? (
-          <div className="relative h-full w-full">
-            <img
-              src={speechThumbnail}
-              alt={file.name}
-              className="h-full w-full object-cover animate-fade-in pointer-events-none"
-              onError={() => setThumbnailError(true)}
-            />
-            {/* Audio waveform overlay */}
-            <div className="absolute bottom-2 left-2 right-2 flex items-center gap-0.5 pointer-events-none">
-              {Array.from({ length: 30 }).map((_, i) => (
-                <div
-                  key={i}
-                  className="flex-1 bg-primary/60 rounded-full"
-                  style={{ height: `${Math.random() * 16 + 4}px` }}
-                />
-              ))}
-            </div>
-          </div>
-        ) : imageThumbnail && !thumbnailError ? (
+        ) : file.preview_url ? (
           <img
-            src={imageThumbnail}
+            src={file.preview_url}
             alt={file.name}
-            className="h-full w-full object-contain animate-fade-in pointer-events-none"
-            onError={() => setThumbnailError(true)}
+            className="h-full w-full object-contain animate-fade-in"
           />
         ) : isProcessing ? (
           <GeneratingOverlay
@@ -1237,7 +1207,7 @@ function FileCard({
             label={getFileGeneratingLabel(file.file_type)}
           />
         ) : (
-          <div className="flex items-center justify-center h-full w-full pointer-events-none">
+          <div className="flex items-center justify-center h-full w-full">
             <FileTypeIcon fileType={file.file_type as FileType} size="lg" className="h-12 w-12 opacity-50" />
           </div>
         )}
@@ -1455,16 +1425,7 @@ function KanbanCard({
   const file = isFile ? (item as File) : null;
   const isProcessing = file?.status === 'processing';
   const isVideoType = ['lip_sync', 'talking_head', 'clips', 'b_roll', 'veo3'].includes(file?.file_type || '');
-  const isSpeechType = file?.file_type === 'speech';
-  const hasVideoThumbnail = isVideoType && file?.status === 'completed' && (file?.preview_url || file?.download_url);
-  const speechThumbnail = isSpeechType ? (file?.generation_params as any)?.actor_profile_image : null;
-  const imageThumbnail = file?.file_type === 'first_frame' && file?.preview_url ? file.preview_url : null;
-  const [thumbnailError, setThumbnailError] = useState(false);
-
-  // Reset error on file change
-  useEffect(() => {
-    setThumbnailError(false);
-  }, [file?.id, file?.preview_url]);
+  const hasVideoThumbnail = isVideoType && (file?.preview_url || file?.download_url);
 
   const toggleTag = (tagId: string) => {
     if (itemTags.includes(tagId)) {
@@ -1569,7 +1530,7 @@ function KanbanCard({
               height="48"
               viewBox="0 0 80 64"
               fill="none"
-              className="text-amber-400 dark:text-amber-500 pointer-events-none"
+              className="text-amber-400 dark:text-amber-500"
             >
               <path
                 d="M4 12C4 7.58172 7.58172 4 12 4H28L34 12H68C72.4183 12 76 15.5817 76 20V52C76 56.4183 72.4183 60 68 60H12C7.58172 60 4 56.4183 4 52V12Z"
@@ -1587,40 +1548,19 @@ function KanbanCard({
               />
             </svg>
           </div>
-        ) : hasVideoThumbnail && !thumbnailError ? (
+        ) : hasVideoThumbnail ? (
           <video
             src={`${file?.preview_url || file?.download_url}#t=0.1`}
-            className="h-full w-full object-contain animate-fade-in pointer-events-none"
+            className="h-full w-full object-contain animate-fade-in"
             muted
             preload="metadata"
             playsInline
-            onError={() => setThumbnailError(true)}
           />
-        ) : speechThumbnail && !thumbnailError ? (
-          <div className="relative h-full w-full">
-            <img
-              src={speechThumbnail}
-              alt={file?.name || 'Speech'}
-              className="h-full w-full object-cover animate-fade-in pointer-events-none"
-              onError={() => setThumbnailError(true)}
-            />
-            {/* Audio waveform overlay */}
-            <div className="absolute bottom-2 left-2 right-2 flex items-center gap-0.5 pointer-events-none">
-              {Array.from({ length: 30 }).map((_, i) => (
-                <div
-                  key={i}
-                  className="flex-1 bg-primary/60 rounded-full"
-                  style={{ height: `${Math.random() * 16 + 4}px` }}
-                />
-              ))}
-            </div>
-          </div>
-        ) : imageThumbnail && !thumbnailError ? (
+        ) : file?.preview_url ? (
           <img
-            src={imageThumbnail}
-            alt={file?.name || 'Image'}
-            className="h-full w-full object-contain animate-fade-in pointer-events-none"
-            onError={() => setThumbnailError(true)}
+            src={file.preview_url}
+            alt={file.name}
+            className="h-full w-full object-contain animate-fade-in"
           />
         ) : isProcessing ? (
           <GeneratingOverlay
@@ -1630,7 +1570,7 @@ function KanbanCard({
             label={getFileGeneratingLabel(file?.file_type || 'script')}
           />
         ) : (
-          <div className="flex h-full items-center justify-center pointer-events-none">
+          <div className="flex h-full items-center justify-center">
             <FileTypeIcon fileType={(file?.file_type || 'script') as FileType} size="lg" className="h-12 w-12 opacity-50" />
           </div>
         )}

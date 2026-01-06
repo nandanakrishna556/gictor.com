@@ -184,15 +184,14 @@ export default function SpeechModal({
         await supabase
           .from('files')
           .update({
-          name,
-          status: displayStatus,
-          tags: selectedTags,
-          generation_params: {
-            script,
-            actor_id: selectedActorId,
-            actor_voice_url: selectedActor?.voice_url,
-            actor_profile_image: selectedActor?.profile_image_url,
-          },
+            name,
+            status: displayStatus,
+            tags: selectedTags,
+            generation_params: {
+              script,
+              actor_id: selectedActorId,
+              actor_voice_url: selectedActor?.voice_url,
+            },
           })
           .eq('id', fileId);
         
@@ -314,7 +313,6 @@ export default function SpeechModal({
             script,
             actor_id: selectedActorId,
             actor_voice_url: selectedActor?.voice_url,
-            actor_profile_image: selectedActor?.profile_image_url,
           },
         })
         .eq('id', fileId);
@@ -393,13 +391,12 @@ export default function SpeechModal({
           name,
           status: displayStatus,
           tags: selectedTags,
-        generation_params: {
-          script,
-          actor_id: selectedActorId,
-          actor_voice_url: selectedActor?.voice_url,
-          actor_profile_image: selectedActor?.profile_image_url,
-        },
-      })
+          generation_params: {
+            script,
+            actor_id: selectedActorId,
+            actor_voice_url: selectedActor?.voice_url,
+          },
+        })
         .eq('id', fileId);
       
       setHasUnsavedChanges(false);
