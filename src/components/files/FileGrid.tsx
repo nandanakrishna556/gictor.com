@@ -1187,71 +1187,56 @@ function FileCard({
         )}
       </div>
 
-      {/* Preview Area - contained with object-contain to prevent cutoff */}
+      {/* Preview Area - Static icons for all file types */}
       <div className="relative flex flex-1 items-center justify-center bg-secondary overflow-hidden">
-        {/* Speech files always show icon (audio URL is not displayable as image) */}
-        {file.file_type === 'speech' ? (
-          isProcessing ? (
-            <GeneratingOverlay
-              status={file.generation_status || 'processing'}
-              generationStartedAt={file.generation_started_at}
-              estimatedDurationSeconds={file.estimated_duration_seconds}
-              label={getFileGeneratingLabel(file.file_type)}
-            />
-          ) : (
-            <div className="absolute inset-0 bg-gradient-to-br from-orange-500/10 to-amber-500/10 flex items-center justify-center">
-              <div className="h-16 w-16 rounded-full bg-orange-500/20 flex items-center justify-center">
-                <Mic className="h-8 w-8 text-orange-500" strokeWidth={1.5} />
-              </div>
-            </div>
-          )
-        ) : file.file_type === 'animate' ? (
-          isProcessing ? (
-            <GeneratingOverlay
-              status={file.generation_status || 'processing'}
-              generationStartedAt={file.generation_started_at}
-              estimatedDurationSeconds={file.estimated_duration_seconds}
-              label={getFileGeneratingLabel(file.file_type)}
-            />
-          ) : hasVideoThumbnail ? (
-            <video
-              src={`${file.preview_url || file.download_url}#t=0.1`}
-              className="h-full w-full object-contain animate-fade-in"
-              muted
-              preload="metadata"
-              playsInline
-            />
-          ) : (
-            <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 to-indigo-500/10 flex items-center justify-center">
-              <div className="h-16 w-16 rounded-full bg-blue-500/20 flex items-center justify-center">
-                <Film className="h-8 w-8 text-blue-500" strokeWidth={1.5} />
-              </div>
-            </div>
-          )
-        ) : hasVideoThumbnail ? (
-          <video
-            src={`${file.preview_url || file.download_url}#t=0.1`}
-            className="h-full w-full object-contain animate-fade-in"
-            muted
-            preload="metadata"
-            playsInline
-          />
-        ) : file.preview_url ? (
-          <img
-            src={file.preview_url}
-            alt={file.name}
-            className="h-full w-full object-contain animate-fade-in"
-          />
-        ) : isProcessing ? (
+        {isProcessing ? (
           <GeneratingOverlay
             status={file.generation_status || 'processing'}
             generationStartedAt={file.generation_started_at}
             estimatedDurationSeconds={file.estimated_duration_seconds}
             label={getFileGeneratingLabel(file.file_type)}
           />
+        ) : file.file_type === 'animate' ? (
+          <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 to-indigo-500/10 flex items-center justify-center">
+            <div className="h-16 w-16 rounded-full bg-blue-500/20 flex items-center justify-center">
+              <Film className="h-8 w-8 text-blue-500" strokeWidth={1.5} />
+            </div>
+          </div>
+        ) : file.file_type === 'lip_sync' || file.file_type === 'talking_head' ? (
+          <div className="absolute inset-0 bg-gradient-to-br from-orange-500/10 to-amber-500/10 flex items-center justify-center">
+            <div className="h-16 w-16 rounded-full bg-orange-500/20 flex items-center justify-center">
+              <Video className="h-8 w-8 text-orange-500" strokeWidth={1.5} />
+            </div>
+          </div>
+        ) : file.file_type === 'speech' ? (
+          <div className="absolute inset-0 bg-gradient-to-br from-purple-500/10 to-violet-500/10 flex items-center justify-center">
+            <div className="h-16 w-16 rounded-full bg-purple-500/20 flex items-center justify-center">
+              <Mic className="h-8 w-8 text-purple-500" strokeWidth={1.5} />
+            </div>
+          </div>
+        ) : file.file_type === 'first_frame' ? (
+          <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/10 to-blue-500/10 flex items-center justify-center">
+            <div className="h-16 w-16 rounded-full bg-cyan-500/20 flex items-center justify-center">
+              <Image className="h-8 w-8 text-cyan-500" strokeWidth={1.5} />
+            </div>
+          </div>
+        ) : file.file_type === 'script' ? (
+          <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/10 to-teal-500/10 flex items-center justify-center">
+            <div className="h-16 w-16 rounded-full bg-emerald-500/20 flex items-center justify-center">
+              <FileText className="h-8 w-8 text-emerald-500" strokeWidth={1.5} />
+            </div>
+          </div>
+        ) : file.file_type === 'b_roll' || file.file_type === 'clips' ? (
+          <div className="absolute inset-0 bg-gradient-to-br from-rose-500/10 to-pink-500/10 flex items-center justify-center">
+            <div className="h-16 w-16 rounded-full bg-rose-500/20 flex items-center justify-center">
+              <Film className="h-8 w-8 text-rose-500" strokeWidth={1.5} />
+            </div>
+          </div>
         ) : (
-          <div className="flex items-center justify-center h-full w-full">
-            <FileTypeIcon fileType={file.file_type as FileType} size="lg" className="h-12 w-12 opacity-50" />
+          <div className="absolute inset-0 bg-gradient-to-br from-slate-500/10 to-gray-500/10 flex items-center justify-center">
+            <div className="h-16 w-16 rounded-full bg-slate-500/20 flex items-center justify-center">
+              <FileTypeIcon fileType={file.file_type as FileType} size="lg" className="h-8 w-8 text-slate-500" />
+            </div>
           </div>
         )}
       </div>
@@ -1564,7 +1549,7 @@ function KanbanCard({
         )}
       </div>
 
-      {/* Preview Area */}
+      {/* Preview Area - Static icons for all file types */}
       <div className="relative aspect-[4/3] w-full bg-secondary overflow-hidden">
         {isFolder ? (
           <div className="flex h-full items-center justify-center">
@@ -1591,58 +1576,6 @@ function KanbanCard({
               />
             </svg>
           </div>
-        ) : file?.file_type === 'speech' ? (
-          isProcessing ? (
-            <GeneratingOverlay
-              status={file?.generation_status || 'processing'}
-              generationStartedAt={file?.generation_started_at || null}
-              estimatedDurationSeconds={file?.estimated_duration_seconds || null}
-              label={getFileGeneratingLabel(file?.file_type || 'script')}
-            />
-          ) : (
-            <div className="absolute inset-0 bg-gradient-to-br from-orange-500/10 to-amber-500/10 flex items-center justify-center">
-              <div className="h-16 w-16 rounded-full bg-orange-500/20 flex items-center justify-center">
-                <Mic className="h-8 w-8 text-orange-500" strokeWidth={1.5} />
-              </div>
-            </div>
-          )
-        ) : file?.file_type === 'animate' ? (
-          isProcessing ? (
-            <GeneratingOverlay
-              status={file?.generation_status || 'processing'}
-              generationStartedAt={file?.generation_started_at || null}
-              estimatedDurationSeconds={file?.estimated_duration_seconds || null}
-              label={getFileGeneratingLabel(file?.file_type || 'script')}
-            />
-          ) : hasVideoThumbnail ? (
-            <video
-              src={`${file?.preview_url || file?.download_url}#t=0.1`}
-              className="h-full w-full object-contain animate-fade-in"
-              muted
-              preload="metadata"
-              playsInline
-            />
-          ) : (
-            <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 to-indigo-500/10 flex items-center justify-center">
-              <div className="h-16 w-16 rounded-full bg-blue-500/20 flex items-center justify-center">
-                <Film className="h-8 w-8 text-blue-500" strokeWidth={1.5} />
-              </div>
-            </div>
-          )
-        ) : hasVideoThumbnail ? (
-          <video
-            src={`${file?.preview_url || file?.download_url}#t=0.1`}
-            className="h-full w-full object-contain animate-fade-in"
-            muted
-            preload="metadata"
-            playsInline
-          />
-        ) : file?.preview_url ? (
-          <img
-            src={file.preview_url}
-            alt={file.name}
-            className="h-full w-full object-contain animate-fade-in"
-          />
         ) : isProcessing ? (
           <GeneratingOverlay
             status={file?.generation_status || 'processing'}
@@ -1650,9 +1583,47 @@ function KanbanCard({
             estimatedDurationSeconds={file?.estimated_duration_seconds || null}
             label={getFileGeneratingLabel(file?.file_type || 'script')}
           />
+        ) : file?.file_type === 'animate' ? (
+          <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 to-indigo-500/10 flex items-center justify-center">
+            <div className="h-16 w-16 rounded-full bg-blue-500/20 flex items-center justify-center">
+              <Film className="h-8 w-8 text-blue-500" strokeWidth={1.5} />
+            </div>
+          </div>
+        ) : file?.file_type === 'lip_sync' || file?.file_type === 'talking_head' ? (
+          <div className="absolute inset-0 bg-gradient-to-br from-orange-500/10 to-amber-500/10 flex items-center justify-center">
+            <div className="h-16 w-16 rounded-full bg-orange-500/20 flex items-center justify-center">
+              <Video className="h-8 w-8 text-orange-500" strokeWidth={1.5} />
+            </div>
+          </div>
+        ) : file?.file_type === 'speech' ? (
+          <div className="absolute inset-0 bg-gradient-to-br from-purple-500/10 to-violet-500/10 flex items-center justify-center">
+            <div className="h-16 w-16 rounded-full bg-purple-500/20 flex items-center justify-center">
+              <Mic className="h-8 w-8 text-purple-500" strokeWidth={1.5} />
+            </div>
+          </div>
+        ) : file?.file_type === 'first_frame' ? (
+          <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/10 to-blue-500/10 flex items-center justify-center">
+            <div className="h-16 w-16 rounded-full bg-cyan-500/20 flex items-center justify-center">
+              <Image className="h-8 w-8 text-cyan-500" strokeWidth={1.5} />
+            </div>
+          </div>
+        ) : file?.file_type === 'script' ? (
+          <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/10 to-teal-500/10 flex items-center justify-center">
+            <div className="h-16 w-16 rounded-full bg-emerald-500/20 flex items-center justify-center">
+              <FileText className="h-8 w-8 text-emerald-500" strokeWidth={1.5} />
+            </div>
+          </div>
+        ) : file?.file_type === 'b_roll' || file?.file_type === 'clips' ? (
+          <div className="absolute inset-0 bg-gradient-to-br from-rose-500/10 to-pink-500/10 flex items-center justify-center">
+            <div className="h-16 w-16 rounded-full bg-rose-500/20 flex items-center justify-center">
+              <Film className="h-8 w-8 text-rose-500" strokeWidth={1.5} />
+            </div>
+          </div>
         ) : (
-          <div className="flex h-full items-center justify-center">
-            <FileTypeIcon fileType={(file?.file_type || 'script') as FileType} size="lg" className="h-12 w-12 opacity-50" />
+          <div className="absolute inset-0 bg-gradient-to-br from-slate-500/10 to-gray-500/10 flex items-center justify-center">
+            <div className="h-16 w-16 rounded-full bg-slate-500/20 flex items-center justify-center">
+              <FileTypeIcon fileType={(file?.file_type || 'script') as FileType} size="lg" className="h-8 w-8 text-slate-500" />
+            </div>
           </div>
         )}
       </div>

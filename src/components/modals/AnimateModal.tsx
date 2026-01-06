@@ -13,6 +13,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Progress } from '@/components/ui/progress';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Switch } from '@/components/ui/switch';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { TagList, TagSelector, TagData } from '@/components/ui/tag-badge';
 import LocationSelector from '@/components/forms/LocationSelector';
@@ -83,6 +84,9 @@ export default function AnimateModal({
   const [prompt, setPrompt] = useState('');
   const [aspectRatio, setAspectRatio] = useState<'16:9' | '9:16'>('9:16');
   const [animationType, setAnimationType] = useState<'broll' | 'motion_graphics'>('broll');
+  const [duration, setDuration] = useState(8);
+  const [audioEnabled, setAudioEnabled] = useState(false);
+  const [cameraFixed, setCameraFixed] = useState(false);
   
   // Upload state
   const [isUploadingFirst, setIsUploadingFirst] = useState(false);
@@ -139,6 +143,9 @@ export default function AnimateModal({
       if (params?.prompt) setPrompt(params.prompt as string);
       if (params?.aspect_ratio) setAspectRatio(params.aspect_ratio as '16:9' | '9:16');
       if (params?.animation_type) setAnimationType(params.animation_type as 'broll' | 'motion_graphics');
+      if (params?.duration) setDuration(params.duration as number);
+      if (typeof params?.audio_enabled === 'boolean') setAudioEnabled(params.audio_enabled);
+      if (typeof params?.camera_fixed === 'boolean') setCameraFixed(params.camera_fixed);
       
       // Check if generation is in progress
       if (file.generation_status === 'processing') {
@@ -192,6 +199,9 @@ export default function AnimateModal({
               prompt,
               aspect_ratio: aspectRatio,
               animation_type: animationType,
+              duration,
+              audio_enabled: audioEnabled,
+              camera_fixed: cameraFixed,
             },
           })
           .eq('id', fileId);
@@ -287,6 +297,9 @@ export default function AnimateModal({
             prompt,
             aspect_ratio: aspectRatio,
             animation_type: animationType,
+            duration,
+            audio_enabled: audioEnabled,
+            camera_fixed: cameraFixed,
           },
         })
         .eq('id', fileId);
@@ -305,6 +318,9 @@ export default function AnimateModal({
           prompt: prompt || null,
           aspect_ratio: aspectRatio,
           animation_type: animationType,
+          duration,
+          audio_enabled: audioEnabled,
+          camera_fixed: cameraFixed,
           credits_cost: CREDIT_COST,
           supabase_url: import.meta.env.VITE_SUPABASE_URL,
         },
@@ -411,6 +427,9 @@ export default function AnimateModal({
             prompt,
             aspect_ratio: aspectRatio,
             animation_type: animationType,
+            duration,
+            audio_enabled: audioEnabled,
+            camera_fixed: cameraFixed,
           },
         })
         .eq('id', fileId);
@@ -609,6 +628,79 @@ export default function AnimateModal({
                     onClick={() => setAspectRatio('16:9')}
                   >
                     16:9 Landscape
+                  </Button>
+                </div>
+              </div>
+              
+              {/* Duration Slider */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Label>Duration</Label>
+                  <span className="text-sm font-medium">{duration}s</span>
+                </div>
+                <input
+                  type="range"
+                  min={4}
+                  max={12}
+                  step={1}
+                  value={duration}
+                  onChange={(e) => {
+                    setDuration(Number(e.target.value));
+                    setHasUnsavedChanges(true);
+                  }}
+                  className="w-full h-2 bg-secondary rounded-lg appearance-none cursor-pointer accent-primary"
+                />
+                <div className="flex justify-between text-xs text-muted-foreground">
+                  <span>4s</span>
+                  <span>12s</span>
+                </div>
+              </div>
+
+              {/* Audio Toggle */}
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label>Audio</Label>
+                  <p className="text-xs text-muted-foreground">Generate accompanying audio</p>
+                </div>
+                <Switch
+                  checked={audioEnabled}
+                  onCheckedChange={(checked) => {
+                    setAudioEnabled(checked);
+                    setHasUnsavedChanges(true);
+                  }}
+                />
+              </div>
+
+              {/* Camera Toggle */}
+              <div className="space-y-2">
+                <div className="space-y-0.5">
+                  <Label>Camera</Label>
+                  <p className="text-xs text-muted-foreground">
+                    {cameraFixed ? 'Static (fixed position)' : 'Dynamic (moves naturally)'}
+                  </p>
+                </div>
+                <div className="flex gap-2">
+                  <Button
+                    type="button"
+                    variant={!cameraFixed ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => {
+                      setCameraFixed(false);
+                      setHasUnsavedChanges(true);
+                    }}
+                  >
+                    Dynamic
+                  </Button>
+                  <Button
+                    type="button"
+                    variant={cameraFixed ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => {
+                      setCameraFixed(true);
+                      setHasUnsavedChanges(true);
+                    }}
+                  >
+                    Static
                   </Button>
                 </div>
               </div>
