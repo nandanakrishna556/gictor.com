@@ -144,7 +144,7 @@ export default function SpeechModal({
       if (params?.actor_id) setSelectedActorId(params.actor_id);
       
       // Check if generation is in progress
-      if (file.status === 'processing') {
+      if (file.generation_status === 'processing') {
         setIsGenerating(true);
         setGenerationProgress(file.progress || 0);
       }
@@ -154,12 +154,12 @@ export default function SpeechModal({
   // Update progress when file updates during generation
   useEffect(() => {
     if (file && isGenerating) {
-      if (file.status === 'completed' && file.download_url) {
+      if (file.generation_status === 'completed' && file.download_url) {
         setIsGenerating(false);
         setGenerationProgress(100);
         toast.success('Speech audio generated!');
         onSuccess?.();
-      } else if (file.status === 'failed') {
+      } else if (file.generation_status === 'failed') {
         setIsGenerating(false);
         setGenerationProgress(0);
         toast.error(file.error_message || 'Generation failed');
@@ -301,11 +301,11 @@ export default function SpeechModal({
       // Calculate estimated duration based on script length
       const estimatedDuration = Math.max(10, Math.ceil((script.length / 20) * 5));
       
-      // Update file status to processing with generation timing
+      // Update file generation_status to processing (preserve kanban status)
       await supabase
         .from('files')
         .update({
-          status: 'processing',
+          generation_status: 'processing',
           progress: 0,
           generation_started_at: new Date().toISOString(),
           estimated_duration_seconds: estimatedDuration,
@@ -313,6 +313,7 @@ export default function SpeechModal({
             script,
             actor_id: selectedActorId,
             actor_voice_url: selectedActor?.voice_url,
+            actor_profile_image: selectedActor?.profile_image_url,
           },
         })
         .eq('id', fileId);

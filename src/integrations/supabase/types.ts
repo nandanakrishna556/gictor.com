@@ -157,6 +157,7 @@ export type Database = {
           folder_id: string | null
           generation_params: Json | null
           generation_started_at: string | null
+          generation_status: string | null
           id: string
           metadata: Json | null
           name: string
@@ -176,6 +177,7 @@ export type Database = {
           folder_id?: string | null
           generation_params?: Json | null
           generation_started_at?: string | null
+          generation_status?: string | null
           id?: string
           metadata?: Json | null
           name: string
@@ -195,6 +197,7 @@ export type Database = {
           folder_id?: string | null
           generation_params?: Json | null
           generation_started_at?: string | null
+          generation_status?: string | null
           id?: string
           metadata?: Json | null
           name?: string

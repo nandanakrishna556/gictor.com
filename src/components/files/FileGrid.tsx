@@ -1095,8 +1095,8 @@ function FileCard({
   onMove?: () => void;
 }) {
   const [renameValue, setRenameValue] = useState(file.name);
-  const isProcessing = file.status === 'processing';
-  const isFailed = file.status === 'failed';
+  const isProcessing = file.generation_status === 'processing';
+  const isFailed = file.generation_status === 'failed';
   // Default status to first stage if not set
   const effectiveStatus = file.status || stages[0]?.id || 'processing';
   const currentStage = stages.find((s) => s.id === effectiveStatus) || stages[0];
@@ -1430,7 +1430,7 @@ function KanbanCard({
   const isFolder = item.itemType === 'folder';
   const isFile = item.itemType === 'file';
   const file = isFile ? (item as File) : null;
-  const isProcessing = file?.status === 'processing';
+  const isProcessing = file?.generation_status === 'processing';
   const isVideoType = ['lip_sync', 'talking_head', 'clips', 'b_roll', 'veo3'].includes(file?.file_type || '');
   const hasVideoThumbnail = isVideoType && (file?.preview_url || file?.download_url);
 
