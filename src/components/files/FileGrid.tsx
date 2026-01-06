@@ -1186,7 +1186,23 @@ function FileCard({
 
       {/* Preview Area - contained with object-contain to prevent cutoff */}
       <div className="relative flex flex-1 items-center justify-center bg-secondary overflow-hidden">
-        {hasVideoThumbnail ? (
+        {/* Speech files always show icon (audio URL is not displayable as image) */}
+        {file.file_type === 'speech' ? (
+          isProcessing ? (
+            <GeneratingOverlay
+              status={file.generation_status || 'processing'}
+              generationStartedAt={file.generation_started_at}
+              estimatedDurationSeconds={file.estimated_duration_seconds}
+              label={getFileGeneratingLabel(file.file_type)}
+            />
+          ) : (
+            <div className="absolute inset-0 bg-gradient-to-br from-orange-500/10 to-amber-500/10 flex items-center justify-center">
+              <div className="h-16 w-16 rounded-full bg-orange-500/20 flex items-center justify-center">
+                <Mic className="h-8 w-8 text-orange-500" strokeWidth={1.5} />
+              </div>
+            </div>
+          )
+        ) : hasVideoThumbnail ? (
           <video
             src={`${file.preview_url || file.download_url}#t=0.1`}
             className="h-full w-full object-contain animate-fade-in"
@@ -1202,17 +1218,11 @@ function FileCard({
           />
         ) : isProcessing ? (
           <GeneratingOverlay
-            status={file.status}
+            status={file.generation_status || 'processing'}
             generationStartedAt={file.generation_started_at}
             estimatedDurationSeconds={file.estimated_duration_seconds}
             label={getFileGeneratingLabel(file.file_type)}
           />
-        ) : file.file_type === 'speech' ? (
-          <div className="absolute inset-0 bg-gradient-to-br from-orange-500/10 to-amber-500/10 flex items-center justify-center">
-            <div className="h-16 w-16 rounded-full bg-orange-500/20 flex items-center justify-center">
-              <Mic className="h-8 w-8 text-orange-500" strokeWidth={1.5} />
-            </div>
-          </div>
         ) : (
           <div className="flex items-center justify-center h-full w-full">
             <FileTypeIcon fileType={file.file_type as FileType} size="lg" className="h-12 w-12 opacity-50" />
@@ -1555,6 +1565,21 @@ function KanbanCard({
               />
             </svg>
           </div>
+        ) : file?.file_type === 'speech' ? (
+          isProcessing ? (
+            <GeneratingOverlay
+              status={file?.generation_status || 'processing'}
+              generationStartedAt={file?.generation_started_at || null}
+              estimatedDurationSeconds={file?.estimated_duration_seconds || null}
+              label={getFileGeneratingLabel(file?.file_type || 'script')}
+            />
+          ) : (
+            <div className="absolute inset-0 bg-gradient-to-br from-orange-500/10 to-amber-500/10 flex items-center justify-center">
+              <div className="h-16 w-16 rounded-full bg-orange-500/20 flex items-center justify-center">
+                <Mic className="h-8 w-8 text-orange-500" strokeWidth={1.5} />
+              </div>
+            </div>
+          )
         ) : hasVideoThumbnail ? (
           <video
             src={`${file?.preview_url || file?.download_url}#t=0.1`}
@@ -1571,17 +1596,11 @@ function KanbanCard({
           />
         ) : isProcessing ? (
           <GeneratingOverlay
-            status={file?.status || 'processing'}
+            status={file?.generation_status || 'processing'}
             generationStartedAt={file?.generation_started_at || null}
             estimatedDurationSeconds={file?.estimated_duration_seconds || null}
             label={getFileGeneratingLabel(file?.file_type || 'script')}
           />
-        ) : file?.file_type === 'speech' ? (
-          <div className="absolute inset-0 bg-gradient-to-br from-orange-500/10 to-amber-500/10 flex items-center justify-center">
-            <div className="h-16 w-16 rounded-full bg-orange-500/20 flex items-center justify-center">
-              <Mic className="h-8 w-8 text-orange-500" strokeWidth={1.5} />
-            </div>
-          </div>
         ) : (
           <div className="flex h-full items-center justify-center">
             <FileTypeIcon fileType={(file?.file_type || 'script') as FileType} size="lg" className="h-12 w-12 opacity-50" />
