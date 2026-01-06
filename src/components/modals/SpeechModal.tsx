@@ -324,6 +324,7 @@ export default function SpeechModal({
           script,
           actor_voice_url: selectedActor?.voice_url,
           credits_cost: creditCost,
+          supabase_url: import.meta.env.VITE_SUPABASE_URL,
         },
       };
       
