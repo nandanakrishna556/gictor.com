@@ -343,6 +343,7 @@ export default function LipSyncModal({
           audio_url: audioUrl,
           audio_duration: audioDuration,
           credits_cost: CREDIT_COST,
+          supabase_url: import.meta.env.VITE_SUPABASE_URL,
         },
       };
       
