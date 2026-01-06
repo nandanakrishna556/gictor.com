@@ -1,5 +1,5 @@
 import React from 'react';
-import { Loader2, Play, AlertCircle, MoreHorizontal, Trash2, Pencil } from 'lucide-react';
+import { Play, AlertCircle, MoreHorizontal, Trash2, Pencil } from 'lucide-react';
 import { 
   DropdownMenu, 
   DropdownMenuContent, 
@@ -11,6 +11,7 @@ import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { FileTypeIcon, FileType, getFileTypeLabel } from '@/components/ui/file-type-icon';
 import { StatusBadge, StatusType } from '@/components/ui/status-badge';
+import { GeneratingOverlay } from '@/components/ui/GeneratingOverlay';
 
 export type PipelineStatus = 'processing' | 'completed' | 'failed';
 
@@ -24,6 +25,8 @@ interface PipelineCardProps {
   errorMessage?: string | null;
   tags?: string[];
   progress?: number;
+  generationStartedAt?: string | null;
+  estimatedDurationSeconds?: number | null;
   onClick: () => void;
   onDelete: () => void;
   onRename: () => void;
@@ -44,38 +47,42 @@ const PreviewPlaceholder: React.FC<{
   );
 };
 
-// Processing state with optional thumbnail
+// Processing state with optional thumbnail - uses GeneratingOverlay for smart progress
 const ProcessingPreview: React.FC<{ 
   thumbnailUrl?: string | null;
   pipelineType: FileType;
-  progress?: number;
-}> = ({ thumbnailUrl, pipelineType, progress }) => {
+  generationStartedAt?: string | null;
+  estimatedDurationSeconds?: number | null;
+}> = ({ thumbnailUrl, pipelineType, generationStartedAt, estimatedDurationSeconds }) => {
   const showThumbnail = thumbnailUrl && (pipelineType === 'talking_head' || pipelineType === 'clips' || pipelineType === 'b_roll');
   
+  const getGeneratingLabel = () => {
+    switch (pipelineType) {
+      case 'talking_head': return 'Generating video...';
+      case 'clips': return 'Generating B-Roll...';
+      case 'b_roll': return 'Generating B-Roll...';
+      case 'first_frame': return 'Generating image...';
+      case 'speech': return 'Generating audio...';
+      case 'script': return 'Writing script...';
+      default: return 'Generating...';
+    }
+  };
+
   return (
-    <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-muted">
-      {showThumbnail ? (
-        <>
-          <img 
-            src={thumbnailUrl} 
-            alt="Processing thumbnail" 
-            className="absolute inset-0 w-full h-full object-cover opacity-50"
-          />
-          <div className="absolute inset-0 bg-background/60 flex flex-col items-center justify-center gap-2">
-            <Loader2 className="h-8 w-8 animate-spin text-primary" strokeWidth={1.5} />
-            <span className="text-sm text-muted-foreground">
-              Generating{progress ? ` ${progress}%` : '...'}
-            </span>
-          </div>
-        </>
-      ) : (
-        <>
-          <Loader2 className="h-8 w-8 animate-spin text-primary" strokeWidth={1.5} />
-          <span className="text-sm text-muted-foreground">
-            Generating{progress ? ` ${progress}%` : '...'}
-          </span>
-        </>
+    <div className="absolute inset-0">
+      {showThumbnail && (
+        <img 
+          src={thumbnailUrl} 
+          alt="Processing thumbnail" 
+          className="absolute inset-0 w-full h-full object-cover opacity-30"
+        />
       )}
+      <GeneratingOverlay
+        status="processing"
+        generationStartedAt={generationStartedAt}
+        estimatedDurationSeconds={estimatedDurationSeconds}
+        label={getGeneratingLabel()}
+      />
     </div>
   );
 };
@@ -148,7 +155,8 @@ export const PipelineCard: React.FC<PipelineCardProps> = ({
   thumbnailUrl,
   errorMessage, 
   tags = [],
-  progress,
+  generationStartedAt,
+  estimatedDurationSeconds,
   onClick, 
   onDelete, 
   onRename 
@@ -169,7 +177,8 @@ export const PipelineCard: React.FC<PipelineCardProps> = ({
         <ProcessingPreview 
           thumbnailUrl={thumbnailUrl} 
           pipelineType={pipelineType}
-          progress={progress}
+          generationStartedAt={generationStartedAt}
+          estimatedDurationSeconds={estimatedDurationSeconds}
         />
       );
     }

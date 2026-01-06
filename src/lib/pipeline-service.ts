@@ -4,6 +4,7 @@ import {
   calculateVoiceCost, 
   calculateVideoCost 
 } from '@/types/pipeline';
+import { getEstimatedDuration } from '@/utils/generationEstimates';
 
 export type PipelineGenerationType = 
   | 'pipeline_first_frame' 
