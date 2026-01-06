@@ -136,7 +136,7 @@ export default function LipSyncModal({
       }
       
       // Check if generation is in progress
-      if (file.status === 'processing') {
+      if (file.generation_status === 'processing') {
         setIsGenerating(true);
         setGenerationProgress(file.progress || 0);
       }
@@ -146,12 +146,12 @@ export default function LipSyncModal({
   // Update progress when file updates during generation
   useEffect(() => {
     if (file && isGenerating) {
-      if (file.status === 'completed' && file.download_url) {
+      if (file.generation_status === 'completed' && file.download_url) {
         setIsGenerating(false);
         setGenerationProgress(100);
         toast.success('Lip sync video generated!');
         onSuccess?.();
-      } else if (file.status === 'failed') {
+      } else if (file.generation_status === 'failed') {
         setIsGenerating(false);
         setGenerationProgress(0);
         toast.error(file.error_message || 'Generation failed');
@@ -323,15 +323,16 @@ export default function LipSyncModal({
       // Calculate estimated duration: 4 minutes per 8 seconds of audio
       const estimatedDuration = Math.max(120, Math.ceil((audioDuration / 8) * 240));
       
-      // Update file record to processing with generation timing
+      // Update file record to processing with generation timing (preserve kanban status)
       await supabase.from('files').update({
-        status: 'processing',
+        generation_status: 'processing',
         generation_started_at: new Date().toISOString(),
         estimated_duration_seconds: estimatedDuration,
         generation_params: {
           image_url: imageUrl,
           audio_url: audioUrl,
           audio_duration: audioDuration,
+          first_frame_url: imageUrl,
         },
       }).eq('id', fileId);
       

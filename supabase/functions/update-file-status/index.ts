@@ -313,7 +313,7 @@ async function handleFileUpdate(
 
   // deno-lint-ignore no-explicit-any
   const updateData: Record<string, any> = {
-    status,
+    generation_status: status,
     updated_at: new Date().toISOString(),
   };
 

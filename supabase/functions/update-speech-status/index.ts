@@ -49,11 +49,11 @@ serve(async (req) => {
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
     if (status === 'completed') {
-      // Update file with audio URL and set progress to 100
+      // Update file with audio URL and set progress to 100 (preserve kanban status)
       const { error: updateError } = await supabase
         .from('files')
         .update({
-          status: 'completed',
+          generation_status: 'completed',
           download_url: audio_url,
           preview_url: audio_url,
           progress: 100,
@@ -68,11 +68,11 @@ serve(async (req) => {
 
       console.log('Speech file updated successfully:', file_id);
     } else if (status === 'failed') {
-      // Update file with error message and reset progress
+      // Update file with error message and reset progress (preserve kanban status)
       const { error: updateError } = await supabase
         .from('files')
         .update({
-          status: 'failed',
+          generation_status: 'failed',
           error_message: error_message || 'Speech generation failed',
           progress: 0,
         })
@@ -100,9 +100,9 @@ serve(async (req) => {
 
       console.log('Speech file marked as failed:', file_id);
     } else if (status === 'processing') {
-      // Update progress if provided
+      // Update progress if provided (preserve kanban status)
       const { progress } = body;
-      const updateData: any = { status: 'processing' };
+      const updateData: any = { generation_status: 'processing' };
       if (typeof progress === 'number') {
         updateData.progress = progress;
       }
