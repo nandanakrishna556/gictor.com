@@ -13,6 +13,7 @@ import ClipsPipelineModal from '@/components/pipeline/ClipsPipelineModal';
 import LipSyncModal from '@/components/modals/LipSyncModal';
 import SpeechModal from '@/components/modals/SpeechModal';
 import AnimateModal from '@/components/modals/AnimateModal';
+import FrameModal from '@/components/modals/FrameModal';
 import { usePipeline } from '@/hooks/usePipeline';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -37,7 +38,7 @@ interface CreateNewModalProps {
 }
 
 type WorkflowType = 'talking_head' | 'b_roll' | 'motion_graphics';
-type ElementType = 'folder' | 'lip_sync' | 'speech' | 'first_frame' | 'last_frame' | 'script' | 'swap' | 'animate';
+type ElementType = 'folder' | 'lip_sync' | 'speech' | 'frame' | 'script' | 'swap' | 'animate';
 
 const workflows = [
   {
@@ -87,17 +88,10 @@ const elements = [
     description: 'Animate images to video',
   },
   {
-    id: 'first_frame' as ElementType,
+    id: 'frame' as ElementType,
     icon: Image,
-    title: 'First Frame',
-    description: 'Generate AI image',
-  },
-  {
-    id: 'last_frame' as ElementType,
-    icon: Image,
-    title: 'Last Frame',
-    description: 'Generate ending image',
-    comingSoon: true,
+    title: 'Frame',
+    description: 'Generate first or last frame',
   },
   {
     id: 'script' as ElementType,
@@ -129,6 +123,7 @@ export default function CreateNewModal({
   const [lipSyncModalOpen, setLipSyncModalOpen] = useState(false);
   const [speechModalOpen, setSpeechModalOpen] = useState(false);
   const [animateModalOpen, setAnimateModalOpen] = useState(false);
+  const [frameModalOpen, setFrameModalOpen] = useState(false);
   const [createdPipelineId, setCreatedPipelineId] = useState<string | null>(null);
   const [createdFileId, setCreatedFileId] = useState<string | null>(null);
   const [isCreating, setIsCreating] = useState(false);
@@ -214,6 +209,13 @@ export default function CreateNewModal({
       return;
     }
 
+    if (element.id === 'frame') {
+      // Frame modal opens directly without creating a file first
+      onOpenChange(false);
+      setFrameModalOpen(true);
+      return;
+    }
+
     if (element.id === 'lip_sync' || element.id === 'speech' || element.id === 'animate') {
       setIsCreating(true);
       setCreatingType(element.id);
@@ -270,6 +272,7 @@ export default function CreateNewModal({
     setLipSyncModalOpen(false);
     setSpeechModalOpen(false);
     setAnimateModalOpen(false);
+    setFrameModalOpen(false);
     setCreatedPipelineId(null);
     setCreatedFileId(null);
     initialStatusRef.current = undefined;
@@ -449,6 +452,15 @@ export default function CreateNewModal({
           onSuccess={handleSuccess}
         />
       )}
+
+      {/* Frame Modal */}
+      <FrameModal
+        isOpen={frameModalOpen}
+        onClose={handleModalClose}
+        projectId={projectId}
+        folderId={folderId}
+        onSuccess={handleSuccess}
+      />
     </>
   );
 }
