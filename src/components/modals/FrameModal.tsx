@@ -17,7 +17,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { TagList, TagSelector, TagData } from '@/components/ui/tag-badge';
 import LocationSelector from '@/components/forms/LocationSelector';
 import ActorSelectorPopover from './ActorSelectorPopover';
-import { ArrowLeft, X, Loader2, Download, Upload, Image as ImageIcon, Check, Plus, Expand, Maximize2 } from 'lucide-react';
+import { ArrowLeft, X, Loader2, Download, Upload, Image as ImageIcon, Check, Plus } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface StatusOption {
@@ -102,8 +102,6 @@ export default function FrameModal({
   const [isGenerating, setIsGenerating] = useState(false);
   const [generationProgress, setGenerationProgress] = useState(0);
   
-  // Fullscreen state
-  const [isFullscreen, setIsFullscreen] = useState(false);
   
   // Fetch file data
   const { data: file } = useQuery({
@@ -544,18 +542,6 @@ export default function FrameModal({
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Fullscreen Image Dialog */}
-      <Dialog open={isFullscreen} onOpenChange={setIsFullscreen}>
-        <DialogContent className="max-w-[90vw] max-h-[90vh] p-0 overflow-hidden [&>button]:hidden">
-          {file?.download_url && (
-            <img
-              src={file.download_url}
-              alt={name}
-              className="w-full h-full object-contain"
-            />
-          )}
-        </DialogContent>
-      </Dialog>
 
       <Dialog open={open} onOpenChange={handleClose}>
         <DialogContent className="max-w-[900px] h-[85vh] p-0 gap-0 overflow-hidden rounded-lg flex flex-col [&>button]:hidden">
@@ -1014,10 +1000,7 @@ export default function FrameModal({
               
               {hasOutput && file?.download_url && (
                 <div className="space-y-4 animate-fade-in">
-                  <div 
-                    className="relative rounded-xl border border-border overflow-hidden cursor-pointer"
-                    onClick={() => setIsFullscreen(true)}
-                  >
+                  <div className="rounded-xl border border-border overflow-hidden">
                     <img
                       src={file.download_url}
                       alt={name}
