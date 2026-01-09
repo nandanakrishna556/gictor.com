@@ -17,6 +17,7 @@ import ClipsPipelineModal from '@/components/pipeline/ClipsPipelineModal';
 import LipSyncModal from '@/components/modals/LipSyncModal';
 import SpeechModal from '@/components/modals/SpeechModal';
 import AnimateModal from '@/components/modals/AnimateModal';
+import FrameModal from '@/components/modals/FrameModal';
 import { useFiles, Folder, File } from '@/hooks/useFiles';
 import { useFileRealtime } from '@/hooks/useFileRealtime';
 import { usePipelines, Pipeline, PipelineStage, DEFAULT_STAGES } from '@/hooks/usePipelines';
@@ -69,6 +70,10 @@ export default function ProjectDetail() {
   // Animate modal state
   const [animateModalOpen, setAnimateModalOpen] = useState(false);
   const [openAnimateFileId, setOpenAnimateFileId] = useState<string | null>(null);
+  
+  // Frame modal state
+  const [frameModalOpen, setFrameModalOpen] = useState(false);
+  const [openFrameFileId, setOpenFrameFileId] = useState<string | null>(null);
 
   // Fetch project details
   const { data: project } = useQuery({
@@ -322,6 +327,10 @@ export default function ProjectDetail() {
       // Open Animate modal
       setOpenAnimateFileId(file.id);
       setAnimateModalOpen(true);
+    } else if (file.file_type === 'frame') {
+      // Open Frame modal
+      setOpenFrameFileId(file.id);
+      setFrameModalOpen(true);
     } else if (file.file_type === 'clips' || file.file_type === 'b_roll') {
       // Extract pipeline_id from generation_params for Clips
       const params = file.generation_params as { pipeline_id?: string } | null;
@@ -675,6 +684,24 @@ export default function ProjectDetail() {
           onSuccess={() => {
             // Refresh files after save
           }}
+        />
+      )}
+
+      {/* Frame Modal */}
+      {openFrameFileId && (
+        <FrameModal
+          open={frameModalOpen}
+          onClose={() => {
+            setFrameModalOpen(false);
+            setOpenFrameFileId(null);
+          }}
+          fileId={openFrameFileId}
+          projectId={projectId}
+          folderId={folderId}
+          onSuccess={() => {
+            // Refresh files after save
+          }}
+          statusOptions={currentStatusOptions}
         />
       )}
     </MainLayout>
