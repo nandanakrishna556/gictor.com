@@ -1214,7 +1214,7 @@ function FileCard({
               <Mic className="h-8 w-8 text-purple-500" strokeWidth={1.5} />
             </div>
           </div>
-        ) : file.file_type === 'first_frame' ? (
+        ) : file.file_type === 'first_frame' || file.file_type === 'frame' ? (
           <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/10 to-blue-500/10 flex items-center justify-center">
             <div className="h-16 w-16 rounded-full bg-cyan-500/20 flex items-center justify-center">
               <Image className="h-8 w-8 text-cyan-500" strokeWidth={1.5} />
@@ -1601,7 +1601,7 @@ function KanbanCard({
               <Mic className="h-8 w-8 text-purple-500" strokeWidth={1.5} />
             </div>
           </div>
-        ) : file?.file_type === 'first_frame' ? (
+        ) : file?.file_type === 'first_frame' || file?.file_type === 'frame' ? (
           <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/10 to-blue-500/10 flex items-center justify-center">
             <div className="h-16 w-16 rounded-full bg-cyan-500/20 flex items-center justify-center">
               <Image className="h-8 w-8 text-cyan-500" strokeWidth={1.5} />
