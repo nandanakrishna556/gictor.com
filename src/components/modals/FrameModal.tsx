@@ -427,7 +427,7 @@ export default function FrameModal({
           output_image_url: file?.download_url || null,
           prompt,
           camera_perspective: style === 'broll' ? cameraPerspective : null,
-          resolution,
+          frame_resolution: resolution,
           credits_cost: creditCost,
           supabase_url: import.meta.env.VITE_SUPABASE_URL,
         },
