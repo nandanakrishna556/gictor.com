@@ -44,12 +44,12 @@ const DEFAULT_STATUS_OPTIONS: StatusOption[] = [
   { value: 'complete', label: 'Complete', color: 'bg-emerald-500' },
 ];
 
-const CREDIT_COST = 1;
-
 type FrameType = 'first' | 'last';
 type Style = 'talking_head' | 'broll' | 'motion_graphics';
 type SubStyle = 'ugc' | 'studio';
 type AspectRatio = '9:16' | '16:9' | '1:1';
+type CameraPerspective = '1st_person' | '3rd_person';
+type Resolution = '1K' | '2K' | '4K';
 
 export default function FrameModal({
   open,
@@ -92,6 +92,8 @@ export default function FrameModal({
   const [selectedActor, setSelectedActor] = useState<Actor | null>(null);
   const [referenceImages, setReferenceImages] = useState<string[]>([]);
   const [prompt, setPrompt] = useState('');
+  const [cameraPerspective, setCameraPerspective] = useState<CameraPerspective>('3rd_person');
+  const [resolution, setResolution] = useState<Resolution>('2K');
   
   // Upload state
   const [uploadingIndex, setUploadingIndex] = useState<number | null>(null);
@@ -129,8 +131,11 @@ export default function FrameModal({
     color: t.color || '#8E8E93',
   })) || [];
   
+  // Dynamic credit cost based on resolution
+  const creditCost = resolution === '4K' ? 0.5 : 0.25;
+  
   // Validation
-  const canGenerate = !isGenerating && profile && (profile.credits ?? 0) >= CREDIT_COST;
+  const canGenerate = !isGenerating && profile && (profile.credits ?? 0) >= creditCost;
   const hasOutput = file?.generation_status === 'completed' && file?.download_url;
   
   // Sync file data when loaded
@@ -149,6 +154,8 @@ export default function FrameModal({
       if (params?.aspect_ratio) setAspectRatio(params.aspect_ratio as AspectRatio);
       if (params?.actor_id) setSelectedActorId(params.actor_id as string);
       if (params?.reference_images) setReferenceImages(params.reference_images as string[]);
+      if (params?.camera_perspective) setCameraPerspective(params.camera_perspective as CameraPerspective);
+      if (params?.resolution) setResolution(params.resolution as Resolution);
       if (params?.prompt) setPrompt(params.prompt as string);
       
       // Check if generation is in progress
@@ -202,9 +209,11 @@ export default function FrameModal({
               style,
               substyle: style !== 'motion_graphics' ? subStyle : null,
               aspect_ratio: aspectRatio,
-              actor_id: selectedActorId,
+              actor_id: style === 'talking_head' ? selectedActorId : null,
               reference_images: referenceImages,
               prompt,
+              camera_perspective: style === 'broll' ? cameraPerspective : null,
+              resolution,
             },
           })
           .eq('id', fileId);
@@ -219,7 +228,7 @@ export default function FrameModal({
         setSaveStatus('idle');
       }
     }, 2000);
-  }, [fileId, hasUnsavedChanges, name, displayStatus, selectedTags, frameType, style, subStyle, aspectRatio, selectedActorId, referenceImages, prompt, queryClient, currentProjectId, currentFolderId]);
+  }, [fileId, hasUnsavedChanges, name, displayStatus, selectedTags, frameType, style, subStyle, aspectRatio, selectedActorId, referenceImages, prompt, cameraPerspective, resolution, queryClient, currentProjectId, currentFolderId]);
   
   // Trigger auto-save when unsaved changes occur
   useEffect(() => {
@@ -362,8 +371,8 @@ export default function FrameModal({
     if (!canGenerate || !profile || !user) return;
     
     // Check credits
-    if ((profile.credits ?? 0) < CREDIT_COST) {
-      toast.error(`Insufficient credits. You need ${CREDIT_COST} credits.`);
+    if ((profile.credits ?? 0) < creditCost) {
+      toast.error(`Insufficient credits. You need ${creditCost} credits.`);
       return;
     }
     
@@ -390,9 +399,11 @@ export default function FrameModal({
             style,
             substyle: style !== 'motion_graphics' ? subStyle : null,
             aspect_ratio: aspectRatio,
-            actor_id: selectedActorId,
+            actor_id: style === 'talking_head' ? selectedActorId : null,
             reference_images: referenceImages,
             prompt,
+            camera_perspective: style === 'broll' ? cameraPerspective : null,
+            resolution,
           },
         })
         .eq('id', fileId);
@@ -410,12 +421,14 @@ export default function FrameModal({
           style,
           substyle: style !== 'motion_graphics' ? subStyle : null,
           aspect_ratio: aspectRatio,
-          actor_id: selectedActorId,
-          actor_360_url: selectedActor?.profile_360_url,
+          actor_id: style === 'talking_head' ? selectedActorId : null,
+          actor_360_url: style === 'talking_head' ? selectedActor?.profile_360_url : null,
           reference_images: referenceImages,
           output_image_url: file?.download_url || null,
           prompt,
-          credits_cost: CREDIT_COST,
+          camera_perspective: style === 'broll' ? cameraPerspective : null,
+          resolution,
+          credits_cost: creditCost,
           supabase_url: import.meta.env.VITE_SUPABASE_URL,
         },
       };
@@ -483,9 +496,11 @@ export default function FrameModal({
             style,
             substyle: style !== 'motion_graphics' ? subStyle : null,
             aspect_ratio: aspectRatio,
-            actor_id: selectedActorId,
+            actor_id: style === 'talking_head' ? selectedActorId : null,
             reference_images: referenceImages,
             prompt,
+            camera_perspective: style === 'broll' ? cameraPerspective : null,
+            resolution,
           },
         })
         .eq('id', fileId);
@@ -767,16 +782,57 @@ export default function FrameModal({
                     </div>
                   </div>
                 </div>
+                <p className="text-xs text-muted-foreground mt-2">
+                  {style === 'talking_head' && 'Person looking directly at camera'}
+                  {style === 'broll' && 'Person captured mid-action, natural movement'}
+                  {style === 'motion_graphics' && (
+                    frameType === 'first' 
+                      ? 'Background only - colors, gradients, patterns' 
+                      : 'Graphics & elements - icons, shapes, text areas'
+                  )}
+                </p>
               </div>
               
-              {/* Actor Selector */}
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Select Actor (Optional)</label>
-                <ActorSelectorPopover
-                  selectedActorId={selectedActorId}
-                  onSelect={handleActorSelect}
-                />
-              </div>
+              {/* Camera Perspective - Only show for B-Roll */}
+              {style === 'broll' && (
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Camera Perspective</label>
+                  <div className="flex gap-2">
+                    <Button
+                      variant={cameraPerspective === '1st_person' ? 'default' : 'outline'}
+                      size="sm"
+                      className="flex-1"
+                      onClick={() => { setCameraPerspective('1st_person'); setHasUnsavedChanges(true); }}
+                    >
+                      1st Person
+                    </Button>
+                    <Button
+                      variant={cameraPerspective === '3rd_person' ? 'default' : 'outline'}
+                      size="sm"
+                      className="flex-1"
+                      onClick={() => { setCameraPerspective('3rd_person'); setHasUnsavedChanges(true); }}
+                    >
+                      3rd Person
+                    </Button>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    {cameraPerspective === '1st_person' 
+                      ? "POV shot - viewer sees through the subject's eyes" 
+                      : 'Observer view - camera captures the subject from outside'}
+                  </p>
+                </div>
+              )}
+              
+              {/* Actor Selector - Only show for Talking Head */}
+              {style === 'talking_head' && (
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Select Actor</label>
+                  <ActorSelectorPopover
+                    selectedActorId={selectedActorId}
+                    onSelect={handleActorSelect}
+                  />
+                </div>
+              )}
               
               {/* Aspect Ratio */}
               <div className="space-y-2">
@@ -807,6 +863,40 @@ export default function FrameModal({
                     1:1
                   </Button>
                 </div>
+              </div>
+              
+              {/* Resolution */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Resolution</label>
+                <div className="flex gap-2">
+                  <Button
+                    variant={resolution === '1K' ? 'default' : 'outline'}
+                    size="sm"
+                    className="flex-1"
+                    onClick={() => { setResolution('1K'); setHasUnsavedChanges(true); }}
+                  >
+                    1K
+                  </Button>
+                  <Button
+                    variant={resolution === '2K' ? 'default' : 'outline'}
+                    size="sm"
+                    className="flex-1"
+                    onClick={() => { setResolution('2K'); setHasUnsavedChanges(true); }}
+                  >
+                    2K
+                  </Button>
+                  <Button
+                    variant={resolution === '4K' ? 'default' : 'outline'}
+                    size="sm"
+                    className="flex-1"
+                    onClick={() => { setResolution('4K'); setHasUnsavedChanges(true); }}
+                  >
+                    4K
+                  </Button>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  {resolution === '4K' ? 'Higher quality • 0.5 credits' : 'Standard quality • 0.25 credits'}
+                </p>
               </div>
               
               {/* Reference Images */}
@@ -862,24 +952,29 @@ export default function FrameModal({
               
               {/* Prompt */}
               <div className="space-y-2">
-                <label className="text-sm font-medium">Prompt (Optional)</label>
+                <label className="text-sm font-medium">Prompt</label>
                 <Textarea
                   value={prompt}
                   onChange={(e) => handlePromptChange(e.target.value)}
-                  placeholder="Describe the image you want to generate..."
+                  placeholder={
+                    style === 'motion_graphics'
+                      ? (frameType === 'first' 
+                          ? 'Describe the background: colors, gradients, patterns, abstract shapes...'
+                          : 'Describe the graphics: icons, shapes, text areas, call-to-action elements...')
+                      : style === 'broll'
+                        ? 'Describe the action, scene, and environment (person will be captured mid-action)...'
+                        : 'Describe the person, their expression, clothing, and setting (looking at camera)...'
+                  }
                   rows={3}
                   className="resize-none"
                 />
-                <p className="text-xs text-muted-foreground">
-                  AI will enhance your prompt based on style and references
-                </p>
               </div>
               
               {/* Generate Section */}
               <div className="pt-4 border-t space-y-3">
                 <div className="flex items-center justify-between text-sm">
                   <span className="text-muted-foreground">Cost:</span>
-                  <span className="font-medium">{CREDIT_COST} credit</span>
+                  <span className="font-medium">{creditCost} credits</span>
                 </div>
                 <Button
                   onClick={handleGenerate}
