@@ -13,6 +13,7 @@ import ClipsPipelineModal from '@/components/pipeline/ClipsPipelineModal';
 import LipSyncModal from '@/components/modals/LipSyncModal';
 import SpeechModal from '@/components/modals/SpeechModal';
 import AnimateModal from '@/components/modals/AnimateModal';
+import FrameModal from '@/components/modals/FrameModal';
 import { usePipeline } from '@/hooks/usePipeline';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -37,7 +38,7 @@ interface CreateNewModalProps {
 }
 
 type WorkflowType = 'talking_head' | 'b_roll' | 'motion_graphics';
-type ElementType = 'folder' | 'lip_sync' | 'speech' | 'first_frame' | 'last_frame' | 'script' | 'swap' | 'animate';
+type ElementType = 'folder' | 'lip_sync' | 'speech' | 'frame' | 'script' | 'swap' | 'animate';
 
 const workflows = [
   {
@@ -87,17 +88,11 @@ const elements = [
     description: 'Animate images to video',
   },
   {
-    id: 'first_frame' as ElementType,
+    id: 'frame' as ElementType,
     icon: Image,
-    title: 'First Frame',
-    description: 'Generate AI image',
-  },
-  {
-    id: 'last_frame' as ElementType,
-    icon: Image,
-    title: 'Last Frame',
-    description: 'Generate ending image',
-    comingSoon: true,
+    title: 'Frame',
+    description: 'Generate AI images',
+    iconColor: 'text-cyan-500',
   },
   {
     id: 'script' as ElementType,
@@ -129,6 +124,7 @@ export default function CreateNewModal({
   const [lipSyncModalOpen, setLipSyncModalOpen] = useState(false);
   const [speechModalOpen, setSpeechModalOpen] = useState(false);
   const [animateModalOpen, setAnimateModalOpen] = useState(false);
+  const [frameModalOpen, setFrameModalOpen] = useState(false);
   const [createdPipelineId, setCreatedPipelineId] = useState<string | null>(null);
   const [createdFileId, setCreatedFileId] = useState<string | null>(null);
   const [isCreating, setIsCreating] = useState(false);
@@ -214,7 +210,7 @@ export default function CreateNewModal({
       return;
     }
 
-    if (element.id === 'lip_sync' || element.id === 'speech' || element.id === 'animate') {
+    if (element.id === 'lip_sync' || element.id === 'speech' || element.id === 'animate' || element.id === 'frame') {
       setIsCreating(true);
       setCreatingType(element.id);
       initialStatusRef.current = initialStatus;
@@ -228,10 +224,18 @@ export default function CreateNewModal({
             id: newFileId,
             project_id: projectId,
             folder_id: folderId || null,
-            name: 'Untitled',
+            name: element.id === 'frame' ? 'Untitled Frame' : 'Untitled',
             file_type: element.id,
             status: initialStatus || 'draft',
-            generation_params: {},
+            generation_params: element.id === 'frame' ? {
+              frame_type: 'first',
+              style: 'talking_head',
+              substyle: 'ugc',
+              aspect_ratio: '9:16',
+              actor_id: null,
+              reference_images: [],
+              prompt: '',
+            } : {},
           });
 
         if (fileError) {
@@ -249,6 +253,8 @@ export default function CreateNewModal({
           setSpeechModalOpen(true);
         } else if (element.id === 'animate') {
           setAnimateModalOpen(true);
+        } else if (element.id === 'frame') {
+          setFrameModalOpen(true);
         }
 
         queryClient.invalidateQueries({ queryKey: ['files', projectId] });
@@ -270,6 +276,7 @@ export default function CreateNewModal({
     setLipSyncModalOpen(false);
     setSpeechModalOpen(false);
     setAnimateModalOpen(false);
+    setFrameModalOpen(false);
     setCreatedPipelineId(null);
     setCreatedFileId(null);
     initialStatusRef.current = undefined;
@@ -447,6 +454,20 @@ export default function CreateNewModal({
           folderId={folderId}
           initialStatus={initialStatusRef.current}
           onSuccess={handleSuccess}
+        />
+      )}
+
+      {/* Frame Modal */}
+      {createdFileId && frameModalOpen && (
+        <FrameModal
+          open={frameModalOpen}
+          onClose={handleModalClose}
+          fileId={createdFileId}
+          projectId={projectId}
+          folderId={folderId}
+          initialStatus={initialStatusRef.current}
+          onSuccess={handleSuccess}
+          statusOptions={statusOptions}
         />
       )}
     </>
