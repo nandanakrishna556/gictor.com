@@ -1041,6 +1041,9 @@ export default function FrameModal({
                       Download Image
                     </a>
                   </Button>
+                  <div className="rounded-lg bg-muted/50 p-3 text-xs text-muted-foreground">
+                    <span className="font-medium">Tip:</span> When you regenerate, this image will automatically be used as a reference for style consistency.
+                  </div>
                 </div>
               )}
               
