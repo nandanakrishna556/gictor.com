@@ -1014,26 +1014,15 @@ export default function FrameModal({
               
               {hasOutput && file?.download_url && (
                 <div className="space-y-4 animate-fade-in">
-                  <div className="relative rounded-xl border border-border overflow-hidden group">
+                  <div 
+                    className="relative rounded-xl border border-border overflow-hidden cursor-pointer"
+                    onClick={() => setIsFullscreen(true)}
+                  >
                     <img
                       src={file.download_url}
                       alt={name}
                       className="w-full object-contain"
                     />
-                    <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-3">
-                      <Button
-                        size="icon"
-                        variant="secondary"
-                        onClick={() => setIsFullscreen(true)}
-                      >
-                        <Maximize2 className="h-4 w-4" />
-                      </Button>
-                      <Button size="icon" variant="secondary" asChild>
-                        <a href={file.download_url} download={`${name}.png`}>
-                          <Download className="h-4 w-4" />
-                        </a>
-                      </Button>
-                    </div>
                   </div>
                   <Button variant="secondary" className="w-full" asChild>
                     <a href={file.download_url} download={`${name}.png`}>
@@ -1041,9 +1030,6 @@ export default function FrameModal({
                       Download Image
                     </a>
                   </Button>
-                  <div className="rounded-lg bg-muted/50 p-3 text-xs text-muted-foreground">
-                    <span className="font-medium">Tip:</span> When you regenerate, this image will automatically be used as a reference for style consistency.
-                  </div>
                 </div>
               )}
               
