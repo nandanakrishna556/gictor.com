@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState } from 'react';
 import { Sparkles, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -23,11 +23,9 @@ import LocationSelector from './LocationSelector';
 import { ImageUpload } from '@/components/ui/image-upload';
 import type { Tag } from '@/hooks/useTags';
 import { cn } from '@/lib/utils';
-import { startGeneration, getFrameCreditCost } from '@/lib/generation-service';
+import { startGeneration, CREDIT_COSTS } from '@/lib/generation-service';
 import { useAuth } from '@/contexts/AuthContext';
 import { v4 as uuidv4 } from 'uuid';
-import ActorSelectorPopover from '@/components/modals/ActorSelectorPopover';
-import { useActors } from '@/hooks/useActors';
 
 interface StatusOption {
   value: string;
@@ -53,12 +51,6 @@ const defaultStatusOptions: StatusOption[] = [
   { value: 'approved', label: 'Approved', color: 'bg-emerald-500' },
 ];
 
-type ContentType = 'talking_head' | 'broll' | 'motion_graphics';
-type Style = 'ugc' | 'studio';
-type CameraPerspective = '1st_person' | '3rd_person';
-type FrameType = 'first' | 'last';
-type Resolution = '1K' | '2K' | '4K';
-
 export default function FirstFrameForm({
   projectId,
   folderId,
@@ -73,7 +65,6 @@ export default function FirstFrameForm({
   
   const { user } = useAuth();
   const { profile } = useProfile();
-  const { actors } = useActors();
 
   // Use provided status options or default
   const availableStatusOptions = statusOptions || defaultStatusOptions;
@@ -89,66 +80,22 @@ export default function FirstFrameForm({
   const [fileName, setFileName] = useState('Untitled');
   const [selectedStatus, setSelectedStatus] = useState(getInitialStatus);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
+  const [imageType, setImageType] = useState<'ugc' | 'studio'>('ugc');
   const [aspectRatio, setAspectRatio] = useState('9:16');
   const [referenceImageUrls, setReferenceImageUrls] = useState<string[]>([]);
   const [prompt, setPrompt] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   
-  // New state variables
-  const [contentType, setContentType] = useState<ContentType>('talking_head');
-  const [style, setStyle] = useState<Style>('ugc');
-  const [cameraPerspective, setCameraPerspective] = useState<CameraPerspective>('3rd_person');
-  const [frameType, setFrameType] = useState<FrameType>('first');
-  const [resolution, setResolution] = useState<Resolution>('2K');
-  const [selectedActorId, setSelectedActorId] = useState<string | null>(null);
 
   // Update selectedStatus when initialStatus or statusOptions change
   React.useEffect(() => {
     setSelectedStatus(getInitialStatus());
   }, [initialStatus, statusOptions]);
 
-  // Dynamic credit cost based on resolution
-  const creditCost = useMemo(() => getFrameCreditCost(resolution), [resolution]);
+  const creditCost = CREDIT_COSTS.first_frame;
   const hasEnoughCredits = (profile?.credits ?? 0) >= creditCost;
 
   const currentStatusOption = availableStatusOptions.find(s => s.value === selectedStatus) || availableStatusOptions[0];
-
-  // Get selected actor data
-  const selectedActor = useMemo(() => {
-    if (!selectedActorId || !actors) return null;
-    return actors.find(a => a.id === selectedActorId) || null;
-  }, [selectedActorId, actors]);
-
-  // Dynamic prompt placeholder
-  const promptPlaceholder = useMemo(() => {
-    if (contentType === 'motion_graphics') {
-      if (frameType === 'first') {
-        return "Describe the background: colors, gradients, patterns, abstract shapes...";
-      } else {
-        return "Describe the graphics: icons, shapes, text areas, call-to-action elements...";
-      }
-    } else if (contentType === 'broll') {
-      return "Describe the action, scene, and environment (person will be captured mid-action)...";
-    } else {
-      return "Describe the person, their expression, clothing, and setting (looking at camera)...";
-    }
-  }, [contentType, frameType]);
-
-  // Content type helper text
-  const contentTypeHelperText = useMemo(() => {
-    if (contentType === 'talking_head') {
-      return "Person looking directly at camera";
-    } else if (contentType === 'broll') {
-      return "Person captured mid-action, natural movement";
-    } else if (contentType === 'motion_graphics') {
-      if (frameType === 'first') {
-        return "Background only - colors, gradients, patterns";
-      } else {
-        return "Graphics & elements - icons, shapes, text areas";
-      }
-    }
-    return "";
-  }, [contentType, frameType]);
 
   const handleLocationChange = (newProjectId: string, newFolderId?: string) => {
     setCurrentProjectId(newProjectId);
@@ -186,7 +133,7 @@ export default function FirstFrameForm({
     setIsSubmitting(true);
 
     try {
-      const result = await startGeneration('frame', {
+      const result = await startGeneration('first_frame', {
         file_id: uuidv4(),
         user_id: user.id,
         project_id: currentProjectId,
@@ -194,21 +141,14 @@ export default function FirstFrameForm({
         file_name: fileName,
         credits_cost: creditCost,
         prompt,
+        image_type: imageType,
         aspect_ratio: aspectRatio as '1:1' | '9:16' | '16:9',
         reference_images: referenceImageUrls,
         tags: selectedTags,
-        // New fields
-        frame_type: frameType,
-        content_type: contentType,
-        style: contentType !== 'motion_graphics' ? style : null,
-        camera_perspective: contentType === 'broll' ? cameraPerspective : null,
-        resolution,
-        actor_id: contentType === 'talking_head' && selectedActorId ? selectedActorId : null,
-        actor_360_url: contentType === 'talking_head' && selectedActor?.profile_360_url ? selectedActor.profile_360_url : null,
       });
 
       if (result.success) {
-        toast.success('Generation started', { description: `Your ${frameType === 'first' ? 'first' : 'last'} frame is being generated.` });
+        toast.success('Generation started', { description: 'Your first frame is being generated.' });
         onSuccess();
       } else {
         const errorMessage = result.error?.userMessage || 'Failed to start generation. Please try again.';
@@ -342,206 +282,48 @@ export default function FirstFrameForm({
           </div>
         </div>
 
-        {/* Frame Type */}
+        {/* Image Type */}
         <div className="space-y-2">
-          <Label>Frame Type</Label>
+          <Label>Image type</Label>
           <div className="flex rounded-xl border border-border bg-secondary/50 p-1">
             <button
               type="button"
-              onClick={() => setFrameType('first')}
+              onClick={() => setImageType('ugc')}
               className={`flex-1 rounded-lg py-2 text-sm font-medium transition-all duration-200 ${
-                frameType === 'first'
+                imageType === 'ugc'
                   ? 'bg-background text-foreground shadow-sm'
                   : 'text-muted-foreground hover:text-foreground'
               }`}
             >
-              First Frame
+              UGC
             </button>
             <button
               type="button"
-              onClick={() => setFrameType('last')}
+              onClick={() => setImageType('studio')}
               className={`flex-1 rounded-lg py-2 text-sm font-medium transition-all duration-200 ${
-                frameType === 'last'
+                imageType === 'studio'
                   ? 'bg-background text-foreground shadow-sm'
                   : 'text-muted-foreground hover:text-foreground'
               }`}
             >
-              Last Frame
+              Studio
             </button>
           </div>
         </div>
-
-        {/* Content Type */}
-        <div className="space-y-2">
-          <Label>Content Type</Label>
-          <div className="flex rounded-xl border border-border bg-secondary/50 p-1">
-            <button
-              type="button"
-              onClick={() => setContentType('talking_head')}
-              className={`flex-1 rounded-lg py-2 text-sm font-medium transition-all duration-200 ${
-                contentType === 'talking_head'
-                  ? 'bg-background text-foreground shadow-sm'
-                  : 'text-muted-foreground hover:text-foreground'
-              }`}
-            >
-              Talking Head
-            </button>
-            <button
-              type="button"
-              onClick={() => setContentType('broll')}
-              className={`flex-1 rounded-lg py-2 text-sm font-medium transition-all duration-200 ${
-                contentType === 'broll'
-                  ? 'bg-background text-foreground shadow-sm'
-                  : 'text-muted-foreground hover:text-foreground'
-              }`}
-            >
-              B-Roll
-            </button>
-            <button
-              type="button"
-              onClick={() => setContentType('motion_graphics')}
-              className={`flex-1 rounded-lg py-2 text-sm font-medium transition-all duration-200 ${
-                contentType === 'motion_graphics'
-                  ? 'bg-background text-foreground shadow-sm'
-                  : 'text-muted-foreground hover:text-foreground'
-              }`}
-            >
-              Motion Graphics
-            </button>
-          </div>
-          <p className="text-xs text-muted-foreground">{contentTypeHelperText}</p>
-        </div>
-
-        {/* Style (only for talking_head and broll) */}
-        {contentType !== 'motion_graphics' && (
-          <div className="space-y-2">
-            <Label>Style</Label>
-            <div className="flex rounded-xl border border-border bg-secondary/50 p-1">
-              <button
-                type="button"
-                onClick={() => setStyle('ugc')}
-                className={`flex-1 rounded-lg py-2 text-sm font-medium transition-all duration-200 ${
-                  style === 'ugc'
-                    ? 'bg-background text-foreground shadow-sm'
-                    : 'text-muted-foreground hover:text-foreground'
-                }`}
-              >
-                UGC
-              </button>
-              <button
-                type="button"
-                onClick={() => setStyle('studio')}
-                className={`flex-1 rounded-lg py-2 text-sm font-medium transition-all duration-200 ${
-                  style === 'studio'
-                    ? 'bg-background text-foreground shadow-sm'
-                    : 'text-muted-foreground hover:text-foreground'
-                }`}
-              >
-                Studio
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* Camera Perspective (only for broll) */}
-        {contentType === 'broll' && (
-          <div className="space-y-2">
-            <Label>Camera Perspective</Label>
-            <div className="flex rounded-xl border border-border bg-secondary/50 p-1">
-              <button
-                type="button"
-                onClick={() => setCameraPerspective('1st_person')}
-                className={`flex-1 rounded-lg py-2 text-sm font-medium transition-all duration-200 ${
-                  cameraPerspective === '1st_person'
-                    ? 'bg-background text-foreground shadow-sm'
-                    : 'text-muted-foreground hover:text-foreground'
-                }`}
-              >
-                1st Person
-              </button>
-              <button
-                type="button"
-                onClick={() => setCameraPerspective('3rd_person')}
-                className={`flex-1 rounded-lg py-2 text-sm font-medium transition-all duration-200 ${
-                  cameraPerspective === '3rd_person'
-                    ? 'bg-background text-foreground shadow-sm'
-                    : 'text-muted-foreground hover:text-foreground'
-                }`}
-              >
-                3rd Person
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* Actor Selector (only for talking_head) */}
-        {contentType === 'talking_head' && (
-          <div className="space-y-2">
-            <Label>Actor</Label>
-            <ActorSelectorPopover
-              selectedActorId={selectedActorId}
-              onSelect={setSelectedActorId}
-              showVoicePreview={false}
-            />
-          </div>
-        )}
 
         {/* Aspect Ratio */}
         <div className="space-y-2">
-          <Label>Aspect Ratio</Label>
-          <div className="flex rounded-xl border border-border bg-secondary/50 p-1">
-            <button
-              type="button"
-              onClick={() => setAspectRatio('9:16')}
-              className={`flex-1 rounded-lg py-2 text-sm font-medium transition-all duration-200 ${
-                aspectRatio === '9:16'
-                  ? 'bg-background text-foreground shadow-sm'
-                  : 'text-muted-foreground hover:text-foreground'
-              }`}
-            >
-              9:16
-            </button>
-            <button
-              type="button"
-              onClick={() => setAspectRatio('16:9')}
-              className={`flex-1 rounded-lg py-2 text-sm font-medium transition-all duration-200 ${
-                aspectRatio === '16:9'
-                  ? 'bg-background text-foreground shadow-sm'
-                  : 'text-muted-foreground hover:text-foreground'
-              }`}
-            >
-              16:9
-            </button>
-            <button
-              type="button"
-              onClick={() => setAspectRatio('1:1')}
-              className={`flex-1 rounded-lg py-2 text-sm font-medium transition-all duration-200 ${
-                aspectRatio === '1:1'
-                  ? 'bg-background text-foreground shadow-sm'
-                  : 'text-muted-foreground hover:text-foreground'
-              }`}
-            >
-              1:1
-            </button>
-          </div>
-        </div>
-
-        {/* Resolution */}
-        <div className="space-y-2">
-          <Label>Resolution</Label>
-          <Select value={resolution} onValueChange={(val) => setResolution(val as Resolution)}>
+          <Label>Aspect ratio</Label>
+          <Select value={aspectRatio} onValueChange={setAspectRatio}>
             <SelectTrigger className="rounded-xl">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="1K">1K</SelectItem>
-              <SelectItem value="2K">2K (Recommended)</SelectItem>
-              <SelectItem value="4K">4K</SelectItem>
+              <SelectItem value="1:1">1:1 (Square)</SelectItem>
+              <SelectItem value="9:16">9:16 (Portrait)</SelectItem>
+              <SelectItem value="16:9">16:9 (Landscape)</SelectItem>
             </SelectContent>
           </Select>
-          <p className="text-xs text-muted-foreground">
-            Cost: {creditCost} credit{creditCost !== 1 ? 's' : ''}
-          </p>
         </div>
 
         {/* Reference Images */}
@@ -562,7 +344,7 @@ export default function FirstFrameForm({
             id="prompt"
             value={prompt}
             onChange={(e) => setPrompt(e.target.value)}
-            placeholder={promptPlaceholder}
+            placeholder="Describe the image you want to generate..."
             className="min-h-24 rounded-xl resize-none"
           />
         </div>
@@ -580,7 +362,7 @@ export default function FirstFrameForm({
           ) : (
             <>
               <Sparkles className="h-4 w-4" />
-              Generate {frameType === 'first' ? 'First' : 'Last'} Frame • {creditCost} Credits
+              Generate First Frame • {creditCost} Credits
             </>
           )}
         </Button>

@@ -1,6 +1,6 @@
 import { supabase } from '@/integrations/supabase/client';
 
-export type GenerationType = 'first_frame' | 'lip_sync' | 'script' | 'speech' | 'b_roll' | 'frame';
+export type GenerationType = 'first_frame' | 'lip_sync' | 'script' | 'speech' | 'b_roll';
 
 // Error types for better user messaging
 export type GenerationErrorType = 
@@ -54,19 +54,6 @@ interface FirstFramePayload extends BasePayload {
   reference_images?: string[];
 }
 
-interface FramePayload extends BasePayload {
-  prompt: string;
-  aspect_ratio: '1:1' | '9:16' | '16:9';
-  reference_images?: string[];
-  frame_type: 'first' | 'last';
-  content_type: 'talking_head' | 'broll' | 'motion_graphics';
-  style?: 'ugc' | 'studio' | null;
-  camera_perspective?: '1st_person' | '3rd_person' | null;
-  resolution: '1K' | '2K' | '4K';
-  actor_id?: string | null;
-  actor_360_url?: string | null;
-}
-
 interface TalkingHeadPayload extends BasePayload {
   script: string;
   voice_id: string;
@@ -86,11 +73,10 @@ interface TalkingHeadQuickPayload extends BasePayload {
   audio_duration: number;
 }
 
-type GenerationPayload = FirstFramePayload | FramePayload | TalkingHeadPayload | ScriptPayload | TalkingHeadQuickPayload;
+type GenerationPayload = FirstFramePayload | TalkingHeadPayload | ScriptPayload | TalkingHeadQuickPayload;
 
 export const CREDIT_COSTS = {
   first_frame: 0.25,
-  frame: 0.25, // Default, but can be dynamic based on resolution
   lip_sync: 1.0,
   talking_head: 1.0, // backward compatibility
   script: 0.5,
@@ -98,14 +84,6 @@ export const CREDIT_COSTS = {
   audio: 0.5, // backward compatibility
   b_roll: 2.0,
 };
-
-// Dynamic credit cost for frame generation based on resolution
-export function getFrameCreditCost(resolution: '1K' | '2K' | '4K'): number {
-  if (resolution === '4K') {
-    return 0.5;
-  }
-  return 0.25;
-}
 
 export interface GenerationResult {
   success: boolean;

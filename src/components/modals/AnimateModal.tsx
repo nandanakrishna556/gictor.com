@@ -745,7 +745,7 @@ export default function AnimateModal({
               
               {/* Last Frame Upload */}
               <div className="space-y-2">
-                <Label>Last Frame {isMotionGraphics && <span className="text-destructive">*</span>}</Label>
+                <Label>Last Frame {isMotionGraphics ? <span className="text-destructive">*</span> : '(Optional)'}</Label>
                 {lastFrameUrl ? (
                   <div className="relative rounded-xl overflow-hidden border border-border">
                     <img src={lastFrameUrl} alt="Last frame" className="w-full h-40 object-cover" />
@@ -783,7 +783,7 @@ export default function AnimateModal({
               
               {/* Prompt */}
               <div className="space-y-2">
-                <Label>Prompt</Label>
+                <Label>Prompt (Optional)</Label>
                 <Textarea
                   value={prompt}
                   onChange={(e) => {
@@ -795,6 +795,9 @@ export default function AnimateModal({
                     : "Describe the transition you want (e.g., 'smooth zoom transition')"}
                   rows={3}
                 />
+                <p className="text-xs text-muted-foreground">
+                  AI will enhance your prompt or analyze the images if left empty
+                </p>
               </div>
               
               {/* Generate Button */}
