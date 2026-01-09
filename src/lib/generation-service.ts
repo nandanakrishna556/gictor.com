@@ -83,6 +83,11 @@ export const CREDIT_COSTS = {
   speech: 0.5,
   audio: 0.5, // backward compatibility
   b_roll: 2.0,
+  frame: 0.25, // base cost, 4K is 0.5
+};
+
+export const getFrameCreditCost = (resolution: '1K' | '2K' | '4K'): number => {
+  return resolution === '4K' ? 0.5 : 0.25;
 };
 
 export interface GenerationResult {
