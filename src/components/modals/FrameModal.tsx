@@ -954,6 +954,11 @@ export default function FrameModal({
                   rows={3}
                   className="resize-none"
                 />
+                {hasOutput && (
+                  <p className="text-xs text-muted-foreground">
+                    Describe what you'd like to change
+                  </p>
+                )}
               </div>
               
               {/* Generate Section */}
@@ -972,8 +977,10 @@ export default function FrameModal({
                       <Loader2 className="h-4 w-4 animate-spin mr-2" strokeWidth={1.5} />
                       Generating...
                     </>
+                  ) : hasOutput ? (
+                    `Regenerate • ${creditCost} credits`
                   ) : (
-                    'Generate'
+                    `Generate • ${creditCost} credits`
                   )}
                 </Button>
               </div>
