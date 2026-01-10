@@ -143,7 +143,7 @@ const FilePayloadSchema = z.object({
     style: z.enum(['talking_head', 'broll', 'motion_graphics']).optional(),
     substyle: z.enum(['ugc', 'studio']).nullable().optional(),
     actor_id: z.string().uuid().nullable().optional(),
-    actor_360_url: z.string().url().optional(),
+    actor_360_url: z.string().url().nullable().optional(),
     output_image_url: z.string().url().nullable().optional(),
     camera_perspective: z.enum(['1st_person', '3rd_person']).nullable().optional(),
     frame_resolution: z.enum(['1K', '2K', '4K']).optional(),
