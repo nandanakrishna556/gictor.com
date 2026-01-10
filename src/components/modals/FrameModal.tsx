@@ -116,7 +116,12 @@ export default function FrameModal({
       return data;
     },
     enabled: !!fileId,
-    refetchInterval: isGenerating ? 2000 : false,
+    // Refetch based on BOTH local state AND file's actual status
+    refetchInterval: (query) => {
+      const fileData = query.state.data;
+      const shouldPoll = isGenerating || fileData?.generation_status === 'processing';
+      return shouldPoll ? 2000 : false;
+    },
   });
   
   // Get current status option
@@ -136,7 +141,11 @@ export default function FrameModal({
   const canGenerate = !isGenerating && profile && (profile.credits ?? 0) >= creditCost;
   const hasOutput = file?.generation_status === 'completed' && file?.download_url;
   
-  // Sync file data when loaded
+  // Track if we've already shown toasts for current generation
+  const hasShownCompletionToastRef = useRef(false);
+  const hasShownErrorToastRef = useRef(false);
+  
+  // Sync file data when loaded (one-time init for form fields)
   useEffect(() => {
     if (file && !fileLoadedRef.current) {
       fileLoadedRef.current = true;
@@ -155,32 +164,47 @@ export default function FrameModal({
       if (params?.camera_perspective) setCameraPerspective(params.camera_perspective as CameraPerspective);
       if (params?.resolution) setResolution(params.resolution as Resolution);
       if (params?.prompt) setPrompt(params.prompt as string);
-      
-      // Check if generation is in progress
-      if (file.generation_status === 'processing') {
-        setIsGenerating(true);
-        setGenerationProgress(file.progress || 0);
-      }
     }
   }, [file]);
   
-  // Update progress when file updates during generation
+  // ALWAYS sync generation status from file data - this is the source of truth
   useEffect(() => {
-    if (file && isGenerating) {
-      if (file.generation_status === 'completed' && file.download_url) {
-        setIsGenerating(false);
-        setGenerationProgress(100);
+    if (!file) return;
+    
+    const fileIsGenerating = file.generation_status === 'processing';
+    
+    // Always sync isGenerating state with file's actual status
+    if (fileIsGenerating) {
+      if (!isGenerating) {
+        setIsGenerating(true);
+        // Reset toast refs when starting new generation
+        hasShownCompletionToastRef.current = false;
+        hasShownErrorToastRef.current = false;
+      }
+      setGenerationProgress(file.progress || 0);
+    }
+    
+    // Handle completion
+    if (file.generation_status === 'completed' && file.download_url) {
+      if (isGenerating && !hasShownCompletionToastRef.current) {
+        hasShownCompletionToastRef.current = true;
         toast.success('Image generated!');
         onSuccess?.();
-      } else if (file.generation_status === 'failed') {
-        setIsGenerating(false);
-        setGenerationProgress(0);
-        toast.error(file.error_message || 'Generation failed');
-      } else if (file.progress) {
-        setGenerationProgress(file.progress);
       }
+      setIsGenerating(false);
+      setGenerationProgress(100);
     }
-  }, [file, isGenerating, onSuccess]);
+    
+    // Handle failure
+    if (file.generation_status === 'failed') {
+      if (isGenerating && !hasShownErrorToastRef.current) {
+        hasShownErrorToastRef.current = true;
+        toast.error(file.error_message || 'Generation failed');
+      }
+      setIsGenerating(false);
+      setGenerationProgress(0);
+    }
+  }, [file, onSuccess]); // Removed isGenerating from deps to avoid stale closures - we read it inside
   
   // Auto-save functionality
   const triggerAutoSave = useCallback(() => {
