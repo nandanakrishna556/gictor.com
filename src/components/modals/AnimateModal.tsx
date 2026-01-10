@@ -840,10 +840,6 @@ export default function AnimateModal({
                       <p className="text-sm text-muted-foreground">Generating animation...</p>
                     </div>
                   </div>
-                  <Progress value={generationProgress} className="h-2" />
-                  <p className="text-center text-sm text-muted-foreground">
-                    {generationProgress}% complete
-                  </p>
                 </div>
               )}
               

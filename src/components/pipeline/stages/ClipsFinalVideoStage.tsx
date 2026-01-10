@@ -325,11 +325,6 @@ export default function BRollFinalVideoStage({ pipelineId, onComplete, stageNavi
             </div>
             
             <div className="space-y-2">
-              <Progress value={generationProgress} className="h-2" />
-              <div className="flex justify-between text-xs text-muted-foreground">
-                <span>{Math.round(generationProgress)}% complete</span>
-                <span>{formatTimeRemaining()}</span>
-              </div>
             </div>
             
             <div className="flex justify-center gap-1.5 pt-2">

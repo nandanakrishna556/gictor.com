@@ -728,10 +728,6 @@ export default function LipSyncModal({
                       <p className="text-sm text-muted-foreground">Generating lip sync video...</p>
                     </div>
                   </div>
-                  <Progress value={generationProgress} className="h-2" />
-                  <p className="text-center text-sm text-muted-foreground">
-                    {generationProgress}% complete
-                  </p>
                 </div>
               )}
               

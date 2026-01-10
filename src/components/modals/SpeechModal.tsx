@@ -755,10 +755,6 @@ export default function SpeechModal({
                       <p className="text-sm text-muted-foreground">Generating speech audio...</p>
                     </div>
                   </div>
-                  <Progress value={generationProgress} className="h-2" />
-                  <p className="text-center text-sm text-muted-foreground">
-                    {generationProgress}% complete
-                  </p>
                 </div>
               )}
               

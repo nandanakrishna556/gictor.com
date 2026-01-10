@@ -1072,8 +1072,6 @@ export default function FrameModal({
                       <p className="text-sm text-muted-foreground">Generating your image...</p>
                     </div>
                   </div>
-                  <Progress value={generationProgress} className="h-2" />
-                  <p className="text-center text-sm text-muted-foreground">{generationProgress}% complete</p>
                 </div>
               ) : hasOutput && file?.download_url ? (
                 <div className="space-y-4 animate-fade-in">
