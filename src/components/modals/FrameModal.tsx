@@ -107,14 +107,12 @@ export default function FrameModal({
   // Upload state
   const [uploadingIndex, setUploadingIndex] = useState<number | null>(null);
 
-  // Generation state
-  const [isGenerating, setIsGenerating] = useState(false);
-  const [generationProgress, setGenerationProgress] = useState(0);
+  // Generation state - localGenerating is ONLY for instant feedback before server updates
+  const [localGenerating, setLocalGenerating] = useState(false);
 
-  // Refs for tracking generation state transitions
-  const hasShownCompletionToastRef = useRef(false);
-  const hasShownErrorToastRef = useRef(false);
-  const lastGenerationStatusRef = useRef<string | null>(null);
+  // Track previous status for transition detection
+  const prevFileStatusRef = useRef<string | null>(null);
+  const toastShownForFileIdRef = useRef<string | null>(null);
 
   // Fetch file data
   const { data: file } = useQuery({
@@ -128,10 +126,18 @@ export default function FrameModal({
     // Refetch based on FILE status, not just local state
     refetchInterval: (query) => {
       const fileData = query.state.data;
-      const shouldPoll = isGenerating || fileData?.generation_status === 'processing';
+      const shouldPoll = localGenerating || fileData?.generation_status === 'processing';
       return shouldPoll ? 2000 : false;
     },
   });
+
+  // DERIVED from file - this is the source of truth
+  const isFileGenerating = file?.generation_status === 'processing';
+  const fileProgress = file?.progress || 0;
+
+  // Combined state: show generating if local OR server says so
+  const isGenerating = localGenerating || isFileGenerating;
+  const generationProgress = isFileGenerating ? fileProgress : (localGenerating ? 5 : 0);
 
   // Get current status option
   const currentStatusOption = statusOptions.find((s) => s.value === displayStatus) || statusOptions[0];
@@ -151,7 +157,7 @@ export default function FrameModal({
   const canGenerate = !isGenerating && profile && (profile.credits ?? 0) >= creditCost;
   const hasOutput = file?.generation_status === "completed" && file?.download_url;
 
-  // Sync file data when loaded AND always sync generation status
+  // Sync file data when loaded
   useEffect(() => {
     if (!file) return;
 
@@ -174,50 +180,52 @@ export default function FrameModal({
       if (params?.resolution) setResolution(params.resolution as Resolution);
       if (params?.prompt) setPrompt(params.prompt as string);
     }
+  }, [file]);
 
-    // CRITICAL: ALWAYS sync generation status from file (not just on first load)
-    // This runs on EVERY file update to keep progress in sync
+  // Handle generation status transitions - ONLY for toasts
+  useEffect(() => {
+    if (!file) return;
+
     const currentStatus = file.generation_status;
-    const prevStatus = lastGenerationStatusRef.current;
+    const prevStatus = prevFileStatusRef.current;
 
-    if (currentStatus === 'processing') {
-      // Reset toast refs when transitioning TO processing
-      if (prevStatus !== 'processing') {
-        hasShownCompletionToastRef.current = false;
-        hasShownErrorToastRef.current = false;
-      }
-      setIsGenerating(true);
-      setGenerationProgress(file.progress || 0);  // SYNC FROM FILE
-    } else if (currentStatus === 'completed' && file.download_url) {
-      // Show toast only when transitioning TO completed
-      if (prevStatus === 'processing' && !hasShownCompletionToastRef.current) {
-        hasShownCompletionToastRef.current = true;
+    // Detect transition FROM processing TO completed
+    if (prevStatus === 'processing' && currentStatus === 'completed' && file.download_url) {
+      // Only show toast once per file completion
+      if (toastShownForFileIdRef.current !== file.id) {
+        toastShownForFileIdRef.current = file.id;
         toast.success('Image generated!');
         onSuccess?.();
+        queryClient.invalidateQueries({ queryKey: ['files', currentProjectId] });
       }
-      setIsGenerating(false);
-      setGenerationProgress(100);
-    } else if (currentStatus === 'failed') {
-      // Show toast only when transitioning TO failed
-      if (prevStatus === 'processing' && !hasShownErrorToastRef.current) {
-        hasShownErrorToastRef.current = true;
+      setLocalGenerating(false);
+    }
+
+    // Detect transition FROM processing TO failed
+    if (prevStatus === 'processing' && currentStatus === 'failed') {
+      if (toastShownForFileIdRef.current !== file.id) {
+        toastShownForFileIdRef.current = file.id;
         toast.error(file.error_message || 'Generation failed');
       }
-      setIsGenerating(false);
-      setGenerationProgress(0);
+      setLocalGenerating(false);
+    }
+
+    // Clear local generating when server catches up
+    if (localGenerating && isFileGenerating) {
+      setLocalGenerating(false);
     }
 
     // Update ref for next comparison
-    lastGenerationStatusRef.current = currentStatus;
-  }, [file, onSuccess]);
+    prevFileStatusRef.current = currentStatus;
+  }, [file, localGenerating, isFileGenerating, onSuccess, queryClient, currentProjectId]);
 
-  // Reset state when modal closes
+  // Reset local state when modal closes
   useEffect(() => {
     if (!open) {
+      setLocalGenerating(false);
       fileLoadedRef.current = false;
-      lastGenerationStatusRef.current = null;
-      hasShownCompletionToastRef.current = false;
-      hasShownErrorToastRef.current = false;
+      prevFileStatusRef.current = null;
+      // Don't reset toastShownForFileIdRef - we want to remember which file we showed toast for
     }
   }, [open]);
 
@@ -417,29 +425,23 @@ export default function FrameModal({
 
   // Handle generate
   const handleGenerate = async () => {
-    // IMMEDIATE visual feedback - must be first lines
-    setIsGenerating(true);
-    setGenerationProgress(5);
-    lastGenerationStatusRef.current = 'processing';
+    // IMMEDIATE visual feedback
+    setLocalGenerating(true);
 
-    // Reset toast refs for new generation
-    hasShownCompletionToastRef.current = false;
-    hasShownErrorToastRef.current = false;
+    // Reset toast tracking for this new generation
+    toastShownForFileIdRef.current = null;
+    prevFileStatusRef.current = 'processing';
 
-    // Now do validation
+    // Validation
     if (!profile || !user) {
-      setIsGenerating(false);
-      setGenerationProgress(0);
-      lastGenerationStatusRef.current = null;
+      setLocalGenerating(false);
       return;
     }
 
     // Check credits
     if ((profile.credits ?? 0) < creditCost) {
       toast.error(`Insufficient credits. You need ${creditCost} credits.`);
-      setIsGenerating(false);
-      setGenerationProgress(0);
-      lastGenerationStatusRef.current = null;
+      setLocalGenerating(false);
       return;
     }
 
@@ -518,13 +520,18 @@ export default function FrameModal({
       queryClient.invalidateQueries({ queryKey: ["files", currentProjectId] });
     } catch (error) {
       console.error("Generation error:", error);
-      setIsGenerating(false);
-      setGenerationProgress(0);
-      lastGenerationStatusRef.current = null;
+      setLocalGenerating(false);
       toast.error("Failed to start generation");
 
       // Revert file status
-      await supabase.from("files").update({ generation_status: "idle" }).eq("id", fileId);
+      await supabase
+        .from("files")
+        .update({ 
+          generation_status: 'idle',
+          progress: 0,
+          error_message: error instanceof Error ? error.message : 'Unknown error'
+        })
+        .eq("id", fileId);
     }
   };
 
