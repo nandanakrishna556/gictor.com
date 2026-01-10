@@ -111,6 +111,11 @@ export default function FrameModal({
   const [isGenerating, setIsGenerating] = useState(false);
   const [generationProgress, setGenerationProgress] = useState(0);
 
+  // Refs for tracking generation state transitions
+  const hasShownCompletionToastRef = useRef(false);
+  const hasShownErrorToastRef = useRef(false);
+  const lastGenerationStatusRef = useRef<string | null>(null);
+
   // Fetch file data
   const { data: file } = useQuery({
     queryKey: ["file", fileId],
@@ -120,7 +125,12 @@ export default function FrameModal({
       return data;
     },
     enabled: !!fileId,
-    refetchInterval: isGenerating ? 2000 : false,
+    // Refetch based on FILE status, not just local state
+    refetchInterval: (query) => {
+      const fileData = query.state.data;
+      const shouldPoll = isGenerating || fileData?.generation_status === 'processing';
+      return shouldPoll ? 2000 : false;
+    },
   });
 
   // Get current status option
@@ -141,9 +151,12 @@ export default function FrameModal({
   const canGenerate = !isGenerating && profile && (profile.credits ?? 0) >= creditCost;
   const hasOutput = file?.generation_status === "completed" && file?.download_url;
 
-  // Sync file data when loaded
+  // Sync file data when loaded AND always sync generation status
   useEffect(() => {
-    if (file && !fileLoadedRef.current) {
+    if (!file) return;
+
+    // First time load - set name, tags, params, etc.
+    if (!fileLoadedRef.current) {
       fileLoadedRef.current = true;
       setName(file.name);
       setDisplayStatus(file.status || initialStatusRef.current || "draft");
@@ -160,32 +173,53 @@ export default function FrameModal({
       if (params?.camera_perspective) setCameraPerspective(params.camera_perspective as CameraPerspective);
       if (params?.resolution) setResolution(params.resolution as Resolution);
       if (params?.prompt) setPrompt(params.prompt as string);
-
-      // Check if generation is in progress
-      if (file.generation_status === "processing") {
-        setIsGenerating(true);
-        setGenerationProgress(file.progress || 0);
-      }
     }
-  }, [file]);
 
-  // Update progress when file updates during generation
-  useEffect(() => {
-    if (file && isGenerating) {
-      if (file.generation_status === "completed" && file.download_url) {
-        setIsGenerating(false);
-        setGenerationProgress(100);
-        toast.success("Image generated!");
+    // CRITICAL: ALWAYS sync generation status from file (not just on first load)
+    // This runs on EVERY file update to keep progress in sync
+    const currentStatus = file.generation_status;
+    const prevStatus = lastGenerationStatusRef.current;
+
+    if (currentStatus === 'processing') {
+      // Reset toast refs when transitioning TO processing
+      if (prevStatus !== 'processing') {
+        hasShownCompletionToastRef.current = false;
+        hasShownErrorToastRef.current = false;
+      }
+      setIsGenerating(true);
+      setGenerationProgress(file.progress || 0);  // SYNC FROM FILE
+    } else if (currentStatus === 'completed' && file.download_url) {
+      // Show toast only when transitioning TO completed
+      if (prevStatus === 'processing' && !hasShownCompletionToastRef.current) {
+        hasShownCompletionToastRef.current = true;
+        toast.success('Image generated!');
         onSuccess?.();
-      } else if (file.generation_status === "failed") {
-        setIsGenerating(false);
-        setGenerationProgress(0);
-        toast.error(file.error_message || "Generation failed");
-      } else if (file.progress) {
-        setGenerationProgress(file.progress);
       }
+      setIsGenerating(false);
+      setGenerationProgress(100);
+    } else if (currentStatus === 'failed') {
+      // Show toast only when transitioning TO failed
+      if (prevStatus === 'processing' && !hasShownErrorToastRef.current) {
+        hasShownErrorToastRef.current = true;
+        toast.error(file.error_message || 'Generation failed');
+      }
+      setIsGenerating(false);
+      setGenerationProgress(0);
     }
-  }, [file, isGenerating, onSuccess]);
+
+    // Update ref for next comparison
+    lastGenerationStatusRef.current = currentStatus;
+  }, [file, onSuccess]);
+
+  // Reset state when modal closes
+  useEffect(() => {
+    if (!open) {
+      fileLoadedRef.current = false;
+      lastGenerationStatusRef.current = null;
+      hasShownCompletionToastRef.current = false;
+      hasShownErrorToastRef.current = false;
+    }
+  }, [open]);
 
   // Auto-save functionality
   const triggerAutoSave = useCallback(() => {
@@ -386,11 +420,17 @@ export default function FrameModal({
     // IMMEDIATE visual feedback - must be first lines
     setIsGenerating(true);
     setGenerationProgress(5);
+    lastGenerationStatusRef.current = 'processing';
+
+    // Reset toast refs for new generation
+    hasShownCompletionToastRef.current = false;
+    hasShownErrorToastRef.current = false;
 
     // Now do validation
     if (!profile || !user) {
       setIsGenerating(false);
       setGenerationProgress(0);
+      lastGenerationStatusRef.current = null;
       return;
     }
 
@@ -399,6 +439,7 @@ export default function FrameModal({
       toast.error(`Insufficient credits. You need ${creditCost} credits.`);
       setIsGenerating(false);
       setGenerationProgress(0);
+      lastGenerationStatusRef.current = null;
       return;
     }
 
@@ -478,6 +519,8 @@ export default function FrameModal({
     } catch (error) {
       console.error("Generation error:", error);
       setIsGenerating(false);
+      setGenerationProgress(0);
+      lastGenerationStatusRef.current = null;
       toast.error("Failed to start generation");
 
       // Revert file status
@@ -857,78 +900,39 @@ export default function FrameModal({
                 </div>
               )}
 
-              {/* Aspect Ratio */}
+              {/* Aspect Ratio & Resolution - Same Row */}
               <div className="space-y-2">
-                <label className="text-sm font-medium">Aspect Ratio</label>
-                <div className="flex gap-2">
-                  <Button
-                    variant={aspectRatio === "9:16" ? "default" : "outline"}
-                    size="sm"
-                    className="flex-1"
-                    onClick={() => handleAspectRatioChange("9:16")}
-                  >
-                    9:16
-                  </Button>
-                  <Button
-                    variant={aspectRatio === "16:9" ? "default" : "outline"}
-                    size="sm"
-                    className="flex-1"
-                    onClick={() => handleAspectRatioChange("16:9")}
-                  >
-                    16:9
-                  </Button>
-                  <Button
-                    variant={aspectRatio === "1:1" ? "default" : "outline"}
-                    size="sm"
-                    className="flex-1"
-                    onClick={() => handleAspectRatioChange("1:1")}
-                  >
-                    1:1
-                  </Button>
+                <div className="flex gap-4">
+                  {/* Aspect Ratio Dropdown */}
+                  <div className="flex-1 space-y-1">
+                    <label className="text-sm font-medium">Aspect Ratio</label>
+                    <Select value={aspectRatio} onValueChange={(value) => handleAspectRatioChange(value as AspectRatio)}>
+                      <SelectTrigger className="w-full">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="9:16">9:16 (Vertical)</SelectItem>
+                        <SelectItem value="16:9">16:9 (Horizontal)</SelectItem>
+                        <SelectItem value="1:1">1:1 (Square)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  {/* Resolution Dropdown */}
+                  <div className="flex-1 space-y-1">
+                    <label className="text-sm font-medium">Resolution</label>
+                    <Select value={resolution} onValueChange={(value) => { setResolution(value as Resolution); setHasUnsavedChanges(true); }}>
+                      <SelectTrigger className="w-full">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="1K">1K • 0.25 credits</SelectItem>
+                        <SelectItem value="2K">2K • 0.25 credits</SelectItem>
+                        <SelectItem value="4K">4K • 0.5 credits</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
-              </div>
-
-              {/* Resolution */}
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Resolution</label>
-                <div className="flex gap-2">
-                  <Button
-                    variant={resolution === "1K" ? "default" : "outline"}
-                    size="sm"
-                    className="flex-1"
-                    onClick={() => {
-                      setResolution("1K");
-                      setHasUnsavedChanges(true);
-                    }}
-                  >
-                    1K
-                  </Button>
-                  <Button
-                    variant={resolution === "2K" ? "default" : "outline"}
-                    size="sm"
-                    className="flex-1"
-                    onClick={() => {
-                      setResolution("2K");
-                      setHasUnsavedChanges(true);
-                    }}
-                  >
-                    2K
-                  </Button>
-                  <Button
-                    variant={resolution === "4K" ? "default" : "outline"}
-                    size="sm"
-                    className="flex-1"
-                    onClick={() => {
-                      setResolution("4K");
-                      setHasUnsavedChanges(true);
-                    }}
-                  >
-                    4K
-                  </Button>
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  {resolution === "4K" ? "Higher quality • 0.5 credits" : "Standard quality • 0.25 credits"}
-                </p>
               </div>
 
               {/* Reference Images */}
