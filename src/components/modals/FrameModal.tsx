@@ -21,7 +21,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Progress } from "@/components/ui/progress";
-import { Skeleton } from "@/components/ui/skeleton";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { TagList, TagSelector, TagData } from "@/components/ui/tag-badge";
@@ -1067,21 +1066,14 @@ export default function FrameModal({
 
               {isGenerating ? (
                 <div className="space-y-4">
-                  <div className="aspect-square rounded-xl overflow-hidden relative">
-                    <Skeleton className="absolute inset-0" />
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <div className="text-center space-y-3 z-10">
-                        <div className="h-16 w-16 rounded-full bg-background/80 backdrop-blur-sm flex items-center justify-center mx-auto shadow-lg">
-                          <Loader2 className="h-8 w-8 animate-spin text-primary" strokeWidth={1.5} />
-                        </div>
-                        <p className="text-sm font-medium text-foreground">Generating your image...</p>
-                      </div>
+                  <div className="aspect-square rounded-xl bg-secondary/50 flex items-center justify-center">
+                    <div className="text-center space-y-3">
+                      <Loader2 className="h-10 w-10 animate-spin text-primary mx-auto" strokeWidth={1.5} />
+                      <p className="text-sm text-muted-foreground">Generating your image...</p>
                     </div>
                   </div>
-                  <div className="space-y-2">
-                    <Progress value={generationProgress} className="h-2" />
-                    <p className="text-center text-sm text-muted-foreground">{Math.round(generationProgress)}% complete</p>
-                  </div>
+                  <Progress value={generationProgress} className="h-2" />
+                  <p className="text-center text-sm text-muted-foreground">{generationProgress}% complete</p>
                 </div>
               ) : hasOutput && file?.download_url ? (
                 <div className="space-y-4 animate-fade-in">
