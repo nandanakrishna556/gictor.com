@@ -171,6 +171,15 @@ export default function FrameModal({
       setDisplayStatus(file.status || initialStatusRef.current || "draft");
       setSelectedTags(file.tags || []);
 
+      // CRITICAL: Initialize prevFileStatusRef to current status to prevent false "transitions"
+      // This prevents showing toast when opening a file that's already completed
+      prevFileStatusRef.current = file.generation_status;
+      
+      // If file is already completed, mark toast as shown to prevent duplicate
+      if (file.generation_status === 'completed' && file.download_url) {
+        toastShownForFileIdRef.current = file.id;
+      }
+
       // Restore generation params if any
       const params = file.generation_params as Record<string, unknown> | null;
       if (params?.frame_type) setFrameType(params.frame_type as FrameType);
