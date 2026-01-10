@@ -366,16 +366,24 @@ export default function FrameModal({
   
   // Handle generate
   const handleGenerate = async () => {
-    if (!canGenerate || !profile || !user) return;
+    // IMMEDIATE visual feedback - must be first lines
+    setIsGenerating(true);
+    setGenerationProgress(5);
+    
+    // Now do validation
+    if (!profile || !user) {
+      setIsGenerating(false);
+      setGenerationProgress(0);
+      return;
+    }
     
     // Check credits
     if ((profile.credits ?? 0) < creditCost) {
       toast.error(`Insufficient credits. You need ${creditCost} credits.`);
+      setIsGenerating(false);
+      setGenerationProgress(0);
       return;
     }
-    
-    setIsGenerating(true);
-    setGenerationProgress(0);
     
     try {
       // Refresh session to get fresh JWT token
@@ -954,7 +962,7 @@ export default function FrameModal({
                   rows={3}
                   className="resize-none"
                 />
-                {hasOutput && (
+                {hasOutput && !isGenerating && (
                   <p className="text-xs text-muted-foreground">
                     Describe what you'd like to change
                   </p>
@@ -969,7 +977,7 @@ export default function FrameModal({
                 </div>
                 <Button
                   onClick={handleGenerate}
-                  disabled={!canGenerate}
+                  disabled={!canGenerate || isGenerating}
                   className="w-full"
                 >
                   {isGenerating ? (
@@ -990,7 +998,7 @@ export default function FrameModal({
             <div className="w-1/2 overflow-y-auto p-6 space-y-6 bg-muted/10">
               <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">Output</h3>
               
-              {isGenerating && (
+              {isGenerating ? (
                 <div className="space-y-4">
                   <div className="aspect-square rounded-xl bg-secondary/50 flex items-center justify-center">
                     <div className="text-center space-y-3">
@@ -1003,9 +1011,7 @@ export default function FrameModal({
                     {generationProgress}% complete
                   </p>
                 </div>
-              )}
-              
-              {hasOutput && file?.download_url && (
+              ) : hasOutput && file?.download_url ? (
                 <div className="space-y-4 animate-fade-in">
                   <div className="rounded-xl border border-border overflow-hidden">
                     <img
@@ -1021,9 +1027,7 @@ export default function FrameModal({
                     </a>
                   </Button>
                 </div>
-              )}
-              
-              {!isGenerating && !hasOutput && (
+              ) : (
                 <div className="aspect-square rounded-xl bg-secondary/30 border-2 border-dashed border-border flex flex-col items-center justify-center gap-2">
                   <ImageIcon className="h-10 w-10 text-muted-foreground/50" strokeWidth={1.5} />
                   <p className="text-muted-foreground text-sm">Generated image will appear here</p>
