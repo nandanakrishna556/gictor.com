@@ -111,22 +111,16 @@ export default function FrameModal({
   const [isGenerating, setIsGenerating] = useState(false);
   const [generationProgress, setGenerationProgress] = useState(0);
 
-  // Use refs to track toast state without causing re-renders
-  const hasShownCompletionToastRef = useRef(false);
-  const hasShownErrorToastRef = useRef(false);
-  const lastGenerationStatusRef = useRef<string | null>(null);
-
   // Fetch file data
-  const { data: file, refetch } = useQuery({
+  const { data: file } = useQuery({
     queryKey: ["file", fileId],
     queryFn: async () => {
       const { data, error } = await supabase.from("files").select("*").eq("id", fileId).single();
       if (error) throw error;
       return data;
     },
-    enabled: !!fileId && open,
-    // Always refetch every 2 seconds when modal is open
-    refetchInterval: 2000,
+    enabled: !!fileId,
+    refetchInterval: isGenerating ? 2000 : false,
   });
 
   // Get current status option
@@ -147,21 +141,15 @@ export default function FrameModal({
   const canGenerate = !isGenerating && profile && (profile.credits ?? 0) >= creditCost;
   const hasOutput = file?.generation_status === "completed" && file?.download_url;
 
-  // SYNC generation state from file - this is THE SOURCE OF TRUTH
+  // Sync file data when loaded
   useEffect(() => {
-    if (!file) return;
-
-    const currentStatus = file.generation_status;
-    const prevStatus = lastGenerationStatusRef.current;
-
-    // First time load - set name, tags, params, etc.
-    if (!fileLoadedRef.current) {
+    if (file && !fileLoadedRef.current) {
       fileLoadedRef.current = true;
       setName(file.name);
       setDisplayStatus(file.status || initialStatusRef.current || "draft");
       setSelectedTags(file.tags || []);
 
-      // Restore generation params
+      // Restore generation params if any
       const params = file.generation_params as Record<string, unknown> | null;
       if (params?.frame_type) setFrameType(params.frame_type as FrameType);
       if (params?.style) setStyle(params.style as Style);
@@ -172,46 +160,32 @@ export default function FrameModal({
       if (params?.camera_perspective) setCameraPerspective(params.camera_perspective as CameraPerspective);
       if (params?.resolution) setResolution(params.resolution as Resolution);
       if (params?.prompt) setPrompt(params.prompt as string);
-    }
 
-    // ALWAYS sync generation state from file
-    if (currentStatus === "processing") {
-      // Reset toast refs when transitioning TO processing
-      if (prevStatus !== "processing") {
-        hasShownCompletionToastRef.current = false;
-        hasShownErrorToastRef.current = false;
+      // Check if generation is in progress
+      if (file.generation_status === "processing") {
+        setIsGenerating(true);
+        setGenerationProgress(file.progress || 0);
       }
-      setIsGenerating(true);
-      // CRITICAL: Always sync progress from file
-      setGenerationProgress(file.progress || 0);
-    } else if (currentStatus === "completed" && file.download_url) {
-      // Show toast only once when transitioning TO completed
-      if (prevStatus === "processing" && !hasShownCompletionToastRef.current) {
-        hasShownCompletionToastRef.current = true;
+    }
+  }, [file]);
+
+  // Update progress when file updates during generation
+  useEffect(() => {
+    if (file && isGenerating) {
+      if (file.generation_status === "completed" && file.download_url) {
+        setIsGenerating(false);
+        setGenerationProgress(100);
         toast.success("Image generated!");
         onSuccess?.();
-        queryClient.invalidateQueries({ queryKey: ["files", currentProjectId] });
-      }
-      setIsGenerating(false);
-      setGenerationProgress(100);
-    } else if (currentStatus === "failed") {
-      // Show toast only once when transitioning TO failed
-      if (prevStatus === "processing" && !hasShownErrorToastRef.current) {
-        hasShownErrorToastRef.current = true;
-        toast.error(file.error_message || "Generation failed");
-      }
-      setIsGenerating(false);
-      setGenerationProgress(0);
-    } else {
-      // idle or other status
-      if (prevStatus === "processing") {
+      } else if (file.generation_status === "failed") {
         setIsGenerating(false);
+        setGenerationProgress(0);
+        toast.error(file.error_message || "Generation failed");
+      } else if (file.progress) {
+        setGenerationProgress(file.progress);
       }
     }
-
-    // Update the ref for next comparison
-    lastGenerationStatusRef.current = currentStatus;
-  }, [file, onSuccess, queryClient, currentProjectId]);
+  }, [file, isGenerating, onSuccess]);
 
   // Auto-save functionality
   const triggerAutoSave = useCallback(() => {
@@ -238,7 +212,7 @@ export default function FrameModal({
               style,
               substyle: style !== "motion_graphics" ? subStyle : null,
               aspect_ratio: aspectRatio,
-              actor_id: style === "talking_head" || style === "broll" ? selectedActorId : null,
+              actor_id: style === "talking_head" ? selectedActorId : null,
               reference_images: referenceImages,
               prompt,
               camera_perspective: style === "broll" ? cameraPerspective : null,
@@ -289,16 +263,6 @@ export default function FrameModal({
       }
     };
   }, [hasUnsavedChanges, triggerAutoSave]);
-
-  // Reset state when modal closes
-  useEffect(() => {
-    if (!open) {
-      fileLoadedRef.current = false;
-      lastGenerationStatusRef.current = null;
-      hasShownCompletionToastRef.current = false;
-      hasShownErrorToastRef.current = false;
-    }
-  }, [open]);
 
   // Handle input changes
   const handleNameChange = (value: string) => {
@@ -377,11 +341,11 @@ export default function FrameModal({
 
   // Handle reference image upload
   const handleImageUpload = async (index: number, e: React.ChangeEvent<HTMLInputElement>) => {
-    const uploadedFile = e.target.files?.[0];
-    if (!uploadedFile || !user) return;
+    const file = e.target.files?.[0];
+    if (!file || !user) return;
 
     // Validate file type
-    if (!uploadedFile.type.startsWith("image/")) {
+    if (!file.type.startsWith("image/")) {
       toast.error("Please upload an image file");
       return;
     }
@@ -389,8 +353,8 @@ export default function FrameModal({
     setUploadingIndex(index);
 
     try {
-      const fileName = `${user.id}/reference-images/${Date.now()}-${uploadedFile.name}`;
-      const { error: uploadError } = await supabase.storage.from("uploads").upload(fileName, uploadedFile);
+      const fileName = `${user.id}/reference-images/${Date.now()}-${file.name}`;
+      const { error: uploadError } = await supabase.storage.from("uploads").upload(fileName, file);
 
       if (uploadError) throw uploadError;
 
@@ -419,20 +383,14 @@ export default function FrameModal({
 
   // Handle generate
   const handleGenerate = async () => {
-    // IMMEDIATE visual feedback - MUST be first lines, no code before this
+    // IMMEDIATE visual feedback - must be first lines
     setIsGenerating(true);
     setGenerationProgress(5);
-
-    // Reset toast refs for new generation
-    hasShownCompletionToastRef.current = false;
-    hasShownErrorToastRef.current = false;
-    lastGenerationStatusRef.current = "processing";
 
     // Now do validation
     if (!profile || !user) {
       setIsGenerating(false);
       setGenerationProgress(0);
-      lastGenerationStatusRef.current = null;
       return;
     }
 
@@ -441,7 +399,6 @@ export default function FrameModal({
       toast.error(`Insufficient credits. You need ${creditCost} credits.`);
       setIsGenerating(false);
       setGenerationProgress(0);
-      lastGenerationStatusRef.current = null;
       return;
     }
 
@@ -452,13 +409,12 @@ export default function FrameModal({
         throw new Error("Session expired. Please log in again.");
       }
 
-      // Update file generation_status to processing FIRST
-      const { error: updateError } = await supabase
+      // Update file generation_status to processing
+      await supabase
         .from("files")
         .update({
           generation_status: "processing",
-          progress: 5,
-          error_message: null,
+          progress: 0,
           generation_started_at: new Date().toISOString(),
           estimated_duration_seconds: 60,
           generation_params: {
@@ -474,11 +430,6 @@ export default function FrameModal({
           },
         })
         .eq("id", fileId);
-
-      if (updateError) {
-        console.error("Failed to update file status:", updateError);
-        throw updateError;
-      }
 
       // Prepare payload for edge function
       const requestPayload = {
@@ -527,19 +478,10 @@ export default function FrameModal({
     } catch (error) {
       console.error("Generation error:", error);
       setIsGenerating(false);
-      setGenerationProgress(0);
-      lastGenerationStatusRef.current = null;
       toast.error("Failed to start generation");
 
       // Revert file status
-      await supabase
-        .from("files")
-        .update({
-          generation_status: "idle",
-          progress: 0,
-          error_message: error instanceof Error ? error.message : "Unknown error",
-        })
-        .eq("id", fileId);
+      await supabase.from("files").update({ generation_status: "idle" }).eq("id", fileId);
     }
   };
 
@@ -573,7 +515,7 @@ export default function FrameModal({
             style,
             substyle: style !== "motion_graphics" ? subStyle : null,
             aspect_ratio: aspectRatio,
-            actor_id: style === "talking_head" || style === "broll" ? selectedActorId : null,
+            actor_id: style === "talking_head" ? selectedActorId : null,
             reference_images: referenceImages,
             prompt,
             camera_perspective: style === "broll" ? cameraPerspective : null,
@@ -606,110 +548,114 @@ export default function FrameModal({
 
   return (
     <>
-      {/* Unsaved Changes Warning */}
       <AlertDialog open={showUnsavedWarning} onOpenChange={setShowUnsavedWarning}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Unsaved Changes</AlertDialogTitle>
+            <AlertDialogTitle>Unsaved changes</AlertDialogTitle>
             <AlertDialogDescription>
-              You have unsaved changes. Would you like to save before closing?
+              You have unsaved changes. Would you like to save them before closing?
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel onClick={handleConfirmClose}>Discard</AlertDialogCancel>
-            <AlertDialogAction onClick={handleSaveAndClose}>Save & Close</AlertDialogAction>
+            <AlertDialogCancel onClick={handleConfirmClose}>Don't save</AlertDialogCancel>
+            <AlertDialogAction onClick={handleSaveAndClose}>Save changes</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
 
-      <Dialog open={open} onOpenChange={(open) => !open && handleClose()}>
-        <DialogContent className="max-w-5xl p-0 gap-0 overflow-hidden" hideCloseButton>
+      <Dialog open={open} onOpenChange={handleClose}>
+        <DialogContent className="max-w-[900px] h-[85vh] p-0 gap-0 overflow-hidden rounded-lg flex flex-col [&>button]:hidden">
           {/* Header */}
-          <div className="flex items-center justify-between px-6 py-4 border-b">
-            <div className="flex items-center gap-4">
-              <button
-                onClick={handleClose}
-                className="h-8 w-8 rounded-lg flex items-center justify-center hover:bg-secondary transition-colors"
-              >
-                <ArrowLeft className="h-4 w-4" strokeWidth={1.5} />
-              </button>
-              <span className="text-sm font-medium text-muted-foreground">Frame</span>
-              <Input
-                value={name}
-                onChange={(e) => handleNameChange(e.target.value)}
-                className="h-8 w-40 text-sm font-medium bg-secondary/50 border-0"
-              />
-            </div>
+          <div className="flex items-center gap-3 border-b bg-background px-4 h-[52px] flex-nowrap shrink-0 relative z-10 mt-0">
+            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={handleClose}>
+              <ArrowLeft className="h-4 w-4" strokeWidth={1.5} />
+            </Button>
+            <h2 className="text-lg font-semibold">Frame</h2>
 
+            <div className="h-5 w-px bg-border" />
+
+            <Input value={name} onChange={(e) => handleNameChange(e.target.value)} className="w-28 h-7 text-sm" />
+
+            <LocationSelector
+              projectId={currentProjectId}
+              folderId={currentFolderId}
+              onLocationChange={handleLocationChange}
+            />
+
+            <Select value={displayStatus} onValueChange={handleStatusChange}>
+              <SelectTrigger
+                className={cn(
+                  "h-7 w-fit rounded-md text-xs border-0 px-3 py-1 gap-1",
+                  currentStatusOption.color,
+                  "text-primary-foreground",
+                )}
+              >
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {statusOptions.map((opt) => (
+                  <SelectItem key={opt.value} value={opt.value}>
+                    <div className="flex items-center gap-2">
+                      <div className={cn("h-2 w-2 rounded-full", opt.color)} />
+                      {opt.label}
+                    </div>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            <Popover>
+              <PopoverTrigger asChild>
+                <div className="flex items-center gap-1 cursor-pointer hover:bg-secondary/50 rounded-md px-2 py-1 transition-colors">
+                  {selectedTags.length > 0 ? (
+                    <TagList tags={tagData} selectedTagIds={selectedTags} maxVisible={1} size="sm" />
+                  ) : (
+                    <span className="text-xs text-muted-foreground">+ Add tag</span>
+                  )}
+                </div>
+              </PopoverTrigger>
+              <PopoverContent align="start" className="w-52 bg-popover">
+                <h4 className="text-sm font-medium mb-2">Tags</h4>
+                <TagSelector
+                  tags={tagData}
+                  selectedTagIds={selectedTags}
+                  onToggleTag={handleToggleTag}
+                  onCreateTag={handleCreateTag}
+                  enableDragDrop
+                />
+              </PopoverContent>
+            </Popover>
+
+            <div className="flex-1" />
+
+            {/* Auto-save indicator */}
             <div className="flex items-center gap-3">
-              <LocationSelector
-                currentProjectId={currentProjectId}
-                currentFolderId={currentFolderId}
-                onLocationChange={handleLocationChange}
-              />
-
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className={cn("h-8", currentStatusOption.color.replace("bg-", "hover:bg-"))}
-                  >
-                    <span className={cn("w-2 h-2 rounded-full mr-2", currentStatusOption.color)} />
-                    {currentStatusOption.label}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-40 p-1">
-                  {statusOptions.map((option) => (
-                    <button
-                      key={option.value}
-                      onClick={() => handleStatusChange(option.value)}
-                      className="w-full flex items-center gap-2 px-2 py-1.5 text-sm hover:bg-secondary rounded transition-colors"
-                    >
-                      <span className={cn("w-2 h-2 rounded-full", option.color)} />
-                      {option.label}
-                    </button>
-                  ))}
-                </PopoverContent>
-              </Popover>
-
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button variant="outline" size="sm" className="h-8">
-                    + Add tag
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-64 p-2">
-                  <TagSelector
-                    availableTags={tagData}
-                    selectedTagIds={selectedTags}
-                    onToggle={handleToggleTag}
-                    onCreate={handleCreateTag}
-                  />
-                </PopoverContent>
-              </Popover>
-
-              <button
-                onClick={handleClose}
-                className="h-8 w-8 rounded-lg flex items-center justify-center hover:bg-secondary transition-colors"
-              >
+              <div className="flex items-center gap-1.5 text-sm min-w-[70px] justify-end">
+                {saveStatus === "saving" ? (
+                  <>
+                    <Loader2 className="h-3.5 w-3.5 animate-spin text-muted-foreground" />
+                    <span className="text-muted-foreground">Saving...</span>
+                  </>
+                ) : saveStatus === "saved" ? (
+                  <>
+                    <Check className="h-3.5 w-3.5 text-emerald-500" strokeWidth={1.5} />
+                    <span className="text-emerald-500">Saved</span>
+                  </>
+                ) : (
+                  <span className="text-muted-foreground invisible">Saved</span>
+                )}
+              </div>
+              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={handleClose}>
                 <X className="h-4 w-4" strokeWidth={1.5} />
-              </button>
+              </Button>
             </div>
           </div>
 
-          {/* Selected Tags */}
-          {selectedTags.length > 0 && (
-            <div className="px-6 py-2 border-b">
-              <TagList tags={tagData.filter((t) => selectedTags.includes(t.id))} onRemove={handleToggleTag} />
-            </div>
-          )}
-
-          {/* Main Content - Split View */}
-          <div className="flex h-[70vh]">
+          {/* Content - Two column layout */}
+          <div className="flex-1 flex min-h-0 overflow-hidden">
             {/* Input Section */}
-            <div className="w-1/2 overflow-y-auto p-6 space-y-6 border-r">
-              <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wide sr-only">Input</h3>
+            <div className="w-1/2 overflow-y-auto p-6 space-y-5 border-r border-border">
+              <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">Input</h3>
 
               {/* Frame Type Toggle */}
               <div className="space-y-2">
@@ -741,129 +687,123 @@ export default function FrameModal({
                   {/* Talking Head */}
                   <div
                     className={cn(
-                      "rounded-lg border-2 p-3 cursor-pointer transition-all",
+                      "flex items-center justify-between p-3 rounded-lg border cursor-pointer transition-all",
                       style === "talking_head"
                         ? "border-primary bg-primary/5"
                         : "border-border hover:border-primary/50",
                     )}
                     onClick={() => handleStyleChange("talking_head")}
                   >
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <div
-                          className={cn(
-                            "w-4 h-4 rounded-full border-2 flex items-center justify-center",
-                            style === "talking_head" ? "border-primary" : "border-muted-foreground",
-                          )}
-                        >
-                          {style === "talking_head" && <div className="w-2 h-2 rounded-full bg-primary" />}
-                        </div>
-                        <span className="font-medium text-sm">Talking Head</span>
+                    <div className="flex items-center gap-3">
+                      <div
+                        className={cn(
+                          "h-4 w-4 rounded-full border-2 flex items-center justify-center",
+                          style === "talking_head" ? "border-primary" : "border-muted-foreground",
+                        )}
+                      >
+                        {style === "talking_head" && <div className="h-2 w-2 rounded-full bg-primary" />}
                       </div>
-                      {style === "talking_head" && (
-                        <div className="flex gap-1">
-                          <Button
-                            variant={subStyle === "ugc" ? "default" : "outline"}
-                            size="sm"
-                            className="h-7 text-xs"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleSubStyleChange("ugc");
-                            }}
-                          >
-                            UGC
-                          </Button>
-                          <Button
-                            variant={subStyle === "studio" ? "default" : "outline"}
-                            size="sm"
-                            className="h-7 text-xs"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleSubStyleChange("studio");
-                            }}
-                          >
-                            Studio
-                          </Button>
-                        </div>
-                      )}
+                      <span className="text-sm font-medium">Talking Head</span>
                     </div>
+                    {style === "talking_head" && (
+                      <div className="flex gap-1">
+                        <Button
+                          variant={subStyle === "ugc" ? "default" : "outline"}
+                          size="sm"
+                          className="h-7 text-xs px-3"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleSubStyleChange("ugc");
+                          }}
+                        >
+                          UGC
+                        </Button>
+                        <Button
+                          variant={subStyle === "studio" ? "default" : "outline"}
+                          size="sm"
+                          className="h-7 text-xs px-3"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleSubStyleChange("studio");
+                          }}
+                        >
+                          Studio
+                        </Button>
+                      </div>
+                    )}
                   </div>
 
                   {/* B-Roll */}
                   <div
                     className={cn(
-                      "rounded-lg border-2 p-3 cursor-pointer transition-all",
+                      "flex items-center justify-between p-3 rounded-lg border cursor-pointer transition-all",
                       style === "broll" ? "border-primary bg-primary/5" : "border-border hover:border-primary/50",
                     )}
                     onClick={() => handleStyleChange("broll")}
                   >
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <div
-                          className={cn(
-                            "w-4 h-4 rounded-full border-2 flex items-center justify-center",
-                            style === "broll" ? "border-primary" : "border-muted-foreground",
-                          )}
-                        >
-                          {style === "broll" && <div className="w-2 h-2 rounded-full bg-primary" />}
-                        </div>
-                        <span className="font-medium text-sm">B-Roll</span>
+                    <div className="flex items-center gap-3">
+                      <div
+                        className={cn(
+                          "h-4 w-4 rounded-full border-2 flex items-center justify-center",
+                          style === "broll" ? "border-primary" : "border-muted-foreground",
+                        )}
+                      >
+                        {style === "broll" && <div className="h-2 w-2 rounded-full bg-primary" />}
                       </div>
-                      {style === "broll" && (
-                        <div className="flex gap-1">
-                          <Button
-                            variant={subStyle === "ugc" ? "default" : "outline"}
-                            size="sm"
-                            className="h-7 text-xs"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleSubStyleChange("ugc");
-                            }}
-                          >
-                            UGC
-                          </Button>
-                          <Button
-                            variant={subStyle === "studio" ? "default" : "outline"}
-                            size="sm"
-                            className="h-7 text-xs"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleSubStyleChange("studio");
-                            }}
-                          >
-                            Studio
-                          </Button>
-                        </div>
-                      )}
+                      <span className="text-sm font-medium">B-Roll</span>
                     </div>
+                    {style === "broll" && (
+                      <div className="flex gap-1">
+                        <Button
+                          variant={subStyle === "ugc" ? "default" : "outline"}
+                          size="sm"
+                          className="h-7 text-xs px-3"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleSubStyleChange("ugc");
+                          }}
+                        >
+                          UGC
+                        </Button>
+                        <Button
+                          variant={subStyle === "studio" ? "default" : "outline"}
+                          size="sm"
+                          className="h-7 text-xs px-3"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleSubStyleChange("studio");
+                          }}
+                        >
+                          Studio
+                        </Button>
+                      </div>
+                    )}
                   </div>
 
                   {/* Motion Graphics */}
                   <div
                     className={cn(
-                      "rounded-lg border-2 p-3 cursor-pointer transition-all",
+                      "flex items-center justify-between p-3 rounded-lg border cursor-pointer transition-all",
                       style === "motion_graphics"
                         ? "border-primary bg-primary/5"
                         : "border-border hover:border-primary/50",
                     )}
                     onClick={() => handleStyleChange("motion_graphics")}
                   >
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-3">
                       <div
                         className={cn(
-                          "w-4 h-4 rounded-full border-2 flex items-center justify-center",
+                          "h-4 w-4 rounded-full border-2 flex items-center justify-center",
                           style === "motion_graphics" ? "border-primary" : "border-muted-foreground",
                         )}
                       >
-                        {style === "motion_graphics" && <div className="w-2 h-2 rounded-full bg-primary" />}
+                        {style === "motion_graphics" && <div className="h-2 w-2 rounded-full bg-primary" />}
                       </div>
-                      <span className="font-medium text-sm">Motion Graphics</span>
+                      <span className="text-sm font-medium">Motion Graphics</span>
                     </div>
                   </div>
                 </div>
-
-                {/* Style Helper Text */}
-                <p className="text-xs text-muted-foreground">
+                <p className="text-xs text-muted-foreground mt-2">
                   {style === "talking_head" && "Person looking directly at camera"}
                   {style === "broll" && "Person captured mid-action, natural movement"}
                   {style === "motion_graphics" &&
@@ -873,7 +813,7 @@ export default function FrameModal({
                 </p>
               </div>
 
-              {/* Camera Perspective - Only for B-Roll */}
+              {/* Camera Perspective - Only show for B-Roll */}
               {style === "broll" && (
                 <div className="space-y-2">
                   <label className="text-sm font-medium">Camera Perspective</label>
@@ -909,7 +849,7 @@ export default function FrameModal({
                 </div>
               )}
 
-              {/* Actor Selector - For Talking Head and B-Roll */}
+              {/* Actor Selector - Show for Talking Head and B-Roll */}
               {(style === "talking_head" || style === "broll") && (
                 <div className="space-y-2">
                   <label className="text-sm font-medium">Select Actor</label>
@@ -1073,12 +1013,14 @@ export default function FrameModal({
                   <span className="text-muted-foreground">Cost:</span>
                   <span className="font-medium">{creditCost} credits</span>
                 </div>
-                <Button onClick={handleGenerate} disabled={!canGenerate} className="w-full">
+                <Button onClick={handleGenerate} disabled={!canGenerate || isGenerating} className="w-full">
                   {isGenerating ? (
                     <>
                       <Loader2 className="h-4 w-4 animate-spin mr-2" strokeWidth={1.5} />
                       Generating...
                     </>
+                  ) : hasOutput ? (
+                    `Regenerate • ${creditCost} credits`
                   ) : (
                     `Generate • ${creditCost} credits`
                   )}
