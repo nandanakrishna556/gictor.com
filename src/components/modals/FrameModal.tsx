@@ -26,7 +26,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { TagList, TagSelector, TagData } from "@/components/ui/tag-badge";
 import LocationSelector from "@/components/forms/LocationSelector";
 import ActorSelectorPopover from "./ActorSelectorPopover";
-import { ArrowLeft, X, Loader2, Download, Image as ImageIcon, Check, Plus, RefreshCw } from "lucide-react";
+import { ArrowLeft, X, Loader2, Download, Upload, Image as ImageIcon, Check, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface StatusOption {
@@ -107,12 +107,15 @@ export default function FrameModal({
   // Upload state
   const [uploadingIndex, setUploadingIndex] = useState<number | null>(null);
 
-  // Edit mode - simple approach for instant UI feedback
-  const [isEditMode, setIsEditMode] = useState(false);
+  // Generation state - localGenerating is ONLY for instant feedback before server updates
+  const [localGenerating, setLocalGenerating] = useState(false);
+  
+  // Tracks if we just clicked generate (prevents useEffect from overriding)
+  const isLocalGeneratingRef = useRef(false);
 
-  // Toast tracking refs
-  const hasShownCompletionToastRef = useRef(false);
-  const hasShownErrorToastRef = useRef(false);
+  // Track previous status for transition detection
+  const prevFileStatusRef = useRef<string | null>(null);
+  const toastShownForFileIdRef = useRef<string | null>(null);
 
   // Fetch file data
   const { data: file } = useQuery({
@@ -123,17 +126,21 @@ export default function FrameModal({
       return data;
     },
     enabled: !!fileId,
-    // Refetch based on FILE status or edit mode
+    // Refetch based on FILE status, not just local state
     refetchInterval: (query) => {
       const fileData = query.state.data;
-      const shouldPoll = isEditMode || fileData?.generation_status === 'processing';
+      const shouldPoll = localGenerating || fileData?.generation_status === 'processing';
       return shouldPoll ? 2000 : false;
     },
   });
 
-  // Simple derived state
-  const isGenerating = isEditMode || file?.generation_status === 'processing';
-  const generationProgress = file?.progress || (isEditMode ? 5 : 0);
+  // DERIVED from file - this is the source of truth
+  const isFileGenerating = file?.generation_status === 'processing';
+  const fileProgress = file?.progress || 0;
+
+  // Combined state: show generating if local OR server says so
+  const isGenerating = localGenerating || isFileGenerating;
+  const generationProgress = isFileGenerating ? fileProgress : (localGenerating ? 5 : 0);
 
   // Get current status option
   const currentStatusOption = statusOptions.find((s) => s.value === displayStatus) || statusOptions[0];
@@ -178,43 +185,58 @@ export default function FrameModal({
     }
   }, [file]);
 
-  // Sync generation status from file - simplified approach
+  // Handle generation status transitions - ONLY for toasts
   useEffect(() => {
     if (!file) return;
 
-    // Clear edit mode when server confirms processing
-    if (file.generation_status === 'processing') {
-      setIsEditMode(false);
+    const currentStatus = file.generation_status;
+    const prevStatus = prevFileStatusRef.current;
+
+    // Server confirmed processing - clear local ref
+    if (currentStatus === 'processing') {
+      isLocalGeneratingRef.current = false;
     }
 
-    // Handle completion
-    if (file.generation_status === 'completed' && file.download_url) {
-      setIsEditMode(false);
-      if (!hasShownCompletionToastRef.current && file.progress === 100) {
-        hasShownCompletionToastRef.current = true;
+    // Detect transition FROM processing TO completed
+    if (prevStatus === 'processing' && currentStatus === 'completed' && file.download_url) {
+      // Only show toast once per file completion
+      if (toastShownForFileIdRef.current !== file.id) {
+        toastShownForFileIdRef.current = file.id;
         toast.success('Image generated!');
         onSuccess?.();
         queryClient.invalidateQueries({ queryKey: ['files', currentProjectId] });
       }
+      isLocalGeneratingRef.current = false;
+      setLocalGenerating(false);
     }
 
-    // Handle failure
-    if (file.generation_status === 'failed') {
-      setIsEditMode(false);
-      if (!hasShownErrorToastRef.current) {
-        hasShownErrorToastRef.current = true;
+    // Detect transition FROM processing TO failed
+    if (prevStatus === 'processing' && currentStatus === 'failed') {
+      if (toastShownForFileIdRef.current !== file.id) {
+        toastShownForFileIdRef.current = file.id;
         toast.error(file.error_message || 'Generation failed');
       }
+      isLocalGeneratingRef.current = false;
+      setLocalGenerating(false);
     }
-  }, [file, onSuccess, queryClient, currentProjectId]);
+
+    // Clear local generating when server catches up (but only if ref is not set)
+    if (localGenerating && isFileGenerating && !isLocalGeneratingRef.current) {
+      setLocalGenerating(false);
+    }
+
+    // Update ref for next comparison
+    prevFileStatusRef.current = currentStatus;
+  }, [file, localGenerating, isFileGenerating, onSuccess, queryClient, currentProjectId]);
 
   // Reset local state when modal closes
   useEffect(() => {
     if (!open) {
-      setIsEditMode(false);
+      isLocalGeneratingRef.current = false;
+      setLocalGenerating(false);
       fileLoadedRef.current = false;
-      hasShownCompletionToastRef.current = false;
-      hasShownErrorToastRef.current = false;
+      prevFileStatusRef.current = null;
+      // Don't reset toastShownForFileIdRef - we want to remember which file we showed toast for
     }
   }, [open]);
 
@@ -414,23 +436,24 @@ export default function FrameModal({
 
   // Handle generate
   const handleGenerate = async () => {
-    // Set edit mode for immediate UI feedback
-    setIsEditMode(true);
+    // IMMEDIATE visual feedback - ref prevents useEffect from overriding
+    isLocalGeneratingRef.current = true;
+    setLocalGenerating(true);
 
-    // Reset toast refs for new generation
-    hasShownCompletionToastRef.current = false;
-    hasShownErrorToastRef.current = false;
+    // Reset toast tracking for this new generation
+    toastShownForFileIdRef.current = null;
+    prevFileStatusRef.current = 'processing';
 
     // Validation
     if (!profile || !user) {
-      setIsEditMode(false);
+      setLocalGenerating(false);
       return;
     }
 
     // Check credits
     if ((profile.credits ?? 0) < creditCost) {
       toast.error(`Insufficient credits. You need ${creditCost} credits.`);
-      setIsEditMode(false);
+      setLocalGenerating(false);
       return;
     }
 
@@ -509,7 +532,7 @@ export default function FrameModal({
       queryClient.invalidateQueries({ queryKey: ["files", currentProjectId] });
     } catch (error) {
       console.error("Generation error:", error);
-      setIsEditMode(false);
+      setLocalGenerating(false);
       toast.error("Failed to start generation");
 
       // Revert file status
@@ -1032,7 +1055,6 @@ export default function FrameModal({
             <div className="w-1/2 overflow-y-auto p-6 space-y-6 bg-muted/10">
               <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">Output</h3>
 
-              {/* Show generating state when isEditMode is true OR file is processing */}
               {isGenerating ? (
                 <div className="space-y-4">
                   <div className="aspect-square rounded-xl bg-secondary/50 flex items-center justify-center">
@@ -1042,34 +1064,12 @@ export default function FrameModal({
                     </div>
                   </div>
                   <Progress value={generationProgress} className="h-2" />
-                  <p className="text-center text-sm text-muted-foreground">
-                    {generationProgress}% complete
-                  </p>
+                  <p className="text-center text-sm text-muted-foreground">{generationProgress}% complete</p>
                 </div>
-              ) : file?.generation_status === 'completed' && file?.download_url ? (
+              ) : hasOutput && file?.download_url ? (
                 <div className="space-y-4 animate-fade-in">
-                  {/* Image with Edit overlay */}
-                  <div className="relative rounded-xl border border-border overflow-hidden group">
-                    <img
-                      src={file.download_url}
-                      alt={name}
-                      className="w-full object-contain"
-                    />
-                    {/* Regenerate button overlay */}
-                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors flex items-center justify-center">
-                      <Button
-                        variant="secondary"
-                        size="sm"
-                        className="opacity-0 group-hover:opacity-100 transition-opacity"
-                        onClick={() => {
-                          setIsEditMode(true);
-                          handleGenerate();
-                        }}
-                      >
-                        <RefreshCw className="h-4 w-4 mr-2" strokeWidth={1.5} />
-                        Regenerate
-                      </Button>
-                    </div>
+                  <div className="rounded-xl border border-border overflow-hidden">
+                    <img src={file.download_url} alt={name} className="w-full object-contain" />
                   </div>
                   <Button variant="secondary" className="w-full" asChild>
                     <a href={file.download_url} download={`${name}.png`}>
