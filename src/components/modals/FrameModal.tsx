@@ -109,6 +109,9 @@ export default function FrameModal({
 
   // Generation state - localGenerating is ONLY for instant feedback before server updates
   const [localGenerating, setLocalGenerating] = useState(false);
+  
+  // Tracks if we just clicked generate (prevents useEffect from overriding)
+  const isLocalGeneratingRef = useRef(false);
 
   // Track previous status for transition detection
   const prevFileStatusRef = useRef<string | null>(null);
@@ -189,6 +192,11 @@ export default function FrameModal({
     const currentStatus = file.generation_status;
     const prevStatus = prevFileStatusRef.current;
 
+    // Server confirmed processing - clear local ref
+    if (currentStatus === 'processing') {
+      isLocalGeneratingRef.current = false;
+    }
+
     // Detect transition FROM processing TO completed
     if (prevStatus === 'processing' && currentStatus === 'completed' && file.download_url) {
       // Only show toast once per file completion
@@ -198,6 +206,7 @@ export default function FrameModal({
         onSuccess?.();
         queryClient.invalidateQueries({ queryKey: ['files', currentProjectId] });
       }
+      isLocalGeneratingRef.current = false;
       setLocalGenerating(false);
     }
 
@@ -207,11 +216,12 @@ export default function FrameModal({
         toastShownForFileIdRef.current = file.id;
         toast.error(file.error_message || 'Generation failed');
       }
+      isLocalGeneratingRef.current = false;
       setLocalGenerating(false);
     }
 
-    // Clear local generating when server catches up
-    if (localGenerating && isFileGenerating) {
+    // Clear local generating when server catches up (but only if ref is not set)
+    if (localGenerating && isFileGenerating && !isLocalGeneratingRef.current) {
       setLocalGenerating(false);
     }
 
@@ -222,6 +232,7 @@ export default function FrameModal({
   // Reset local state when modal closes
   useEffect(() => {
     if (!open) {
+      isLocalGeneratingRef.current = false;
       setLocalGenerating(false);
       fileLoadedRef.current = false;
       prevFileStatusRef.current = null;
@@ -425,7 +436,8 @@ export default function FrameModal({
 
   // Handle generate
   const handleGenerate = async () => {
-    // IMMEDIATE visual feedback
+    // IMMEDIATE visual feedback - ref prevents useEffect from overriding
+    isLocalGeneratingRef.current = true;
     setLocalGenerating(true);
 
     // Reset toast tracking for this new generation
