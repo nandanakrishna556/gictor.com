@@ -405,7 +405,7 @@ export default function FrameModal({
             style,
             substyle: style !== 'motion_graphics' ? subStyle : null,
             aspect_ratio: aspectRatio,
-            actor_id: style === 'talking_head' ? selectedActorId : null,
+            actor_id: (style === 'talking_head' || style === 'broll') ? selectedActorId : null,
             reference_images: referenceImages,
             prompt,
             camera_perspective: style === 'broll' ? cameraPerspective : null,
@@ -427,8 +427,8 @@ export default function FrameModal({
           style,
           substyle: style !== 'motion_graphics' ? subStyle : null,
           aspect_ratio: aspectRatio,
-          actor_id: style === 'talking_head' ? selectedActorId : null,
-          actor_360_url: style === 'talking_head' ? selectedActor?.profile_360_url : null,
+          actor_id: (style === 'talking_head' || style === 'broll') ? selectedActorId : null,
+          actor_360_url: (style === 'talking_head' || style === 'broll') ? selectedActor?.profile_360_url : null,
           reference_images: referenceImages,
           output_image_url: file?.download_url || null,
           prompt,
@@ -817,8 +817,8 @@ export default function FrameModal({
                 </div>
               )}
               
-              {/* Actor Selector - Only show for Talking Head */}
-              {style === 'talking_head' && (
+              {/* Actor Selector - Show for Talking Head and B-Roll */}
+              {(style === 'talking_head' || style === 'broll') && (
                 <div className="space-y-2">
                   <label className="text-sm font-medium">Select Actor</label>
                   <ActorSelectorPopover
