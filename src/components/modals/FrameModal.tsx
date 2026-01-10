@@ -201,12 +201,23 @@ export default function FrameModal({
     const currentStatus = file.generation_status;
     const prevStatus = prevFileStatusRef.current;
 
-    // Server confirmed processing - clear local ref
-    if (currentStatus === 'processing') {
-      isLocalGeneratingRef.current = false;
+    // CRITICAL: Skip transition detection if we're in local generating mode
+    // This prevents false "completion" detection when file data hasn't caught up yet
+    if (isLocalGeneratingRef.current) {
+      // Only update ref when server confirms processing
+      if (currentStatus === 'processing') {
+        isLocalGeneratingRef.current = false;
+        prevFileStatusRef.current = 'processing';
+      }
+      return;
     }
 
-    // Detect transition FROM processing TO completed
+    // Server confirmed processing - clear local state
+    if (currentStatus === 'processing') {
+      setLocalGenerating(false);
+    }
+
+    // Detect transition FROM processing TO completed (only if not locally generating)
     if (prevStatus === 'processing' && currentStatus === 'completed' && file.download_url) {
       // Only show toast once per file completion
       if (toastShownForFileIdRef.current !== file.id) {
@@ -215,7 +226,6 @@ export default function FrameModal({
         onSuccess?.();
         queryClient.invalidateQueries({ queryKey: ['files', currentProjectId] });
       }
-      isLocalGeneratingRef.current = false;
       setLocalGenerating(false);
     }
 
@@ -225,18 +235,12 @@ export default function FrameModal({
         toastShownForFileIdRef.current = file.id;
         toast.error(file.error_message || 'Generation failed');
       }
-      isLocalGeneratingRef.current = false;
-      setLocalGenerating(false);
-    }
-
-    // Clear local generating when server catches up (but only if ref is not set)
-    if (localGenerating && isFileGenerating && !isLocalGeneratingRef.current) {
       setLocalGenerating(false);
     }
 
     // Update ref for next comparison
     prevFileStatusRef.current = currentStatus;
-  }, [file, localGenerating, isFileGenerating, onSuccess, queryClient, currentProjectId]);
+  }, [file, onSuccess, queryClient, currentProjectId]);
 
   // Reset local state when modal closes
   useEffect(() => {
@@ -449,9 +453,7 @@ export default function FrameModal({
     isLocalGeneratingRef.current = true;
     setLocalGenerating(true);
 
-    // Reset toast tracking for this new generation
-    toastShownForFileIdRef.current = null;
-    prevFileStatusRef.current = 'processing';
+    // Reset toast tracking for this new generation (but don't set prevFileStatusRef - let the useEffect handle it)
 
     // Validation
     if (!profile || !user) {
@@ -1051,8 +1053,6 @@ export default function FrameModal({
                       <Loader2 className="h-4 w-4 animate-spin mr-2" strokeWidth={1.5} />
                       Generating...
                     </>
-                  ) : hasOutput ? (
-                    `Regenerate • ${creditCost} credits`
                   ) : (
                     `Generate • ${creditCost} credits`
                   )}
