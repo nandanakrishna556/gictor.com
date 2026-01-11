@@ -164,6 +164,7 @@ export type Database = {
           preview_url: string | null
           progress: number | null
           project_id: string
+          script_output: string | null
           status: string | null
           tags: string[] | null
           updated_at: string | null
@@ -184,6 +185,7 @@ export type Database = {
           preview_url?: string | null
           progress?: number | null
           project_id: string
+          script_output?: string | null
           status?: string | null
           tags?: string[] | null
           updated_at?: string | null
@@ -204,6 +206,7 @@ export type Database = {
           preview_url?: string | null
           progress?: number | null
           project_id?: string
+          script_output?: string | null
           status?: string | null
           tags?: string[] | null
           updated_at?: string | null

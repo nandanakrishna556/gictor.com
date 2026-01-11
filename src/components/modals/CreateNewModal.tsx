@@ -14,6 +14,7 @@ import LipSyncModal from '@/components/modals/LipSyncModal';
 import SpeechModal from '@/components/modals/SpeechModal';
 import AnimateModal from '@/components/modals/AnimateModal';
 import FrameModal from '@/components/modals/FrameModal';
+import ScriptModal from '@/components/modals/ScriptModal';
 import { usePipeline } from '@/hooks/usePipeline';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -125,6 +126,7 @@ export default function CreateNewModal({
   const [speechModalOpen, setSpeechModalOpen] = useState(false);
   const [animateModalOpen, setAnimateModalOpen] = useState(false);
   const [frameModalOpen, setFrameModalOpen] = useState(false);
+  const [scriptModalOpen, setScriptModalOpen] = useState(false);
   const [createdPipelineId, setCreatedPipelineId] = useState<string | null>(null);
   const [createdFileId, setCreatedFileId] = useState<string | null>(null);
   const [isCreating, setIsCreating] = useState(false);
@@ -210,7 +212,7 @@ export default function CreateNewModal({
       return;
     }
 
-    if (element.id === 'lip_sync' || element.id === 'speech' || element.id === 'animate' || element.id === 'frame') {
+    if (element.id === 'lip_sync' || element.id === 'speech' || element.id === 'animate' || element.id === 'frame' || element.id === 'script') {
       setIsCreating(true);
       setCreatingType(element.id);
       initialStatusRef.current = initialStatus;
@@ -224,7 +226,7 @@ export default function CreateNewModal({
             id: newFileId,
             project_id: projectId,
             folder_id: folderId || null,
-            name: element.id === 'frame' ? 'Untitled Frame' : 'Untitled',
+            name: element.id === 'frame' ? 'Untitled Frame' : element.id === 'script' ? 'Untitled Script' : 'Untitled',
             file_type: element.id,
             status: initialStatus || 'draft',
             generation_params: element.id === 'frame' ? {
@@ -234,6 +236,13 @@ export default function CreateNewModal({
               aspect_ratio: '9:16',
               actor_id: null,
               reference_images: [],
+              prompt: '',
+            } : element.id === 'script' ? {
+              script_type: 'prompt',
+              perspective: 'mixed',
+              duration_value: 1,
+              duration_unit: 'minutes',
+              script_format: 'demo',
               prompt: '',
             } : {},
           });
@@ -255,6 +264,8 @@ export default function CreateNewModal({
           setAnimateModalOpen(true);
         } else if (element.id === 'frame') {
           setFrameModalOpen(true);
+        } else if (element.id === 'script') {
+          setScriptModalOpen(true);
         }
 
         queryClient.invalidateQueries({ queryKey: ['files', projectId] });
@@ -277,6 +288,7 @@ export default function CreateNewModal({
     setSpeechModalOpen(false);
     setAnimateModalOpen(false);
     setFrameModalOpen(false);
+    setScriptModalOpen(false);
     setCreatedPipelineId(null);
     setCreatedFileId(null);
     initialStatusRef.current = undefined;
@@ -461,6 +473,20 @@ export default function CreateNewModal({
       {createdFileId && frameModalOpen && (
         <FrameModal
           open={frameModalOpen}
+          onClose={handleModalClose}
+          fileId={createdFileId}
+          projectId={projectId}
+          folderId={folderId}
+          initialStatus={initialStatusRef.current}
+          onSuccess={handleSuccess}
+          statusOptions={statusOptions}
+        />
+      )}
+
+      {/* Script Modal */}
+      {createdFileId && scriptModalOpen && (
+        <ScriptModal
+          open={scriptModalOpen}
           onClose={handleModalClose}
           fileId={createdFileId}
           projectId={projectId}
