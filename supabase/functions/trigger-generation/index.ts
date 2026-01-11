@@ -69,7 +69,7 @@ const PipelinePayloadSchema = z.object({
     is_edit: z.boolean().optional(),
     description: z.string().max(2000).optional(),
     script_type: z.string().optional(),
-    duration_seconds: z.number().positive().max(300).optional(),
+    duration_seconds: z.number().positive().max(1800).optional(),
     previous_script: z.string().max(10000).optional(),
     script_text: z.string().max(10000).optional(),
     voice_id: z.string().optional(),
@@ -130,7 +130,7 @@ const FilePayloadSchema = z.object({
     resolution: z.enum(['480p', '720p', '1080p']).optional(),
     description: z.string().max(2000).optional(),
     script_type: z.enum(['sales', 'educational', 'entertainment', 'tutorial', 'story', 'other']).optional(),
-    duration_seconds: z.number().positive().max(300).optional(),
+    duration_seconds: z.number().positive().max(1800).optional(),
     // Speech-specific fields
     actor_voice_url: z.string().url().optional(),
     supabase_url: z.string().url().optional(),
