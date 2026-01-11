@@ -375,11 +375,11 @@ export default function ScriptModal({
     }
   };
 
-  // Duration handlers - max 300 seconds (5 minutes)
-  const MAX_DURATION_SECONDS = 300;
+  // Duration handlers - max 1800 seconds (30 minutes)
+  const MAX_DURATION_SECONDS = 1800;
   const incrementAmount = durationUnit === 'minutes' ? 1 : 15;
   const minValue = durationUnit === 'minutes' ? 1 : 15;
-  const maxValue = durationUnit === 'minutes' ? 5 : 300;
+  const maxValue = durationUnit === 'minutes' ? 30 : 1800;
 
   const handleDecrement = () => {
     const newValue = durationValue - incrementAmount;
