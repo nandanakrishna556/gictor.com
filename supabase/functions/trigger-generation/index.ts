@@ -327,7 +327,19 @@ serve(async (req) => {
         );
       }
 
-      const responseData = await response.json();
+      // Try to parse response as JSON, handle empty/non-JSON responses
+      let responseData = {};
+      const responseText = await response.text();
+      
+      if (responseText) {
+        try {
+          responseData = JSON.parse(responseText);
+        } catch {
+          console.log('N8N returned non-JSON response:', responseText.substring(0, 100));
+          responseData = { message: 'Generation started' };
+        }
+      }
+      
       console.log('N8N response received successfully');
 
       return new Response(
