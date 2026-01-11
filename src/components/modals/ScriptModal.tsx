@@ -559,6 +559,17 @@ Example: Dashboard walkthrough for new users. Show: 1) Create project, 2) Add sc
         })
         .eq('id', fileId);
 
+      // Map frontend script format to backend script_type enum
+      const formatToScriptType: Record<ScriptFormat, string> = {
+        demo: 'tutorial',
+        listicle: 'educational',
+        'problem-solution': 'sales',
+        educational: 'educational',
+        comparison: 'sales',
+        promotional: 'sales',
+        vsl: 'sales',
+      };
+
       // Prepare payload for edge function
       const payload = {
         type: 'script',
@@ -566,7 +577,7 @@ Example: Dashboard walkthrough for new users. Show: 1) Create project, 2) Add sc
           file_id: fileId,
           user_id: user.id,
           project_id: currentProjectId,
-          script_type: scriptType,
+          script_type: formatToScriptType[scriptFormat],
           perspective,
           duration_seconds: durationUnit === 'minutes' ? durationValue * 60 : durationValue,
           script_format: scriptFormat,
