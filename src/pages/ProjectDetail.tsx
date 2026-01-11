@@ -18,6 +18,7 @@ import LipSyncModal from '@/components/modals/LipSyncModal';
 import SpeechModal from '@/components/modals/SpeechModal';
 import AnimateModal from '@/components/modals/AnimateModal';
 import FrameModal from '@/components/modals/FrameModal';
+import ScriptModal from '@/components/modals/ScriptModal';
 import { useFiles, Folder, File } from '@/hooks/useFiles';
 import { useFileRealtime } from '@/hooks/useFileRealtime';
 import { usePipelines, Pipeline, PipelineStage, DEFAULT_STAGES } from '@/hooks/usePipelines';
@@ -74,6 +75,10 @@ export default function ProjectDetail() {
   // Frame modal state
   const [frameModalOpen, setFrameModalOpen] = useState(false);
   const [openFrameFileId, setOpenFrameFileId] = useState<string | null>(null);
+  
+  // Script modal state
+  const [scriptModalOpen, setScriptModalOpen] = useState(false);
+  const [openScriptFileId, setOpenScriptFileId] = useState<string | null>(null);
 
   // Fetch project details
   const { data: project } = useQuery({
@@ -331,6 +336,10 @@ export default function ProjectDetail() {
       // Open Frame modal
       setOpenFrameFileId(file.id);
       setFrameModalOpen(true);
+    } else if (file.file_type === 'script') {
+      // Open Script modal
+      setOpenScriptFileId(file.id);
+      setScriptModalOpen(true);
     } else if (file.file_type === 'clips' || file.file_type === 'b_roll') {
       // Extract pipeline_id from generation_params for Clips
       const params = file.generation_params as { pipeline_id?: string } | null;
@@ -696,6 +705,24 @@ export default function ProjectDetail() {
             setOpenFrameFileId(null);
           }}
           fileId={openFrameFileId}
+          projectId={projectId}
+          folderId={folderId}
+          onSuccess={() => {
+            // Refresh files after save
+          }}
+          statusOptions={currentStatusOptions}
+        />
+      )}
+
+      {/* Script Modal */}
+      {openScriptFileId && (
+        <ScriptModal
+          open={scriptModalOpen}
+          onClose={() => {
+            setScriptModalOpen(false);
+            setOpenScriptFileId(null);
+          }}
+          fileId={openScriptFileId}
           projectId={projectId}
           folderId={folderId}
           onSuccess={() => {
