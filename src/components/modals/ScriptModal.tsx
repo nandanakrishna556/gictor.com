@@ -14,7 +14,7 @@ import LocationSelector from '@/components/forms/LocationSelector';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { TagList, TagSelector, TagData } from '@/components/ui/tag-badge';
-import { ArrowLeft, X, Check, Loader2, FileText, Sparkles, RefreshCw, Wand2, Minus, Plus, Upload, Link, Copy, Download } from 'lucide-react';
+import { ArrowLeft, X, Check, Loader2, FileText, Sparkles, RefreshCw, Wand2, Minus, Plus, Upload, Link, Copy, Download, Video } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface StatusOption {
@@ -122,6 +122,11 @@ export default function ScriptModal({
   // Output
   const [scriptOutput, setScriptOutput] = useState('');
   const [isRefineMode, setIsRefineMode] = useState(false);
+
+  // Upload state
+  const [isUploadingVideo, setIsUploadingVideo] = useState(false);
+  const [isDraggingVideo, setIsDraggingVideo] = useState(false);
+  const videoInputRef = useRef<HTMLInputElement>(null);
 
   // Generation state
   const [localGenerating, setLocalGenerating] = useState(false);
@@ -376,6 +381,85 @@ export default function ScriptModal({
     }
     setDurationUnit(newUnit);
     setHasUnsavedChanges(true);
+  };
+
+  // Video upload handlers
+  const handleVideoUpload = async (uploadedFile: globalThis.File) => {
+    if (!user) return;
+
+    // Validate file type
+    const validTypes = ['video/mp4', 'video/quicktime', 'video/webm', 'video/x-msvideo'];
+    if (!validTypes.includes(uploadedFile.type)) {
+      toast.error('Please upload a valid video file (MP4, MOV, WebM, AVI)');
+      return;
+    }
+
+    // Validate file size (500MB max)
+    const maxSize = 500 * 1024 * 1024;
+    if (uploadedFile.size > maxSize) {
+      toast.error('Video file must be less than 500MB');
+      return;
+    }
+
+    setIsUploadingVideo(true);
+
+    try {
+      const fileExt = uploadedFile.name.split('.').pop();
+      const fileName = `${user.id}/videos/${Date.now()}.${fileExt}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('uploads')
+        .upload(fileName, uploadedFile);
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('uploads')
+        .getPublicUrl(fileName);
+
+      setUploadedVideoUrl(publicUrl);
+      setHasUnsavedChanges(true);
+      toast.success('Video uploaded successfully');
+    } catch (error) {
+      console.error('Upload error:', error);
+      toast.error('Failed to upload video');
+    } finally {
+      setIsUploadingVideo(false);
+    }
+  };
+
+  const handleRemoveVideo = () => {
+    setUploadedVideoUrl('');
+    setHasUnsavedChanges(true);
+    if (videoInputRef.current) {
+      videoInputRef.current.value = '';
+    }
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDraggingVideo(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDraggingVideo(false);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDraggingVideo(false);
+    const droppedFile = e.dataTransfer.files[0];
+    if (droppedFile) {
+      handleVideoUpload(droppedFile);
+    }
+  };
+
+  const handleFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const selectedFile = e.target.files?.[0];
+    if (selectedFile) {
+      handleVideoUpload(selectedFile);
+    }
   };
 
   // Get placeholder based on format and mode
@@ -797,17 +881,59 @@ export default function ScriptModal({
 
                   {videoSource === 'upload' ? (
                     <div className="space-y-2">
-                      <div className="border-2 border-dashed border-border rounded-xl p-8 text-center bg-muted/30 hover:bg-muted/50 transition-colors cursor-pointer">
-                        <div className="flex flex-col items-center gap-2">
-                          <div className="h-12 w-12 rounded-full bg-secondary flex items-center justify-center">
-                            <Upload className="h-5 w-5 text-muted-foreground" />
-                          </div>
-                          <div>
-                            <p className="font-medium text-sm">Drop video here or click to browse</p>
-                            <p className="text-xs text-muted-foreground">MP4, MOV, WebM up to 500MB</p>
-                          </div>
+                      <input
+                        ref={videoInputRef}
+                        type="file"
+                        accept="video/mp4,video/quicktime,video/webm,video/x-msvideo"
+                        onChange={handleFileInputChange}
+                        className="hidden"
+                      />
+                      
+                      {uploadedVideoUrl ? (
+                        <div className="relative rounded-xl overflow-hidden bg-card border border-border">
+                          <video
+                            src={uploadedVideoUrl}
+                            className="w-full aspect-video object-contain bg-black"
+                            controls
+                          />
+                          <button
+                            onClick={handleRemoveVideo}
+                            className="absolute top-2 left-2 h-7 w-7 rounded-full bg-black/60 hover:bg-black/80 flex items-center justify-center transition-colors"
+                          >
+                            <X className="h-4 w-4 text-white" />
+                          </button>
                         </div>
-                      </div>
+                      ) : (
+                        <div
+                          onClick={() => videoInputRef.current?.click()}
+                          onDragOver={handleDragOver}
+                          onDragLeave={handleDragLeave}
+                          onDrop={handleDrop}
+                          className={cn(
+                            'border-2 border-dashed rounded-xl p-8 text-center transition-colors cursor-pointer',
+                            isDraggingVideo
+                              ? 'border-primary bg-primary/10'
+                              : 'border-border bg-muted/30 hover:bg-muted/50'
+                          )}
+                        >
+                          {isUploadingVideo ? (
+                            <div className="flex flex-col items-center gap-2">
+                              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                              <p className="text-sm text-muted-foreground">Uploading video...</p>
+                            </div>
+                          ) : (
+                            <div className="flex flex-col items-center gap-2">
+                              <div className="h-12 w-12 rounded-full bg-secondary flex items-center justify-center">
+                                <Video className="h-5 w-5 text-muted-foreground" />
+                              </div>
+                              <div>
+                                <p className="font-medium text-sm">Drop video here or click to browse</p>
+                                <p className="text-xs text-muted-foreground">MP4, MOV, WebM up to 500MB</p>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      )}
                     </div>
                   ) : (
                     <div className="space-y-2">
