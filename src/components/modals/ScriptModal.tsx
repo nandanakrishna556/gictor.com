@@ -899,13 +899,16 @@ Example: Dashboard walkthrough for new users. Show: 1) Create project, 2) Add sc
                   <div className="space-y-2">
                     <label className="text-sm font-medium">Script Format</label>
                     <Select value={scriptFormat} onValueChange={(v) => { setScriptFormat(v as ScriptFormat); setHasUnsavedChanges(true); }}>
-                      <SelectTrigger className="h-10">
-                        <SelectValue />
+                      <SelectTrigger className="h-auto py-2.5 px-3">
+                        <div className="flex flex-col items-start text-left w-full">
+                          <span className="font-medium text-sm">{scriptFormats.find(f => f.value === scriptFormat)?.label}</span>
+                          <span className="text-xs text-muted-foreground">{scriptFormats.find(f => f.value === scriptFormat)?.desc}</span>
+                        </div>
                       </SelectTrigger>
                       <SelectContent>
                         {scriptFormats.map((f) => (
-                          <SelectItem key={f.value} value={f.value}>
-                            <div className="flex flex-col">
+                          <SelectItem key={f.value} value={f.value} className="py-2">
+                            <div className="flex flex-col items-start text-left">
                               <span className="font-medium">{f.label}</span>
                               <span className="text-xs text-muted-foreground">{f.desc}</span>
                             </div>
