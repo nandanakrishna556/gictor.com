@@ -375,9 +375,11 @@ export default function ScriptModal({
     }
   };
 
-  // Duration handlers
+  // Duration handlers - max 300 seconds (5 minutes)
+  const MAX_DURATION_SECONDS = 300;
   const incrementAmount = durationUnit === 'minutes' ? 1 : 15;
   const minValue = durationUnit === 'minutes' ? 1 : 15;
+  const maxValue = durationUnit === 'minutes' ? 5 : 300;
 
   const handleDecrement = () => {
     const newValue = durationValue - incrementAmount;
@@ -388,16 +390,22 @@ export default function ScriptModal({
   };
 
   const handleIncrement = () => {
-    setDurationValue(durationValue + incrementAmount);
-    setHasUnsavedChanges(true);
+    const newValue = durationValue + incrementAmount;
+    if ((durationUnit === 'seconds' && newValue <= MAX_DURATION_SECONDS) || 
+        (durationUnit === 'minutes' && newValue * 60 <= MAX_DURATION_SECONDS)) {
+      setDurationValue(newValue);
+      setHasUnsavedChanges(true);
+    }
   };
 
   const handleUnitChange = (newUnit: DurationUnit) => {
     if (newUnit === durationUnit) return;
     if (newUnit === 'seconds') {
-      setDurationValue(durationValue * 60);
+      const newVal = Math.min(durationValue * 60, MAX_DURATION_SECONDS);
+      setDurationValue(newVal);
     } else {
-      setDurationValue(Math.max(1, Math.round(durationValue / 60)));
+      const newVal = Math.max(1, Math.min(5, Math.round(durationValue / 60)));
+      setDurationValue(newVal);
     }
     setDurationUnit(newUnit);
     setHasUnsavedChanges(true);
@@ -867,7 +875,11 @@ Example: Dashboard walkthrough for new users. Show: 1) Create project, 2) Add sc
                         <input
                           type="number"
                           value={durationValue}
-                          onChange={(e) => { setDurationValue(Math.max(minValue, parseInt(e.target.value) || minValue)); setHasUnsavedChanges(true); }}
+                          onChange={(e) => { 
+                            const val = parseInt(e.target.value) || minValue;
+                            setDurationValue(Math.min(maxValue, Math.max(minValue, val))); 
+                            setHasUnsavedChanges(true); 
+                          }}
                           className="h-9 flex-1 min-w-0 bg-secondary border-x border-border text-center text-sm font-medium focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                         />
                         <button
