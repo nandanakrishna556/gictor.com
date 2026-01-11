@@ -65,13 +65,33 @@ const scriptFormats: { value: ScriptFormat; label: string; desc: string }[] = [
 ];
 
 const formatPlaceholders: Record<ScriptFormat, string> = {
-  demo: "Describe what the script should be about...\n\nExample: A product demo for our AI video generator. Show how easy it is to create talking head videos in 3 steps.",
-  listicle: "Describe what the script should be about...\n\nExample: Top 5 productivity hacks for remote workers. Keep it energetic and actionable.",
-  'problem-solution': "Describe what the script should be about...\n\nExample: Address the frustration of spending hours on video editing, then introduce our AI solution.",
-  educational: "Describe what the script should be about...\n\nExample: Explain how AI lip-sync technology works in simple terms for beginners.",
-  comparison: "Describe what the script should be about...\n\nExample: Compare traditional video production vs AI-generated videos. Highlight time and cost savings.",
-  promotional: "Describe what the script should be about...\n\nExample: Promote our Black Friday sale - 50% off all plans. Create urgency with limited-time offer.",
-  vsl: "Describe what the script should be about...\n\nExample: A video sales letter for our course. Start with the pain point, build desire, present the solution, and close with a strong CTA.",
+  demo: `Describe your product and key features to demo...
+
+Example: Create a demo for our AI video generator. Hook: "Stop spending $5K on video ads." Show the 3-step process: write script → pick AI actor → generate. End with free trial CTA.`,
+
+  listicle: `What's your list topic and target audience?
+
+Example: "5 AI tools every creator needs in 2025." Fast-paced, 10-15 sec per point. Hook with a bold claim, deliver value quickly, end with "Follow for more."`,
+
+  'problem-solution': `What pain point are you solving?
+
+Example: "Tired of paying agencies $5K per video?" Agitate the frustration, then reveal our AI solution. Show before/after: weeks of waiting vs. 5-minute generation.`,
+
+  educational: `What concept are you teaching and to whom?
+
+Example: Explain AI lip-sync for beginners. Break it down: 1) What it is, 2) How AI analyzes audio, 3) How it maps to faces. Use simple analogies, friendly tone.`,
+
+  comparison: `What are you comparing?
+
+Example: Traditional video production vs AI. Compare: Cost ($5K vs $50), Time (weeks vs minutes), Revisions (expensive vs unlimited). End with "The choice is clear."`,
+
+  promotional: `What offer or product are you promoting?
+
+Example: Black Friday sale - 50% off annual plans, 48 hours only. Create urgency, add social proof ("Join 10K+ creators"), strong CTA to claim the discount.`,
+
+  vsl: `What product/service are you selling?
+
+Example: VSL for our AI course. Structure: Hook → Pain → Story → Solution → Value stack → Price anchor → Guarantee → Urgency + CTA. Target: 5-10 minutes.`,
 };
 
 const CREDIT_COST = 0.5;
@@ -465,13 +485,19 @@ export default function ScriptModal({
   // Get placeholder based on format and mode
   const getPlaceholder = () => {
     if (isRefineMode) {
-      return "Describe what you want to change...\n\nExample: Make it shorter and more punchy. Add urgency at the end.";
+      return `What changes do you want?
+
+Example: Make it shorter (45 sec). More urgency at the end. Conversational tone. Remove pricing.`;
     }
     if (scriptType === 'recreate') {
-      return "Describe any changes or adaptations...\n\nExample: Recreate this video script but focus on our product instead. Keep the same energy and pacing.";
+      return `How should we adapt this video?
+
+Example: Recreate this competitor's script for our product. Keep their hook structure and energy. Replace their features with ours: AI actors, instant generation, unlimited revisions.`;
     }
     if (scriptType === 'walkthrough') {
-      return "Describe focus areas and preferences...\n\nExample: Create a walkthrough script highlighting the dashboard features. Emphasize ease of use for beginners.";
+      return `What features should we walk through?
+
+Example: Dashboard walkthrough for new users. Show: 1) Create project, 2) Add script, 3) Select actor, 4) Generate video. Emphasize simplicity at each step.`;
     }
     return formatPlaceholders[scriptFormat];
   };
@@ -609,6 +635,49 @@ export default function ScriptModal({
     onClose();
   };
 
+  const handleSave = async () => {
+    try {
+      setSaveStatus('saving');
+
+      await supabase
+        .from('files')
+        .update({
+          name,
+          status: displayStatus,
+          tags: selectedTags,
+          project_id: currentProjectId,
+          folder_id: currentFolderId || null,
+          generation_params: {
+            script_type: scriptType,
+            perspective,
+            duration_value: durationValue,
+            duration_unit: durationUnit,
+            duration_seconds: durationUnit === 'minutes' ? durationValue * 60 : durationValue,
+            script_format: scriptFormat,
+            prompt,
+            video_source: videoSource,
+            video_url: videoUrl,
+            uploaded_video_url: uploadedVideoUrl,
+          },
+        })
+        .eq('id', fileId);
+
+      setHasUnsavedChanges(false);
+      setSaveStatus('saved');
+      setTimeout(() => setSaveStatus('idle'), 2000);
+      queryClient.invalidateQueries({ queryKey: ['files', currentProjectId] });
+    } catch (error) {
+      console.error('Save error:', error);
+      setSaveStatus('idle');
+    }
+  };
+
+  const handleSaveAndClose = async () => {
+    await handleSave();
+    setShowUnsavedWarning(false);
+    onClose();
+  };
+
   return (
     <>
       <Dialog open={open} onOpenChange={(isOpen) => !isOpen && handleCloseAttempt()}>
@@ -711,12 +780,12 @@ export default function ScriptModal({
           {/* Content */}
           <div className="flex-1 flex overflow-hidden">
             {/* Input Section */}
-            <div className="w-1/2 overflow-y-auto p-6 space-y-6 border-r border-border">
+            <div className="w-1/2 overflow-y-auto p-5 space-y-5 border-r border-border">
               <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
                 Input
               </h3>
 
-              {/* Script Type */}
+              {/* Script Type - Full width buttons */}
               <div className="space-y-2">
                 <label className="text-sm font-medium">Script Type</label>
                 <div className="flex gap-2">
@@ -725,7 +794,7 @@ export default function ScriptModal({
                       key={type}
                       onClick={() => { setScriptType(type); setHasUnsavedChanges(true); }}
                       className={cn(
-                        'py-2.5 px-4 rounded-lg text-sm font-medium transition-all',
+                        'flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-all',
                         scriptType === type
                           ? 'bg-primary text-primary-foreground'
                           : 'bg-secondary text-muted-foreground hover:bg-secondary/80 hover:text-foreground'
@@ -737,7 +806,7 @@ export default function ScriptModal({
                 </div>
               </div>
 
-              {/* Perspective */}
+              {/* Perspective - Compact cards */}
               <div className="space-y-2">
                 <label className="text-sm font-medium">Perspective</label>
                 <div className="grid grid-cols-2 gap-2">
@@ -746,24 +815,24 @@ export default function ScriptModal({
                       key={p.value}
                       onClick={() => { setPerspective(p.value); setHasUnsavedChanges(true); }}
                       className={cn(
-                        'p-3 rounded-lg border text-left transition-all',
+                        'p-2.5 rounded-lg border text-left transition-all',
                         perspective === p.value
-                          ? 'border-primary bg-primary/10'
-                          : 'border-border hover:border-border/80 bg-card'
+                          ? 'border-primary bg-primary/5'
+                          : 'border-border hover:border-primary/50 bg-card'
                       )}
                     >
                       <div className="flex items-center gap-2">
                         <div className={cn(
-                          'w-4 h-4 rounded-full border-2 flex items-center justify-center',
-                          perspective === p.value ? 'border-primary' : 'border-muted-foreground'
+                          'w-3.5 h-3.5 rounded-full border-2 flex items-center justify-center shrink-0',
+                          perspective === p.value ? 'border-primary' : 'border-muted-foreground/50'
                         )}>
                           {perspective === p.value && (
-                            <div className="w-2 h-2 rounded-full bg-primary" />
+                            <div className="w-1.5 h-1.5 rounded-full bg-primary" />
                           )}
                         </div>
                         <span className="font-medium text-sm">{p.label}</span>
                       </div>
-                      <p className="text-xs text-muted-foreground mt-1 ml-6">{p.desc}</p>
+                      <p className="text-xs text-muted-foreground mt-0.5 ml-5">{p.desc}</p>
                     </button>
                   ))}
                 </div>
@@ -772,14 +841,15 @@ export default function ScriptModal({
               {/* Prompt-specific fields */}
               {scriptType === 'prompt' && (
                 <>
-                  {/* Duration */}
+                  {/* Duration - Equal width split */}
                   <div className="space-y-2">
                     <label className="text-sm font-medium">Estimated Duration</label>
-                    <div className="flex gap-3">
-                      <div className="flex items-center border border-border rounded-lg overflow-hidden">
+                    <div className="flex gap-2">
+                      {/* Stepper - takes 50% */}
+                      <div className="flex-1 flex items-center border border-border rounded-lg overflow-hidden">
                         <button
                           onClick={handleDecrement}
-                          className="h-10 w-10 flex items-center justify-center hover:bg-secondary transition-colors"
+                          className="h-9 w-9 flex items-center justify-center hover:bg-secondary transition-colors shrink-0"
                         >
                           <Minus className="h-4 w-4" />
                         </button>
@@ -787,38 +857,39 @@ export default function ScriptModal({
                           type="number"
                           value={durationValue}
                           onChange={(e) => { setDurationValue(Math.max(minValue, parseInt(e.target.value) || minValue)); setHasUnsavedChanges(true); }}
-                          className="h-10 w-16 bg-secondary border-y border-border text-center text-sm font-medium focus:outline-none"
+                          className="h-9 flex-1 min-w-0 bg-secondary border-x border-border text-center text-sm font-medium focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                         />
                         <button
                           onClick={handleIncrement}
-                          className="h-10 w-10 flex items-center justify-center hover:bg-secondary transition-colors"
+                          className="h-9 w-9 flex items-center justify-center hover:bg-secondary transition-colors shrink-0"
                         >
                           <Plus className="h-4 w-4" />
                         </button>
                       </div>
 
-                      <div className="flex items-center bg-secondary rounded-lg p-1">
+                      {/* Unit Toggle - takes 50% */}
+                      <div className="flex-1 flex items-center bg-secondary rounded-lg p-1">
                         <button
                           onClick={() => handleUnitChange('seconds')}
                           className={cn(
-                            'px-3 py-2 rounded-md text-sm font-medium transition-all',
+                            'flex-1 py-1.5 rounded-md text-sm font-medium transition-all',
                             durationUnit === 'seconds'
-                              ? 'bg-primary text-primary-foreground'
+                              ? 'bg-primary text-primary-foreground shadow-sm'
                               : 'text-muted-foreground hover:text-foreground'
                           )}
                         >
-                          Sec
+                          Seconds
                         </button>
                         <button
                           onClick={() => handleUnitChange('minutes')}
                           className={cn(
-                            'px-3 py-2 rounded-md text-sm font-medium transition-all',
+                            'flex-1 py-1.5 rounded-md text-sm font-medium transition-all',
                             durationUnit === 'minutes'
-                              ? 'bg-primary text-primary-foreground'
+                              ? 'bg-primary text-primary-foreground shadow-sm'
                               : 'text-muted-foreground hover:text-foreground'
                           )}
                         >
-                          Min
+                          Minutes
                         </button>
                       </div>
                     </div>
@@ -828,15 +899,15 @@ export default function ScriptModal({
                   <div className="space-y-2">
                     <label className="text-sm font-medium">Script Format</label>
                     <Select value={scriptFormat} onValueChange={(v) => { setScriptFormat(v as ScriptFormat); setHasUnsavedChanges(true); }}>
-                      <SelectTrigger>
+                      <SelectTrigger className="h-10">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
                         {scriptFormats.map((f) => (
                           <SelectItem key={f.value} value={f.value}>
-                            <div>
-                              <p className="font-medium">{f.label}</p>
-                              <p className="text-xs text-muted-foreground">{f.desc}</p>
+                            <div className="flex flex-col">
+                              <span className="font-medium">{f.label}</span>
+                              <span className="text-xs text-muted-foreground">{f.desc}</span>
                             </div>
                           </SelectItem>
                         ))}
@@ -855,10 +926,10 @@ export default function ScriptModal({
                       <button
                         onClick={() => { setVideoSource('upload'); setHasUnsavedChanges(true); }}
                         className={cn(
-                          'flex-1 py-3 px-4 rounded-lg border text-sm font-medium transition-all flex items-center justify-center gap-2',
+                          'flex-1 py-2.5 px-3 rounded-lg border text-sm font-medium transition-all flex items-center justify-center gap-2',
                           videoSource === 'upload'
-                            ? 'border-primary bg-primary/10 text-primary'
-                            : 'border-border bg-card text-muted-foreground hover:border-border/80'
+                            ? 'border-primary bg-primary/5 text-primary'
+                            : 'border-border bg-card text-muted-foreground hover:border-primary/50'
                         )}
                       >
                         <Upload className="h-4 w-4" />
@@ -867,10 +938,10 @@ export default function ScriptModal({
                       <button
                         onClick={() => { setVideoSource('url'); setHasUnsavedChanges(true); }}
                         className={cn(
-                          'flex-1 py-3 px-4 rounded-lg border text-sm font-medium transition-all flex items-center justify-center gap-2',
+                          'flex-1 py-2.5 px-3 rounded-lg border text-sm font-medium transition-all flex items-center justify-center gap-2',
                           videoSource === 'url'
-                            ? 'border-primary bg-primary/10 text-primary'
-                            : 'border-border bg-card text-muted-foreground hover:border-border/80'
+                            ? 'border-primary bg-primary/5 text-primary'
+                            : 'border-border bg-card text-muted-foreground hover:border-primary/50'
                         )}
                       >
                         <Link className="h-4 w-4" />
@@ -880,7 +951,7 @@ export default function ScriptModal({
                   </div>
 
                   {videoSource === 'upload' ? (
-                    <div className="space-y-2">
+                    <div>
                       <input
                         ref={videoInputRef}
                         type="file"
@@ -890,7 +961,7 @@ export default function ScriptModal({
                       />
                       
                       {uploadedVideoUrl ? (
-                        <div className="relative rounded-xl overflow-hidden bg-card border border-border">
+                        <div className="relative rounded-lg overflow-hidden bg-card border border-border">
                           <video
                             src={uploadedVideoUrl}
                             className="w-full aspect-video object-contain bg-black"
@@ -898,9 +969,9 @@ export default function ScriptModal({
                           />
                           <button
                             onClick={handleRemoveVideo}
-                            className="absolute top-2 left-2 h-7 w-7 rounded-full bg-black/60 hover:bg-black/80 flex items-center justify-center transition-colors"
+                            className="absolute top-2 left-2 h-6 w-6 rounded-full bg-black/60 hover:bg-black/80 flex items-center justify-center transition-colors"
                           >
-                            <X className="h-4 w-4 text-white" />
+                            <X className="h-3.5 w-3.5 text-white" />
                           </button>
                         </div>
                       ) : (
@@ -910,24 +981,24 @@ export default function ScriptModal({
                           onDragLeave={handleDragLeave}
                           onDrop={handleDrop}
                           className={cn(
-                            'border-2 border-dashed rounded-xl p-8 text-center transition-colors cursor-pointer',
+                            'border-2 border-dashed rounded-lg p-6 text-center transition-colors cursor-pointer',
                             isDraggingVideo
                               ? 'border-primary bg-primary/10'
-                              : 'border-border bg-muted/30 hover:bg-muted/50'
+                              : 'border-border bg-muted/20 hover:bg-muted/40'
                           )}
                         >
                           {isUploadingVideo ? (
                             <div className="flex flex-col items-center gap-2">
-                              <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                              <p className="text-sm text-muted-foreground">Uploading video...</p>
+                              <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                              <p className="text-sm text-muted-foreground">Uploading...</p>
                             </div>
                           ) : (
                             <div className="flex flex-col items-center gap-2">
-                              <div className="h-12 w-12 rounded-full bg-secondary flex items-center justify-center">
-                                <Video className="h-5 w-5 text-muted-foreground" />
+                              <div className="h-10 w-10 rounded-full bg-secondary flex items-center justify-center">
+                                <Video className="h-4 w-4 text-muted-foreground" />
                               </div>
                               <div>
-                                <p className="font-medium text-sm">Drop video here or click to browse</p>
+                                <p className="font-medium text-sm">Drop video or click to browse</p>
                                 <p className="text-xs text-muted-foreground">MP4, MOV, WebM up to 500MB</p>
                               </div>
                             </div>
@@ -936,11 +1007,12 @@ export default function ScriptModal({
                       )}
                     </div>
                   ) : (
-                    <div className="space-y-2">
+                    <div className="space-y-1.5">
                       <Input
                         value={videoUrl}
                         onChange={(e) => { setVideoUrl(e.target.value); setHasUnsavedChanges(true); }}
                         placeholder="https://youtube.com/watch?v=..."
+                        className="h-9"
                       />
                       <p className="text-xs text-muted-foreground">YouTube, Vimeo, Loom, or direct video links</p>
                     </div>
@@ -960,12 +1032,12 @@ export default function ScriptModal({
                   value={prompt}
                   onChange={(e) => { setPrompt(e.target.value); setHasUnsavedChanges(true); }}
                   placeholder={getPlaceholder()}
-                  className="min-h-[140px] resize-none"
+                  className="min-h-[120px] resize-none text-sm"
                 />
               </div>
 
               {/* Generate */}
-              <div className="pt-4 border-t border-border space-y-3">
+              <div className="pt-3 border-t border-border space-y-3">
                 <div className="flex items-center justify-between text-sm">
                   <span className="text-muted-foreground">Cost:</span>
                   <span className="font-medium">{CREDIT_COST} credits</span>
@@ -973,7 +1045,7 @@ export default function ScriptModal({
                 <Button
                   onClick={handleGenerate}
                   disabled={!canGenerate}
-                  className="w-full"
+                  className="w-full h-10"
                 >
                   {isGenerating ? (
                     <>
@@ -1078,12 +1150,12 @@ export default function ScriptModal({
           <AlertDialogHeader>
             <AlertDialogTitle>Unsaved changes</AlertDialogTitle>
             <AlertDialogDescription>
-              You have unsaved changes. Are you sure you want to close?
+              You have unsaved changes. Would you like to save before closing?
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleConfirmClose}>Close anyway</AlertDialogAction>
+            <AlertDialogCancel onClick={handleConfirmClose}>Don't save</AlertDialogCancel>
+            <AlertDialogAction onClick={handleSaveAndClose}>Save changes</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
