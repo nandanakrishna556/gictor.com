@@ -68,8 +68,11 @@ const PipelineUpdateSchema = z.object({
 const FileUpdateSchema = z.object({
   file_id: z.string().uuid(),
   status: z.enum(['completed', 'failed', 'processing']),
+  generation_status: z.enum(['completed', 'failed', 'processing']).optional(),
+  progress: z.number().min(0).max(100).optional(),
   preview_url: z.string().url().optional(),
   download_url: z.string().url().optional(),
+  script_output: z.string().max(50000).optional(),
   error_message: z.string().max(1000).optional(),
   metadata: z.record(z.unknown()).optional(),
   user_id: z.string().uuid().optional(),
@@ -309,7 +312,7 @@ async function handleFileUpdate(
   corsHeaders: Record<string, string>,
   remaining: number
 ) {
-  const { file_id, status, preview_url, download_url, error_message, metadata, user_id, credits_cost } = body;
+  const { file_id, status, generation_status, progress, preview_url, download_url, script_output, error_message, metadata, user_id, credits_cost } = body;
 
   // deno-lint-ignore no-explicit-any
   const updateData: Record<string, any> = {
@@ -320,9 +323,10 @@ async function handleFileUpdate(
   if (status === 'completed') {
     if (preview_url) updateData.preview_url = preview_url;
     if (download_url) updateData.download_url = download_url;
+    if (script_output) updateData.script_output = script_output;
     updateData.metadata = metadata || {};
     updateData.error_message = null;
-    updateData.progress = 100;
+    updateData.progress = progress ?? 100;
   } else if (status === 'failed') {
     updateData.error_message = error_message || 'Generation failed';
     updateData.preview_url = null;
