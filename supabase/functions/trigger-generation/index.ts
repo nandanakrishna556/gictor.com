@@ -109,7 +109,7 @@ const ActorPayloadSchema = z.object({
 });
 
 const FilePayloadSchema = z.object({
-  type: z.enum(['first_frame', 'lip_sync', 'talking_head', 'script', 'speech', 'audio', 'b_roll', 'animate', 'frame']),
+  type: z.enum(['first_frame', 'lip_sync', 'talking_head', 'script', 'speech', 'audio', 'b_roll', 'animate', 'frame', 'humanize']),
   payload: z.object({
     file_id: z.string().uuid(),
     project_id: z.string().uuid().optional(),

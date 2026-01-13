@@ -15,26 +15,39 @@ export interface UploadOptions {
 }
 
 const DEFAULT_MAX_SIZE = 10 * 1024 * 1024; // 10MB
+const VIDEO_MAX_SIZE = 500 * 1024 * 1024; // 500MB
+
 const DEFAULT_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
 const DEFAULT_AUDIO_TYPES = ['audio/mpeg', 'audio/wav', 'audio/mp3', 'audio/m4a', 'audio/x-m4a', 'audio/ogg'];
-const DEFAULT_ALLOWED_TYPES = [...DEFAULT_IMAGE_TYPES, ...DEFAULT_AUDIO_TYPES];
+const DEFAULT_VIDEO_TYPES = ['video/mp4', 'video/quicktime', 'video/webm', 'video/x-msvideo'];
+const DEFAULT_ALLOWED_TYPES = [...DEFAULT_IMAGE_TYPES, ...DEFAULT_AUDIO_TYPES, ...DEFAULT_VIDEO_TYPES];
 
 /**
- * Upload a single image to Cloudflare R2
+ * Check if a MIME type is a video type
+ */
+const isVideoType = (type: string): boolean => {
+  return DEFAULT_VIDEO_TYPES.includes(type);
+};
+
+/**
+ * Upload a single file to Cloudflare R2
  * @param file - The file to upload
  * @param options - Optional configuration
- * @returns Promise<string> - The public URL of the uploaded image
+ * @returns Promise<string> - The public URL of the uploaded file
  */
 export const uploadToR2 = async (file: File, options: UploadOptions = {}): Promise<string> => {
   const {
     folder = 'uploads',
-    maxSize = DEFAULT_MAX_SIZE,
+    maxSize,
     allowedTypes = DEFAULT_ALLOWED_TYPES,
   } = options;
 
+  // Determine max size based on file type if not explicitly provided
+  const effectiveMaxSize = maxSize ?? (isVideoType(file.type) ? VIDEO_MAX_SIZE : DEFAULT_MAX_SIZE);
+
   // Validate file size
-  if (file.size > maxSize) {
-    const maxMB = Math.round(maxSize / 1024 / 1024);
+  if (file.size > effectiveMaxSize) {
+    const maxMB = Math.round(effectiveMaxSize / 1024 / 1024);
     throw new Error(`File size exceeds ${maxMB}MB limit`);
   }
   
@@ -76,7 +89,7 @@ export const uploadToR2 = async (file: File, options: UploadOptions = {}): Promi
 };
 
 /**
- * Upload multiple images to Cloudflare R2
+ * Upload multiple files to Cloudflare R2
  * @param files - Array of files to upload
  * @param options - Optional configuration
  * @param onProgress - Optional callback for progress updates
@@ -109,12 +122,15 @@ export const validateFile = (
   options: UploadOptions = {}
 ): { valid: boolean; error?: string } => {
   const {
-    maxSize = DEFAULT_MAX_SIZE,
+    maxSize,
     allowedTypes = DEFAULT_ALLOWED_TYPES,
   } = options;
 
-  if (file.size > maxSize) {
-    const maxMB = Math.round(maxSize / 1024 / 1024);
+  // Determine max size based on file type if not explicitly provided
+  const effectiveMaxSize = maxSize ?? (isVideoType(file.type) ? VIDEO_MAX_SIZE : DEFAULT_MAX_SIZE);
+
+  if (file.size > effectiveMaxSize) {
+    const maxMB = Math.round(effectiveMaxSize / 1024 / 1024);
     return { valid: false, error: `File size exceeds ${maxMB}MB limit` };
   }
 
@@ -132,3 +148,6 @@ export const validateFile = (
 export const getR2PublicUrl = (filename: string): string => {
   return `${R2_PUBLIC_URL}/${filename}`;
 };
+
+// Export constants for use in components
+export { DEFAULT_VIDEO_TYPES, VIDEO_MAX_SIZE, DEFAULT_IMAGE_TYPES, DEFAULT_AUDIO_TYPES };
