@@ -24,30 +24,31 @@ const problems = [
 
 export function ProblemSection() {
   return (
-    <section className="py-20 px-6 bg-card/50">
+    <section className="py-24 px-6 bg-card/50">
       <div className="max-w-6xl mx-auto">
-        <div className="text-center mb-14">
-          <h2 className="text-3xl md:text-4xl font-bold mb-4">
+        <div className="text-center mb-16">
+          <p className="text-primary font-semibold text-lg mb-4 tracking-wide uppercase">The Problem</p>
+          <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 tracking-tight">
             Creative Testing Takes Too Long
           </h2>
-          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+          <p className="text-xl md:text-2xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
             Your best ad has a shelf life. When performance drops, you need new
             winners fast. But every test costs time and money.
           </p>
         </div>
 
-        <div className="grid md:grid-cols-3 gap-6">
+        <div className="grid md:grid-cols-3 gap-8">
           {problems.map((problem, index) => (
             <Card
               key={index}
-              className="bg-background border-border hover:border-primary/30 transition-colors"
+              className="bg-background border-border hover:border-destructive/30 transition-all duration-300 group"
             >
-              <CardContent className="pt-6">
-                <div className="h-12 w-12 rounded-lg bg-destructive/10 flex items-center justify-center mb-4">
-                  <problem.icon className="h-6 w-6 text-destructive" />
+              <CardContent className="pt-8 pb-8">
+                <div className="h-14 w-14 rounded-xl bg-destructive/10 flex items-center justify-center mb-6 group-hover:bg-destructive/20 transition-colors">
+                  <problem.icon className="h-7 w-7 text-destructive" />
                 </div>
-                <h3 className="text-xl font-semibold mb-2">{problem.title}</h3>
-                <p className="text-muted-foreground">{problem.description}</p>
+                <h3 className="text-2xl font-bold mb-3">{problem.title}</h3>
+                <p className="text-lg text-muted-foreground leading-relaxed">{problem.description}</p>
               </CardContent>
             </Card>
           ))}

@@ -17,52 +17,54 @@ const newWay = [
 
 export function ComparisonSection() {
   return (
-    <section id="pricing" className="py-20 px-6">
+    <section id="pricing" className="py-24 px-6 bg-card/50">
       <div className="max-w-5xl mx-auto">
-        <div className="text-center mb-14">
-          <h2 className="text-3xl md:text-4xl font-bold mb-4">
+        <div className="text-center mb-16">
+          <p className="text-primary font-semibold text-lg mb-4 tracking-wide uppercase">The Difference</p>
+          <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 tracking-tight">
             The New Playbook
           </h2>
-          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+          <p className="text-xl md:text-2xl text-muted-foreground max-w-2xl mx-auto leading-relaxed">
             Test cheap. Scale what wins.
           </p>
         </div>
 
-        <div className="grid md:grid-cols-2 gap-6">
-          <Card className="border-border bg-card">
-            <CardHeader>
-              <CardTitle className="text-xl text-muted-foreground">
+        <div className="grid md:grid-cols-2 gap-8">
+          <Card className="border-border bg-background">
+            <CardHeader className="pb-4">
+              <CardTitle className="text-2xl text-muted-foreground font-bold">
                 The Old Way
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <ul className="space-y-4">
+              <ul className="space-y-5">
                 {oldWay.map((item, index) => (
-                  <li key={index} className="flex items-center gap-3">
-                    <div className="h-6 w-6 rounded-full bg-destructive/10 flex items-center justify-center flex-shrink-0">
-                      <X className="h-4 w-4 text-destructive" />
+                  <li key={index} className="flex items-center gap-4">
+                    <div className="h-8 w-8 rounded-full bg-destructive/10 flex items-center justify-center flex-shrink-0">
+                      <X className="h-5 w-5 text-destructive" />
                     </div>
-                    <span className="text-muted-foreground">{item}</span>
+                    <span className="text-lg text-muted-foreground">{item}</span>
                   </li>
                 ))}
               </ul>
             </CardContent>
           </Card>
 
-          <Card className="border-primary/50 bg-card shadow-primary-glow">
-            <CardHeader>
-              <CardTitle className="text-xl text-primary">
+          <Card className="border-primary/50 bg-background shadow-primary-glow relative overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent pointer-events-none" />
+            <CardHeader className="pb-4 relative">
+              <CardTitle className="text-2xl text-primary font-bold">
                 The Gictor Way
               </CardTitle>
             </CardHeader>
-            <CardContent>
-              <ul className="space-y-4">
+            <CardContent className="relative">
+              <ul className="space-y-5">
                 {newWay.map((item, index) => (
-                  <li key={index} className="flex items-center gap-3">
-                    <div className="h-6 w-6 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-                      <Check className="h-4 w-4 text-primary" />
+                  <li key={index} className="flex items-center gap-4">
+                    <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                      <Check className="h-5 w-5 text-primary" />
                     </div>
-                    <span>{item}</span>
+                    <span className="text-lg font-medium">{item}</span>
                   </li>
                 ))}
               </ul>
