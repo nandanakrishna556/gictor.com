@@ -1,6 +1,5 @@
 import { Check } from "lucide-react";
 import { Card } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 
 const steps = [
   {
@@ -43,54 +42,60 @@ const steps = [
 
 export function HowItWorksSection() {
   return (
-    <section id="how-it-works" className="py-20 px-6 bg-card/50">
+    <section id="how-it-works" className="py-24 px-6">
       <div className="max-w-6xl mx-auto">
-        <div className="text-center mb-14">
-          <h2 className="text-3xl md:text-4xl font-bold mb-4">How It Works</h2>
-          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            From idea to ready-to-test video in three simple steps
+        <div className="text-center mb-16">
+          <p className="text-primary font-semibold text-lg mb-4 tracking-wide uppercase">How It Works</p>
+          <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 tracking-tight">
+            Three Steps to Your Next Winner
+          </h2>
+          <p className="text-xl md:text-2xl text-muted-foreground max-w-2xl mx-auto leading-relaxed">
+            From idea to ready-to-test video in minutes, not weeks
           </p>
         </div>
 
-        <div className="space-y-16">
+        <div className="space-y-20">
           {steps.map((step, index) => (
             <div
               key={step.step}
-              className={`grid lg:grid-cols-2 gap-10 items-center ${
+              className={`grid lg:grid-cols-2 gap-12 items-center ${
                 index % 2 === 1 ? "lg:flex-row-reverse" : ""
               }`}
             >
               <div className={index % 2 === 1 ? "lg:order-2" : ""}>
-                <Badge variant="secondary" className="mb-4">
-                  Step {step.step}
-                </Badge>
-                <h3 className="text-2xl md:text-3xl font-bold mb-4">
+                <div className="inline-flex items-center gap-3 mb-6">
+                  <span className="h-10 w-10 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold text-lg">
+                    {step.step}
+                  </span>
+                  <span className="text-primary font-semibold text-lg">Step {step.step}</span>
+                </div>
+                <h3 className="text-3xl md:text-4xl font-bold mb-5 tracking-tight">
                   {step.title}
                 </h3>
-                <p className="text-muted-foreground mb-6">{step.description}</p>
-                <ul className="space-y-3">
+                <p className="text-lg text-muted-foreground mb-8 leading-relaxed">{step.description}</p>
+                <ul className="space-y-4">
                   {step.bullets.map((bullet, i) => (
-                    <li key={i} className="flex items-center gap-3">
-                      <div className="h-5 w-5 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-                        <Check className="h-3 w-3 text-primary" />
+                    <li key={i} className="flex items-center gap-4">
+                      <div className="h-6 w-6 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                        <Check className="h-4 w-4 text-primary" />
                       </div>
-                      <span className="text-foreground">{bullet}</span>
+                      <span className="text-lg text-foreground">{bullet}</span>
                     </li>
                   ))}
                 </ul>
               </div>
 
               <Card
-                className={`overflow-hidden border-border bg-background ${
+                className={`overflow-hidden border-border bg-card ${
                   index % 2 === 1 ? "lg:order-1" : ""
                 }`}
               >
                 <div className="aspect-video bg-muted flex items-center justify-center">
                   <div className="text-center text-muted-foreground">
-                    <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center mx-auto mb-3">
-                      <span className="text-xl">🖼️</span>
+                    <div className="h-14 w-14 rounded-xl bg-primary/10 flex items-center justify-center mx-auto mb-4">
+                      <span className="text-2xl">🖼️</span>
                     </div>
-                    <p className="text-sm">{step.image}</p>
+                    <p className="text-base">{step.image}</p>
                   </div>
                 </div>
               </Card>
