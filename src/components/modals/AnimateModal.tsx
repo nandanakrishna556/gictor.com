@@ -598,6 +598,116 @@ export default function AnimateModal({
             <div className="w-1/2 overflow-y-auto p-6 space-y-6 border-r">
               <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">Input</h3>
               
+              {/* Generate/Upload Toggle */}
+              <InputModeToggle
+                mode={inputMode}
+                onModeChange={setInputMode}
+                uploadLabel="Upload"
+              />
+
+              {inputMode === 'upload' ? (
+                /* Upload Mode UI */
+                <div className="space-y-4">
+                  <Label>Upload Video</Label>
+                  {uploadedVideoUrl ? (
+                    <div className="relative rounded-xl overflow-hidden border border-border">
+                      <video src={uploadedVideoUrl} controls className="w-full h-40 object-cover" />
+                      <button
+                        onClick={() => setUploadedVideoUrl(null)}
+                        className="absolute top-2 right-2 p-1 rounded-full bg-background/80 hover:bg-background transition-colors"
+                      >
+                        <X className="h-4 w-4" strokeWidth={1.5} />
+                      </button>
+                    </div>
+                  ) : (
+                    <label className="flex flex-col items-center justify-center h-40 rounded-xl border-2 border-dashed border-border hover:border-primary cursor-pointer transition-colors">
+                      <input
+                        type="file"
+                        accept="video/mp4,video/quicktime,video/webm,.mp4,.mov,.webm"
+                        className="hidden"
+                        onChange={async (e) => {
+                          const f = e.target.files?.[0];
+                          if (!f || !user) return;
+                          
+                          // Validate
+                          const validTypes = ['video/mp4', 'video/quicktime', 'video/webm'];
+                          if (!validTypes.includes(f.type)) {
+                            toast.error('Please upload MP4, MOV, or WebM video');
+                            return;
+                          }
+                          if (f.size > 500 * 1024 * 1024) {
+                            toast.error('Video must be less than 500MB');
+                            return;
+                          }
+                          
+                          setIsUploadingVideo(true);
+                          try {
+                            const fileName = `${user.id}/videos/${Date.now()}-${f.name}`;
+                            const { error: uploadError } = await supabase.storage.from('uploads').upload(fileName, f);
+                            if (uploadError) throw uploadError;
+                            
+                            const { data: { publicUrl } } = supabase.storage.from('uploads').getPublicUrl(fileName);
+                            setUploadedVideoUrl(publicUrl);
+                            toast.success('Video uploaded');
+                          } catch (error) {
+                            toast.error('Failed to upload video');
+                          } finally {
+                            setIsUploadingVideo(false);
+                          }
+                        }}
+                        disabled={isUploadingVideo}
+                      />
+                      {isUploadingVideo ? (
+                        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" strokeWidth={1.5} />
+                      ) : (
+                        <>
+                          <Film className="h-8 w-8 text-muted-foreground mb-2" strokeWidth={1.5} />
+                          <span className="text-sm text-muted-foreground">Upload your video</span>
+                          <span className="text-xs text-muted-foreground/70">MP4, MOV, WebM up to 500MB</span>
+                        </>
+                      )}
+                    </label>
+                  )}
+                  
+                  {uploadedVideoUrl && (
+                    <Button
+                      onClick={async () => {
+                        if (!uploadedVideoUrl) return;
+                        setIsSavingUpload(true);
+                        try {
+                          await supabase.from('files').update({
+                            download_url: uploadedVideoUrl,
+                            preview_url: uploadedVideoUrl,
+                            generation_status: 'completed',
+                          }).eq('id', fileId);
+                          
+                          queryClient.invalidateQueries({ queryKey: ['file', fileId] });
+                          queryClient.invalidateQueries({ queryKey: ['files', currentProjectId] });
+                          toast.success('Video saved!');
+                          onSuccess?.();
+                        } catch (error) {
+                          toast.error('Failed to save video');
+                        } finally {
+                          setIsSavingUpload(false);
+                        }
+                      }}
+                      disabled={isSavingUpload}
+                      className="w-full"
+                    >
+                      {isSavingUpload ? (
+                        <>
+                          <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                          Saving...
+                        </>
+                      ) : (
+                        <>Save Video <span className="text-emerald-400 ml-1">• Free</span></>
+                      )}
+                    </Button>
+                  )}
+                </div>
+              ) : (
+                /* Generate Mode UI */
+                <>
               {/* Animation Type */}
               <div className="space-y-2">
                 <Label>Animation Type</Label>
@@ -834,6 +944,8 @@ export default function AnimateModal({
                   </p>
                 )}
               </div>
+              </>
+              )}
             </div>
             
             {/* Output Section */}
