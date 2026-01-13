@@ -8,7 +8,7 @@ import { cn } from '@/lib/utils';
 import { usePipeline } from '@/hooks/usePipeline';
 import { toast } from 'sonner';
 import StageLayout from './StageLayout';
-
+import { supabase } from '@/integrations/supabase/client';
 interface BRollFinalVideoStageProps {
   pipelineId: string;
   onComplete: () => void;
@@ -162,18 +162,11 @@ export default function BRollFinalVideoStage({ pipelineId, onComplete, stageNavi
         status: 'processing',
       });
 
-      // Call the n8n webhook for B-Roll video generation
-      const N8N_WEBHOOK_URL = import.meta.env.VITE_N8N_WEBHOOK_URL || '';
-      const N8N_API_KEY = import.meta.env.VITE_N8N_API_KEY || '';
-
-      const response = await fetch(N8N_WEBHOOK_URL, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-api-key': N8N_API_KEY,
-        },
-        body: JSON.stringify({ 
-          type: 'pipeline_final_video_b_roll',
+      // Use the secure edge function instead of direct n8n call
+      // This keeps API keys server-side and enables proper auth/rate limiting
+      const { data, error } = await supabase.functions.invoke('trigger-generation', {
+        body: {
+          type: 'pipeline_final_video',
           payload: {
             pipeline_id: pipelineId,
             first_frame_url: firstFrameUrl,
@@ -184,12 +177,12 @@ export default function BRollFinalVideoStage({ pipelineId, onComplete, stageNavi
             resolution,
             pipeline_type: 'b_roll',
           }
-        }),
+        }
       });
 
-      if (!response.ok) {
+      if (error || !data?.success) {
         await updateFinalVideo({ status: 'failed' });
-        toast.error('Generation failed');
+        toast.error('Generation failed', { description: error?.message || data?.error });
         return;
       }
 
