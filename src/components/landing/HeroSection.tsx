@@ -61,7 +61,7 @@ export function HeroSection() {
 
         <div className="flex flex-col items-center gap-4">
           <Button size="lg" className="text-lg px-10 py-7 rounded-xl shadow-primary-glow" asChild>
-            <Link to="/login">
+            <Link to="/signup">
               <Sparkles className="h-5 w-5 mr-2" />
               Create Free Account
             </Link>

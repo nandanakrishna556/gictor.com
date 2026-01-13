@@ -21,7 +21,7 @@ export function FinalCTASection() {
 
         <div className="flex flex-col items-center gap-4">
           <Button size="lg" className="text-lg px-10 py-7 rounded-xl shadow-primary-glow group" asChild>
-            <Link to="/login">
+            <Link to="/signup">
               <Sparkles className="h-5 w-5 mr-2" />
               Create Free Account
               <ArrowRight className="h-5 w-5 ml-2 group-hover:translate-x-1 transition-transform" />

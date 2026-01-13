@@ -45,7 +45,7 @@ export function LandingNav() {
             <Link to="/login">Log In</Link>
           </Button>
           <Button className="text-base px-5" asChild>
-            <Link to="/login">Start Free</Link>
+            <Link to="/signup">Start Free</Link>
           </Button>
         </div>
       </div>

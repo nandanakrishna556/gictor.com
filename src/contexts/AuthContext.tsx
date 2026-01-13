@@ -8,19 +8,23 @@ interface AuthContextType {
   session: Session | null;
   loading: boolean;
   signInWithGoogle: () => Promise<void>;
-  signInWithApple: () => Promise<void>;
   signInWithEmail: (email: string, password: string) => Promise<{ error: Error | null }>;
-  signUpWithEmail: (email: string, password: string, fullName?: string) => Promise<{ error: Error | null }>;
+  signUpWithEmail: (email: string, password: string, fullName?: string) => Promise<{ error: Error | null; needsEmailVerification?: boolean }>;
   signOut: () => Promise<void>;
+  resetPassword: (email: string) => Promise<{ error: Error | null }>;
+  updatePassword: (newPassword: string) => Promise<{ error: Error | null }>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 const LAST_URL_KEY = 'lovable_last_url';
 
-// Save current URL to localStorage (excludes login page)
+// Paths that should not be saved as last URL
+const AUTH_PATHS = ['/login', '/signup', '/forgot-password', '/reset-password', '/', '/home'];
+
+// Save current URL to localStorage (excludes auth pages)
 function saveLastUrl(pathname: string) {
-  if (pathname !== '/login' && pathname !== '/') {
+  if (!AUTH_PATHS.includes(pathname)) {
     localStorage.setItem(LAST_URL_KEY, pathname);
   }
 }
@@ -38,7 +42,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const location = useLocation();
   const hasInitialSession = useRef(false);
 
-  // Save URL whenever it changes (except login/root)
+  // Save URL whenever it changes (except auth pages)
   useEffect(() => {
     saveLastUrl(location.pathname);
   }, [location.pathname]);
@@ -51,13 +55,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setUser(session?.user ?? null);
         setLoading(false);
 
-        // Only navigate on fresh sign-in from login page, not on token refresh
+        // Handle password recovery event
+        if (event === 'PASSWORD_RECOVERY') {
+          setTimeout(() => {
+            navigate('/reset-password');
+          }, 0);
+          return;
+        }
+
+        // Only navigate on fresh sign-in from auth pages, not on token refresh
         if (event === 'SIGNED_IN' && session && !hasInitialSession.current) {
-          // Only redirect if user is on the login page
-          if (location.pathname === '/login' || location.pathname === '/') {
+          if (AUTH_PATHS.includes(location.pathname)) {
             const savedUrl = getLastUrl();
             setTimeout(() => {
-              navigate(savedUrl || '/projects');
+              navigate(savedUrl || '/dashboard');
             }, 0);
           }
         }
@@ -74,7 +85,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setSession(session);
       setUser(session?.user ?? null);
       setLoading(false);
-      // If there's already a session, mark it so we don't redirect on refresh
       if (session) {
         hasInitialSession.current = true;
       }
@@ -87,17 +97,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: `${window.location.origin}/projects`,
-      },
-    });
-    if (error) throw error;
-  };
-
-  const signInWithApple = async () => {
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: 'apple',
-      options: {
-        redirectTo: `${window.location.origin}/projects`,
+        redirectTo: `${window.location.origin}/dashboard`,
       },
     });
     if (error) throw error;
@@ -112,15 +112,33 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const signUpWithEmail = async (email: string, password: string, fullName?: string) => {
-    const { error } = await supabase.auth.signUp({
+    const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
-        emailRedirectTo: `${window.location.origin}/projects`,
+        emailRedirectTo: `${window.location.origin}/dashboard`,
         data: {
           full_name: fullName,
         },
       },
+    });
+    
+    // Check if email confirmation is required
+    const needsEmailVerification = data?.user && !data?.session;
+    
+    return { error, needsEmailVerification };
+  };
+
+  const resetPassword = async (email: string) => {
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/reset-password`,
+    });
+    return { error };
+  };
+
+  const updatePassword = async (newPassword: string) => {
+    const { error } = await supabase.auth.updateUser({
+      password: newPassword,
     });
     return { error };
   };
@@ -138,10 +156,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         session,
         loading,
         signInWithGoogle,
-        signInWithApple,
         signInWithEmail,
         signUpWithEmail,
         signOut,
+        resetPassword,
+        updatePassword,
       }}
     >
       {children}
