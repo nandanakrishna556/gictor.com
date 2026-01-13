@@ -1,5 +1,7 @@
+import { useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Coins, CreditCard, ArrowUpRight, ArrowDownRight } from 'lucide-react';
+import { useSearchParams } from 'react-router-dom';
+import { Coins, CreditCard, ArrowUpRight, ArrowDownRight, Loader2, Check } from 'lucide-react';
 import MainLayout from '@/components/layout/MainLayout';
 import AppHeader from '@/components/layout/AppHeader';
 import { Button } from '@/components/ui/button';
@@ -7,6 +9,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { useProfile } from '@/hooks/useProfile';
 import { useAuth } from '@/contexts/AuthContext';
 import { formatDistanceToNow } from 'date-fns';
+import { toast } from 'sonner';
+import { CREDIT_PACKAGES, CREDIT_COSTS } from '@/constants/creditPackages';
 
 interface CreditTransaction {
   id: string;
@@ -16,16 +20,27 @@ interface CreditTransaction {
   created_at: string;
 }
 
-const creditPackages = [
-  { credits: 50, price: 5, popular: false },
-  { credits: 100, price: 10, popular: true },
-  { credits: 250, price: 20, popular: false },
-  { credits: 500, price: 35, popular: false },
-];
-
 export default function Billing() {
   const { user } = useAuth();
-  const { profile } = useProfile();
+  const { profile, refetch: refetchProfile } = useProfile();
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  // Handle success/cancel from Stripe redirect
+  useEffect(() => {
+    const success = searchParams.get('success');
+    const canceled = searchParams.get('canceled');
+    const credits = searchParams.get('credits');
+
+    if (success === 'true') {
+      toast.success(`Successfully purchased ${credits} credits!`);
+      refetchProfile();
+      // Clean up URL
+      setSearchParams({});
+    } else if (canceled === 'true') {
+      toast.info('Purchase canceled');
+      setSearchParams({});
+    }
+  }, [searchParams, setSearchParams, refetchProfile]);
 
   const { data: transactions } = useQuery({
     queryKey: ['credit-transactions', user?.id],
@@ -42,13 +57,29 @@ export default function Billing() {
     enabled: !!user,
   });
 
+  const handlePurchase = async (priceId: string) => {
+    try {
+      const { data, error } = await supabase.functions.invoke('create-checkout', {
+        body: { priceId },
+      });
+
+      if (error) throw error;
+      if (data?.url) {
+        window.open(data.url, '_blank');
+      }
+    } catch (error) {
+      console.error('Checkout error:', error);
+      toast.error('Failed to start checkout');
+    }
+  };
+
   return (
     <MainLayout>
       <div className="flex h-screen flex-col">
         <AppHeader breadcrumbs={[{ label: 'Billing' }]} />
 
         <div className="flex-1 overflow-y-auto p-6">
-          <div className="mx-auto max-w-4xl">
+          <div className="mx-auto max-w-5xl">
             {/* Current Balance */}
             <div className="mb-8 rounded-2xl border border-border bg-card p-8 shadow-apple">
               <div className="flex items-center gap-4">
@@ -66,15 +97,44 @@ export default function Billing() {
               </div>
             </div>
 
+            {/* Credit Costs Info */}
+            <div className="mb-8 rounded-2xl border border-border bg-card p-6 shadow-apple">
+              <h2 className="mb-4 text-lg font-semibold text-foreground">
+                Credit Usage
+              </h2>
+              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                <div className="flex items-center justify-between rounded-xl bg-muted/50 px-4 py-3">
+                  <span className="text-sm text-muted-foreground">Lip Sync</span>
+                  <span className="font-medium text-foreground">{CREDIT_COSTS.lip_sync_per_second} / sec</span>
+                </div>
+                <div className="flex items-center justify-between rounded-xl bg-muted/50 px-4 py-3">
+                  <span className="text-sm text-muted-foreground">Speech</span>
+                  <span className="font-medium text-foreground">{CREDIT_COSTS.speech_per_1000_chars} / 1k chars</span>
+                </div>
+                <div className="flex items-center justify-between rounded-xl bg-muted/50 px-4 py-3">
+                  <span className="text-sm text-muted-foreground">Script</span>
+                  <span className="font-medium text-foreground">{CREDIT_COSTS.script_per_generation} / gen</span>
+                </div>
+                <div className="flex items-center justify-between rounded-xl bg-muted/50 px-4 py-3">
+                  <span className="text-sm text-muted-foreground">Frame</span>
+                  <span className="font-medium text-foreground">{CREDIT_COSTS.frame_per_generation} / gen</span>
+                </div>
+                <div className="flex items-center justify-between rounded-xl bg-muted/50 px-4 py-3">
+                  <span className="text-sm text-muted-foreground">Animate</span>
+                  <span className="font-medium text-foreground">{CREDIT_COSTS.animate_per_second} / sec</span>
+                </div>
+              </div>
+            </div>
+
             {/* Purchase Credits */}
             <div className="mb-8">
               <h2 className="mb-4 text-lg font-semibold text-foreground">
                 Purchase Credits
               </h2>
-              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                {creditPackages.map((pkg) => (
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                {CREDIT_PACKAGES.map((pkg) => (
                   <div
-                    key={pkg.credits}
+                    key={pkg.priceId}
                     className={`relative rounded-2xl border bg-card p-5 shadow-apple transition-apple hover-lift ${
                       pkg.popular
                         ? 'border-primary ring-1 ring-primary'
@@ -86,16 +146,22 @@ export default function Billing() {
                         Popular
                       </span>
                     )}
-                    <p className="mb-1 text-2xl font-semibold text-foreground">
-                      {pkg.credits}
-                    </p>
-                    <p className="mb-4 text-sm text-muted-foreground">credits</p>
+                    <div className="mb-4">
+                      <p className="text-3xl font-semibold text-foreground">
+                        {pkg.credits}
+                      </p>
+                      <p className="text-sm text-muted-foreground">credits</p>
+                    </div>
+                    <div className="mb-4 text-sm text-muted-foreground">
+                      ${(pkg.price / pkg.credits).toFixed(2)} per credit
+                    </div>
                     <Button
                       variant={pkg.popular ? 'default' : 'outline'}
                       className="w-full rounded-xl"
+                      onClick={() => handlePurchase(pkg.priceId)}
                     >
-                      <CreditCard className="mr-2 h-4 w-4" />$
-                      {pkg.price}
+                      <CreditCard className="mr-2 h-4 w-4" />
+                      ${pkg.price}
                     </Button>
                   </div>
                 ))}
@@ -139,7 +205,9 @@ export default function Billing() {
                                 ? 'Credits purchased'
                                 : tx.transaction_type === 'usage'
                                 ? 'Generation'
-                                : 'Credits refunded'}
+                                : tx.transaction_type === 'refund'
+                                ? 'Credits refunded'
+                                : tx.transaction_type}
                             </p>
                             <p className="text-sm text-muted-foreground">
                               {tx.description ||

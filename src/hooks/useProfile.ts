@@ -78,11 +78,16 @@ export function useProfile() {
     },
   });
 
+  const refetch = () => {
+    queryClient.invalidateQueries({ queryKey: ['profile'] });
+  };
+
   return {
     profile,
     isLoading,
     error,
     updateProfile: updateProfileMutation.mutateAsync,
     deductCredits: deductCreditsMutation.mutateAsync,
+    refetch,
   };
 }
