@@ -551,6 +551,116 @@ export default function SpeechModal({
             <div className="w-1/2 overflow-y-auto p-6 space-y-6 border-r border-border">
               <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">Input</h3>
               
+              {/* Generate/Upload Toggle */}
+              <InputModeToggle
+                mode={inputMode}
+                onModeChange={setInputMode}
+                uploadLabel="Upload"
+              />
+
+              {inputMode === 'upload' ? (
+                /* Upload Mode UI */
+                <div className="space-y-4">
+                  <label className="text-sm font-medium">Upload Audio</label>
+                  {uploadedAudioUrl ? (
+                    <div className="space-y-3">
+                      <AudioPlayer src={uploadedAudioUrl} />
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        onClick={() => setUploadedAudioUrl(null)}
+                        className="w-full"
+                      >
+                        Remove Audio
+                      </Button>
+                    </div>
+                  ) : (
+                    <label className="flex flex-col items-center justify-center h-40 rounded-xl border-2 border-dashed border-border hover:border-primary cursor-pointer transition-colors">
+                      <input
+                        type="file"
+                        accept="audio/mpeg,audio/mp3,audio/wav,audio/m4a,audio/x-m4a,.mp3,.wav,.m4a"
+                        className="hidden"
+                        onChange={async (e) => {
+                          const f = e.target.files?.[0];
+                          if (!f || !user) return;
+                          
+                          const validTypes = ['audio/mpeg', 'audio/mp3', 'audio/wav', 'audio/m4a', 'audio/x-m4a'];
+                          if (!validTypes.includes(f.type) && !f.name.match(/\.(mp3|wav|m4a)$/i)) {
+                            toast.error('Please upload MP3, WAV, or M4A audio');
+                            return;
+                          }
+                          if (f.size > 50 * 1024 * 1024) {
+                            toast.error('Audio must be less than 50MB');
+                            return;
+                          }
+                          
+                          setIsUploadingAudio(true);
+                          try {
+                            const url = await uploadToR2(f, { 
+                              folder: 'speech-audio',
+                              allowedTypes: [...validTypes, 'audio/mp4'],
+                              maxSize: 50 * 1024 * 1024
+                            });
+                            setUploadedAudioUrl(url);
+                            toast.success('Audio uploaded');
+                          } catch (error) {
+                            toast.error('Failed to upload audio');
+                          } finally {
+                            setIsUploadingAudio(false);
+                          }
+                        }}
+                        disabled={isUploadingAudio}
+                      />
+                      {isUploadingAudio ? (
+                        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" strokeWidth={1.5} />
+                      ) : (
+                        <>
+                          <Mic className="h-8 w-8 text-muted-foreground mb-2" strokeWidth={1.5} />
+                          <span className="text-sm text-muted-foreground">Upload your audio</span>
+                          <span className="text-xs text-muted-foreground/70">MP3, WAV, M4A up to 50MB</span>
+                        </>
+                      )}
+                    </label>
+                  )}
+                  
+                  {uploadedAudioUrl && (
+                    <Button
+                      onClick={async () => {
+                        if (!uploadedAudioUrl) return;
+                        setIsSavingUpload(true);
+                        try {
+                          await supabase.from('files').update({
+                            download_url: uploadedAudioUrl,
+                            generation_status: 'completed',
+                          }).eq('id', fileId);
+                          
+                          queryClient.invalidateQueries({ queryKey: ['file', fileId] });
+                          queryClient.invalidateQueries({ queryKey: ['files', currentProjectId] });
+                          toast.success('Audio saved!');
+                          onSuccess?.();
+                        } catch (error) {
+                          toast.error('Failed to save audio');
+                        } finally {
+                          setIsSavingUpload(false);
+                        }
+                      }}
+                      disabled={isSavingUpload}
+                      className="w-full"
+                    >
+                      {isSavingUpload ? (
+                        <>
+                          <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                          Saving...
+                        </>
+                      ) : (
+                        <>Save Audio <span className="text-emerald-400 ml-1">• Free</span></>
+                      )}
+                    </Button>
+                  )}
+                </div>
+              ) : (
+                /* Generate Mode UI */
+                <>
               {/* Script Input */}
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
@@ -749,6 +859,8 @@ export default function SpeechModal({
                   )}
                 </Button>
               </div>
+              </>
+              )}
             </div>
             
             {/* Output Section */}

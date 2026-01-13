@@ -735,9 +735,68 @@ export default function FrameModal({
           <div className="flex-1 flex min-h-0 overflow-hidden">
             {/* Input Section */}
             <div className="w-1/2 overflow-y-auto p-6 space-y-5 border-r border-border">
-              <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">Input</h3>
+              <div className="flex items-center justify-between">
+                <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">Input</h3>
+              </div>
+              
+              {/* Generate/Upload Toggle */}
+              <InputModeToggle
+                mode={inputMode}
+                onModeChange={setInputMode}
+                uploadLabel="Upload"
+              />
 
-              {/* Frame Type Toggle */}
+              {inputMode === 'upload' ? (
+                /* Upload Mode UI */
+                <div className="space-y-4">
+                  <SingleImageUpload
+                    value={uploadedImageUrl || undefined}
+                    onChange={(url) => setUploadedImageUrl(url || null)}
+                    aspectRatio="video"
+                    placeholder="Drag & drop your image or"
+                    showGenerateLink={false}
+                  />
+                  
+                  {uploadedImageUrl && (
+                    <Button
+                      onClick={async () => {
+                        if (!uploadedImageUrl) return;
+                        setIsSavingUpload(true);
+                        try {
+                          await supabase.from('files').update({
+                            download_url: uploadedImageUrl,
+                            preview_url: uploadedImageUrl,
+                            generation_status: 'completed',
+                          }).eq('id', fileId);
+                          
+                          queryClient.invalidateQueries({ queryKey: ['file', fileId] });
+                          queryClient.invalidateQueries({ queryKey: ['files', currentProjectId] });
+                          toast.success('Image saved!');
+                          onSuccess?.();
+                        } catch (error) {
+                          toast.error('Failed to save image');
+                        } finally {
+                          setIsSavingUpload(false);
+                        }
+                      }}
+                      disabled={isSavingUpload}
+                      className="w-full"
+                    >
+                      {isSavingUpload ? (
+                        <>
+                          <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                          Saving...
+                        </>
+                      ) : (
+                        <>Save Image <span className="text-emerald-400 ml-1">• Free</span></>
+                      )}
+                    </Button>
+                  )}
+                </div>
+              ) : (
+                /* Generate Mode UI */
+                <>
+                  {/* Frame Type Toggle */}
               <div className="space-y-2">
                 <label className="text-sm font-medium">Frame Type</label>
                 <div className="flex gap-2">
@@ -1065,6 +1124,8 @@ export default function FrameModal({
                   )}
                 </Button>
               </div>
+              </>
+              )}
             </div>
 
             {/* Output Section */}
