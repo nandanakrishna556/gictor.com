@@ -118,7 +118,7 @@ export default function LipSyncForm({
   const isOverLimit = characterCount > maxChars;
   
   const estimatedDuration = Math.max(SECONDS_PER_BLOCK, Math.ceil(characterCount / CHARS_PER_BLOCK) * SECONDS_PER_BLOCK);
-  const creditCost = CREDIT_COSTS.lip_sync;
+  const creditCost = Math.ceil(estimatedDuration * 0.15 * 100) / 100; // 0.15 credits per second
   const hasEnoughCredits = (profile?.credits ?? 0) >= creditCost;
 
   const currentStatusOption = availableStatusOptions.find(s => s.value === selectedStatus) || availableStatusOptions[0];

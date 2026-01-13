@@ -46,7 +46,7 @@ const DEFAULT_STATUS_OPTIONS: StatusOption[] = [
   { value: 'complete', label: 'Complete', color: 'bg-emerald-500' },
 ];
 
-const CREDIT_COST = 1;
+const CREDIT_COST_PER_SECOND = 0.15;
 
 export default function AnimateModal({
   open,
@@ -130,10 +130,13 @@ export default function AnimateModal({
     color: t.color || '#8E8E93',
   })) || [];
   
+  // Dynamic credit cost based on duration (0.15 per second)
+  const creditCost = Math.ceil(duration * CREDIT_COST_PER_SECOND * 100) / 100;
+  
   // Validation
   const isMotionGraphics = animationType === 'motion_graphics';
   const hasRequiredInputs = firstFrameUrl && (!isMotionGraphics || lastFrameUrl);
-  const canGenerate = hasRequiredInputs && !isGenerating && profile && (profile.credits ?? 0) >= CREDIT_COST;
+  const canGenerate = hasRequiredInputs && !isGenerating && profile && (profile.credits ?? 0) >= creditCost;
   const hasOutput = file?.generation_status === 'completed' && file?.download_url;
   
   // Sync file data when loaded
@@ -278,8 +281,8 @@ export default function AnimateModal({
     if (!canGenerate || !profile || !user) return;
     
     // Check credits
-    if ((profile.credits ?? 0) < CREDIT_COST) {
-      toast.error(`Insufficient credits. You need ${CREDIT_COST} credit.`);
+    if ((profile.credits ?? 0) < creditCost) {
+      toast.error(`Insufficient credits. You need ${creditCost.toFixed(2)} credits.`);
       return;
     }
     
@@ -329,7 +332,7 @@ export default function AnimateModal({
           duration,
           audio_enabled: audioEnabled,
           camera_fixed: cameraFixed,
-          credits_cost: CREDIT_COST,
+          credits_cost: creditCost,
           supabase_url: import.meta.env.VITE_SUPABASE_URL,
         },
       };
@@ -922,7 +925,7 @@ export default function AnimateModal({
               <div className="pt-4 border-t space-y-3">
                 <div className="flex items-center justify-between text-sm">
                   <span className="text-muted-foreground">Cost:</span>
-                  <span className="font-medium">{CREDIT_COST} credit</span>
+                  <span className="font-medium">{creditCost.toFixed(2)} credits</span>
                 </div>
                 <Button
                   onClick={handleGenerate}
@@ -935,7 +938,7 @@ export default function AnimateModal({
                       Generating...
                     </>
                   ) : (
-                    <>Generate Animation • {CREDIT_COST} credit</>
+                    <>Generate Animation • {creditCost.toFixed(2)} credits</>
                   )}
                 </Button>
                 {isMotionGraphics && !lastFrameUrl && (

@@ -77,13 +77,11 @@ type GenerationPayload = FirstFramePayload | TalkingHeadPayload | ScriptPayload 
 
 export const CREDIT_COSTS = {
   first_frame: 0.25,
-  lip_sync: 1.0,
-  talking_head: 1.0, // backward compatibility
-  script: 0.5,
-  speech: 0.5,
-  audio: 0.5, // backward compatibility
-  b_roll: 2.0,
+  lip_sync_per_second: 0.15,
+  speech_per_1000_chars: 0.25,
+  script: 0.25,
   frame: 0.25, // base cost, 4K is 0.5
+  animate_per_second: 0.15,
 };
 
 export const getFrameCreditCost = (resolution: '1K' | '2K' | '4K'): number => {

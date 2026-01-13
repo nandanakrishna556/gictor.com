@@ -94,7 +94,7 @@ Example: Black Friday sale - 50% off annual plans, 48 hours only. Create urgency
 Example: VSL for our AI course. Structure: Hook → Pain → Story → Solution → Value stack → Price anchor → Guarantee → Urgency + CTA. Target: 5-10 minutes.`,
 };
 
-const CREDIT_COST = 0.5;
+const CREDIT_COST = 0.25;
 const HUMANIZE_CREDIT_COST = 0.25;
 
 export default function ScriptModal({
