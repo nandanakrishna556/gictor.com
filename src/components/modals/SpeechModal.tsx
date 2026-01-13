@@ -17,9 +17,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { TagList, TagSelector, TagData } from '@/components/ui/tag-badge';
-import { ArrowLeft, X, Check, Loader2, Download, AlertCircle, User, Search, Play, Pause } from 'lucide-react';
+import { InputModeToggle, InputMode } from '@/components/ui/input-mode-toggle';
+import { ArrowLeft, X, Check, Loader2, Download, AlertCircle, User, Search, Play, Pause, Mic } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { AudioPlayer } from '@/components/ui/AudioPlayer';
+import { uploadToR2, validateFile } from '@/lib/cloudflare-upload';
 
 interface StatusOption {
   value: string;
@@ -87,6 +89,12 @@ export default function SpeechModal({
   const [selectedActorId, setSelectedActorId] = useState<string | null>(null);
   const [actorSearchOpen, setActorSearchOpen] = useState(false);
   const [playingAudioId, setPlayingAudioId] = useState<string | null>(null);
+  
+  // Input mode state
+  const [inputMode, setInputMode] = useState<InputMode>('generate');
+  const [uploadedAudioUrl, setUploadedAudioUrl] = useState<string | null>(null);
+  const [isUploadingAudio, setIsUploadingAudio] = useState(false);
+  const [isSavingUpload, setIsSavingUpload] = useState(false);
   
   // Generation state
   const [isGenerating, setIsGenerating] = useState(false);

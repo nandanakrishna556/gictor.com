@@ -16,9 +16,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Switch } from '@/components/ui/switch';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { TagList, TagSelector, TagData } from '@/components/ui/tag-badge';
+import { InputModeToggle, InputMode } from '@/components/ui/input-mode-toggle';
 import LocationSelector from '@/components/forms/LocationSelector';
 import { ArrowLeft, X, Loader2, Download, Upload, Film, Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { uploadToR2, validateFile } from '@/lib/cloudflare-upload';
 
 interface StatusOption {
   value: string;
@@ -87,6 +89,12 @@ export default function AnimateModal({
   const [duration, setDuration] = useState(8);
   const [audioEnabled, setAudioEnabled] = useState(false);
   const [cameraFixed, setCameraFixed] = useState(false);
+  
+  // Input mode state
+  const [inputMode, setInputMode] = useState<InputMode>('generate');
+  const [uploadedVideoUrl, setUploadedVideoUrl] = useState<string | null>(null);
+  const [isUploadingVideo, setIsUploadingVideo] = useState(false);
+  const [isSavingUpload, setIsSavingUpload] = useState(false);
   
   // Upload state
   const [isUploadingFirst, setIsUploadingFirst] = useState(false);

@@ -14,9 +14,9 @@ import LocationSelector from '@/components/forms/LocationSelector';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { TagList, TagSelector, TagData } from '@/components/ui/tag-badge';
+import { InputModeToggle, InputMode } from '@/components/ui/input-mode-toggle';
 import { ArrowLeft, X, Check, Loader2, FileText, Sparkles, RefreshCw, Wand2, Minus, Plus, Upload, Link, Copy, Download, Video } from 'lucide-react';
 import { cn } from '@/lib/utils';
-
 interface StatusOption {
   value: string;
   label: string;
@@ -95,6 +95,7 @@ Example: VSL for our AI course. Structure: Hook → Pain → Story → Solution 
 };
 
 const CREDIT_COST = 0.5;
+const HUMANIZE_CREDIT_COST = 0.25;
 
 export default function ScriptModal({
   open,
@@ -139,9 +140,14 @@ export default function ScriptModal({
   const [videoUrl, setVideoUrl] = useState('');
   const [uploadedVideoUrl, setUploadedVideoUrl] = useState('');
 
+  // Input mode state
+  const [inputMode, setInputMode] = useState<InputMode>('generate');
+  const [pastedScript, setPastedScript] = useState('');
+
   // Output
   const [scriptOutput, setScriptOutput] = useState('');
   const [isRefineMode, setIsRefineMode] = useState(false);
+  const [isHumanizing, setIsHumanizing] = useState(false);
 
   // Upload state
   const [isUploadingVideo, setIsUploadingVideo] = useState(false);
@@ -606,6 +612,94 @@ Example: Dashboard walkthrough for new users. Show: 1) Create project, 2) Add sc
     }
   };
 
+  // Handle saving pasted script (free mode)
+  const handleSavePastedScript = async () => {
+    if (!pastedScript.trim()) {
+      toast.error('Please paste a script first');
+      return;
+    }
+
+    try {
+      setSaveStatus('saving');
+      await supabase
+        .from('files')
+        .update({
+          script_output: pastedScript,
+          generation_status: 'completed',
+        })
+        .eq('id', fileId);
+
+      setScriptOutput(pastedScript);
+      setSaveStatus('saved');
+      setTimeout(() => setSaveStatus('idle'), 2000);
+      toast.success('Script saved!');
+      queryClient.invalidateQueries({ queryKey: ['file', fileId] });
+      queryClient.invalidateQueries({ queryKey: ['files', currentProjectId] });
+    } catch (error) {
+      console.error('Save pasted script error:', error);
+      toast.error('Failed to save script');
+      setSaveStatus('idle');
+    }
+  };
+
+  // Handle humanize script
+  const handleHumanize = async () => {
+    if (!scriptOutput || !profile || !user) return;
+
+    if ((profile.credits ?? 0) < HUMANIZE_CREDIT_COST) {
+      toast.error(`Insufficient credits. You need ${HUMANIZE_CREDIT_COST} credits.`);
+      return;
+    }
+
+    setIsHumanizing(true);
+
+    try {
+      const { data: sessionData, error: sessionError } = await supabase.auth.refreshSession();
+      if (sessionError || !sessionData.session) {
+        throw new Error('Session expired. Please log in again.');
+      }
+
+      // Update file status to processing
+      await supabase
+        .from('files')
+        .update({
+          generation_status: 'processing',
+          progress: 0,
+          generation_started_at: new Date().toISOString(),
+        })
+        .eq('id', fileId);
+
+      // Prepare payload for edge function
+      const payload = {
+        type: 'humanize',
+        payload: {
+          file_id: fileId,
+          user_id: user.id,
+          project_id: currentProjectId,
+          script: scriptOutput,
+          supabase_url: import.meta.env.VITE_SUPABASE_URL,
+          credits_cost: HUMANIZE_CREDIT_COST,
+        },
+      };
+
+      // Call edge function
+      const response = await supabase.functions.invoke('trigger-generation', {
+        body: payload,
+      });
+
+      if (response.error) {
+        throw new Error(response.error.message || 'Failed to start humanization');
+      }
+
+      toast.success('Humanizing script...');
+      queryClient.invalidateQueries({ queryKey: ['file', fileId] });
+    } catch (error) {
+      console.error('Humanize error:', error);
+      toast.error(error instanceof Error ? error.message : 'Failed to humanize script');
+      setIsHumanizing(false);
+    }
+  };
+
   // Copy to clipboard
   const handleCopy = () => {
     navigator.clipboard.writeText(scriptOutput);
@@ -628,7 +722,9 @@ Example: Dashboard walkthrough for new users. Show: 1) Create project, 2) Add sc
 
   // Calculate stats
   const charCount = scriptOutput.length;
+  const pastedCharCount = pastedScript.length;
   const estimatedSeconds = Math.round(charCount / 17);
+  const pastedEstimatedSeconds = Math.round(pastedCharCount / 17);
 
   const handleCloseAttempt = () => {
     if (hasUnsavedChanges) {
@@ -793,26 +889,35 @@ Example: Dashboard walkthrough for new users. Show: 1) Create project, 2) Add sc
                 Input
               </h3>
 
-              {/* Script Type - Full width buttons */}
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Script Type</label>
-                <div className="flex gap-2">
-                  {(['prompt', 'recreate', 'walkthrough'] as ScriptType[]).map((type) => (
-                    <button
-                      key={type}
-                      onClick={() => { setScriptType(type); setHasUnsavedChanges(true); }}
-                      className={cn(
-                        'flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-all',
-                        scriptType === type
-                          ? 'bg-primary text-primary-foreground'
-                          : 'bg-secondary text-muted-foreground hover:bg-secondary/80 hover:text-foreground'
-                      )}
-                    >
-                      {type.charAt(0).toUpperCase() + type.slice(1)}
-                    </button>
-                  ))}
-                </div>
-              </div>
+              {/* Input Mode Toggle */}
+              <InputModeToggle
+                mode={inputMode}
+                onModeChange={setInputMode}
+                uploadLabel="Paste"
+              />
+
+              {inputMode === 'generate' ? (
+                <>
+                  {/* Script Type - Full width buttons */}
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Script Type</label>
+                    <div className="flex gap-2">
+                      {(['prompt', 'recreate', 'walkthrough'] as ScriptType[]).map((type) => (
+                        <button
+                          key={type}
+                          onClick={() => { setScriptType(type); setHasUnsavedChanges(true); }}
+                          className={cn(
+                            'flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-all',
+                            scriptType === type
+                              ? 'bg-primary text-primary-foreground'
+                              : 'bg-secondary text-muted-foreground hover:bg-secondary/80 hover:text-foreground'
+                          )}
+                        >
+                          {type.charAt(0).toUpperCase() + type.slice(1)}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
 
               {/* Perspective - Compact cards */}
               <div className="space-y-2">
@@ -1075,6 +1180,49 @@ Example: Dashboard walkthrough for new users. Show: 1) Create project, 2) Add sc
                   )}
                 </Button>
               </div>
+                </>
+              ) : (
+                /* Paste Mode */
+                <>
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <label className="text-sm font-medium">Paste Your Script</label>
+                      <span className={cn(
+                        "text-xs",
+                        pastedCharCount > 50000 ? "text-destructive" : "text-muted-foreground"
+                      )}>
+                        {pastedCharCount.toLocaleString()} characters
+                      </span>
+                    </div>
+                    <Textarea
+                      value={pastedScript}
+                      onChange={(e) => setPastedScript(e.target.value)}
+                      placeholder="Paste your script here..."
+                      className="min-h-[300px] resize-none text-sm"
+                    />
+                    {pastedCharCount > 0 && (
+                      <p className="text-xs text-muted-foreground">
+                        Estimated duration: ~{pastedEstimatedSeconds} seconds
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Save Script - Free */}
+                  <div className="pt-3 border-t border-border space-y-3">
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-muted-foreground">Cost:</span>
+                      <span className="font-medium text-emerald-500">Free</span>
+                    </div>
+                    <Button
+                      onClick={handleSavePastedScript}
+                      disabled={!pastedScript.trim()}
+                      className="w-full h-10"
+                    >
+                      Save Script <span className="ml-2 text-emerald-400">• Free</span>
+                    </Button>
+                  </div>
+                </>
+              )}
             </div>
 
             {/* Output Section */}
@@ -1138,6 +1286,26 @@ Example: Dashboard walkthrough for new users. Show: 1) Create project, 2) Add sc
                       Refine
                     </Button>
                   </div>
+
+                  {/* Humanize Button */}
+                  <Button
+                    variant="outline"
+                    onClick={handleHumanize}
+                    disabled={isHumanizing || isGenerating}
+                    className="w-full"
+                  >
+                    {isHumanizing ? (
+                      <>
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        Humanizing...
+                      </>
+                    ) : (
+                      <>
+                        <Wand2 className="h-4 w-4 mr-2" />
+                        Humanize Script • {HUMANIZE_CREDIT_COST} credits
+                      </>
+                    )}
+                  </Button>
 
                   {isRefineMode && (
                     <div className="bg-primary/10 border border-primary/30 rounded-lg p-3 text-sm">
