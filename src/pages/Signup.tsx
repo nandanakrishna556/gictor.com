@@ -5,29 +5,32 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { Sparkles, ArrowLeft } from 'lucide-react';
+import { Sparkles, ArrowLeft, Mail, CheckCircle2 } from 'lucide-react';
 import { z } from 'zod';
 
-const loginSchema = z.object({
-  email: z.string().trim().email('Please enter a valid email'),
-  password: z.string().min(1, 'Password is required'),
+const signupSchema = z.object({
+  fullName: z.string().trim().min(1, 'Full name is required').max(100, 'Name must be less than 100 characters'),
+  email: z.string().trim().email('Please enter a valid email').max(255, 'Email must be less than 255 characters'),
+  password: z.string().min(8, 'Password must be at least 8 characters').max(72, 'Password must be less than 72 characters'),
 });
 
-export default function Login() {
-  const { user, signInWithEmail, signInWithGoogle, loading } = useAuth();
+export default function Signup() {
+  const { user, signUpWithEmail, signInWithGoogle, loading } = useAuth();
   const { toast } = useToast();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [fullName, setFullName] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showVerificationMessage, setShowVerificationMessage] = useState(false);
 
   if (user && !loading) {
     return <Navigate to="/dashboard" replace />;
   }
 
-  const handleLogin = async (e: React.FormEvent) => {
+  const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    const validation = loginSchema.safeParse({ email, password });
+    const validation = signupSchema.safeParse({ fullName, email, password });
     if (!validation.success) {
       toast({
         title: 'Validation Error',
@@ -40,28 +43,24 @@ export default function Login() {
     setIsSubmitting(true);
 
     try {
-      const { error } = await signInWithEmail(email, password);
+      const { error, needsEmailVerification } = await signUpWithEmail(email, password, fullName);
       
       if (error) {
-        if (error.message.includes('Email not confirmed')) {
+        if (error.message.includes('already registered')) {
           toast({
-            title: 'Email not verified',
-            description: 'Please check your email and click the verification link before logging in.',
-            variant: 'destructive',
-          });
-        } else if (error.message.includes('Invalid login credentials')) {
-          toast({
-            title: 'Login failed',
-            description: 'Invalid email or password. Please try again.',
+            title: 'Account exists',
+            description: 'An account with this email already exists. Try logging in instead.',
             variant: 'destructive',
           });
         } else {
           toast({
-            title: 'Login failed',
+            title: 'Signup failed',
             description: error.message,
             variant: 'destructive',
           });
         }
+      } else if (needsEmailVerification) {
+        setShowVerificationMessage(true);
       }
     } catch (error) {
       toast({
@@ -94,6 +93,40 @@ export default function Login() {
     );
   }
 
+  if (showVerificationMessage) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-secondary/30 p-4">
+        <Link 
+          to="/home" 
+          className="absolute top-6 left-6 flex items-center gap-2 text-base text-muted-foreground hover:text-foreground transition-colors"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Back to Home
+        </Link>
+        
+        <div className="w-full max-w-md animate-fade-in">
+          <div className="rounded-2xl bg-card p-8 shadow-elevated text-center">
+            <div className="mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-primary/10 mx-auto">
+              <Mail className="h-8 w-8 text-primary" />
+            </div>
+            <h1 className="text-2xl font-bold text-foreground mb-3">Check your email</h1>
+            <p className="text-lg text-muted-foreground mb-6">
+              We've sent a verification link to <span className="text-foreground font-medium">{email}</span>
+            </p>
+            <p className="text-muted-foreground mb-8">
+              Click the link in the email to verify your account and get started.
+            </p>
+            <div className="flex flex-col gap-3">
+              <Button variant="outline" asChild>
+                <Link to="/login">Back to Login</Link>
+              </Button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="flex min-h-screen items-center justify-center bg-secondary/30 p-4">
       <Link 
@@ -111,9 +144,9 @@ export default function Login() {
             <Link to="/home" className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-primary">
               <Sparkles className="h-7 w-7 text-primary-foreground" />
             </Link>
-            <h1 className="text-2xl font-bold text-foreground">Welcome back</h1>
+            <h1 className="text-2xl font-bold text-foreground">Create your account</h1>
             <p className="mt-2 text-base text-muted-foreground">
-              Log in to your Gictor account
+              Start creating studio-quality videos with AI
             </p>
           </div>
 
@@ -151,7 +184,22 @@ export default function Login() {
           </div>
 
           {/* Email Form */}
-          <form onSubmit={handleLogin} className="space-y-4">
+          <form onSubmit={handleSignup} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="fullName" className="text-base font-medium">
+                Full Name
+              </Label>
+              <Input
+                id="fullName"
+                type="text"
+                value={fullName}
+                onChange={(e) => setFullName(e.target.value)}
+                placeholder="John Doe"
+                className="h-12 rounded-xl border-border bg-background text-base"
+                required
+              />
+            </div>
+            
             <div className="space-y-2">
               <Label htmlFor="email" className="text-base font-medium">
                 Email
@@ -168,17 +216,9 @@ export default function Login() {
             </div>
 
             <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <Label htmlFor="password" className="text-base font-medium">
-                  Password
-                </Label>
-                <Link 
-                  to="/forgot-password" 
-                  className="text-sm text-primary hover:opacity-80 transition-opacity"
-                >
-                  Forgot password?
-                </Link>
-              </div>
+              <Label htmlFor="password" className="text-base font-medium">
+                Password
+              </Label>
               <Input
                 id="password"
                 type="password"
@@ -188,6 +228,7 @@ export default function Login() {
                 className="h-12 rounded-xl border-border bg-background text-base"
                 required
               />
+              <p className="text-sm text-muted-foreground">Minimum 8 characters</p>
             </div>
 
             <Button
@@ -198,15 +239,15 @@ export default function Login() {
               {isSubmitting ? (
                 <div className="h-5 w-5 animate-spin rounded-full border-2 border-primary-foreground border-t-transparent" />
               ) : (
-                'Log In'
+                'Create Account'
               )}
             </Button>
           </form>
 
           <p className="mt-6 text-center text-base text-muted-foreground">
-            Don't have an account?{' '}
-            <Link to="/signup" className="font-medium text-primary hover:opacity-80 transition-opacity">
-              Sign up
+            Already have an account?{' '}
+            <Link to="/login" className="font-medium text-primary hover:opacity-80 transition-opacity">
+              Log in
             </Link>
           </p>
         </div>
