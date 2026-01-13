@@ -51,7 +51,86 @@ function checkRateLimit(identifier: string): { allowed: boolean; remaining: numb
   return { allowed: true, remaining: RATE_LIMIT - record.count };
 }
 
+// ============= Server-Side Credit Cost Calculation =============
+// SECURITY: All credit costs are calculated server-side to prevent manipulation
+const CREDIT_COSTS = {
+  first_frame: 0.25,
+  script: 0.25,
+  voice_per_1000_chars: 0.25,
+  video_per_second: 0.2,
+  lip_sync_per_second: 0.15,
+  animate_per_second: 0.15,
+  speech_per_1000_chars: 0.25,
+  frame_base: 0.25,
+  frame_4k: 0.5,
+  actor_create: 1.0,
+};
+
+function calculateServerSideCost(type: string, payload: Record<string, unknown>): number {
+  switch(type) {
+    // Pipeline generation types
+    case 'pipeline_first_frame':
+    case 'pipeline_first_frame_b_roll':
+      return CREDIT_COSTS.first_frame;
+    
+    case 'pipeline_script':
+      return CREDIT_COSTS.script;
+    
+    case 'pipeline_voice':
+      const charCount = (payload.char_count as number) || (payload.script_text as string)?.length || 0;
+      return Math.ceil(charCount / 1000) * CREDIT_COSTS.voice_per_1000_chars;
+    
+    case 'pipeline_final_video':
+      const audioDuration = (payload.audio_duration_seconds as number) || (payload.duration_seconds as number) || 5;
+      return audioDuration * CREDIT_COSTS.video_per_second;
+    
+    // File generation types
+    case 'first_frame':
+      return CREDIT_COSTS.first_frame;
+    
+    case 'script':
+      return CREDIT_COSTS.script;
+    
+    case 'speech':
+      const scriptLength = (payload.script as string)?.length || 0;
+      return Math.ceil(scriptLength / 1000) * CREDIT_COSTS.speech_per_1000_chars;
+    
+    case 'lip_sync':
+      const lipSyncDuration = (payload.audio_duration as number) || 0;
+      return Math.max(0.15, lipSyncDuration * CREDIT_COSTS.lip_sync_per_second);
+    
+    case 'animate':
+      const animateDuration = (payload.duration as number) || (payload.duration_seconds as number) || 5;
+      return animateDuration * CREDIT_COSTS.animate_per_second;
+    
+    case 'frame':
+      const resolution = payload.frame_resolution as string;
+      return resolution === '4K' ? CREDIT_COSTS.frame_4k : CREDIT_COSTS.frame_base;
+    
+    case 'talking_head':
+    case 'b_roll':
+      const thDuration = (payload.audio_duration as number) || 5;
+      return thDuration * CREDIT_COSTS.video_per_second;
+    
+    case 'audio':
+      const audioScriptLength = (payload.script as string)?.length || 0;
+      return Math.ceil(audioScriptLength / 1000) * CREDIT_COSTS.speech_per_1000_chars;
+    
+    case 'humanize':
+      return 0.25; // Base cost for humanize
+    
+    case 'create_actor':
+      return CREDIT_COSTS.actor_create;
+    
+    default:
+      console.warn(`Unknown generation type for cost calculation: ${type}`);
+      return 0.25; // Default minimum cost
+  }
+}
+
 // ============= Input Validation Schemas =============
+// Note: credits_cost is intentionally REMOVED from client input schemas
+// All costs are calculated server-side for security
 const PipelinePayloadSchema = z.object({
   type: z.enum([
     'pipeline_first_frame', 
@@ -84,7 +163,10 @@ const PipelinePayloadSchema = z.object({
     audio_duration_seconds: z.number().positive().max(300).optional(),
     resolution: z.string().optional(),
     pipeline_type: z.string().optional(),
-    credits_cost: z.number().positive().optional(),
+    // Motion settings for B-Roll
+    motion_prompt: z.string().max(2000).optional(),
+    camera_motion: z.string().optional(),
+    motion_intensity: z.number().min(0).max(100).optional(),
   }),
 });
 
@@ -103,7 +185,6 @@ const ActorPayloadSchema = z.object({
     other_instructions: z.string().max(2000).optional(),
     custom_image_url: z.string().url().optional().nullable(),
     custom_audio_url: z.string().url().optional().nullable(),
-    credits_cost: z.number().positive(),
     supabase_url: z.string().url(),
   }),
 });
@@ -117,7 +198,6 @@ const FilePayloadSchema = z.object({
     folder_id: z.string().uuid().nullable().optional(),
     file_name: z.string().max(255).optional(),
     tags: z.array(z.string()).optional(),
-    credits_cost: z.number().positive(),
     prompt: z.string().max(10000).optional(),
     image_type: z.enum(['ugc', 'studio']).optional(),
     aspect_ratio: z.enum(['1:1', '9:16', '16:9']).optional(),
@@ -133,6 +213,7 @@ const FilePayloadSchema = z.object({
     script_format: z.enum(['demo', 'listicle', 'problem-solution', 'educational', 'comparison', 'promotional', 'vsl']).optional(),
     perspective: z.enum(['mixed', '1st', '2nd', '3rd']).optional(),
     duration_seconds: z.number().positive().max(1800).optional(),
+    duration: z.number().positive().max(600).optional(),
     is_refine: z.boolean().optional(),
     previous_script: z.string().max(50000).optional(),
     video_url: z.string().url().optional(),
@@ -274,12 +355,75 @@ serve(async (req) => {
       validatedBody = parseResult.data;
     }
 
+    // ============= SERVER-SIDE CREDIT HANDLING =============
+    // Calculate cost server-side - NEVER trust client-supplied costs
+    const actualCost = calculateServerSideCost(validatedBody.type, validatedBody.payload);
+    console.log('Server-calculated cost:', { type: validatedBody.type, cost: actualCost });
+
+    // Check user has enough credits
+    const { data: profile, error: profileError } = await supabase
+      .from('profiles')
+      .select('credits')
+      .eq('id', user.id)
+      .single();
+
+    if (profileError || !profile) {
+      console.error('Profile fetch error:', profileError);
+      return new Response(
+        JSON.stringify({ success: false, error: 'Unable to verify credits' }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    if ((profile.credits || 0) < actualCost) {
+      console.warn('Insufficient credits:', { available: profile.credits, required: actualCost });
+      return new Response(
+        JSON.stringify({ 
+          success: false, 
+          error: 'Insufficient credits',
+          required: actualCost,
+          available: profile.credits || 0
+        }),
+        { status: 402, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Deduct credits server-side (service_role bypasses the trigger)
+    const { error: deductError } = await supabase
+      .from('profiles')
+      .update({ credits: (profile.credits || 0) - actualCost })
+      .eq('id', user.id);
+
+    if (deductError) {
+      console.error('Credit deduction error:', deductError);
+      return new Response(
+        JSON.stringify({ success: false, error: 'Failed to process credits' }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Log transaction
+    await supabase.from('credit_transactions').insert({
+      user_id: user.id,
+      amount: -actualCost,
+      transaction_type: 'usage',
+      description: `${validatedBody.type} generation`
+    });
+
+    console.log('Credits deducted server-side:', { userId: user.id, amount: actualCost });
+
     // Get n8n configuration (server-side secrets)
     const n8nWebhookUrl = Deno.env.get('N8N_WEBHOOK_URL');
     const n8nApiKey = Deno.env.get('N8N_API_KEY');
 
     if (!n8nWebhookUrl || !n8nApiKey) {
       console.error('N8N configuration missing');
+      // Refund credits on configuration error
+      await supabase.rpc('refund_credits', {
+        p_user_id: user.id,
+        p_amount: actualCost,
+        p_description: 'Refund: Service configuration error'
+      });
       return new Response(
         JSON.stringify({ success: false, error: 'Service configuration error' }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -287,11 +431,13 @@ serve(async (req) => {
     }
 
     // Forward request to n8n with the secret API key (server-side only)
+    // Include server-calculated cost for downstream status updates
     const n8nPayload = {
       ...validatedBody,
       payload: {
         ...validatedBody.payload,
         user_id: user.id,
+        credits_cost: actualCost, // Server-calculated cost for n8n/status updates
       }
     };
 
@@ -316,6 +462,14 @@ serve(async (req) => {
       if (!response.ok) {
         const errorText = await response.text();
         console.error('N8N error:', response.status, errorText);
+        
+        // Refund credits on n8n error
+        await supabase.rpc('refund_credits', {
+          p_user_id: user.id,
+          p_amount: actualCost,
+          p_description: `Refund: ${validatedBody.type} generation failed (n8n error)`
+        });
+        
         return new Response(
           JSON.stringify({ 
             success: false, 
@@ -345,7 +499,7 @@ serve(async (req) => {
       console.log('N8N response received successfully');
 
       return new Response(
-        JSON.stringify({ success: true, ...responseData }),
+        JSON.stringify({ success: true, credits_deducted: actualCost, ...responseData }),
         { 
           status: 200, 
           headers: { 
@@ -357,6 +511,13 @@ serve(async (req) => {
       );
     } catch (fetchError) {
       clearTimeout(timeoutId);
+      
+      // Refund credits on any fetch error
+      await supabase.rpc('refund_credits', {
+        p_user_id: user.id,
+        p_amount: actualCost,
+        p_description: `Refund: ${validatedBody.type} generation failed (network error)`
+      });
       
       if (fetchError instanceof DOMException && fetchError.name === 'AbortError') {
         console.error('N8N request timed out');
