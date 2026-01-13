@@ -141,21 +141,8 @@ export function useActors() {
 
       if (createError) throw createError;
 
-      // Deduct 1 credit from user's profile
-      const { error: creditError } = await supabase
-        .from('profiles')
-        .update({ credits: profile.credits - 1 })
-        .eq('id', user.id);
-
-      if (creditError) throw creditError;
-
-      // Log credit transaction
-      await supabase.from('credit_transactions').insert({
-        user_id: user.id,
-        amount: -1,
-        transaction_type: 'usage',
-        description: 'Actor creation',
-      });
+      // Note: Credit deduction is handled server-side by the trigger-generation edge function
+      // The database trigger prevents client-side credit manipulation
 
       // Refresh session for fresh token
       await supabase.auth.refreshSession();
