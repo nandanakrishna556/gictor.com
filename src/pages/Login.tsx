@@ -1,11 +1,11 @@
 import { useState } from 'react';
-import { Navigate } from 'react-router-dom';
+import { Navigate, Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { Sparkles } from 'lucide-react';
+import { Sparkles, ArrowLeft } from 'lucide-react';
 import { z } from 'zod';
 
 const emailSchema = z.string().email('Please enter a valid email');
@@ -117,14 +117,22 @@ export default function Login() {
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-secondary/30 p-4">
+      <Link 
+        to="/" 
+        className="absolute top-6 left-6 flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+      >
+        <ArrowLeft className="h-4 w-4" />
+        Back to Home
+      </Link>
+      
       <div className="w-full max-w-md animate-fade-in">
         <div className="rounded-2xl bg-card p-8 shadow-apple-lg">
           {/* Logo */}
           <div className="mb-8 flex flex-col items-center">
-            <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-primary">
+            <Link to="/" className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-primary">
               <Sparkles className="h-7 w-7 text-primary-foreground" />
-            </div>
-            <h1 className="text-2xl font-semibold text-foreground">UGC Generator</h1>
+            </Link>
+            <h1 className="text-2xl font-semibold text-foreground">Gictor</h1>
             <p className="mt-1 text-sm text-muted-foreground">
               {isSignUp ? 'Create your account' : 'Welcome back'}
             </p>
