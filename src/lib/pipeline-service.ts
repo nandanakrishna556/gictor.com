@@ -18,63 +18,37 @@ interface GenerationResult {
   error?: string;
 }
 
-// Deduct credits and call edge function (which proxies to n8n securely)
+// Call edge function which handles credit deduction and n8n proxy securely
+// SECURITY: All credit operations are now handled server-side to prevent manipulation
 async function executeGeneration(
   type: PipelineGenerationType,
   payload: Record<string, unknown>,
-  creditsCost: number
+  _creditsCost: number // Kept for backwards compatibility but not used (server calculates)
 ): Promise<GenerationResult> {
   try {
-    // Get user
+    // Get user for auth check only
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return { success: false, error: 'Not authenticated' };
 
-    // Check credits
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('credits')
-      .eq('id', user.id)
-      .single();
+    // SECURITY: Credits are now checked and deducted server-side in trigger-generation edge function
+    // This prevents client-side manipulation of credit costs
 
-    if (!profile || (profile.credits || 0) < creditsCost) {
-      return { success: false, error: 'Insufficient credits' };
-    }
-
-    // Deduct credits
-    await supabase
-      .from('profiles')
-      .update({ credits: (profile.credits || 0) - creditsCost })
-      .eq('id', user.id);
-
-    // Log transaction
-    await supabase.from('credit_transactions').insert({
-      user_id: user.id,
-      amount: -creditsCost,
-      transaction_type: 'usage',
-      description: `Pipeline ${type.replace('pipeline_', '')} generation`
-    });
-
-    // Call secure edge function (n8n API key stays server-side)
+    // Call secure edge function (handles credit deduction + n8n API key server-side)
     const { data, error } = await supabase.functions.invoke('trigger-generation', {
       body: { 
         type, 
-        payload: {
-          ...payload,
-          credits_cost: creditsCost,
-        }
+        payload,
       },
     });
 
     if (error) {
       console.error('Edge function error:', error);
-      // Refund on failure
-      await refundCredits(user.id, creditsCost, type);
+      // Refunds are handled server-side in edge function
       return { success: false, error: error.message || 'Generation service error' };
     }
 
     if (!data?.success) {
-      // Refund on failure
-      await refundCredits(user.id, creditsCost, type);
+      // Refunds are handled server-side in edge function
       return { success: false, error: data?.error || 'Generation failed' };
     }
 
@@ -82,29 +56,6 @@ async function executeGeneration(
   } catch (error) {
     console.error('Generation error:', error);
     return { success: false, error: 'Network error' };
-  }
-}
-
-// Refund helper
-async function refundCredits(userId: string, amount: number, type: string) {
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('credits')
-    .eq('id', userId)
-    .single();
-
-  if (profile) {
-    await supabase
-      .from('profiles')
-      .update({ credits: (profile.credits || 0) + amount })
-      .eq('id', userId);
-
-    await supabase.from('credit_transactions').insert({
-      user_id: userId,
-      amount: amount,
-      transaction_type: 'refund',
-      description: `Refund for failed ${type} generation`
-    });
   }
 }
 

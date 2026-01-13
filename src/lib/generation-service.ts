@@ -124,7 +124,7 @@ export async function startGeneration(
       };
     }
 
-    // Deduct credits
+    // Get user for auth check only (credits handled server-side now)
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
       // Clean up file record
@@ -139,54 +139,10 @@ export async function startGeneration(
       };
     }
 
-    // Get current credits and deduct
-    const { data: profile, error: profileError } = await supabase
-      .from('profiles')
-      .select('credits')
-      .eq('id', user.id)
-      .single();
-
-    if (profileError || !profile) {
-      // Clean up file record
-      await supabase.from('files').delete().eq('id', payload.file_id);
-      return {
-        success: false,
-        error: {
-          type: 'auth_error',
-          message: 'Failed to fetch user profile',
-          userMessage: 'Unable to verify your credits. Please try again.',
-        },
-      };
-    }
-
-    if ((profile.credits || 0) < payload.credits_cost) {
-      // Clean up file record
-      await supabase.from('files').delete().eq('id', payload.file_id);
-      return {
-        success: false,
-        error: {
-          type: 'insufficient_credits',
-          message: 'Not enough credits',
-          userMessage: getErrorMessage('insufficient_credits'),
-        },
-      };
-    }
-
-    // Deduct credits
-    await supabase
-      .from('profiles')
-      .update({ credits: (profile.credits || 0) - payload.credits_cost })
-      .eq('id', user.id);
-
-    // Log transaction
-    await supabase.from('credit_transactions').insert([{
-      user_id: user.id,
-      amount: -payload.credits_cost,
-      transaction_type: 'usage',
-      description: `${type} generation`
-    }]);
-
-    // Call secure edge function (n8n API key stays server-side)
+    // SECURITY: Credits are now checked and deducted server-side in trigger-generation edge function
+    // This prevents client-side manipulation of credit costs
+    
+    // Call secure edge function (handles credit deduction + n8n API key server-side)
     const { data, error: invokeError } = await supabase.functions.invoke('trigger-generation', {
       body: { type, payload },
     });
@@ -200,6 +156,8 @@ export async function startGeneration(
         errorType = 'rate_limit_exceeded';
       } else if (invokeError.message?.includes('Unauthorized')) {
         errorType = 'auth_error';
+      } else if (invokeError.message?.includes('Insufficient credits') || invokeError.message?.includes('402')) {
+        errorType = 'insufficient_credits';
       }
 
       // Update file status to failed
@@ -208,8 +166,7 @@ export async function startGeneration(
         error_message: invokeError.message,
       }).eq('id', payload.file_id);
 
-      // Refund credits
-      await refundCredits(user.id, payload.credits_cost, type);
+      // Note: Refunds are handled server-side in edge function
 
       return {
         success: false,
@@ -222,21 +179,25 @@ export async function startGeneration(
     }
 
     if (!data?.success) {
+      // Check for insufficient credits error from server
+      const isInsufficientCredits = data?.error === 'Insufficient credits';
+      
       // Update file status to failed
       await supabase.from('files').update({
         status: 'failed',
         error_message: data?.error || 'Generation failed',
       }).eq('id', payload.file_id);
 
-      // Refund credits
-      await refundCredits(user.id, payload.credits_cost, type);
+      // Note: Refunds are handled server-side in edge function
 
       return {
         success: false,
         error: {
-          type: 'service_unavailable',
+          type: isInsufficientCredits ? 'insufficient_credits' : 'service_unavailable',
           message: data?.error || 'Generation failed',
-          userMessage: getErrorMessage('service_unavailable'),
+          userMessage: isInsufficientCredits 
+            ? getErrorMessage('insufficient_credits') 
+            : getErrorMessage('service_unavailable'),
         },
       };
     }
@@ -252,32 +213,5 @@ export async function startGeneration(
         userMessage: getErrorMessage('unknown_error'),
       },
     };
-  }
-}
-
-// Helper function to refund credits
-async function refundCredits(userId: string, amount: number, type: GenerationType) {
-  try {
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('credits')
-      .eq('id', userId)
-      .single();
-
-    if (profile) {
-      await supabase
-        .from('profiles')
-        .update({ credits: (profile.credits || 0) + amount })
-        .eq('id', userId);
-
-      await supabase.from('credit_transactions').insert([{
-        user_id: userId,
-        amount: amount,
-        transaction_type: 'refund',
-        description: `Refund for failed ${type} generation`
-      }]);
-    }
-  } catch (error) {
-    console.error('Failed to refund credits:', error);
   }
 }
