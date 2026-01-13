@@ -5,11 +5,11 @@ export function LandingFooter() {
     <footer className="border-t border-border py-12 px-6">
       <div className="max-w-6xl mx-auto">
         <div className="flex flex-col md:flex-row justify-between items-center gap-6">
-          <Link to="/" className="text-xl font-bold text-primary">
+          <Link to="/" className="text-2xl font-bold text-primary">
             Gictor
           </Link>
 
-          <div className="flex flex-wrap justify-center gap-6 text-sm text-muted-foreground">
+          <div className="flex flex-wrap justify-center gap-8 text-base text-muted-foreground">
             <Link to="/" className="hover:text-foreground transition-colors">
               Product
             </Link>
@@ -27,7 +27,7 @@ export function LandingFooter() {
             </Link>
           </div>
 
-          <p className="text-sm text-muted-foreground">
+          <p className="text-base text-muted-foreground">
             © 2025 Gictor. All rights reserved.
           </p>
         </div>

@@ -77,14 +77,14 @@ export function UseCasesSection() {
                     <h3 className="text-2xl font-bold mb-2">
                       {useCase.title}
                     </h3>
-                    <p className="text-base text-muted-foreground leading-relaxed">
+                    <p className="text-lg text-muted-foreground leading-relaxed">
                       {useCase.description}
                     </p>
                   </div>
                 </div>
                 <ul className="space-y-3 ml-[84px]">
                   {useCase.bullets.map((bullet, i) => (
-                    <li key={i} className="flex items-center gap-3 text-base">
+                    <li key={i} className="flex items-center gap-3 text-lg">
                       <Check className="h-5 w-5 text-primary flex-shrink-0" />
                       <span>{bullet}</span>
                     </li>

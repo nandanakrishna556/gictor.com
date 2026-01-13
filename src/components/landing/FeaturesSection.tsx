@@ -69,15 +69,15 @@ export function FeaturesSection() {
               <div className="aspect-video bg-muted flex items-center justify-center relative overflow-hidden">
                 <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
                 <div className="text-center text-muted-foreground relative">
-                  <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center mx-auto mb-3 group-hover:bg-primary/20 group-hover:scale-110 transition-all">
-                    <feature.icon className="h-6 w-6 text-primary" />
+                  <div className="h-14 w-14 rounded-xl bg-primary/10 flex items-center justify-center mx-auto mb-3 group-hover:bg-primary/20 group-hover:scale-110 transition-all">
+                    <feature.icon className="h-7 w-7 text-primary" />
                   </div>
-                  <p className="text-sm">{feature.image}</p>
+                  <p className="text-base">{feature.image}</p>
                 </div>
               </div>
               <CardContent className="pt-6 pb-6">
                 <h3 className="text-xl font-bold mb-3">{feature.title}</h3>
-                <p className="text-base text-muted-foreground leading-relaxed">
+                <p className="text-lg text-muted-foreground leading-relaxed">
                   {feature.description}
                 </p>
               </CardContent>
