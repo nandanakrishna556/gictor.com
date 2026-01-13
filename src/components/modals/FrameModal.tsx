@@ -24,6 +24,8 @@ import { Progress } from "@/components/ui/progress";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { TagList, TagSelector, TagData } from "@/components/ui/tag-badge";
+import { SingleImageUpload } from "@/components/ui/single-image-upload";
+import { InputModeToggle, InputMode } from "@/components/ui/input-mode-toggle";
 import LocationSelector from "@/components/forms/LocationSelector";
 import ActorSelectorPopover from "./ActorSelectorPopover";
 import { ArrowLeft, X, Loader2, Download, Upload, Image as ImageIcon, Check, Plus } from "lucide-react";
@@ -103,6 +105,11 @@ export default function FrameModal({
   const [prompt, setPrompt] = useState("");
   const [cameraPerspective, setCameraPerspective] = useState<CameraPerspective>("3rd_person");
   const [resolution, setResolution] = useState<Resolution>("2K");
+
+  // Input mode state
+  const [inputMode, setInputMode] = useState<InputMode>('generate');
+  const [uploadedImageUrl, setUploadedImageUrl] = useState<string | null>(null);
+  const [isSavingUpload, setIsSavingUpload] = useState(false);
 
   // Upload state
   const [uploadingIndex, setUploadingIndex] = useState<number | null>(null);

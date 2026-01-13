@@ -13,6 +13,7 @@ import { Progress } from '@/components/ui/progress';
 import { SingleImageUpload } from '@/components/ui/single-image-upload';
 import { VideoPlayer } from '@/components/ui/video-player';
 import { AudioPlayer } from '@/components/ui/audio-player';
+import { InputModeToggle, InputMode } from '@/components/ui/input-mode-toggle';
 import LocationSelector from '@/components/forms/LocationSelector';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -88,6 +89,11 @@ export default function LipSyncModal({
   const [audioError, setAudioError] = useState<string | null>(null);
   const [isUploadingAudio, setIsUploadingAudio] = useState(false);
   
+  // Input mode state
+  const [inputMode, setInputMode] = useState<InputMode>('generate');
+  const [uploadedVideoUrl, setUploadedVideoUrl] = useState<string | null>(null);
+  const [isUploadingVideo, setIsUploadingVideo] = useState(false);
+  const [isSavingUpload, setIsSavingUpload] = useState(false);
   
   // Generation state
   const [isGenerating, setIsGenerating] = useState(false);
