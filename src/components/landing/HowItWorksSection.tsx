@@ -76,7 +76,7 @@ export function HowItWorksSection() {
                 <ul className="space-y-4">
                   {step.bullets.map((bullet, i) => (
                     <li key={i} className="flex items-center gap-4">
-                      <div className="h-6 w-6 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                      <div className="h-7 w-7 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
                         <Check className="h-4 w-4 text-primary" />
                       </div>
                       <span className="text-lg text-foreground">{bullet}</span>
@@ -92,10 +92,10 @@ export function HowItWorksSection() {
               >
                 <div className="aspect-video bg-muted flex items-center justify-center">
                   <div className="text-center text-muted-foreground">
-                    <div className="h-14 w-14 rounded-xl bg-primary/10 flex items-center justify-center mx-auto mb-4">
+                    <div className="h-16 w-16 rounded-xl bg-primary/10 flex items-center justify-center mx-auto mb-4">
                       <span className="text-2xl">🖼️</span>
                     </div>
-                    <p className="text-base">{step.image}</p>
+                    <p className="text-lg">{step.image}</p>
                   </div>
                 </div>
               </Card>
