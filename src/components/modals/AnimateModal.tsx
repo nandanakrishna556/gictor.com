@@ -337,7 +337,7 @@ export default function AnimateModal({
         },
       };
       
-      console.log('Calling trigger-generation with:', requestPayload);
+      // Starting generation request
       
       // Call edge function
       const { data, error } = await supabase.functions.invoke('trigger-generation', {

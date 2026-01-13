@@ -268,12 +268,8 @@ serve(async (req) => {
     // Get user from token directly
     const { data: userData, error: authError } = await supabase.auth.getUser(token);
     
-    console.log('Auth debug:', { 
-      hasToken: !!token, 
-      tokenPrefix: token?.substring(0, 20),
-      userId: userData?.user?.id, 
-      authError: authError?.message 
-    });
+    // Auth check completed - log only non-sensitive status
+    console.log('Auth check:', { authenticated: !!userData?.user });
     
     if (authError || !userData?.user) {
       console.error('Auth error:', authError);
