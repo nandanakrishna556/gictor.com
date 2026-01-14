@@ -121,22 +121,34 @@ export default function ActorSelectorPopover({
                     isSelected && 'border-primary ring-2 ring-primary/20'
                   )}
                 >
-                  {/* Preview area - 360° grid */}
-                  <div className="aspect-square w-full relative">
+                  {/* Preview area - 360° grid with error handling */}
+                  <div className="aspect-square w-full relative bg-muted">
                     {actor.profile_360_url ? (
                       <img
                         src={actor.profile_360_url}
-                        alt={`${actor.name} 360°`}
+                        alt={actor.name}
                         className="w-full h-full object-cover"
+                        onError={(e) => {
+                          // Fallback to profile image if 360 fails
+                          const target = e.currentTarget;
+                          if (actor.profile_image_url && target.src !== actor.profile_image_url) {
+                            target.src = actor.profile_image_url;
+                          } else {
+                            target.style.display = 'none';
+                          }
+                        }}
                       />
                     ) : actor.profile_image_url ? (
                       <img
                         src={actor.profile_image_url}
                         alt={actor.name}
                         className="w-full h-full object-cover"
+                        onError={(e) => {
+                          e.currentTarget.style.display = 'none';
+                        }}
                       />
                     ) : (
-                      <div className="w-full h-full bg-muted flex items-center justify-center">
+                      <div className="w-full h-full flex items-center justify-center">
                         <User className="h-8 w-8 text-muted-foreground/50" />
                       </div>
                     )}
@@ -148,14 +160,26 @@ export default function ActorSelectorPopover({
                   </div>
                   {/* Info section - fixed height */}
                   <div className="h-11 px-2 py-1.5 flex items-center gap-1.5 border-t border-border">
-                    <img
-                      src={actor.profile_image_url || ''}
-                      alt={actor.name}
-                      className={cn(
-                        'h-5 w-5 rounded-full object-cover shrink-0',
+                    {actor.profile_image_url ? (
+                      <img
+                        src={actor.profile_image_url}
+                        alt={actor.name}
+                        className={cn(
+                          'h-5 w-5 rounded-full object-cover shrink-0 bg-muted',
+                          isSelected && 'ring-2 ring-primary'
+                        )}
+                        onError={(e) => {
+                          e.currentTarget.style.display = 'none';
+                        }}
+                      />
+                    ) : (
+                      <div className={cn(
+                        'h-5 w-5 rounded-full bg-muted flex items-center justify-center shrink-0',
                         isSelected && 'ring-2 ring-primary'
-                      )}
-                    />
+                      )}>
+                        <User className="h-3 w-3 text-muted-foreground" />
+                      </div>
+                    )}
                     <div className="flex-1 min-w-0 text-left">
                       <p className="text-xs font-medium truncate">{actor.name}</p>
                       <p className="text-[10px] text-muted-foreground truncate">
