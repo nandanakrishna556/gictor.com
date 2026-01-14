@@ -4,7 +4,6 @@ import { useActors, Actor } from '@/hooks/useActors';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Input } from '@/components/ui/input';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
 
 interface ActorSelectorPopoverProps {
@@ -85,8 +84,7 @@ export default function ActorSelectorPopover({
             className="h-9"
           />
         </div>
-        <ScrollArea className="max-h-[320px]">
-          <div className="p-2">
+        <div className="max-h-[320px] overflow-y-auto p-2">
           <div className="grid grid-cols-3 gap-2">
             {/* No Actor Card */}
             <button
@@ -216,8 +214,7 @@ export default function ActorSelectorPopover({
               </p>
             </div>
           )}
-          </div>
-        </ScrollArea>
+        </div>
       </PopoverContent>
     </Popover>
   );
