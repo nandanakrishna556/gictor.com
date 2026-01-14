@@ -4,14 +4,15 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
-import { Video, Image as ImageIcon, Loader2, Download, Upload, X } from 'lucide-react';
+import { Film, Loader2, Download, Upload, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { usePipeline } from '@/hooks/usePipeline';
 import { useProfile } from '@/hooks/useProfile';
+import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import StageLayout from './StageLayout';
 import { useQueryClient } from '@tanstack/react-query';
+import { InputModeToggle, InputMode } from '@/components/ui/input-mode-toggle';
 
 interface BRollAnimateStageProps {
   pipelineId: string;
@@ -20,31 +21,33 @@ interface BRollAnimateStageProps {
 
 const CREDIT_COST_PER_SECOND = 0.15;
 
-const DURATION_OPTIONS = [
-  { value: 4, label: '4 seconds' },
-  { value: 6, label: '6 seconds' },
-  { value: 8, label: '8 seconds' },
-  { value: 10, label: '10 seconds' },
-  { value: 12, label: '12 seconds' },
-];
-
 export default function BRollAnimateStage({ pipelineId, onComplete }: BRollAnimateStageProps) {
+  const { user } = useAuth();
   const { pipeline, updateVoice, updateFinalVideo, isUpdating } = usePipeline(pipelineId);
   const { profile } = useProfile();
   const queryClient = useQueryClient();
   
-  // Use voice_input/voice_output for animate settings (since it's unused in B-Roll)
-  const [prompt, setPrompt] = useState('');
+  // Input mode
+  const [inputMode, setInputMode] = useState<InputMode>('generate');
+  
+  // Input state
+  const [animationType, setAnimationType] = useState<'broll' | 'motion_graphics'>('broll');
+  const [aspectRatio, setAspectRatio] = useState<'16:9' | '9:16'>('9:16');
   const [duration, setDuration] = useState(8);
+  const [audioEnabled, setAudioEnabled] = useState(false);
   const [cameraFixed, setCameraFixed] = useState(false);
+  const [prompt, setPrompt] = useState('');
   
   // Custom frame uploads (override the generated ones)
-  const [customFirstFrame, setCustomFirstFrame] = useState<string | null>(null);
-  const [customLastFrame, setCustomLastFrame] = useState<string | null>(null);
-  const [isDraggingFirst, setIsDraggingFirst] = useState(false);
-  const [isDraggingLast, setIsDraggingLast] = useState(false);
-  const firstFrameInputRef = useRef<HTMLInputElement>(null);
-  const lastFrameInputRef = useRef<HTMLInputElement>(null);
+  const [firstFrameUrl, setFirstFrameUrl] = useState('');
+  const [lastFrameUrl, setLastFrameUrl] = useState('');
+  const [isUploadingFirst, setIsUploadingFirst] = useState(false);
+  const [isUploadingLast, setIsUploadingLast] = useState(false);
+  
+  // Upload mode state
+  const [uploadedVideoUrl, setUploadedVideoUrl] = useState<string | null>(null);
+  const [isUploadingVideo, setIsUploadingVideo] = useState(false);
+  const [isSavingUpload, setIsSavingUpload] = useState(false);
   
   // Generation state
   const [localGenerating, setLocalGenerating] = useState(false);
@@ -52,13 +55,13 @@ export default function BRollAnimateStage({ pipelineId, onComplete }: BRollAnima
   const prevStatusRef = useRef<string | null>(null);
   const toastShownRef = useRef<string | null>(null);
 
-  // Get frames from pipeline
+  // Get frames from pipeline (from previous stages)
   const originalFirstFrame = pipeline?.first_frame_output?.url;
   const originalLastFrame = (pipeline?.script_output as any)?.last_frame_url;
   
   // Use custom if available, otherwise use original
-  const firstFrameUrl = customFirstFrame || originalFirstFrame;
-  const lastFrameUrl = customLastFrame || originalLastFrame;
+  const effectiveFirstFrame = firstFrameUrl || originalFirstFrame;
+  const effectiveLastFrame = lastFrameUrl || originalLastFrame;
   
   // Output from final_video_output
   const outputVideo = pipeline?.final_video_output;
@@ -71,18 +74,31 @@ export default function BRollAnimateStage({ pipelineId, onComplete }: BRollAnima
   // Credit cost
   const creditCost = Math.ceil(duration * CREDIT_COST_PER_SECOND * 100) / 100;
   
-  // Can generate
-  const canGenerate = !!firstFrameUrl && !isGenerating && profile && (profile.credits ?? 0) >= creditCost;
+  // Validation
+  const isMotionGraphics = animationType === 'motion_graphics';
+  const hasRequiredInputs = effectiveFirstFrame && (!isMotionGraphics || effectiveLastFrame);
+  const canGenerate = hasRequiredInputs && !isGenerating && profile && (profile.credits ?? 0) >= creditCost;
 
   // Load existing data from voice_input (repurposed for animate settings)
   useEffect(() => {
     if (pipeline?.voice_input) {
       const input = pipeline.voice_input as any;
-      if (input.animation_type === 'broll') {
+      if (input.animation_type) {
+        setAnimationType(input.animation_type);
         setPrompt(input.prompt || '');
         setDuration(input.duration || 8);
         setCameraFixed(input.camera_fixed || false);
+        setAspectRatio(input.aspect_ratio || '9:16');
+        setAudioEnabled(input.audio_enabled || false);
       }
+    }
+    
+    // Use frames from previous stages if not overridden
+    if (originalFirstFrame && !firstFrameUrl) {
+      setFirstFrameUrl(originalFirstFrame);
+    }
+    if (originalLastFrame && !lastFrameUrl) {
+      setLastFrameUrl(originalLastFrame);
     }
     
     // Initialize prev status
@@ -92,7 +108,7 @@ export default function BRollAnimateStage({ pipelineId, onComplete }: BRollAnima
         toastShownRef.current = pipelineId;
       }
     }
-  }, [pipeline?.voice_input, pipeline?.status, hasOutput, pipelineId]);
+  }, [pipeline?.voice_input, pipeline?.status, hasOutput, pipelineId, originalFirstFrame, originalLastFrame]);
 
   // Handle status transitions
   useEffect(() => {
@@ -125,50 +141,41 @@ export default function BRollAnimateStage({ pipelineId, onComplete }: BRollAnima
     prevStatusRef.current = currentStatus;
   }, [pipeline, pipelineId, queryClient]);
 
-  // Save input changes
-  const saveInput = async () => {
-    await updateVoice({
-      input: {
-        animation_type: 'broll',
-        prompt,
-        duration,
-        camera_fixed: cameraFixed,
-        first_frame_url: firstFrameUrl,
-        last_frame_url: lastFrameUrl,
-      } as any,
-    });
-  };
-
-  // Auto-save on changes
-  useEffect(() => {
-    const timer = setTimeout(saveInput, 500);
-    return () => clearTimeout(timer);
-  }, [prompt, duration, cameraFixed, firstFrameUrl, lastFrameUrl]);
-
-  const handleFrameUpload = (file: File, isFirst: boolean) => {
-    if (!file.type.startsWith('image/')) {
-      toast.error('Please upload an image file');
-      return;
+  // Handle file upload
+  const handleFileUpload = async (uploadedFile: File, isFirstFrame: boolean) => {
+    if (!user) return;
+    
+    const setUploading = isFirstFrame ? setIsUploadingFirst : setIsUploadingLast;
+    const setUrl = isFirstFrame ? setFirstFrameUrl : setLastFrameUrl;
+    
+    setUploading(true);
+    
+    try {
+      const fileExt = uploadedFile.name.split('.').pop();
+      const fileName = `${user.id}/${Date.now()}.${fileExt}`;
+      
+      const { error: uploadError } = await supabase.storage
+        .from('uploads')
+        .upload(fileName, uploadedFile);
+      
+      if (uploadError) throw uploadError;
+      
+      const { data: { publicUrl } } = supabase.storage
+        .from('uploads')
+        .getPublicUrl(fileName);
+      
+      setUrl(publicUrl);
+      toast.success(`${isFirstFrame ? 'First' : 'Last'} frame uploaded`);
+    } catch (error) {
+      console.error('Upload error:', error);
+      toast.error('Failed to upload image');
+    } finally {
+      setUploading(false);
     }
-    const url = URL.createObjectURL(file);
-    if (isFirst) {
-      setCustomFirstFrame(url);
-    } else {
-      setCustomLastFrame(url);
-    }
-    toast.success(`${isFirst ? 'First' : 'Last'} frame uploaded`);
-  };
-
-  const handleDrop = (e: React.DragEvent, isFirst: boolean) => {
-    e.preventDefault();
-    if (isFirst) setIsDraggingFirst(false);
-    else setIsDraggingLast(false);
-    const file = e.dataTransfer.files[0];
-    if (file) handleFrameUpload(file, isFirst);
   };
 
   const handleGenerate = async () => {
-    if (!firstFrameUrl) {
+    if (!effectiveFirstFrame) {
       toast.error('Please add a first frame');
       return;
     }
@@ -184,7 +191,18 @@ export default function BRollAnimateStage({ pipelineId, onComplete }: BRollAnima
 
     try {
       // Save input first
-      await saveInput();
+      await updateVoice({
+        input: {
+          animation_type: animationType,
+          prompt,
+          duration,
+          camera_fixed: cameraFixed,
+          aspect_ratio: aspectRatio,
+          audio_enabled: audioEnabled,
+          first_frame_url: effectiveFirstFrame,
+          last_frame_url: effectiveLastFrame,
+        } as any,
+      });
 
       // Update pipeline status
       await updateFinalVideo({
@@ -198,15 +216,17 @@ export default function BRollAnimateStage({ pipelineId, onComplete }: BRollAnima
           type: 'animate',
           payload: {
             pipeline_id: pipelineId,
-            file_id: pipelineId, // Use pipeline_id as identifier
-            first_frame_url: firstFrameUrl,
-            last_frame_url: lastFrameUrl || null,
+            file_id: pipelineId,
+            first_frame_url: effectiveFirstFrame,
+            last_frame_url: effectiveLastFrame || null,
             prompt: prompt || null,
             duration,
             camera_fixed: cameraFixed,
-            animation_type: 'broll',
-            aspect_ratio: '16:9',
+            animation_type: animationType,
+            aspect_ratio: aspectRatio,
+            audio_enabled: audioEnabled,
             pipeline_type: 'clips',
+            credits_cost: creditCost,
           },
         },
       });
@@ -226,188 +246,392 @@ export default function BRollAnimateStage({ pipelineId, onComplete }: BRollAnima
     }
   };
 
-  const formatDuration = (seconds: number) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = Math.floor(seconds % 60);
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  const handleSaveUpload = async () => {
+    if (!uploadedVideoUrl) return;
+    setIsSavingUpload(true);
+    try {
+      await updateFinalVideo({
+        output: { url: uploadedVideoUrl, duration_seconds: 0, generated_at: new Date().toISOString() },
+        status: 'completed',
+      });
+      
+      queryClient.invalidateQueries({ queryKey: ['pipeline', pipelineId] });
+      toast.success('Video saved!');
+      onComplete();
+    } catch (error) {
+      toast.error('Failed to save video');
+    } finally {
+      setIsSavingUpload(false);
+    }
   };
 
-  const inputContent = (
-    <div className="space-y-6">
-      {/* First Frame */}
-      <div className="space-y-2">
-        <div className="flex items-center gap-2 text-sm font-medium">
-          <ImageIcon className="h-4 w-4 text-primary" />
-          First Frame {!firstFrameUrl && <span className="text-destructive">*</span>}
-        </div>
-        <input
-          ref={firstFrameInputRef}
-          type="file"
-          accept="image/*"
-          onChange={(e) => e.target.files?.[0] && handleFrameUpload(e.target.files[0], true)}
-          className="hidden"
-        />
-        {firstFrameUrl ? (
-          <div className="relative w-full max-w-[150px] group">
-            <img src={firstFrameUrl} alt="First frame" className="w-full h-auto max-h-[100px] object-contain rounded-lg" />
-            <button
-              type="button"
-              onClick={() => setCustomFirstFrame(null)}
-              className="absolute left-2 top-2 rounded-full bg-foreground/80 p-1 text-background opacity-0 group-hover:opacity-100 transition-opacity"
-            >
-              <X className="h-3 w-3" />
-            </button>
-          </div>
-        ) : (
-          <div
-            className={cn(
-              "border-2 border-dashed rounded-lg p-4 text-center cursor-pointer transition-colors",
-              isDraggingFirst ? "border-primary bg-primary/10" : "border-muted-foreground/30 hover:border-primary/50"
-            )}
-            onClick={() => firstFrameInputRef.current?.click()}
-            onDragOver={(e) => { e.preventDefault(); setIsDraggingFirst(true); }}
-            onDragLeave={(e) => { e.preventDefault(); setIsDraggingFirst(false); }}
-            onDrop={(e) => handleDrop(e, true)}
-          >
-            <Upload className={cn("h-5 w-5 mx-auto mb-1", isDraggingFirst ? "text-primary" : "text-muted-foreground")} />
-            <p className="text-xs text-muted-foreground">Upload first frame</p>
-          </div>
-        )}
-      </div>
-
-      {/* Last Frame (Optional) */}
-      <div className="space-y-2">
-        <div className="flex items-center gap-2 text-sm font-medium">
-          <ImageIcon className="h-4 w-4 text-muted-foreground" />
-          Last Frame <span className="text-muted-foreground text-xs">(optional)</span>
-        </div>
-        <input
-          ref={lastFrameInputRef}
-          type="file"
-          accept="image/*"
-          onChange={(e) => e.target.files?.[0] && handleFrameUpload(e.target.files[0], false)}
-          className="hidden"
-        />
-        {lastFrameUrl ? (
-          <div className="relative w-full max-w-[150px] group">
-            <img src={lastFrameUrl} alt="Last frame" className="w-full h-auto max-h-[100px] object-contain rounded-lg" />
-            <button
-              type="button"
-              onClick={() => setCustomLastFrame(null)}
-              className="absolute left-2 top-2 rounded-full bg-foreground/80 p-1 text-background opacity-0 group-hover:opacity-100 transition-opacity"
-            >
-              <X className="h-3 w-3" />
-            </button>
-          </div>
-        ) : (
-          <div
-            className={cn(
-              "border-2 border-dashed rounded-lg p-4 text-center cursor-pointer transition-colors",
-              isDraggingLast ? "border-primary bg-primary/10" : "border-muted-foreground/30 hover:border-primary/50"
-            )}
-            onClick={() => lastFrameInputRef.current?.click()}
-            onDragOver={(e) => { e.preventDefault(); setIsDraggingLast(true); }}
-            onDragLeave={(e) => { e.preventDefault(); setIsDraggingLast(false); }}
-            onDrop={(e) => handleDrop(e, false)}
-          >
-            <Upload className={cn("h-5 w-5 mx-auto mb-1", isDraggingLast ? "text-muted-foreground" : "text-muted-foreground")} />
-            <p className="text-xs text-muted-foreground">Upload last frame</p>
-          </div>
-        )}
-      </div>
-
-      {/* Prompt */}
-      <div className="space-y-2">
-        <Label>Motion prompt (optional)</Label>
-        <Textarea
-          value={prompt}
-          onChange={(e) => setPrompt(e.target.value)}
-          placeholder="Describe how the scene should animate..."
-          className="min-h-20 rounded-xl resize-none"
-        />
-      </div>
-
-      {/* Duration */}
-      <div className="space-y-2">
-        <Label>Duration</Label>
-        <Select value={duration.toString()} onValueChange={(v) => setDuration(parseInt(v))}>
-          <SelectTrigger className="rounded-xl">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {DURATION_OPTIONS.map((opt) => (
-              <SelectItem key={opt.value} value={opt.value.toString()}>
-                {opt.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-
-      {/* Camera Fixed */}
-      <div className="flex items-center justify-between">
-        <div className="space-y-0.5">
-          <Label>Static camera</Label>
-          <p className="text-xs text-muted-foreground">Keep the camera position fixed</p>
-        </div>
-        <Switch checked={cameraFixed} onCheckedChange={setCameraFixed} />
-      </div>
-    </div>
-  );
-
-  const outputContent = hasOutput && outputVideo ? (
-    <div className="w-full max-w-lg mx-auto space-y-4">
-      <video src={outputVideo.url} controls className="w-full aspect-video rounded-xl bg-black" />
-      <span className="text-sm text-muted-foreground block text-center">
-        Duration: {formatDuration(outputVideo.duration_seconds)}
-      </span>
-    </div>
-  ) : isProcessing ? (
-    <div className="flex flex-col items-center justify-center text-center gap-4 min-h-[300px]">
-      <Loader2 className="h-12 w-12 animate-spin text-primary" />
-      <div>
-        <p className="text-lg font-medium">Generating video...</p>
-        <p className="text-sm text-muted-foreground">This may take a few minutes</p>
-      </div>
-    </div>
-  ) : (
-    <div className="flex flex-col items-center justify-center text-center gap-2 min-h-[300px]">
-      <Video className="h-16 w-16 text-muted-foreground/50" />
-      <p className="text-lg font-medium">Generate Animation</p>
-      <p className="text-sm text-muted-foreground">
-        Animate your frames into a video
-      </p>
-      <p className="text-xs text-muted-foreground mt-2">
-        {CREDIT_COST_PER_SECOND} credits/second ({duration}s = {creditCost.toFixed(2)} credits)
-      </p>
-    </div>
-  );
-
-  const outputActions = hasOutput ? (
-    <div className="flex items-center gap-2">
-      <Button variant="ghost" size="sm" asChild>
-        <a href={outputVideo?.url} download>
-          <Download className="h-4 w-4 mr-2" />
-          Download
-        </a>
-      </Button>
-    </div>
-  ) : undefined;
-
   return (
-    <StageLayout
-      inputContent={inputContent}
-      outputContent={outputContent}
-      hasOutput={hasOutput}
-      onGenerate={handleGenerate}
-      onRemix={handleGenerate}
-      onContinue={onComplete}
-      isGenerating={isGenerating || isUpdating}
-      canContinue={hasOutput}
-      generateLabel={isProcessing ? 'Generating...' : 'Generate Animation'}
-      creditsCost={`${creditCost.toFixed(2)} Credits`}
-      generateDisabled={!canGenerate}
-      outputActions={outputActions}
-    />
+    <div className="flex flex-1 overflow-hidden h-full">
+      {/* Input Section */}
+      <div className="w-1/2 overflow-y-auto p-6 space-y-6 border-r">
+        <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">Input</h3>
+        
+        {/* Generate/Upload Toggle */}
+        <InputModeToggle
+          mode={inputMode}
+          onModeChange={setInputMode}
+          uploadLabel="Upload"
+        />
+
+        {inputMode === 'upload' ? (
+          /* Upload Mode UI */
+          <div className="space-y-4">
+            <Label>Upload Video</Label>
+            {uploadedVideoUrl ? (
+              <div className="relative rounded-xl overflow-hidden border border-border">
+                <video src={uploadedVideoUrl} controls className="w-full h-40 object-cover" />
+                <button
+                  onClick={() => setUploadedVideoUrl(null)}
+                  className="absolute top-2 right-2 p-1 rounded-full bg-background/80 hover:bg-background transition-colors"
+                >
+                  <X className="h-4 w-4" strokeWidth={1.5} />
+                </button>
+              </div>
+            ) : (
+              <label className="flex flex-col items-center justify-center h-40 rounded-xl border-2 border-dashed border-border hover:border-primary cursor-pointer transition-colors">
+                <input
+                  type="file"
+                  accept="video/mp4,video/quicktime,video/webm,.mp4,.mov,.webm"
+                  className="hidden"
+                  onChange={async (e) => {
+                    const f = e.target.files?.[0];
+                    if (!f || !user) return;
+                    
+                    const validTypes = ['video/mp4', 'video/quicktime', 'video/webm'];
+                    if (!validTypes.includes(f.type)) {
+                      toast.error('Please upload MP4, MOV, or WebM video');
+                      return;
+                    }
+                    if (f.size > 500 * 1024 * 1024) {
+                      toast.error('Video must be less than 500MB');
+                      return;
+                    }
+                    
+                    setIsUploadingVideo(true);
+                    try {
+                      const fileName = `${user.id}/videos/${Date.now()}-${f.name}`;
+                      const { error: uploadError } = await supabase.storage.from('uploads').upload(fileName, f);
+                      if (uploadError) throw uploadError;
+                      
+                      const { data: { publicUrl } } = supabase.storage.from('uploads').getPublicUrl(fileName);
+                      setUploadedVideoUrl(publicUrl);
+                      toast.success('Video uploaded');
+                    } catch (error) {
+                      toast.error('Failed to upload video');
+                    } finally {
+                      setIsUploadingVideo(false);
+                    }
+                  }}
+                  disabled={isUploadingVideo}
+                />
+                {isUploadingVideo ? (
+                  <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" strokeWidth={1.5} />
+                ) : (
+                  <>
+                    <Film className="h-8 w-8 text-muted-foreground mb-2" strokeWidth={1.5} />
+                    <span className="text-sm text-muted-foreground">Upload your video</span>
+                    <span className="text-xs text-muted-foreground/70">MP4, MOV, WebM up to 500MB</span>
+                  </>
+                )}
+              </label>
+            )}
+            
+            {uploadedVideoUrl && (
+              <Button
+                onClick={handleSaveUpload}
+                disabled={isSavingUpload}
+                className="w-full"
+              >
+                {isSavingUpload ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                    Saving...
+                  </>
+                ) : (
+                  <>Save Video <span className="text-emerald-400 ml-1">• Free</span></>
+                )}
+              </Button>
+            )}
+          </div>
+        ) : (
+          /* Generate Mode UI */
+          <>
+            {/* Animation Type */}
+            <div className="space-y-2">
+              <Label>Animation Type</Label>
+              <Select value={animationType} onValueChange={(v: 'broll' | 'motion_graphics') => setAnimationType(v)}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="broll">B-Roll (Natural footage)</SelectItem>
+                  <SelectItem value="motion_graphics">Motion Graphics (Transitions)</SelectItem>
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">
+                {animationType === 'broll' 
+                  ? 'Creates natural, realistic B-roll footage from your image'
+                  : 'Creates smooth motion graphics transitions between two frames'}
+              </p>
+            </div>
+            
+            {/* Aspect Ratio */}
+            <div className="space-y-2">
+              <Label>Aspect Ratio</Label>
+              <div className="flex gap-2">
+                <Button
+                  type="button"
+                  variant={aspectRatio === '9:16' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setAspectRatio('9:16')}
+                >
+                  9:16 Portrait
+                </Button>
+                <Button
+                  type="button"
+                  variant={aspectRatio === '16:9' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setAspectRatio('16:9')}
+                >
+                  16:9 Landscape
+                </Button>
+              </div>
+            </div>
+            
+            {/* Duration Slider */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <Label>Duration</Label>
+                <span className="text-sm font-medium">{duration}s</span>
+              </div>
+              <input
+                type="range"
+                min={4}
+                max={12}
+                step={1}
+                value={duration}
+                onChange={(e) => setDuration(Number(e.target.value))}
+                className="w-full h-2 bg-secondary rounded-lg appearance-none cursor-pointer accent-primary"
+              />
+              <div className="flex justify-between text-xs text-muted-foreground">
+                <span>4s</span>
+                <span>12s</span>
+              </div>
+            </div>
+
+            {/* Audio Toggle */}
+            <div className="flex items-center justify-between">
+              <div className="space-y-0.5">
+                <Label>Audio</Label>
+                <p className="text-xs text-muted-foreground">Generate accompanying audio</p>
+              </div>
+              <Switch
+                checked={audioEnabled}
+                onCheckedChange={setAudioEnabled}
+              />
+            </div>
+
+            {/* Camera Toggle */}
+            <div className="space-y-2">
+              <div className="space-y-0.5">
+                <Label>Camera</Label>
+                <p className="text-xs text-muted-foreground">
+                  {cameraFixed ? 'Static (fixed position)' : 'Dynamic (moves naturally)'}
+                </p>
+              </div>
+              <div className="flex gap-2">
+                <Button
+                  type="button"
+                  variant={!cameraFixed ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setCameraFixed(false)}
+                >
+                  Dynamic
+                </Button>
+                <Button
+                  type="button"
+                  variant={cameraFixed ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setCameraFixed(true)}
+                >
+                  Static
+                </Button>
+              </div>
+            </div>
+            
+            {/* First Frame Upload */}
+            <div className="space-y-2">
+              <Label>First Frame *</Label>
+              {effectiveFirstFrame ? (
+                <div className="relative rounded-xl overflow-hidden border border-border">
+                  <img src={effectiveFirstFrame} alt="First frame" className="w-full h-40 object-cover" />
+                  <button
+                    onClick={() => setFirstFrameUrl('')}
+                    className="absolute top-2 right-2 p-1 rounded-full bg-background/80 hover:bg-background transition-colors"
+                  >
+                    <X className="h-4 w-4" strokeWidth={1.5} />
+                  </button>
+                </div>
+              ) : (
+                <label className="flex flex-col items-center justify-center h-40 rounded-xl border-2 border-dashed border-border hover:border-primary cursor-pointer transition-colors">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(e) => {
+                      const f = e.target.files?.[0];
+                      if (f) handleFileUpload(f, true);
+                    }}
+                    disabled={isUploadingFirst}
+                  />
+                  {isUploadingFirst ? (
+                    <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" strokeWidth={1.5} />
+                  ) : (
+                    <>
+                      <Upload className="h-8 w-8 text-muted-foreground mb-2" strokeWidth={1.5} />
+                      <span className="text-sm text-muted-foreground">Upload first frame</span>
+                      <span className="text-xs text-muted-foreground/70">PNG, JPG up to 10MB</span>
+                    </>
+                  )}
+                </label>
+              )}
+            </div>
+            
+            {/* Last Frame Upload */}
+            <div className="space-y-2">
+              <Label>Last Frame {isMotionGraphics ? <span className="text-destructive">*</span> : '(Optional)'}</Label>
+              {effectiveLastFrame ? (
+                <div className="relative rounded-xl overflow-hidden border border-border">
+                  <img src={effectiveLastFrame} alt="Last frame" className="w-full h-40 object-cover" />
+                  <button
+                    onClick={() => setLastFrameUrl('')}
+                    className="absolute top-2 right-2 p-1 rounded-full bg-background/80 hover:bg-background transition-colors"
+                  >
+                    <X className="h-4 w-4" strokeWidth={1.5} />
+                  </button>
+                </div>
+              ) : (
+                <label className="flex flex-col items-center justify-center h-40 rounded-xl border-2 border-dashed border-border hover:border-primary cursor-pointer transition-colors">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(e) => {
+                      const f = e.target.files?.[0];
+                      if (f) handleFileUpload(f, false);
+                    }}
+                    disabled={isUploadingLast}
+                  />
+                  {isUploadingLast ? (
+                    <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" strokeWidth={1.5} />
+                  ) : (
+                    <>
+                      <Upload className="h-8 w-8 text-muted-foreground mb-2" strokeWidth={1.5} />
+                      <span className="text-sm text-muted-foreground">Upload last frame</span>
+                      <span className="text-xs text-muted-foreground/70">PNG, JPG up to 10MB</span>
+                    </>
+                  )}
+                </label>
+              )}
+            </div>
+            
+            {/* Prompt */}
+            <div className="space-y-2">
+              <Label>Prompt (Optional)</Label>
+              <Textarea
+                value={prompt}
+                onChange={(e) => setPrompt(e.target.value)}
+                placeholder={animationType === 'broll' 
+                  ? "Describe the motion you want (e.g., 'gentle camera pan across the scene')"
+                  : "Describe the transition you want (e.g., 'smooth zoom transition')"}
+                rows={3}
+              />
+              <p className="text-xs text-muted-foreground">
+                AI will enhance your prompt or analyze the images if left empty
+              </p>
+            </div>
+            
+            {/* Generate Button */}
+            <div className="pt-4 border-t space-y-3">
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-muted-foreground">Cost:</span>
+                <span className="font-medium">{creditCost.toFixed(2)} credits</span>
+              </div>
+              <Button
+                onClick={handleGenerate}
+                disabled={!canGenerate}
+                className="w-full"
+              >
+                {isGenerating ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin mr-2" strokeWidth={1.5} />
+                    Generating...
+                  </>
+                ) : (
+                  <>Generate Animation • {creditCost.toFixed(2)} credits</>
+                )}
+              </Button>
+              {isMotionGraphics && !effectiveLastFrame && (
+                <p className="text-xs text-amber-500 text-center">
+                  Motion graphics requires both first and last frames
+                </p>
+              )}
+            </div>
+          </>
+        )}
+      </div>
+      
+      {/* Output Section */}
+      <div className="w-1/2 overflow-y-auto p-6 space-y-6 bg-muted/10">
+        <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">Output</h3>
+        
+        {isGenerating && (
+          <div className="space-y-4">
+            <div className="aspect-video rounded-xl bg-secondary/50 flex items-center justify-center">
+              <div className="text-center space-y-3">
+                <Loader2 className="h-10 w-10 animate-spin text-primary mx-auto" strokeWidth={1.5} />
+                <p className="text-sm text-muted-foreground">Generating animation...</p>
+              </div>
+            </div>
+          </div>
+        )}
+        
+        {hasOutput && outputVideo?.url && (
+          <div className="space-y-4 animate-fade-in">
+            <div className="rounded-xl overflow-hidden border border-border">
+              <video
+                src={outputVideo.url}
+                controls
+                className="w-full"
+                autoPlay
+                muted
+                loop
+              />
+            </div>
+            <Button variant="secondary" className="w-full" asChild>
+              <a href={outputVideo.url} download>
+                <Download className="h-4 w-4 mr-2" strokeWidth={1.5} />
+                Download Video
+              </a>
+            </Button>
+          </div>
+        )}
+        
+        {!isGenerating && !hasOutput && (
+          <div className="aspect-video rounded-xl bg-secondary/30 border-2 border-dashed border-border flex items-center justify-center">
+            <div className="text-center">
+              <Film className="h-12 w-12 text-muted-foreground/30 mx-auto mb-2" />
+              <p className="text-muted-foreground text-sm">No output yet</p>
+              <p className="text-muted-foreground/70 text-xs mt-1">Upload images and click generate</p>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
   );
 }

@@ -52,9 +52,9 @@ export default function PipelineHeader({
   onClose,
 }: PipelineHeaderProps) {
   return (
-    <div className="flex items-center gap-3 border-b bg-muted/30 px-6 py-3 flex-wrap">
+    <div className="flex items-center gap-3 border-b bg-background px-4 h-[52px] flex-nowrap shrink-0 relative z-10">
       <Button variant="ghost" size="icon" className="h-8 w-8" onClick={onClose}>
-        <ArrowLeft className="h-4 w-4" />
+        <ArrowLeft className="h-4 w-4" strokeWidth={1.5} />
       </Button>
       <h2 className="text-lg font-semibold">{title}</h2>
       
@@ -119,28 +119,27 @@ export default function PipelineHeader({
         </PopoverContent>
       </Popover>
       
-      {/* Spacer to push save/close to right */}
       <div className="flex-1" />
       
-      {/* Auto-save indicator and Close button */}
+      {/* Auto-save indicator - always reserve space */}
       <div className="flex items-center gap-3">
-        {saveStatus !== 'idle' && (
-          <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
-            {saveStatus === 'saving' ? (
-              <>
-                <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                <span>Saving...</span>
-              </>
-            ) : (
-              <>
-                <Check className="h-3.5 w-3.5 text-emerald-500" />
-                <span className="text-emerald-500">Saved</span>
-              </>
-            )}
-          </div>
-        )}
+        <div className="flex items-center gap-1.5 text-sm min-w-[70px] justify-end">
+          {saveStatus === 'saving' ? (
+            <>
+              <Loader2 className="h-3.5 w-3.5 animate-spin text-muted-foreground" />
+              <span className="text-muted-foreground">Saving...</span>
+            </>
+          ) : saveStatus === 'saved' ? (
+            <>
+              <Check className="h-3.5 w-3.5 text-emerald-500" />
+              <span className="text-emerald-500">Saved</span>
+            </>
+          ) : (
+            <span className="invisible">Saved</span>
+          )}
+        </div>
         <Button variant="ghost" size="icon" className="h-8 w-8" onClick={onClose}>
-          <X className="h-4 w-4" />
+          <X className="h-4 w-4" strokeWidth={1.5} />
         </Button>
       </div>
     </div>
