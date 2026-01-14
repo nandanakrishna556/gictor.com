@@ -57,13 +57,15 @@ export default function BRollFirstFrameStage({ pipelineId, onComplete }: BRollFi
   const isLocalGeneratingRef = useRef(false);
   const prevStatusRef = useRef<string | null>(null);
   const toastShownRef = useRef<string | null>(null);
+  const generationInitiatedRef = useRef(false); // Track if user initiated generation
 
   // Dynamic credit cost based on resolution
   const creditCost = resolution === '4K' ? 0.5 : 0.25;
 
-  // Derive from pipeline
-  const isProcessing = pipeline?.status === 'processing' && pipeline?.current_stage === 'first_frame';
-  const isGenerating = localGenerating || isProcessing;
+  // Derive from pipeline - only consider processing if we initiated generation
+  const isServerProcessing = pipeline?.status === 'processing' && pipeline?.current_stage === 'first_frame';
+  // Only show generating state if: (1) user clicked generate (localGenerating), OR (2) server is processing AND we initiated it
+  const isGenerating = localGenerating || (isServerProcessing && generationInitiatedRef.current);
   const hasOutput = !!pipeline?.first_frame_output?.url;
   const outputUrl = pipeline?.first_frame_output?.url;
 
@@ -103,19 +105,21 @@ export default function BRollFirstFrameStage({ pipelineId, onComplete }: BRollFi
     const currentStatus = pipeline.status;
     const prevStatus = prevStatusRef.current;
     
-    if (isLocalGeneratingRef.current && currentStatus === 'processing') {
+    // Server confirmed processing - clear local generating state
+    if (generationInitiatedRef.current && currentStatus === 'processing') {
       isLocalGeneratingRef.current = false;
       setLocalGenerating(false);
     }
     
-    // Completed transition
-    if (prevStatus === 'processing' && currentStatus !== 'processing' && pipeline.first_frame_output?.url) {
+    // Completed transition - only react if we initiated generation
+    if (generationInitiatedRef.current && prevStatus === 'processing' && currentStatus !== 'processing' && pipeline.first_frame_output?.url) {
       if (toastShownRef.current !== pipelineId) {
         toastShownRef.current = pipelineId;
         toast.success('First frame generated!');
         queryClient.invalidateQueries({ queryKey: ['pipeline', pipelineId] });
       }
       setLocalGenerating(false);
+      generationInitiatedRef.current = false; // Reset after completion
     }
     
     prevStatusRef.current = currentStatus;
@@ -221,8 +225,9 @@ export default function BRollFirstFrameStage({ pipelineId, onComplete }: BRollFi
       return;
     }
 
-    // Immediate feedback
+    // Immediate feedback - mark that user initiated generation
     isLocalGeneratingRef.current = true;
+    generationInitiatedRef.current = true;
     setLocalGenerating(true);
 
     try {
