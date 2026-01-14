@@ -17,8 +17,8 @@ import { useQueryClient } from '@tanstack/react-query';
 
 import FirstFrameStage from './stages/FirstFrameStage';
 import ScriptStage from './stages/ScriptStage';
-import VoiceStage from './stages/VoiceStage';
-import FinalVideoStage from './stages/FinalVideoStage';
+import SpeechStage from './stages/SpeechStage';
+import LipSyncStage from './stages/LipSyncStage';
 
 interface StatusOption {
   value: string;
@@ -40,8 +40,8 @@ interface PipelineModalProps {
 const STAGES: { key: PipelineStage; label: string }[] = [
   { key: 'first_frame', label: 'First Frame' },
   { key: 'script', label: 'Script' },
-  { key: 'voice', label: 'Voice' },
-  { key: 'final_video', label: 'Final Video' },
+  { key: 'speech', label: 'Speech' },
+  { key: 'lip_sync', label: 'Lip Sync' },
 ];
 
 export default function PipelineModal({
@@ -203,7 +203,9 @@ export default function PipelineModal({
     switch (stage) {
       case 'first_frame': return pipeline.first_frame_complete;
       case 'script': return pipeline.script_complete;
+      case 'speech':
       case 'voice': return pipeline.voice_complete;
+      case 'lip_sync':
       case 'final_video': return pipeline.status === 'completed';
       default: return false;
     }
@@ -229,12 +231,14 @@ export default function PipelineModal({
         if (hasInput) return 40;
         return 0;
       }
+      case 'speech':
       case 'voice': {
         if (pipeline.voice_complete) return 100;
         const hasOutput = pipeline.voice_output?.url;
         if (hasOutput) return 90;
         return 0;
       }
+      case 'lip_sync':
       case 'final_video': {
         if (pipeline.status === 'completed') return 100;
         const hasOutput = pipeline.final_video_output?.url;
@@ -432,17 +436,17 @@ export default function PipelineModal({
               {activeStage === 'script' && (
                 <ScriptStage
                   pipelineId={pipelineId}
-                  onContinue={() => setActiveStage('voice')}
+                  onContinue={() => setActiveStage('speech')}
                 />
               )}
-              {activeStage === 'voice' && (
-                <VoiceStage
+              {activeStage === 'speech' && (
+                <SpeechStage
                   pipelineId={pipelineId}
-                  onContinue={() => setActiveStage('final_video')}
+                  onContinue={() => setActiveStage('lip_sync')}
                 />
               )}
-              {activeStage === 'final_video' && (
-                <FinalVideoStage
+              {activeStage === 'lip_sync' && (
+                <LipSyncStage
                   pipelineId={pipelineId}
                   onComplete={() => {
                     toast.success('Video generated successfully!');
