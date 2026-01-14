@@ -48,18 +48,21 @@ const workflows = [
     icon: Video,
     title: 'Talking Head',
     description: 'Create talking head video',
+    comingSoon: true,
   },
   {
     id: 'b_roll' as WorkflowType,
     icon: Film,
     title: 'B-Roll',
     description: 'Generate video clips',
+    comingSoon: true,
   },
   {
     id: 'motion_graphics' as WorkflowType,
     icon: Sparkles,
     title: 'Motion Graphics',
     description: 'Generate motion graphics',
+    comingSoon: true,
   },
 ];
 
