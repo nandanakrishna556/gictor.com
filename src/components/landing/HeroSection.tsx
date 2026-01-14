@@ -37,7 +37,7 @@ export function HeroSection() {
           AI-Powered Video Creation
         </Badge>
 
-        <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight mb-8 leading-[1.1]">
+        <h1 className="text-5xl md:text-7xl lg:text-8xl font-bold tracking-tight mb-8 leading-[1.1]">
           Your Next Winning Ad Is{" "}
           <span className="text-primary relative">
             One Test Away
