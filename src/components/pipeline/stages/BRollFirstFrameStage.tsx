@@ -136,11 +136,17 @@ export default function BRollFirstFrameStage({ pipelineId, onComplete }: BRollFi
     });
   };
 
-  // Auto-save on changes
+  // Auto-save on changes (excluding prompt to prevent typing interruption)
   useEffect(() => {
     const timer = setTimeout(saveInput, 500);
     return () => clearTimeout(timer);
-  }, [inputMode, style, subStyle, aspectRatio, cameraPerspective, resolution, selectedActorId, referenceImages, prompt, uploadedUrl]);
+  }, [inputMode, style, subStyle, aspectRatio, cameraPerspective, resolution, selectedActorId, referenceImages, uploadedUrl]);
+  
+  // Separate debounced save for prompt (longer delay)
+  useEffect(() => {
+    const timer = setTimeout(saveInput, 1500);
+    return () => clearTimeout(timer);
+  }, [prompt]);
 
   // Handle reference image upload
   const handleImageUpload = async (index: number, e: React.ChangeEvent<HTMLInputElement>) => {
