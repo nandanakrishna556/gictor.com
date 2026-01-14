@@ -1,3 +1,5 @@
+import { supabase } from '@/integrations/supabase/client';
+
 const CLOUDFLARE_WORKER_URL = 'https://gictor-ugc-upload-worker.nandanakrishna556.workers.dev';
 const R2_PUBLIC_URL = 'https://pub-9a6eb4f4a27e4eb486d2c73c1902506f.r2.dev';
 
@@ -30,6 +32,14 @@ const isVideoType = (type: string): boolean => {
 };
 
 /**
+ * Get the current user's JWT token for authenticated uploads
+ */
+const getAuthToken = async (): Promise<string | null> => {
+  const { data: { session } } = await supabase.auth.getSession();
+  return session?.access_token ?? null;
+};
+
+/**
  * Upload a single file to Cloudflare R2
  * @param file - The file to upload
  * @param options - Optional configuration
@@ -45,16 +55,22 @@ export const uploadToR2 = async (file: File, options: UploadOptions = {}): Promi
   // Determine max size based on file type if not explicitly provided
   const effectiveMaxSize = maxSize ?? (isVideoType(file.type) ? VIDEO_MAX_SIZE : DEFAULT_MAX_SIZE);
 
-  // Validate file size
+  // Validate file size (client-side validation - server should also validate)
   if (file.size > effectiveMaxSize) {
     const maxMB = Math.round(effectiveMaxSize / 1024 / 1024);
     throw new Error(`File size exceeds ${maxMB}MB limit`);
   }
   
-  // Validate file type
+  // Validate file type (client-side validation - server should also validate)
   if (!allowedTypes.includes(file.type)) {
     const allowed = allowedTypes.map(t => t.split('/')[1].toUpperCase()).join(', ');
     throw new Error(`Invalid file type. Allowed: ${allowed}`);
+  }
+  
+  // Get auth token for authenticated uploads
+  const authToken = await getAuthToken();
+  if (!authToken) {
+    throw new Error('Authentication required. Please log in to upload files.');
   }
   
   // Generate unique filename with folder
@@ -63,10 +79,11 @@ export const uploadToR2 = async (file: File, options: UploadOptions = {}): Promi
   const extension = file.name.split('.').pop()?.toLowerCase() || 'jpg';
   const fileName = `${folder}/${timestamp}-${randomId}.${extension}`;
   
-  // Upload to R2 via Cloudflare Worker
+  // Upload to R2 via Cloudflare Worker with authentication
   const response = await fetch(CLOUDFLARE_WORKER_URL, {
     method: 'PUT',
     headers: {
+      'Authorization': `Bearer ${authToken}`,
       'Content-Type': file.type,
       'X-Filename': fileName,
     },

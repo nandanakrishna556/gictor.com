@@ -48,35 +48,9 @@ export function useProfile() {
     },
   });
 
-  const deductCreditsMutation = useMutation({
-    mutationFn: async (amount: number) => {
-      if (!profile || profile.credits < amount) {
-        throw new Error('Insufficient credits');
-      }
-
-      const { data, error } = await supabase
-        .from('profiles')
-        .update({ credits: profile.credits - amount })
-        .eq('id', user!.id)
-        .select()
-        .single();
-
-      if (error) throw error;
-
-      // Log transaction
-      await supabase.from('credit_transactions').insert({
-        user_id: user!.id,
-        amount: -amount,
-        transaction_type: 'usage',
-        description: 'Content generation',
-      });
-
-      return data as Profile;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['profile'] });
-    },
-  });
+  // NOTE: Credit operations are handled server-side in the trigger-generation edge function
+  // to ensure security and prevent client-side manipulation. Do not add client-side credit
+  // deduction methods here.
 
   const refetch = () => {
     queryClient.invalidateQueries({ queryKey: ['profile'] });
@@ -87,7 +61,6 @@ export function useProfile() {
     isLoading,
     error,
     updateProfile: updateProfileMutation.mutateAsync,
-    deductCredits: deductCreditsMutation.mutateAsync,
     refetch,
   };
 }
