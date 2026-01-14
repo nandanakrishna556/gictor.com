@@ -23,6 +23,7 @@ export interface File {
   estimated_duration_seconds: number | null;
   created_at: string;
   updated_at: string;
+  sort_order: number;
 }
 
 export interface Folder {
@@ -35,6 +36,7 @@ export interface Folder {
   access_control: Record<string, unknown>;
   created_at: string;
   updated_at: string;
+  sort_order: number;
 }
 
 export function useFiles(projectId: string, folderId?: string) {
@@ -48,6 +50,7 @@ export function useFiles(projectId: string, folderId?: string) {
         .from('files')
         .select('*')
         .eq('project_id', projectId)
+        .order('sort_order', { ascending: true })
         .order('created_at', { ascending: false });
 
       if (folderId) {
@@ -70,6 +73,7 @@ export function useFiles(projectId: string, folderId?: string) {
         .from('folders')
         .select('*')
         .eq('project_id', projectId)
+        .order('sort_order', { ascending: true })
         .order('created_at', { ascending: false });
 
       if (folderId) {
@@ -308,6 +312,47 @@ export function useFiles(projectId: string, folderId?: string) {
     },
   });
 
+  // Reorder files within a kanban column
+  const reorderFilesMutation = useMutation({
+    mutationFn: async (updates: { id: string; sort_order: number; status?: string }[]) => {
+      // Update each file's sort_order (and optionally status)
+      const promises = updates.map(({ id, sort_order, status }) => {
+        const updateData: { sort_order: number; status?: string } = { sort_order };
+        if (status !== undefined) {
+          updateData.status = status;
+        }
+        return supabase.from('files').update(updateData).eq('id', id);
+      });
+      
+      const results = await Promise.all(promises);
+      const error = results.find(r => r.error)?.error;
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['files', projectId] });
+    },
+  });
+
+  // Reorder folders within a kanban column
+  const reorderFoldersMutation = useMutation({
+    mutationFn: async (updates: { id: string; sort_order: number; status?: string }[]) => {
+      const promises = updates.map(({ id, sort_order, status }) => {
+        const updateData: { sort_order: number; status?: string } = { sort_order };
+        if (status !== undefined) {
+          updateData.status = status;
+        }
+        return supabase.from('folders').update(updateData).eq('id', id);
+      });
+      
+      const results = await Promise.all(promises);
+      const error = results.find(r => r.error)?.error;
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['folders', projectId] });
+    },
+  });
+
   return {
     files,
     folders,
@@ -320,5 +365,7 @@ export function useFiles(projectId: string, folderId?: string) {
     deleteFolder: deleteFolderMutation.mutateAsync,
     bulkDeleteFiles: bulkDeleteFilesMutation.mutateAsync,
     bulkUpdateFiles: bulkUpdateFilesMutation.mutateAsync,
+    reorderFiles: reorderFilesMutation.mutateAsync,
+    reorderFolders: reorderFoldersMutation.mutateAsync,
   };
 }
