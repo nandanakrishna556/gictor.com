@@ -23,9 +23,9 @@ export default function ActorSelectorPopover({
   const [open, setOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
 
-  // Filter completed actors with profile images
+  // Filter completed actors with profile images (prefer 360 URL)
   const availableActors = actors?.filter(
-    (actor) => actor.status === 'completed' && actor.profile_image_url
+    (actor) => actor.status === 'completed' && (actor.profile_360_url || actor.profile_image_url)
   ) || [];
 
   // Filter by search
@@ -53,9 +53,14 @@ export default function ActorSelectorPopover({
           {selectedActor ? (
             <div className="flex items-center gap-3">
               <img
-                src={selectedActor.profile_image_url || ''}
+                src={selectedActor.profile_360_url || selectedActor.profile_image_url || ''}
                 alt={selectedActor.name}
-                className="h-6 w-6 rounded-full object-cover"
+                className="h-6 w-6 rounded-full object-cover bg-muted"
+                onError={(e) => {
+                  if (selectedActor.profile_image_url && e.currentTarget.src !== selectedActor.profile_image_url) {
+                    e.currentTarget.src = selectedActor.profile_image_url;
+                  }
+                }}
               />
               <div className="text-left">
                 <p className="font-medium text-sm">{selectedActor.name}</p>
