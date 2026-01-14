@@ -115,13 +115,13 @@ export default function AppSidebar() {
             </button>
           </CollapsibleTrigger>
 
-          <CollapsibleContent className="mt-0.5 space-y-0.5 pl-3">
+          <CollapsibleContent className="mt-0.5 space-y-0.5">
             {projects?.map((project) => (
               <div
                 key={project.id}
                 onClick={() => navigate(`/projects/${project.id}`)}
                 className={cn(
-                  'group flex w-full items-center gap-2 rounded-sm px-3 py-2 text-sm transition-fast cursor-pointer',
+                  'group flex w-full items-center gap-2 rounded-sm px-3 py-1.5 text-sm transition-fast cursor-pointer',
                   projectId === project.id
                     ? 'bg-primary/15 font-medium text-primary'
                     : 'text-sidebar-muted hover:bg-sidebar-border/50 hover:text-sidebar-foreground'
@@ -163,7 +163,6 @@ export default function AppSidebar() {
                   </div>
                 ) : (
                   <>
-                    <Layers className="h-4 w-4 shrink-0" strokeWidth={1.5} />
                     <span className="flex-1 truncate text-left">{project.name}</span>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
