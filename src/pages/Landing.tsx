@@ -1,6 +1,5 @@
 import { LandingNav } from "@/components/landing/LandingNav";
 import { HeroSection } from "@/components/landing/HeroSection";
-import { ProblemSection } from "@/components/landing/ProblemSection";
 import { FeaturesSection } from "@/components/landing/FeaturesSection";
 import { UseCasesSection } from "@/components/landing/UseCasesSection";
 import { ComparisonSection } from "@/components/landing/ComparisonSection";
@@ -14,7 +13,6 @@ export default function Landing() {
       <LandingNav />
       <main>
         <HeroSection />
-        <ProblemSection />
         <FeaturesSection />
         <UseCasesSection />
         <ComparisonSection />
