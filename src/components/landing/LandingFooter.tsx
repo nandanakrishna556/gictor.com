@@ -5,9 +5,8 @@ export function LandingFooter() {
     <footer className="border-t border-border py-12 px-6">
       <div className="max-w-6xl mx-auto">
         <div className="flex flex-col md:flex-row justify-between items-center gap-6">
-          <Link to="/" className="flex items-center gap-2">
-            <img src="/logo.png" alt="Gictor" className="h-8 w-8" />
-            <span className="text-2xl font-bold text-primary">Gictor</span>
+          <Link to="/" className="flex items-center">
+            <img src="/logo.png" alt="Gictor" className="h-10" />
           </Link>
 
           <div className="flex flex-wrap justify-center gap-8 text-base text-muted-foreground">
