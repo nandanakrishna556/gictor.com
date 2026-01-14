@@ -884,17 +884,44 @@ Example: Dashboard walkthrough for new users. Show: 1) Create project, 2) Add sc
           {/* Content */}
           <div className="flex-1 flex overflow-hidden">
             {/* Input Section */}
-            <div className="w-1/2 overflow-y-auto p-5 space-y-5 border-r border-border">
-              <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                Input
-              </h3>
+            <div className="w-1/2 flex flex-col border-r border-border">
+              {/* Sticky header with title, toggle, and generate button */}
+              <div className="shrink-0 p-5 pb-4 space-y-4 border-b border-border bg-background">
+                <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                  Input
+                </h3>
 
-              {/* Input Mode Toggle */}
-              <InputModeToggle
-                mode={inputMode}
-                onModeChange={setInputMode}
-                uploadLabel="Paste"
-              />
+                {/* Input Mode Toggle */}
+                <InputModeToggle
+                  mode={inputMode}
+                  onModeChange={setInputMode}
+                  uploadLabel="Paste"
+                />
+
+                {/* Generate Button - Sticky at top in generate mode */}
+                {inputMode === 'generate' && (
+                  <Button
+                    onClick={handleGenerate}
+                    disabled={!canGenerate}
+                    className="w-full h-10"
+                  >
+                    {isGenerating ? (
+                      <>
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        Generating...
+                      </>
+                    ) : (
+                      <>
+                        <Sparkles className="h-4 w-4 mr-2" />
+                        {isRefineMode ? `Refine Script • ${CREDIT_COST} credits` : `Generate Script • ${CREDIT_COST} credits`}
+                      </>
+                    )}
+                  </Button>
+                )}
+              </div>
+              
+              {/* Scrollable content */}
+              <div className="flex-1 overflow-y-auto p-5 pt-4 space-y-5">
 
               {inputMode === 'generate' ? (
                 <>
@@ -1155,31 +1182,6 @@ Example: Dashboard walkthrough for new users. Show: 1) Create project, 2) Add sc
                   className="min-h-[120px] resize-none text-sm"
                 />
               </div>
-
-              {/* Generate */}
-              <div className="pt-3 border-t border-border space-y-3">
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-muted-foreground">Cost:</span>
-                  <span className="font-medium">{CREDIT_COST} credits</span>
-                </div>
-                <Button
-                  onClick={handleGenerate}
-                  disabled={!canGenerate}
-                  className="w-full h-10"
-                >
-                  {isGenerating ? (
-                    <>
-                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      Generating...
-                    </>
-                  ) : (
-                    <>
-                      <Sparkles className="h-4 w-4 mr-2" />
-                      {isRefineMode ? `Refine Script • ${CREDIT_COST} credits` : `Generate Script • ${CREDIT_COST} credits`}
-                    </>
-                  )}
-                </Button>
-              </div>
                 </>
               ) : (
                 /* Paste Mode */
@@ -1223,9 +1225,8 @@ Example: Dashboard walkthrough for new users. Show: 1) Create project, 2) Add sc
                   </div>
                 </>
               )}
+              </div>
             </div>
-
-            {/* Output Section */}
             <div className="w-1/2 overflow-y-auto p-6 space-y-6 bg-muted/30">
               <div className="flex items-center justify-between">
                 <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
