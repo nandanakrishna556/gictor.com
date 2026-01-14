@@ -69,11 +69,15 @@ export default function BRollLastFrameStage({ pipelineId, onComplete }: BRollLas
   const isGenerating = localGenerating || isProcessing;
   const hasOutput = !!outputUrl;
 
-  // Load existing data from script_input (repurposed for last frame)
+  // Track if initial load is done to prevent overwriting user input
+  const initialLoadDone = useRef(false);
+  
+  // Load existing data from script_input (repurposed for last frame) - only on first mount
   useEffect(() => {
-    if (pipeline?.script_input) {
+    if (pipeline?.script_input && !initialLoadDone.current) {
       const input = pipeline.script_input as any;
       if (input.frame_type === 'last') {
+        initialLoadDone.current = true;
         setInputMode(input.mode || 'generate');
         setStyle(input.style || 'broll');
         setSubStyle(input.substyle || 'ugc');
@@ -85,13 +89,13 @@ export default function BRollLastFrameStage({ pipelineId, onComplete }: BRollLas
         setPrompt(input.prompt || input.description || '');
         setUploadedUrl(input.uploaded_url || '');
       }
-      
-      // Initialize prev status
-      if (prevStatusRef.current === null) {
-        prevStatusRef.current = pipeline.status;
-        if (hasOutput) {
-          toastShownRef.current = pipelineId;
-        }
+    }
+    
+    // Initialize prev status
+    if (prevStatusRef.current === null && pipeline) {
+      prevStatusRef.current = pipeline.status;
+      if (hasOutput) {
+        toastShownRef.current = pipelineId;
       }
     }
   }, [pipeline?.script_input, pipeline?.status, hasOutput, pipelineId]);

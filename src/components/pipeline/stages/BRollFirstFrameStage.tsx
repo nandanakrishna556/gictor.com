@@ -67,9 +67,13 @@ export default function BRollFirstFrameStage({ pipelineId, onComplete }: BRollFi
   const hasOutput = !!pipeline?.first_frame_output?.url;
   const outputUrl = pipeline?.first_frame_output?.url;
 
-  // Load existing data
+  // Track if initial load is done to prevent overwriting user input
+  const initialLoadDone = useRef(false);
+  
+  // Load existing data only on first mount
   useEffect(() => {
-    if (pipeline?.first_frame_input) {
+    if (pipeline?.first_frame_input && !initialLoadDone.current) {
+      initialLoadDone.current = true;
       const input = pipeline.first_frame_input as any;
       setInputMode(input.mode || 'generate');
       setStyle(input.style || 'broll');
@@ -81,13 +85,13 @@ export default function BRollFirstFrameStage({ pipelineId, onComplete }: BRollFi
       setReferenceImages(input.reference_images || []);
       setPrompt(input.prompt || '');
       setUploadedUrl(input.uploaded_url || '');
-      
-      // Initialize prev status
-      if (prevStatusRef.current === null) {
-        prevStatusRef.current = pipeline.status;
-        if (hasOutput) {
-          toastShownRef.current = pipelineId;
-        }
+    }
+    
+    // Initialize prev status
+    if (prevStatusRef.current === null && pipeline) {
+      prevStatusRef.current = pipeline.status;
+      if (hasOutput) {
+        toastShownRef.current = pipelineId;
       }
     }
   }, [pipeline?.first_frame_input, pipeline?.status, hasOutput, pipelineId]);
