@@ -79,6 +79,9 @@ export default function BRollAnimateStage({ pipelineId, onComplete }: BRollAnima
   const hasRequiredInputs = effectiveFirstFrame && (!isMotionGraphics || effectiveLastFrame);
   const canGenerate = hasRequiredInputs && !isGenerating && profile && (profile.credits ?? 0) >= creditCost;
 
+  // Track if we've already loaded the initial data
+  const initialLoadDoneRef = useRef(false);
+  
   // Load existing data from voice_input (repurposed for animate settings)
   useEffect(() => {
     if (pipeline?.voice_input) {
@@ -93,14 +96,6 @@ export default function BRollAnimateStage({ pipelineId, onComplete }: BRollAnima
       }
     }
     
-    // Use frames from previous stages if not overridden
-    if (originalFirstFrame && !firstFrameUrl) {
-      setFirstFrameUrl(originalFirstFrame);
-    }
-    if (originalLastFrame && !lastFrameUrl) {
-      setLastFrameUrl(originalLastFrame);
-    }
-    
     // Initialize prev status
     if (prevStatusRef.current === null && pipeline) {
       prevStatusRef.current = pipeline.status;
@@ -108,7 +103,21 @@ export default function BRollAnimateStage({ pipelineId, onComplete }: BRollAnima
         toastShownRef.current = pipelineId;
       }
     }
-  }, [pipeline?.voice_input, pipeline?.status, hasOutput, pipelineId, originalFirstFrame, originalLastFrame]);
+  }, [pipeline?.voice_input, pipeline?.status, hasOutput, pipelineId]);
+
+  // Auto-populate frames from previous stages when they become available
+  useEffect(() => {
+    // Only auto-populate if user hasn't manually cleared the frame
+    if (originalFirstFrame && !firstFrameUrl) {
+      setFirstFrameUrl(originalFirstFrame);
+    }
+  }, [originalFirstFrame]);
+  
+  useEffect(() => {
+    if (originalLastFrame && !lastFrameUrl) {
+      setLastFrameUrl(originalLastFrame);
+    }
+  }, [originalLastFrame]);
 
   // Handle status transitions
   useEffect(() => {
@@ -268,321 +277,321 @@ export default function BRollAnimateStage({ pipelineId, onComplete }: BRollAnima
   return (
     <div className="flex flex-1 overflow-hidden h-full">
       {/* Input Section */}
-      <div className="w-1/2 overflow-y-auto p-6 space-y-6 border-r">
-        <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">Input</h3>
-        
-        {/* Generate/Upload Toggle */}
-        <InputModeToggle
-          mode={inputMode}
-          onModeChange={setInputMode}
-          uploadLabel="Upload"
-        />
+      <div className="w-1/2 flex flex-col overflow-hidden border-r">
+        <div className="flex-1 overflow-y-auto p-6 space-y-6">
+          <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">Input</h3>
+          
+          {/* Generate/Upload Toggle */}
+          <InputModeToggle
+            mode={inputMode}
+            onModeChange={setInputMode}
+            uploadLabel="Upload"
+          />
 
-        {inputMode === 'upload' ? (
-          /* Upload Mode UI */
-          <div className="space-y-4">
-            <Label>Upload Video</Label>
-            {uploadedVideoUrl ? (
-              <div className="relative rounded-xl overflow-hidden border border-border">
-                <video src={uploadedVideoUrl} controls className="w-full h-40 object-cover" />
-                <button
-                  onClick={() => setUploadedVideoUrl(null)}
-                  className="absolute top-2 right-2 p-1 rounded-full bg-background/80 hover:bg-background transition-colors"
-                >
-                  <X className="h-4 w-4" strokeWidth={1.5} />
-                </button>
-              </div>
-            ) : (
-              <label className="flex flex-col items-center justify-center h-40 rounded-xl border-2 border-dashed border-border hover:border-primary cursor-pointer transition-colors">
-                <input
-                  type="file"
-                  accept="video/mp4,video/quicktime,video/webm,.mp4,.mov,.webm"
-                  className="hidden"
-                  onChange={async (e) => {
-                    const f = e.target.files?.[0];
-                    if (!f || !user) return;
-                    
-                    const validTypes = ['video/mp4', 'video/quicktime', 'video/webm'];
-                    if (!validTypes.includes(f.type)) {
-                      toast.error('Please upload MP4, MOV, or WebM video');
-                      return;
-                    }
-                    if (f.size > 500 * 1024 * 1024) {
-                      toast.error('Video must be less than 500MB');
-                      return;
-                    }
-                    
-                    setIsUploadingVideo(true);
-                    try {
-                      const fileName = `${user.id}/videos/${Date.now()}-${f.name}`;
-                      const { error: uploadError } = await supabase.storage.from('uploads').upload(fileName, f);
-                      if (uploadError) throw uploadError;
+          {inputMode === 'upload' ? (
+            /* Upload Mode UI */
+            <div className="space-y-4">
+              <Label>Upload Video</Label>
+              {uploadedVideoUrl ? (
+                <div className="relative rounded-xl overflow-hidden border border-border">
+                  <video src={uploadedVideoUrl} controls className="w-full h-40 object-cover" />
+                  <button
+                    onClick={() => setUploadedVideoUrl(null)}
+                    className="absolute top-2 right-2 p-1 rounded-full bg-background/80 hover:bg-background transition-colors"
+                  >
+                    <X className="h-4 w-4" strokeWidth={1.5} />
+                  </button>
+                </div>
+              ) : (
+                <label className="flex flex-col items-center justify-center h-40 rounded-xl border-2 border-dashed border-border hover:border-primary cursor-pointer transition-colors">
+                  <input
+                    type="file"
+                    accept="video/mp4,video/quicktime,video/webm,.mp4,.mov,.webm"
+                    className="hidden"
+                    onChange={async (e) => {
+                      const f = e.target.files?.[0];
+                      if (!f || !user) return;
                       
-                      const { data: { publicUrl } } = supabase.storage.from('uploads').getPublicUrl(fileName);
-                      setUploadedVideoUrl(publicUrl);
-                      toast.success('Video uploaded');
-                    } catch (error) {
-                      toast.error('Failed to upload video');
-                    } finally {
-                      setIsUploadingVideo(false);
-                    }
-                  }}
-                  disabled={isUploadingVideo}
+                      const validTypes = ['video/mp4', 'video/quicktime', 'video/webm'];
+                      if (!validTypes.includes(f.type)) {
+                        toast.error('Please upload MP4, MOV, or WebM video');
+                        return;
+                      }
+                      if (f.size > 500 * 1024 * 1024) {
+                        toast.error('Video must be less than 500MB');
+                        return;
+                      }
+                      
+                      setIsUploadingVideo(true);
+                      try {
+                        const fileName = `${user.id}/videos/${Date.now()}-${f.name}`;
+                        const { error: uploadError } = await supabase.storage.from('uploads').upload(fileName, f);
+                        if (uploadError) throw uploadError;
+                        
+                        const { data: { publicUrl } } = supabase.storage.from('uploads').getPublicUrl(fileName);
+                        setUploadedVideoUrl(publicUrl);
+                        toast.success('Video uploaded');
+                      } catch (error) {
+                        toast.error('Failed to upload video');
+                      } finally {
+                        setIsUploadingVideo(false);
+                      }
+                    }}
+                    disabled={isUploadingVideo}
+                  />
+                  {isUploadingVideo ? (
+                    <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" strokeWidth={1.5} />
+                  ) : (
+                    <>
+                      <Film className="h-8 w-8 text-muted-foreground mb-2" strokeWidth={1.5} />
+                      <span className="text-sm text-muted-foreground">Upload your video</span>
+                      <span className="text-xs text-muted-foreground/70">MP4, MOV, WebM up to 500MB</span>
+                    </>
+                  )}
+                </label>
+              )}
+              
+              {uploadedVideoUrl && (
+                <Button
+                  onClick={handleSaveUpload}
+                  disabled={isSavingUpload}
+                  className="w-full"
+                >
+                  {isSavingUpload ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                      Saving...
+                    </>
+                  ) : (
+                    <>Save Video <span className="text-emerald-400 ml-1">• Free</span></>
+                  )}
+                </Button>
+              )}
+            </div>
+          ) : (
+            /* Generate Mode UI */
+            <>
+              {/* Animation Type */}
+              <div className="space-y-2">
+                <Label>Animation Type</Label>
+                <Select value={animationType} onValueChange={(v: 'broll' | 'motion_graphics') => setAnimationType(v)}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="broll">B-Roll (Natural footage)</SelectItem>
+                    <SelectItem value="motion_graphics">Motion Graphics (Transitions)</SelectItem>
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground">
+                  {animationType === 'broll' 
+                    ? 'Creates natural, realistic B-roll footage from your image'
+                    : 'Creates smooth motion graphics transitions between two frames'}
+                </p>
+              </div>
+              
+              {/* Aspect Ratio */}
+              <div className="space-y-2">
+                <Label>Aspect Ratio</Label>
+                <div className="flex gap-2">
+                  <Button
+                    type="button"
+                    variant={aspectRatio === '9:16' ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => setAspectRatio('9:16')}
+                  >
+                    9:16 Portrait
+                  </Button>
+                  <Button
+                    type="button"
+                    variant={aspectRatio === '16:9' ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => setAspectRatio('16:9')}
+                  >
+                    16:9 Landscape
+                  </Button>
+                </div>
+              </div>
+              
+              {/* Duration Slider */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Label>Duration</Label>
+                  <span className="text-sm font-medium">{duration}s</span>
+                </div>
+                <input
+                  type="range"
+                  min={4}
+                  max={12}
+                  step={1}
+                  value={duration}
+                  onChange={(e) => setDuration(Number(e.target.value))}
+                  className="w-full h-2 bg-secondary rounded-lg appearance-none cursor-pointer accent-primary"
                 />
-                {isUploadingVideo ? (
-                  <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" strokeWidth={1.5} />
+                <div className="flex justify-between text-xs text-muted-foreground">
+                  <span>4s</span>
+                  <span>12s</span>
+                </div>
+              </div>
+
+              {/* Audio Toggle */}
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label>Audio</Label>
+                  <p className="text-xs text-muted-foreground">Generate accompanying audio</p>
+                </div>
+                <Switch
+                  checked={audioEnabled}
+                  onCheckedChange={setAudioEnabled}
+                />
+              </div>
+
+              {/* Camera Toggle */}
+              <div className="space-y-2">
+                <div className="space-y-0.5">
+                  <Label>Camera</Label>
+                  <p className="text-xs text-muted-foreground">
+                    {cameraFixed ? 'Static (fixed position)' : 'Dynamic (moves naturally)'}
+                  </p>
+                </div>
+                <div className="flex gap-2">
+                  <Button
+                    type="button"
+                    variant={!cameraFixed ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => setCameraFixed(false)}
+                  >
+                    Dynamic
+                  </Button>
+                  <Button
+                    type="button"
+                    variant={cameraFixed ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => setCameraFixed(true)}
+                  >
+                    Static
+                  </Button>
+                </div>
+              </div>
+              
+              {/* First Frame Upload */}
+              <div className="space-y-2">
+                <Label>First Frame *</Label>
+                {effectiveFirstFrame ? (
+                  <div className="relative rounded-xl overflow-hidden border border-border">
+                    <img src={effectiveFirstFrame} alt="First frame" className="w-full h-40 object-cover" />
+                    <button
+                      onClick={() => setFirstFrameUrl('')}
+                      className="absolute top-2 right-2 p-1 rounded-full bg-background/80 hover:bg-background transition-colors"
+                    >
+                      <X className="h-4 w-4" strokeWidth={1.5} />
+                    </button>
+                  </div>
                 ) : (
-                  <>
-                    <Film className="h-8 w-8 text-muted-foreground mb-2" strokeWidth={1.5} />
-                    <span className="text-sm text-muted-foreground">Upload your video</span>
-                    <span className="text-xs text-muted-foreground/70">MP4, MOV, WebM up to 500MB</span>
-                  </>
+                  <label className="flex flex-col items-center justify-center h-40 rounded-xl border-2 border-dashed border-border hover:border-primary cursor-pointer transition-colors">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={(e) => {
+                        const f = e.target.files?.[0];
+                        if (f) handleFileUpload(f, true);
+                      }}
+                      disabled={isUploadingFirst}
+                    />
+                    {isUploadingFirst ? (
+                      <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" strokeWidth={1.5} />
+                    ) : (
+                      <>
+                        <Upload className="h-8 w-8 text-muted-foreground mb-2" strokeWidth={1.5} />
+                        <span className="text-sm text-muted-foreground">Upload first frame</span>
+                        <span className="text-xs text-muted-foreground/70">PNG, JPG up to 10MB</span>
+                      </>
+                    )}
+                  </label>
                 )}
-              </label>
-            )}
-            
-            {uploadedVideoUrl && (
-              <Button
-                onClick={handleSaveUpload}
-                disabled={isSavingUpload}
-                className="w-full"
-              >
-                {isSavingUpload ? (
-                  <>
-                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                    Saving...
-                  </>
+              </div>
+              
+              {/* Last Frame Upload */}
+              <div className="space-y-2">
+                <Label>Last Frame {isMotionGraphics ? <span className="text-destructive">*</span> : '(Optional)'}</Label>
+                {effectiveLastFrame ? (
+                  <div className="relative rounded-xl overflow-hidden border border-border">
+                    <img src={effectiveLastFrame} alt="Last frame" className="w-full h-40 object-cover" />
+                    <button
+                      onClick={() => setLastFrameUrl('')}
+                      className="absolute top-2 right-2 p-1 rounded-full bg-background/80 hover:bg-background transition-colors"
+                    >
+                      <X className="h-4 w-4" strokeWidth={1.5} />
+                    </button>
+                  </div>
                 ) : (
-                  <>Save Video <span className="text-emerald-400 ml-1">• Free</span></>
+                  <label className="flex flex-col items-center justify-center h-40 rounded-xl border-2 border-dashed border-border hover:border-primary cursor-pointer transition-colors">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={(e) => {
+                        const f = e.target.files?.[0];
+                        if (f) handleFileUpload(f, false);
+                      }}
+                      disabled={isUploadingLast}
+                    />
+                    {isUploadingLast ? (
+                      <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" strokeWidth={1.5} />
+                    ) : (
+                      <>
+                        <Upload className="h-8 w-8 text-muted-foreground mb-2" strokeWidth={1.5} />
+                        <span className="text-sm text-muted-foreground">Upload last frame</span>
+                        <span className="text-xs text-muted-foreground/70">PNG, JPG up to 10MB</span>
+                      </>
+                    )}
+                  </label>
                 )}
-              </Button>
+              </div>
+              
+              {/* Prompt */}
+              <div className="space-y-2">
+                <Label>Prompt (Optional)</Label>
+                <Textarea
+                  value={prompt}
+                  onChange={(e) => setPrompt(e.target.value)}
+                  placeholder={animationType === 'broll' 
+                    ? "Describe the motion you want (e.g., 'gentle camera pan across the scene')"
+                    : "Describe the transition you want (e.g., 'smooth zoom transition')"}
+                  rows={3}
+                />
+                <p className="text-xs text-muted-foreground">
+                  AI will enhance your prompt or analyze the images if left empty
+                </p>
+              </div>
+            </>
+          )}
+        </div>
+
+        {/* Sticky Generate Button (Generate mode only) */}
+        {inputMode === 'generate' && (
+          <div className="shrink-0 p-4 border-t bg-background">
+            <Button
+              onClick={handleGenerate}
+              disabled={!canGenerate}
+              className="w-full"
+            >
+              {isGenerating ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" strokeWidth={1.5} />
+                  Generating...
+                </>
+              ) : (
+                <>Generate Animation • {creditCost.toFixed(2)} credits</>
+              )}
+            </Button>
+            {isMotionGraphics && !effectiveLastFrame && (
+              <p className="text-xs text-amber-500 text-center mt-2">
+                Motion graphics requires both first and last frames
+              </p>
             )}
           </div>
-        ) : (
-          /* Generate Mode UI */
-          <>
-            {/* Animation Type */}
-            <div className="space-y-2">
-              <Label>Animation Type</Label>
-              <Select value={animationType} onValueChange={(v: 'broll' | 'motion_graphics') => setAnimationType(v)}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="broll">B-Roll (Natural footage)</SelectItem>
-                  <SelectItem value="motion_graphics">Motion Graphics (Transitions)</SelectItem>
-                </SelectContent>
-              </Select>
-              <p className="text-xs text-muted-foreground">
-                {animationType === 'broll' 
-                  ? 'Creates natural, realistic B-roll footage from your image'
-                  : 'Creates smooth motion graphics transitions between two frames'}
-              </p>
-            </div>
-            
-            {/* Aspect Ratio */}
-            <div className="space-y-2">
-              <Label>Aspect Ratio</Label>
-              <div className="flex gap-2">
-                <Button
-                  type="button"
-                  variant={aspectRatio === '9:16' ? 'default' : 'outline'}
-                  size="sm"
-                  onClick={() => setAspectRatio('9:16')}
-                >
-                  9:16 Portrait
-                </Button>
-                <Button
-                  type="button"
-                  variant={aspectRatio === '16:9' ? 'default' : 'outline'}
-                  size="sm"
-                  onClick={() => setAspectRatio('16:9')}
-                >
-                  16:9 Landscape
-                </Button>
-              </div>
-            </div>
-            
-            {/* Duration Slider */}
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <Label>Duration</Label>
-                <span className="text-sm font-medium">{duration}s</span>
-              </div>
-              <input
-                type="range"
-                min={4}
-                max={12}
-                step={1}
-                value={duration}
-                onChange={(e) => setDuration(Number(e.target.value))}
-                className="w-full h-2 bg-secondary rounded-lg appearance-none cursor-pointer accent-primary"
-              />
-              <div className="flex justify-between text-xs text-muted-foreground">
-                <span>4s</span>
-                <span>12s</span>
-              </div>
-            </div>
-
-            {/* Audio Toggle */}
-            <div className="flex items-center justify-between">
-              <div className="space-y-0.5">
-                <Label>Audio</Label>
-                <p className="text-xs text-muted-foreground">Generate accompanying audio</p>
-              </div>
-              <Switch
-                checked={audioEnabled}
-                onCheckedChange={setAudioEnabled}
-              />
-            </div>
-
-            {/* Camera Toggle */}
-            <div className="space-y-2">
-              <div className="space-y-0.5">
-                <Label>Camera</Label>
-                <p className="text-xs text-muted-foreground">
-                  {cameraFixed ? 'Static (fixed position)' : 'Dynamic (moves naturally)'}
-                </p>
-              </div>
-              <div className="flex gap-2">
-                <Button
-                  type="button"
-                  variant={!cameraFixed ? 'default' : 'outline'}
-                  size="sm"
-                  onClick={() => setCameraFixed(false)}
-                >
-                  Dynamic
-                </Button>
-                <Button
-                  type="button"
-                  variant={cameraFixed ? 'default' : 'outline'}
-                  size="sm"
-                  onClick={() => setCameraFixed(true)}
-                >
-                  Static
-                </Button>
-              </div>
-            </div>
-            
-            {/* First Frame Upload */}
-            <div className="space-y-2">
-              <Label>First Frame *</Label>
-              {effectiveFirstFrame ? (
-                <div className="relative rounded-xl overflow-hidden border border-border">
-                  <img src={effectiveFirstFrame} alt="First frame" className="w-full h-40 object-cover" />
-                  <button
-                    onClick={() => setFirstFrameUrl('')}
-                    className="absolute top-2 right-2 p-1 rounded-full bg-background/80 hover:bg-background transition-colors"
-                  >
-                    <X className="h-4 w-4" strokeWidth={1.5} />
-                  </button>
-                </div>
-              ) : (
-                <label className="flex flex-col items-center justify-center h-40 rounded-xl border-2 border-dashed border-border hover:border-primary cursor-pointer transition-colors">
-                  <input
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    onChange={(e) => {
-                      const f = e.target.files?.[0];
-                      if (f) handleFileUpload(f, true);
-                    }}
-                    disabled={isUploadingFirst}
-                  />
-                  {isUploadingFirst ? (
-                    <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" strokeWidth={1.5} />
-                  ) : (
-                    <>
-                      <Upload className="h-8 w-8 text-muted-foreground mb-2" strokeWidth={1.5} />
-                      <span className="text-sm text-muted-foreground">Upload first frame</span>
-                      <span className="text-xs text-muted-foreground/70">PNG, JPG up to 10MB</span>
-                    </>
-                  )}
-                </label>
-              )}
-            </div>
-            
-            {/* Last Frame Upload */}
-            <div className="space-y-2">
-              <Label>Last Frame {isMotionGraphics ? <span className="text-destructive">*</span> : '(Optional)'}</Label>
-              {effectiveLastFrame ? (
-                <div className="relative rounded-xl overflow-hidden border border-border">
-                  <img src={effectiveLastFrame} alt="Last frame" className="w-full h-40 object-cover" />
-                  <button
-                    onClick={() => setLastFrameUrl('')}
-                    className="absolute top-2 right-2 p-1 rounded-full bg-background/80 hover:bg-background transition-colors"
-                  >
-                    <X className="h-4 w-4" strokeWidth={1.5} />
-                  </button>
-                </div>
-              ) : (
-                <label className="flex flex-col items-center justify-center h-40 rounded-xl border-2 border-dashed border-border hover:border-primary cursor-pointer transition-colors">
-                  <input
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    onChange={(e) => {
-                      const f = e.target.files?.[0];
-                      if (f) handleFileUpload(f, false);
-                    }}
-                    disabled={isUploadingLast}
-                  />
-                  {isUploadingLast ? (
-                    <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" strokeWidth={1.5} />
-                  ) : (
-                    <>
-                      <Upload className="h-8 w-8 text-muted-foreground mb-2" strokeWidth={1.5} />
-                      <span className="text-sm text-muted-foreground">Upload last frame</span>
-                      <span className="text-xs text-muted-foreground/70">PNG, JPG up to 10MB</span>
-                    </>
-                  )}
-                </label>
-              )}
-            </div>
-            
-            {/* Prompt */}
-            <div className="space-y-2">
-              <Label>Prompt (Optional)</Label>
-              <Textarea
-                value={prompt}
-                onChange={(e) => setPrompt(e.target.value)}
-                placeholder={animationType === 'broll' 
-                  ? "Describe the motion you want (e.g., 'gentle camera pan across the scene')"
-                  : "Describe the transition you want (e.g., 'smooth zoom transition')"}
-                rows={3}
-              />
-              <p className="text-xs text-muted-foreground">
-                AI will enhance your prompt or analyze the images if left empty
-              </p>
-            </div>
-            
-            {/* Generate Button */}
-            <div className="pt-4 border-t space-y-3">
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-muted-foreground">Cost:</span>
-                <span className="font-medium">{creditCost.toFixed(2)} credits</span>
-              </div>
-              <Button
-                onClick={handleGenerate}
-                disabled={!canGenerate}
-                className="w-full"
-              >
-                {isGenerating ? (
-                  <>
-                    <Loader2 className="h-4 w-4 animate-spin mr-2" strokeWidth={1.5} />
-                    Generating...
-                  </>
-                ) : (
-                  <>Generate Animation • {creditCost.toFixed(2)} credits</>
-                )}
-              </Button>
-              {isMotionGraphics && !effectiveLastFrame && (
-                <p className="text-xs text-amber-500 text-center">
-                  Motion graphics requires both first and last frames
-                </p>
-              )}
-            </div>
-          </>
         )}
       </div>
       
