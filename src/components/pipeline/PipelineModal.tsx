@@ -379,7 +379,7 @@ export default function PipelineModal({
       <Dialog open={open} onOpenChange={handleClose}>
         <DialogContent className="max-w-[900px] h-[85vh] flex flex-col p-0 gap-0 overflow-hidden rounded-lg">
         <PipelineHeader
-          title="Lip Sync"
+          title="Talking Head"
           name={name}
           onNameChange={handleNameChange}
           projectId={currentProjectId}

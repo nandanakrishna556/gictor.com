@@ -61,18 +61,26 @@ export default function StageLayout({
 }: StageLayoutProps) {
   return (
     <div className="flex h-full overflow-hidden">
-      {/* Input Section - Fixed width */}
-      <div className="w-1/2 flex-shrink-0 flex flex-col border-r min-h-0">
-        <div className="flex-1 overflow-y-auto p-6 min-h-0">
-          <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wide mb-4">Input</h3>
-          {inputContent}
+      {/* Input Section */}
+      <div className="w-1/2 overflow-y-auto p-6 space-y-5 border-r border-border">
+        <div className="flex items-center justify-between">
+          <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">Input</h3>
         </div>
+        
+        {inputContent}
 
-        <div className="shrink-0 px-6 py-4 border-t bg-background space-y-2">
+        {/* Generate Section */}
+        <div className="pt-4 border-t space-y-3">
+          {creditsCost && (
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-muted-foreground">Cost:</span>
+              <span className="font-medium">{creditsCost}</span>
+            </div>
+          )}
           <Button 
-            className="w-full" 
             onClick={onGenerate}
             disabled={isGenerating || generateDisabled}
+            className="w-full"
           >
             {isGenerating ? (
               <>
@@ -80,60 +88,48 @@ export default function StageLayout({
                 Generating...
               </>
             ) : creditsCost ? (
-              <>
-                {generateLabel} • {creditsCost}
-              </>
+              `${generateLabel} • ${creditsCost}`
             ) : (
-              <>{generateLabel}</>
+              generateLabel
             )}
           </Button>
           {creditsInfo}
         </div>
       </div>
 
-      {/* Output Section - Fixed width */}
-      <div className="w-1/2 flex-shrink-0 flex flex-col bg-muted/10 min-h-0">
-        <div className="flex-1 overflow-y-auto p-6 min-h-0 space-y-6">
-          {/* Output Header */}
-          <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">Output</h3>
-          
-          {isGenerating ? (
-            // Generating state - matches FrameModal
-            <div className="space-y-4">
-              <div className="aspect-square rounded-xl bg-secondary/50 flex items-center justify-center">
-                <div className="text-center space-y-3">
-                  <Loader2 className="h-10 w-10 animate-spin text-primary mx-auto" strokeWidth={1.5} />
-                  <p className="text-sm text-muted-foreground">Generating your image...</p>
-                </div>
+      {/* Output Section */}
+      <div className="w-1/2 overflow-y-auto p-6 space-y-6 bg-muted/10">
+        <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">Output</h3>
+        
+        {isGenerating ? (
+          <div className="space-y-4">
+            <div className="aspect-square rounded-xl bg-secondary/50 flex items-center justify-center">
+              <div className="text-center space-y-3">
+                <Loader2 className="h-10 w-10 animate-spin text-primary mx-auto" strokeWidth={1.5} />
+                <p className="text-sm text-muted-foreground">Generating your image...</p>
               </div>
             </div>
-          ) : hasOutput ? (
-            // Has output - show content with actions
-            <div className="space-y-4 animate-fade-in">
-              {outputContent}
-              {/* Output actions - download, etc. */}
-              {outputActions && (
-                <div className="flex items-center gap-2">
-                  {outputActions}
-                </div>
-              )}
-            </div>
-          ) : (
-            // Empty state - matches FrameModal exactly
-            <div className="aspect-square rounded-xl bg-secondary/30 border-2 border-dashed border-border flex flex-col items-center justify-center gap-2">
-              {emptyStateIcon || <ImageIcon className="h-10 w-10 text-muted-foreground/50" strokeWidth={1.5} />}
-              <p className="text-muted-foreground text-sm">{emptyStateTitle}</p>
-              <p className="text-muted-foreground/70 text-xs">{emptyStateSubtitle}</p>
-            </div>
-          )}
-        </div>
-
-        {hasOutput && (
-          <div className="shrink-0 px-6 py-4 border-t bg-background">
+          </div>
+        ) : hasOutput ? (
+          <div className="space-y-4 animate-fade-in">
+            {outputContent}
+            {/* Output actions - download, etc. */}
+            {outputActions && (
+              <div className="flex items-center gap-2">
+                {outputActions}
+              </div>
+            )}
+            {/* Continue Button */}
             <Button className="w-full" onClick={onContinue} disabled={!canContinue}>
               Continue to Next Stage
               <ArrowRight className="h-4 w-4 ml-2" />
             </Button>
+          </div>
+        ) : (
+          <div className="aspect-square rounded-xl bg-secondary/30 border-2 border-dashed border-border flex flex-col items-center justify-center gap-2">
+            {emptyStateIcon || <ImageIcon className="h-10 w-10 text-muted-foreground/50" strokeWidth={1.5} />}
+            <p className="text-muted-foreground text-sm">{emptyStateTitle}</p>
+            <p className="text-muted-foreground/70 text-xs">{emptyStateSubtitle}</p>
           </div>
         )}
       </div>
