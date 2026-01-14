@@ -115,7 +115,7 @@ export default function AppSidebar() {
             </button>
           </CollapsibleTrigger>
 
-          <CollapsibleContent className="mt-0.5 space-y-0.5">
+          <CollapsibleContent className="mt-0.5 space-y-0.5 ml-[26px]">
             {projects?.map((project) => (
               <div
                 key={project.id}
