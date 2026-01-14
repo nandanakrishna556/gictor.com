@@ -18,6 +18,7 @@ import { useAuth } from '@/contexts/AuthContext';
 interface MoGraphFirstFrameStageProps {
   pipelineId: string;
   onComplete: () => void;
+  onContinue: () => void;
 }
 
 type AspectRatio = '9:16' | '16:9' | '1:1';
@@ -25,7 +26,7 @@ type Resolution = '1K' | '2K' | '4K';
 
 const CREDIT_COST = 0.25;
 
-export default function MoGraphFirstFrameStage({ pipelineId, onComplete }: MoGraphFirstFrameStageProps) {
+export default function MoGraphFirstFrameStage({ pipelineId, onComplete, onContinue }: MoGraphFirstFrameStageProps) {
   const { pipeline, updateFirstFrame, isUpdating } = usePipeline(pipelineId);
   const { profile } = useProfile();
   const { user } = useAuth();
@@ -413,7 +414,10 @@ export default function MoGraphFirstFrameStage({ pipelineId, onComplete }: MoGra
       isGenerating={isGenerating}
       hasOutput={hasOutput}
       onGenerate={handleGenerate}
-      generateButtonText={inputMode === 'upload' ? 'Save • Free' : `Generate First Frame • ${creditCost} Credits`}
+      onContinue={onContinue}
+      canContinue={hasOutput}
+      generateLabel={inputMode === 'upload' ? 'Save' : 'Generate First Frame'}
+      creditsCost={inputMode === 'upload' ? '' : `${creditCost} Credits`}
       generateDisabled={generateDisabled}
       outputActions={outputActions}
       emptyStateTitle="Generated image will appear here"
