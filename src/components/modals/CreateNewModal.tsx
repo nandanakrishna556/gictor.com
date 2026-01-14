@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react';
-import { Video, FolderPlus, X, Loader2, Film, Mic, Image, FileText, Sparkles, RefreshCw, Clapperboard } from 'lucide-react';
+import { Video, FolderPlus, X, Loader2, Film, Mic, Image, FileText, Sparkles, RefreshCw } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
 import { v4 as uuidv4 } from 'uuid';
 import {
@@ -87,7 +87,7 @@ const elements = [
   },
   {
     id: 'animate' as ElementType,
-    icon: Clapperboard,
+    icon: Film,
     title: 'Animate',
     description: 'Animate images to video',
   },
@@ -327,7 +327,7 @@ export default function CreateNewModal({
           </DialogHeader>
 
           <div className="flex-1 overflow-y-auto p-6 space-y-6">
-            {/* Workflows Section */}
+            {/* Workflows Section - Temporarily hidden, uncomment to re-enable
             <div>
               <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-4">
                 Workflows
@@ -368,8 +368,8 @@ export default function CreateNewModal({
               </div>
             </div>
 
-            {/* Divider */}
             <div className="border-t border-border" />
+            */}
 
             {/* Elements Section */}
             <div>
