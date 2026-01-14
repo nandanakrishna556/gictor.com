@@ -29,7 +29,7 @@ interface FileCardProps {
 }
 
 // Video file types that should show video preview
-const VIDEO_FILE_TYPES = ['lip_sync', 'talking_head', 'clips', 'b_roll', 'veo3'];
+const VIDEO_FILE_TYPES = ['lip_sync', 'talking_head', 'clips', 'b_roll', 'veo3', 'motion_graphics'];
 
 // Audio file types
 const AUDIO_FILE_TYPES = ['speech', 'audio', 'voice'];
@@ -49,6 +49,8 @@ const getGeneratingLabel = (fileType: string) => {
     case 'b_roll':
     case 'clips':
       return 'Generating B-Roll...';
+    case 'motion_graphics':
+      return 'Generating Motion Graphics...';
     default: 
       return 'Generating...';
   }
