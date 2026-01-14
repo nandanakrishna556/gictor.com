@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { Sparkles, ArrowLeft, Mail, CheckCircle2 } from 'lucide-react';
+import { ArrowLeft, Mail, CheckCircle2 } from 'lucide-react';
 import { z } from 'zod';
 
 const signupSchema = z.object({
@@ -141,8 +141,8 @@ export default function Signup() {
         <div className="rounded-2xl bg-card p-8 shadow-elevated">
           {/* Logo */}
           <div className="mb-8 flex flex-col items-center">
-            <Link to="/home" className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-primary">
-              <Sparkles className="h-7 w-7 text-primary-foreground" />
+            <Link to="/home" className="mb-4">
+              <img src="/logo.png" alt="Gictor" className="h-14 w-14" />
             </Link>
             <h1 className="text-2xl font-bold text-foreground">Create your account</h1>
             <p className="mt-2 text-base text-muted-foreground">
