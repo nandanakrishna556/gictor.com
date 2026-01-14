@@ -18,6 +18,7 @@ import { useAuth } from '@/contexts/AuthContext';
 interface MoGraphLastFrameStageProps {
   pipelineId: string;
   onComplete: () => void;
+  onContinue: () => void;
 }
 
 type AspectRatio = '9:16' | '16:9' | '1:1';
@@ -25,7 +26,7 @@ type Resolution = '1K' | '2K' | '4K';
 
 const CREDIT_COST = 0.25;
 
-export default function MoGraphLastFrameStage({ pipelineId, onComplete }: MoGraphLastFrameStageProps) {
+export default function MoGraphLastFrameStage({ pipelineId, onComplete, onContinue }: MoGraphLastFrameStageProps) {
   const { pipeline, updateScript, isUpdating } = usePipeline(pipelineId);
   const { profile } = useProfile();
   const { user } = useAuth();
@@ -414,7 +415,10 @@ export default function MoGraphLastFrameStage({ pipelineId, onComplete }: MoGrap
       isGenerating={isGenerating}
       hasOutput={hasOutput}
       onGenerate={handleGenerate}
-      generateButtonText={inputMode === 'upload' ? 'Save • Free' : `Generate Last Frame • ${creditCost} Credits`}
+      onContinue={onContinue}
+      canContinue={hasOutput}
+      generateLabel={inputMode === 'upload' ? 'Save' : 'Generate Last Frame'}
+      creditsCost={inputMode === 'upload' ? '' : `${creditCost} Credits`}
       generateDisabled={generateDisabled}
       outputActions={outputActions}
       emptyStateTitle="Generated image will appear here"

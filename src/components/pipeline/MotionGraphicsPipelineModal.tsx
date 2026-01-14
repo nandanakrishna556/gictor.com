@@ -419,12 +419,14 @@ export default function MotionGraphicsPipelineModal({
                 <MoGraphFirstFrameStage
                   pipelineId={pipelineId}
                   onComplete={() => setActiveStage('last_frame')}
+                  onContinue={() => setActiveStage('last_frame')}
                 />
               )}
               {activeStage === 'last_frame' && (
                 <MoGraphLastFrameStage
                   pipelineId={pipelineId}
                   onComplete={() => setActiveStage('animate')}
+                  onContinue={() => setActiveStage('animate')}
                 />
               )}
               {activeStage === 'animate' && (
