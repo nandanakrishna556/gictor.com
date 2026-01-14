@@ -205,10 +205,17 @@ export default function FileGrid({
   ];
 
   // Combine files and folders into unified items - files are already filtered from ProjectDetail
-  const allItems: GridItem[] = [
+  // For kanban view, reverse the order so newest items appear at the bottom of each column
+  const combinedItems: GridItem[] = [
     ...folders.map((f) => ({ ...f, itemType: 'folder' as const, file_type: 'folder' })),
     ...files.map((f) => ({ ...f, itemType: 'file' as const })),
   ];
+  
+  // In kanban view, sort by created_at ascending so newest items are at the bottom
+  // In grid view, keep the default order (newest first at the top)
+  const allItems: GridItem[] = viewMode === 'kanban' 
+    ? [...combinedItems].sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
+    : combinedItems;
 
   const toggleSelection = (id: string) => {
     setSelectedItems((prev) => {
