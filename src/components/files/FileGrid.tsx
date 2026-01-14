@@ -1,6 +1,6 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
+import { DragDropContext, Droppable, Draggable, DropResult, DragUpdate, DragStart } from '@hello-pangea/dnd';
 import {
   Download,
   MoreHorizontal,
@@ -177,6 +177,15 @@ export default function FileGrid({
   const [showBulkDeleteDialog, setShowBulkDeleteDialog] = useState(false);
   const [moveDialogOpen, setMoveDialogOpen] = useState(false);
   const [fileToMove, setFileToMove] = useState<File | null>(null);
+  
+  // Optimistic reordering state for smooth drag-and-drop
+  const [optimisticOrder, setOptimisticOrder] = useState<GridItem[] | null>(null);
+  const [dragState, setDragState] = useState<{
+    draggingId: string | null;
+    sourceDroppableId: string | null;
+    destinationDroppableId: string | null;
+    destinationIndex: number | null;
+  }>({ draggingId: null, sourceDroppableId: null, destinationDroppableId: null, destinationIndex: null });
 
   // Keyboard shortcuts
   const handleKeyDown = useCallback((e: KeyboardEvent) => {
@@ -210,20 +219,28 @@ export default function FileGrid({
 
   // Combine files and folders into unified items - files are already filtered from ProjectDetail
   // Use sort_order for kanban view, fallback to created_at for items with same sort_order
-  const combinedItems: GridItem[] = [
+  const combinedItems: GridItem[] = useMemo(() => [
     ...folders.map((f) => ({ ...f, itemType: 'folder' as const, file_type: 'folder' })),
     ...files.map((f) => ({ ...f, itemType: 'file' as const })),
-  ];
+  ], [files, folders]);
   
   // In kanban view, sort by sort_order (ascending), then by created_at (ascending for newest at bottom)
   // In grid view, keep sort_order then created_at descending (newest first)
-  const allItems: GridItem[] = viewMode === 'kanban' 
+  const sortedItems: GridItem[] = useMemo(() => viewMode === 'kanban' 
     ? [...combinedItems].sort((a, b) => {
         const sortOrderDiff = (a.sort_order ?? 0) - (b.sort_order ?? 0);
         if (sortOrderDiff !== 0) return sortOrderDiff;
         return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
       })
-    : combinedItems;
+    : combinedItems, [combinedItems, viewMode]);
+  
+  // Use optimistic order during drag operations for smooth UX
+  const allItems = optimisticOrder ?? sortedItems;
+  
+  // Reset optimistic order when files/folders change from server
+  useEffect(() => {
+    setOptimisticOrder(null);
+  }, [files, folders]);
 
   const toggleSelection = (id: string) => {
     setSelectedItems((prev) => {
@@ -295,8 +312,52 @@ export default function FileGrid({
     });
   };
 
+  // Helper to get items in a specific stage
+  const getItemsInStage = useCallback((stageId: string, stageIndex: number, items: GridItem[]) => {
+    return items.filter((item) => {
+      const itemStatus = item.status;
+      const generationStatuses = ['processing', 'completed', 'failed', 'active', undefined, null, ''];
+      if (generationStatuses.includes(itemStatus as any)) {
+        return stageIndex === 0;
+      }
+      return itemStatus === stageId;
+    });
+  }, []);
+
+  const handleDragStart = (start: DragStart) => {
+    setDragState({
+      draggingId: start.draggableId,
+      sourceDroppableId: start.source.droppableId,
+      destinationDroppableId: null,
+      destinationIndex: null,
+    });
+  };
+
+  const handleDragUpdate = (update: DragUpdate) => {
+    if (!update.destination) {
+      setDragState(prev => ({
+        ...prev,
+        destinationDroppableId: null,
+        destinationIndex: null,
+      }));
+      return;
+    }
+    
+    setDragState(prev => ({
+      ...prev,
+      destinationDroppableId: update.destination?.droppableId ?? null,
+      destinationIndex: update.destination?.index ?? null,
+    }));
+  };
+
   const handleDragEnd = (result: DropResult) => {
-    if (!result.destination) return;
+    // Reset drag state
+    setDragState({ draggingId: null, sourceDroppableId: null, destinationDroppableId: null, destinationIndex: null });
+    
+    if (!result.destination) {
+      setOptimisticOrder(null);
+      return;
+    }
     
     const { draggableId, source, destination } = result;
     
@@ -306,21 +367,11 @@ export default function FileGrid({
       const destStatus = destination.droppableId;
       const destIndex = destination.index;
       
-      // Helper to determine item status for filtering
-      const getItemStatus = (item: GridItem, stageIndex: number) => {
-        const itemStatus = item.status;
-        const generationStatuses = ['processing', 'completed', 'failed', 'active', undefined, null, ''];
-        if (generationStatuses.includes(itemStatus as any)) {
-          return stageIndex === 0;
-        }
-        return itemStatus === stages[stageIndex]?.id;
-      };
-      
       // Get destination stage index
       const destStageIndex = stages.findIndex(s => s.id === destStatus);
       
       // Get items in destination column (excluding the dragged item if same column)
-      const destItems = allItems.filter(item => {
+      const destItems = sortedItems.filter(item => {
         if (item.id === draggableId && sourceStatus === destStatus) return false;
         const itemStatus = item.status;
         const generationStatuses = ['processing', 'completed', 'failed', 'active', undefined, null, ''];
@@ -331,22 +382,36 @@ export default function FileGrid({
       });
       
       // Insert the dragged item at the new position
-      const draggedItem = allItems.find(item => item.id === draggableId);
+      const draggedItem = sortedItems.find(item => item.id === draggableId);
       if (!draggedItem) return;
       
       // Create new order array with the dragged item inserted
-      const newOrder = [...destItems];
-      newOrder.splice(destIndex, 0, draggedItem);
+      const newDestOrder = [...destItems];
+      newDestOrder.splice(destIndex, 0, { ...draggedItem, status: destStatus, sort_order: destIndex });
+      
+      // Create optimistic update for smooth UX
+      const newOptimisticItems = sortedItems.map(item => {
+        if (item.id === draggableId) {
+          return { ...item, status: destStatus, sort_order: destIndex };
+        }
+        // Update sort_order for items in destination column
+        const itemInDest = newDestOrder.findIndex(di => di.id === item.id);
+        if (itemInDest !== -1) {
+          return { ...item, sort_order: itemInDest };
+        }
+        return item;
+      });
+      
+      setOptimisticOrder(newOptimisticItems);
       
       // Separate files and folders for updates
       const fileUpdates: { id: string; sort_order: number; status?: string }[] = [];
       const folderUpdates: { id: string; sort_order: number; status?: string }[] = [];
       
-      newOrder.forEach((item, index) => {
+      newDestOrder.forEach((item, index) => {
         const update = {
           id: item.id,
           sort_order: index,
-          // Include status update if moving to different column or if item is the dragged one
           status: item.id === draggableId ? destStatus : undefined,
         };
         
@@ -356,16 +421,6 @@ export default function FileGrid({
           folderUpdates.push(update);
         }
       });
-      
-      // Also update sort_order for the dragged item if moving across columns
-      if (sourceStatus !== destStatus) {
-        const draggedUpdate = draggedItem.itemType === 'file' 
-          ? fileUpdates.find(u => u.id === draggableId)
-          : folderUpdates.find(u => u.id === draggableId);
-        if (draggedUpdate) {
-          draggedUpdate.status = destStatus;
-        }
-      }
       
       // Apply updates
       if (fileUpdates.length > 0 && onReorderFiles) {
@@ -470,11 +525,15 @@ export default function FileGrid({
           </Button>
         </div>
 
-        <DragDropContext onDragEnd={handleDragEnd}>
+        <DragDropContext onDragStart={handleDragStart} onDragUpdate={handleDragUpdate} onDragEnd={handleDragEnd}>
           <div className="flex gap-4 overflow-x-auto pb-4">
             {stages.map((stage, stageIndex) => {
               // Filter items by status - handle both generation status and pipeline stage status
               const stageItems = allItems.filter((item) => {
+                // Don't show dragging item in its original position
+                if (item.id === dragState.draggingId && dragState.sourceDroppableId === stage.id && dragState.destinationDroppableId !== stage.id) {
+                  return false;
+                }
                 const itemStatus = item.status;
                 // Special generation statuses should go to first stage
                 const generationStatuses = ['processing', 'completed', 'failed', 'active', undefined, null, ''];
@@ -483,6 +542,9 @@ export default function FileGrid({
                 }
                 return itemStatus === stage.id;
               });
+              
+              // Check if this column should show a drop indicator
+              const showDropIndicator = dragState.draggingId && dragState.destinationDroppableId === stage.id;
 
               return (
                 <Droppable key={stage.id} droppableId={stage.id}>
@@ -506,51 +568,82 @@ export default function FileGrid({
                       </div>
 
                       <div className="space-y-3">
-                        {stageItems.map((item, index) => (
-                          <Draggable key={item.id} draggableId={item.id} index={index}>
-                            {(provided, snapshot) => (
-                              <div
-                                ref={provided.innerRef}
-                                {...provided.draggableProps}
-                                {...provided.dragHandleProps}
-                              >
-                                <KanbanCard
-                                  item={item}
-                                  tags={tags}
-                                  projectId={projectId}
-                                  isDragging={snapshot.isDragging}
-                                  isSelected={selectedItems.has(item.id)}
-                                  bulkMode={bulkMode}
-                                  isRenaming={renamingItemId === item.id}
-                                  onStartRename={() => setRenamingItemId(item.id)}
-                                  onCancelRename={() => setRenamingItemId(null)}
-                                  onSaveRename={(newName) => {
-                                    if (item.itemType === 'file') {
-                                      onUpdateFileName?.(item.id, newName);
-                                    } else {
-                                      onUpdateFolderName?.(item.id, newName);
-                                    }
-                                    setRenamingItemId(null);
-                                  }}
-                                  onSelect={() => toggleSelection(item.id)}
-                                  onDelete={
-                                    item.itemType === 'file'
-                                      ? onDeleteFile
-                                      : onDeleteFolder
-                                  }
-                                  onTagsChange={
-                                    item.itemType === 'file'
-                                      ? onUpdateFileTags
-                                      : onUpdateFolderTags
-                                  }
-                                  onDeleteTag={onDeleteTag}
-                                  onCreateTag={onCreateTag}
-                                  onFileClick={onFileClick}
-                                />
-                              </div>
-                            )}
-                          </Draggable>
-                        ))}
+                        {stageItems.map((item, index) => {
+                          // Show drop indicator before this item if it's the drop target
+                          const showIndicatorBefore = showDropIndicator && 
+                            dragState.destinationIndex === index && 
+                            item.id !== dragState.draggingId;
+                          
+                          return (
+                            <div key={item.id}>
+                              {/* Drop indicator line */}
+                              {showIndicatorBefore && (
+                                <div className="mb-3 flex items-center gap-2">
+                                  <div className="h-1 w-1 rounded-full bg-primary" />
+                                  <div className="h-0.5 flex-1 rounded-full bg-primary" />
+                                  <div className="h-1 w-1 rounded-full bg-primary" />
+                                </div>
+                              )}
+                              <Draggable draggableId={item.id} index={index}>
+                                {(provided, snapshot) => (
+                                  <div
+                                    ref={provided.innerRef}
+                                    {...provided.draggableProps}
+                                    {...provided.dragHandleProps}
+                                    className={cn(
+                                      'transition-transform duration-200',
+                                      snapshot.isDragging && 'z-50'
+                                    )}
+                                  >
+                                    <KanbanCard
+                                      item={item}
+                                      tags={tags}
+                                      projectId={projectId}
+                                      isDragging={snapshot.isDragging}
+                                      isSelected={selectedItems.has(item.id)}
+                                      bulkMode={bulkMode}
+                                      isRenaming={renamingItemId === item.id}
+                                      onStartRename={() => setRenamingItemId(item.id)}
+                                      onCancelRename={() => setRenamingItemId(null)}
+                                      onSaveRename={(newName) => {
+                                        if (item.itemType === 'file') {
+                                          onUpdateFileName?.(item.id, newName);
+                                        } else {
+                                          onUpdateFolderName?.(item.id, newName);
+                                        }
+                                        setRenamingItemId(null);
+                                      }}
+                                      onSelect={() => toggleSelection(item.id)}
+                                      onDelete={
+                                        item.itemType === 'file'
+                                          ? onDeleteFile
+                                          : onDeleteFolder
+                                      }
+                                      onTagsChange={
+                                        item.itemType === 'file'
+                                          ? onUpdateFileTags
+                                          : onUpdateFolderTags
+                                      }
+                                      onDeleteTag={onDeleteTag}
+                                      onCreateTag={onCreateTag}
+                                      onFileClick={onFileClick}
+                                    />
+                                  </div>
+                                )}
+                              </Draggable>
+                            </div>
+                          );
+                        })}
+                        
+                        {/* Drop indicator at end of list */}
+                        {showDropIndicator && dragState.destinationIndex === stageItems.length && (
+                          <div className="flex items-center gap-2">
+                            <div className="h-1 w-1 rounded-full bg-primary" />
+                            <div className="h-0.5 flex-1 rounded-full bg-primary" />
+                            <div className="h-1 w-1 rounded-full bg-primary" />
+                          </div>
+                        )}
+                        
                         {provided.placeholder}
 
                         {/* Add Card Button */}
