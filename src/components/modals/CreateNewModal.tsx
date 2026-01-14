@@ -10,6 +10,7 @@ import {
 } from '@/components/ui/dialog';
 import PipelineModal from '@/components/pipeline/PipelineModal';
 import ClipsPipelineModal from '@/components/pipeline/ClipsPipelineModal';
+import MotionGraphicsPipelineModal from '@/components/pipeline/MotionGraphicsPipelineModal';
 import LipSyncModal from '@/components/modals/LipSyncModal';
 import SpeechModal from '@/components/modals/SpeechModal';
 import AnimateModal from '@/components/modals/AnimateModal';
@@ -59,7 +60,6 @@ const workflows = [
     icon: Sparkles,
     title: 'Motion Graphics',
     description: 'Generate motion graphics',
-    comingSoon: true,
   },
 ];
 
@@ -122,6 +122,7 @@ export default function CreateNewModal({
   const queryClient = useQueryClient();
   const [talkingHeadWorkflowOpen, setTalkingHeadWorkflowOpen] = useState(false);
   const [bRollWorkflowOpen, setBRollWorkflowOpen] = useState(false);
+  const [motionGraphicsWorkflowOpen, setMotionGraphicsWorkflowOpen] = useState(false);
   const [lipSyncModalOpen, setLipSyncModalOpen] = useState(false);
   const [speechModalOpen, setSpeechModalOpen] = useState(false);
   const [animateModalOpen, setAnimateModalOpen] = useState(false);
@@ -141,7 +142,8 @@ export default function CreateNewModal({
   };
 
   const handleWorkflowSelect = async (workflow: typeof workflows[0]) => {
-    if (workflow.comingSoon) {
+    const workflowWithComingSoon = workflow as typeof workflow & { comingSoon?: boolean };
+    if (workflowWithComingSoon.comingSoon) {
       toast.info(`${workflow.title} workflow coming soon!`);
       return;
     }
@@ -153,8 +155,9 @@ export default function CreateNewModal({
     try {
       // talking_head workflow uses lip_sync pipeline type
       // b_roll workflow uses clips pipeline type
-      const pipelineType = workflow.id === 'talking_head' ? 'lip_sync' : 'clips';
-      const fileType = workflow.id === 'talking_head' ? 'lip_sync' : 'clips';
+      // motion_graphics workflow uses motion_graphics pipeline type
+      const pipelineType = workflow.id === 'talking_head' ? 'lip_sync' : workflow.id === 'motion_graphics' ? 'motion_graphics' : 'clips';
+      const fileType = workflow.id === 'talking_head' ? 'lip_sync' : workflow.id === 'motion_graphics' ? 'motion_graphics' : 'clips';
 
       const newPipeline = await createPipeline({
         projectId,
@@ -162,7 +165,7 @@ export default function CreateNewModal({
         name: 'Untitled',
         status: 'draft',
         displayStatus: initialStatus,
-        pipelineType: pipelineType,
+        pipelineType: pipelineType as 'lip_sync' | 'talking_head' | 'clips' | 'motion_graphics',
       });
 
       const { error: fileError } = await supabase
@@ -187,6 +190,8 @@ export default function CreateNewModal({
 
       if (workflow.id === 'b_roll') {
         setBRollWorkflowOpen(true);
+      } else if (workflow.id === 'motion_graphics') {
+        setMotionGraphicsWorkflowOpen(true);
       } else {
         setTalkingHeadWorkflowOpen(true);
       }
@@ -284,6 +289,7 @@ export default function CreateNewModal({
   const handleModalClose = () => {
     setTalkingHeadWorkflowOpen(false);
     setBRollWorkflowOpen(false);
+    setMotionGraphicsWorkflowOpen(false);
     setLipSyncModalOpen(false);
     setSpeechModalOpen(false);
     setAnimateModalOpen(false);
@@ -324,14 +330,16 @@ export default function CreateNewModal({
                 Workflows
               </h3>
               <div className="grid grid-cols-3 gap-4">
-                {workflows.map((workflow) => (
+                {workflows.map((workflow) => {
+                  const workflowWithComingSoon = workflow as typeof workflow & { comingSoon?: boolean };
+                  return (
                   <button
                     key={workflow.id}
                     onClick={() => handleWorkflowSelect(workflow)}
-                    disabled={isCreating || workflow.comingSoon}
+                    disabled={isCreating || workflowWithComingSoon.comingSoon}
                     className="relative flex flex-col items-center rounded-xl border border-border bg-card p-6 text-center transition-apple hover:border-primary hover:bg-primary/5 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    {workflow.comingSoon && (
+                    {workflowWithComingSoon.comingSoon && (
                       <span className="absolute top-2 right-2 text-[10px] font-medium bg-muted px-1.5 py-0.5 rounded text-muted-foreground">
                         Soon
                       </span>
@@ -352,7 +360,8 @@ export default function CreateNewModal({
                         : workflow.description}
                     </p>
                   </button>
-                ))}
+                  );
+                })}
               </div>
             </div>
 
@@ -418,6 +427,20 @@ export default function CreateNewModal({
       {createdPipelineId && bRollWorkflowOpen && (
         <ClipsPipelineModal
           open={bRollWorkflowOpen}
+          onClose={handleModalClose}
+          pipelineId={createdPipelineId}
+          projectId={projectId}
+          folderId={folderId}
+          initialStatus={initialStatusRef.current}
+          onSuccess={handleSuccess}
+          statusOptions={statusOptions}
+        />
+      )}
+
+      {/* Motion Graphics Workflow Modal */}
+      {createdPipelineId && motionGraphicsWorkflowOpen && (
+        <MotionGraphicsPipelineModal
+          open={motionGraphicsWorkflowOpen}
           onClose={handleModalClose}
           pipelineId={createdPipelineId}
           projectId={projectId}
