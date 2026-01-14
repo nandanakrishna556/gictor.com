@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { Link, useNavigate, useParams, useLocation } from 'react-router-dom';
-import { ChevronDown, Plus, Layers, MoreHorizontal, Trash2, Pencil, Check, X, Coins, Sun, Moon, LayoutDashboard, Settings, UserCircle } from 'lucide-react';
-import gictorLogo from "@/assets/gictor-logo.png";
+import { ChevronDown, Plus, Sparkles, Layers, MoreHorizontal, Trash2, Pencil, Check, X, Coins, Sun, Moon, LayoutDashboard, Settings, UserCircle } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -54,10 +53,11 @@ export default function AppSidebar() {
   return (
     <aside className="flex h-screen w-60 shrink-0 flex-col bg-sidebar gradient-sidebar border-r border-sidebar-border overflow-hidden">
       {/* Logo */}
-      <div className="flex h-14 items-center border-b border-sidebar-border px-4">
-        <Link to="/dashboard">
-          <img src={gictorLogo} alt="Gictor" className="h-7 w-auto" />
-        </Link>
+      <div className="flex h-14 items-center gap-2.5 border-b border-sidebar-border px-4">
+        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-sm bg-primary">
+          <Sparkles className="h-4 w-4 text-primary-foreground" strokeWidth={1.5} />
+        </div>
+        <span className="font-semibold text-sidebar-foreground text-sm">UGC Generator</span>
       </div>
 
       {/* Navigation */}

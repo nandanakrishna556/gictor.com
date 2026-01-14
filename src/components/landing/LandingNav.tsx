@@ -1,6 +1,5 @@
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
-import gictorLogo from "@/assets/gictor-logo.png";
 
 export function LandingNav() {
   const scrollToSection = (id: string) => {
@@ -10,8 +9,8 @@ export function LandingNav() {
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-md border-b border-border">
       <div className="max-w-7xl mx-auto px-6 h-18 py-4 flex items-center justify-between">
-        <Link to="/">
-          <img src={gictorLogo} alt="Gictor" className="h-8 w-auto" />
+        <Link to="/" className="text-2xl font-bold text-primary tracking-tight">
+          Gictor
         </Link>
 
         <div className="hidden md:flex items-center gap-8">
