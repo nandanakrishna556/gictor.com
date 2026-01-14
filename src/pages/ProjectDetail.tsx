@@ -14,6 +14,7 @@ import ConfirmDeleteDialog from '@/components/modals/ConfirmDeleteDialog';
 import { FileDetailModalEnhanced } from '@/components/files/FileDetailModalEnhanced';
 import PipelineModal from '@/components/pipeline/PipelineModal';
 import ClipsPipelineModal from '@/components/pipeline/ClipsPipelineModal';
+import MotionGraphicsPipelineModal from '@/components/pipeline/MotionGraphicsPipelineModal';
 import LipSyncModal from '@/components/modals/LipSyncModal';
 import SpeechModal from '@/components/modals/SpeechModal';
 import AnimateModal from '@/components/modals/AnimateModal';
@@ -59,6 +60,10 @@ export default function ProjectDetail() {
   // B-Roll pipeline modal state
   const [brollPipelineModalOpen, setBrollPipelineModalOpen] = useState(false);
   const [openBrollPipelineId, setOpenBrollPipelineId] = useState<string | null>(null);
+  
+  // Motion Graphics pipeline modal state
+  const [motionGraphicsPipelineModalOpen, setMotionGraphicsPipelineModalOpen] = useState(false);
+  const [openMotionGraphicsPipelineId, setOpenMotionGraphicsPipelineId] = useState<string | null>(null);
   
   // Lip Sync modal state
   const [lipSyncModalOpen, setLipSyncModalOpen] = useState(false);
@@ -350,6 +355,16 @@ export default function ProjectDetail() {
         // Fallback to file detail modal if no pipeline_id
         setSelectedFile(file);
       }
+    } else if (file.file_type === 'motion_graphics') {
+      // Extract pipeline_id from generation_params for Motion Graphics
+      const params = file.generation_params as { pipeline_id?: string } | null;
+      if (params?.pipeline_id) {
+        setOpenMotionGraphicsPipelineId(params.pipeline_id);
+        setMotionGraphicsPipelineModalOpen(true);
+      } else {
+        // Fallback to file detail modal if no pipeline_id
+        setSelectedFile(file);
+      }
     } else {
       setSelectedFile(file);
     }
@@ -635,6 +650,22 @@ export default function ProjectDetail() {
           setOpenBrollPipelineId(null);
         }}
         pipelineId={openBrollPipelineId}
+        projectId={projectId}
+        folderId={folderId}
+        onSuccess={() => {
+          // Refresh files after save
+        }}
+        statusOptions={currentStatusOptions}
+      />
+
+      {/* Motion Graphics Pipeline Modal */}
+      <MotionGraphicsPipelineModal
+        open={motionGraphicsPipelineModalOpen}
+        onClose={() => {
+          setMotionGraphicsPipelineModalOpen(false);
+          setOpenMotionGraphicsPipelineId(null);
+        }}
+        pipelineId={openMotionGraphicsPipelineId}
         projectId={projectId}
         folderId={folderId}
         onSuccess={() => {
