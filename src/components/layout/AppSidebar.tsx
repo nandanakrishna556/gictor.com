@@ -53,9 +53,8 @@ export default function AppSidebar() {
   return (
     <aside className="flex h-screen w-60 shrink-0 flex-col bg-sidebar gradient-sidebar border-r border-sidebar-border overflow-hidden">
       {/* Logo */}
-      <div className="flex h-14 items-center gap-2.5 border-b border-sidebar-border px-4">
-        <img src="/logo.png" alt="Gictor" className="h-8 w-8 shrink-0" />
-        <span className="font-semibold text-sidebar-foreground text-sm">Gictor</span>
+      <div className="flex h-14 items-center border-b border-sidebar-border px-4">
+        <img src="/logo.png" alt="Gictor" className="h-7" />
       </div>
 
       {/* Navigation */}
