@@ -6,7 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { SingleImageUpload } from '@/components/ui/single-image-upload';
 import { InputModeToggle, InputMode } from '@/components/ui/input-mode-toggle';
 import ActorSelectorPopover from '@/components/modals/ActorSelectorPopover';
-import { Upload, Sparkles, Download, Copy, Image as ImageIcon, Loader2, Plus, X } from 'lucide-react';
+import { Upload, Sparkles, Download, Image as ImageIcon, Loader2, Plus, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { usePipeline } from '@/hooks/usePipeline';
 import { supabase } from '@/integrations/supabase/client';
@@ -289,37 +289,6 @@ export default function BRollLastFrameStage({ pipelineId, onComplete }: BRollLas
         output: null,
         complete: false,
       });
-    }
-  };
-
-  const handleDownload = async () => {
-    if (!outputUrl) return;
-    try {
-      const response = await fetch(outputUrl);
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `last-frame-${Date.now()}.png`;
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
-      toast.success('Image downloaded');
-    } catch (error) {
-      toast.error('Failed to download image');
-    }
-  };
-
-  const handleCopy = async () => {
-    if (!outputUrl) return;
-    try {
-      const response = await fetch(outputUrl);
-      const blob = await response.blob();
-      await navigator.clipboard.write([new ClipboardItem({ [blob.type]: blob })]);
-      toast.success('Image copied to clipboard');
-    } catch (error) {
-      toast.error('Failed to copy image');
     }
   };
 
@@ -615,28 +584,18 @@ export default function BRollLastFrameStage({ pipelineId, onComplete }: BRollLas
   );
 
   const outputContent = outputUrl ? (
-    <div className="w-full max-w-md mx-auto">
-      <img src={outputUrl} alt="Generated last frame" className="w-full rounded-xl shadow-lg" />
+    <div className="rounded-xl border border-border overflow-hidden">
+      <img src={outputUrl} alt="Generated last frame" className="w-full object-contain" />
     </div>
-  ) : (
-    <div className="flex flex-col items-center justify-center text-center gap-2 min-h-[300px]">
-      <ImageIcon className="h-16 w-16 text-muted-foreground/50" />
-      <p className="text-lg font-medium">Generated image will appear here</p>
-      <p className="text-sm text-muted-foreground">Configure inputs and click Generate</p>
-    </div>
-  );
+  ) : null;
 
-  const outputActions = hasOutput ? (
-    <div className="flex items-center gap-2">
-      <Button variant="ghost" size="sm" onClick={handleDownload}>
-        <Download className="h-4 w-4 mr-2" />
-        Download
-      </Button>
-      <Button variant="ghost" size="sm" onClick={handleCopy}>
-        <Copy className="h-4 w-4 mr-2" />
-        Copy
-      </Button>
-    </div>
+  const outputActions = hasOutput && outputUrl ? (
+    <Button variant="secondary" className="w-full" asChild>
+      <a href={outputUrl} download={`last-frame-${Date.now()}.png`}>
+        <Download className="h-4 w-4 mr-2" strokeWidth={1.5} />
+        Download Image
+      </a>
+    </Button>
   ) : undefined;
 
   const wasAIGenerated = (pipeline?.script_input as any)?.mode === 'generate';
