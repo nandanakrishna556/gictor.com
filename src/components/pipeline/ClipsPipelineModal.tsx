@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
-import { Button } from '@/components/ui/button';
 import PipelineHeader from './PipelineHeader';
 import PipelineTabNavigation from './PipelineTabNavigation';
 import { usePipeline } from '@/hooks/usePipeline';
@@ -14,9 +13,9 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useQueryClient } from '@tanstack/react-query';
 
-import ClipsFirstFrameStage from './stages/ClipsFirstFrameStage';
-import ClipsPromptStage from './stages/ClipsPromptStage';
-import ClipsFinalVideoStage from './stages/ClipsFinalVideoStage';
+import BRollFirstFrameStage from './stages/BRollFirstFrameStage';
+import BRollLastFrameStage from './stages/BRollLastFrameStage';
+import BRollAnimateStage from './stages/BRollAnimateStage';
 
 interface StatusOption {
   value: string;
@@ -35,13 +34,13 @@ interface BRollPipelineModalProps {
   statusOptions?: StatusOption[];
 }
 
-// B-Roll has 3 stages: First Frame, Prompt, Final Video
-type BRollStage = 'first_frame' | 'prompt' | 'final_video';
+// B-Roll has 3 stages: First Frame, Last Frame, Animate
+type BRollStage = 'first_frame' | 'last_frame' | 'animate';
 
 const BROLL_STAGES: { key: BRollStage; label: string }[] = [
   { key: 'first_frame', label: 'First Frame' },
-  { key: 'prompt', label: 'Prompt' },
-  { key: 'final_video', label: 'Final Video' },
+  { key: 'last_frame', label: 'Last Frame' },
+  { key: 'animate', label: 'Animate' },
 ];
 
 export default function BRollPipelineModal({
@@ -105,8 +104,8 @@ export default function BRollPipelineModal({
   // Map pipeline's current_stage to B-Roll stage
   const mapPipelineStageToBRoll = (stage: string): BRollStage => {
     if (stage === 'first_frame') return 'first_frame';
-    if (stage === 'script') return 'prompt'; // We use script stage for prompt
-    if (stage === 'final_video') return 'final_video';
+    if (stage === 'script') return 'last_frame'; // We use script stage for last frame
+    if (stage === 'voice' || stage === 'final_video') return 'animate';
     return 'first_frame';
   };
 
@@ -196,7 +195,13 @@ export default function BRollPipelineModal({
   const handleStageClick = (stage: BRollStage) => {
     setActiveStage(stage);
     // Map B-Roll stage back to pipeline stage
-    const pipelineStage = stage === 'prompt' ? 'script' : stage;
+    let pipelineStage: string;
+    switch (stage) {
+      case 'first_frame': pipelineStage = 'first_frame'; break;
+      case 'last_frame': pipelineStage = 'script'; break;
+      case 'animate': pipelineStage = 'final_video'; break;
+      default: pipelineStage = 'first_frame';
+    }
     updatePipeline({ current_stage: pipelineStage as any });
   };
 
@@ -204,8 +209,8 @@ export default function BRollPipelineModal({
     if (!pipeline) return false;
     switch (stage) {
       case 'first_frame': return pipeline.first_frame_complete;
-      case 'prompt': return pipeline.script_complete; // We use script_complete for prompt
-      case 'final_video': return pipeline.status === 'completed';
+      case 'last_frame': return pipeline.script_complete; // We use script_complete for last frame
+      case 'animate': return pipeline.status === 'completed';
       default: return false;
     }
   };
@@ -222,14 +227,16 @@ export default function BRollPipelineModal({
         if (hasInput) return 40;
         return 0;
       }
-      case 'prompt': {
+      case 'last_frame': {
         if (pipeline.script_complete) return 100;
-        // B-roll stores motion_prompt in script_input - check for any input
-        const hasInput = pipeline.script_input?.description || pipeline.script_input?.pasted_text;
-        if (hasInput) return 60;
+        const scriptOutput = pipeline.script_output as any;
+        const hasOutput = scriptOutput?.last_frame_url;
+        if (hasOutput) return 90;
+        const hasInput = (pipeline.script_input as any)?.prompt;
+        if (hasInput) return 40;
         return 0;
       }
-      case 'final_video': {
+      case 'animate': {
         if (pipeline.status === 'completed') return 100;
         const hasOutput = pipeline.final_video_output?.url;
         if (hasOutput) return 90;
@@ -317,6 +324,7 @@ export default function BRollPipelineModal({
     if (hasUnsavedChanges) {
       setShowUnsavedWarning(true);
     } else {
+      pipelineLoadedRef.current = false;
       onClose();
     }
   };
@@ -324,12 +332,15 @@ export default function BRollPipelineModal({
   const handleConfirmClose = () => {
     setShowUnsavedWarning(false);
     setHasUnsavedChanges(false);
+    pipelineLoadedRef.current = false;
     onClose();
   };
 
   const handleSaveAndClose = async () => {
     await handleSave();
     setShowUnsavedWarning(false);
+    pipelineLoadedRef.current = false;
+    onClose();
   };
 
 
@@ -358,7 +369,7 @@ export default function BRollPipelineModal({
       <Dialog open={open} onOpenChange={handleClose}>
         <DialogContent className="max-w-[900px] h-[85vh] flex flex-col p-0 gap-0 overflow-hidden rounded-lg">
         <PipelineHeader
-          title="Clips"
+          title="B-Roll"
           name={name}
           onNameChange={handleNameChange}
           projectId={currentProjectId}
@@ -406,22 +417,22 @@ export default function BRollPipelineModal({
           {pipelineId && (
             <>
               {activeStage === 'first_frame' && (
-                <ClipsFirstFrameStage
+                <BRollFirstFrameStage
                   pipelineId={pipelineId}
-                  onComplete={() => setActiveStage('prompt')}
+                  onComplete={() => setActiveStage('last_frame')}
                 />
               )}
-              {activeStage === 'prompt' && (
-                <ClipsPromptStage
+              {activeStage === 'last_frame' && (
+                <BRollLastFrameStage
                   pipelineId={pipelineId}
-                  onContinue={() => setActiveStage('final_video')}
+                  onComplete={() => setActiveStage('animate')}
                 />
               )}
-              {activeStage === 'final_video' && (
-                <ClipsFinalVideoStage
+              {activeStage === 'animate' && (
+                <BRollAnimateStage
                   pipelineId={pipelineId}
                   onComplete={() => {
-                    toast.success('Clip video generated successfully!');
+                    toast.success('Animation video generated successfully!');
                     onSuccess?.();
                     onClose();
                   }}
