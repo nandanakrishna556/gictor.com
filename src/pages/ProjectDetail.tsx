@@ -129,7 +129,7 @@ export default function ProjectDetail() {
 
   const currentFolder = folderAncestry?.[folderAncestry.length - 1];
 
-  const { files, folders, isLoading, createFolder, updateFile, updateFolder, deleteFile, deleteFolder, bulkDeleteFiles, bulkUpdateFiles, reorderFiles, reorderFolders } = useFiles(projectId!, folderId);
+  const { files, folders, isLoading, createFolder, updateFile, updateFolder, deleteFile, deleteFolder, bulkDeleteFiles, bulkUpdateFiles } = useFiles(projectId!, folderId);
   const { pipelines, createPipeline, updatePipeline, deletePipeline, updateDefaultStages, defaultStages } = usePipelines();
   const { tags, createTag, deleteTag } = useTags();
   
@@ -462,8 +462,6 @@ export default function ProjectDetail() {
               onMoveFile={handleMoveFile}
               onBulkDelete={handleBulkDelete}
               onBulkUpdateStatus={handleBulkUpdateStatus}
-              onReorderFiles={reorderFiles}
-              onReorderFolders={reorderFolders}
               defaultStages={defaultStages}
               selectMode={selectMode}
               onSelectModeChange={setSelectMode}
@@ -530,8 +528,6 @@ export default function ProjectDetail() {
               onMoveFile={handleMoveFile}
               onBulkDelete={handleBulkDelete}
               onBulkUpdateStatus={handleBulkUpdateStatus}
-              onReorderFiles={reorderFiles}
-              onReorderFolders={reorderFolders}
               defaultStages={defaultStages}
               selectMode={selectMode}
               onSelectModeChange={setSelectMode}

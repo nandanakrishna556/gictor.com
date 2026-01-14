@@ -165,7 +165,6 @@ export type Database = {
           progress: number | null
           project_id: string
           script_output: string | null
-          sort_order: number | null
           status: string | null
           tags: string[] | null
           updated_at: string | null
@@ -187,7 +186,6 @@ export type Database = {
           progress?: number | null
           project_id: string
           script_output?: string | null
-          sort_order?: number | null
           status?: string | null
           tags?: string[] | null
           updated_at?: string | null
@@ -209,7 +207,6 @@ export type Database = {
           progress?: number | null
           project_id?: string
           script_output?: string | null
-          sort_order?: number | null
           status?: string | null
           tags?: string[] | null
           updated_at?: string | null
@@ -239,7 +236,6 @@ export type Database = {
           name: string
           parent_folder_id: string | null
           project_id: string
-          sort_order: number | null
           status: string | null
           tags: string[] | null
           updated_at: string | null
@@ -251,7 +247,6 @@ export type Database = {
           name: string
           parent_folder_id?: string | null
           project_id: string
-          sort_order?: number | null
           status?: string | null
           tags?: string[] | null
           updated_at?: string | null
@@ -263,7 +258,6 @@ export type Database = {
           name?: string
           parent_folder_id?: string | null
           project_id?: string
-          sort_order?: number | null
           status?: string | null
           tags?: string[] | null
           updated_at?: string | null

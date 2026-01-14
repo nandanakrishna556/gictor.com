@@ -84,8 +84,6 @@ interface FileGridProps {
   onBulkDelete?: (ids: string[]) => void;
   onBulkUpdateStatus?: (ids: string[], status: string) => void;
   onBulkUpdateTags?: (ids: string[], tags: string[]) => void;
-  onReorderFiles?: (updates: { id: string; sort_order: number; status?: string }[]) => void;
-  onReorderFolders?: (updates: { id: string; sort_order: number; status?: string }[]) => void;
   defaultStages?: PipelineStage[];
   selectMode?: boolean;
   onSelectModeChange?: (mode: boolean) => void;
@@ -164,8 +162,6 @@ export default function FileGrid({
   onBulkDelete,
   onBulkUpdateStatus,
   onBulkUpdateTags,
-  onReorderFiles,
-  onReorderFolders,
   defaultStages,
   selectMode = false,
   onSelectModeChange,
@@ -209,20 +205,16 @@ export default function FileGrid({
   ];
 
   // Combine files and folders into unified items - files are already filtered from ProjectDetail
-  // Use sort_order for kanban view, fallback to created_at for items with same sort_order
+  // For kanban view, reverse the order so newest items appear at the bottom of each column
   const combinedItems: GridItem[] = [
     ...folders.map((f) => ({ ...f, itemType: 'folder' as const, file_type: 'folder' })),
     ...files.map((f) => ({ ...f, itemType: 'file' as const })),
   ];
   
-  // In kanban view, sort by sort_order (ascending), then by created_at (ascending for newest at bottom)
-  // In grid view, keep sort_order then created_at descending (newest first)
+  // In kanban view, sort by created_at ascending so newest items are at the bottom
+  // In grid view, keep the default order (newest first at the top)
   const allItems: GridItem[] = viewMode === 'kanban' 
-    ? [...combinedItems].sort((a, b) => {
-        const sortOrderDiff = (a.sort_order ?? 0) - (b.sort_order ?? 0);
-        if (sortOrderDiff !== 0) return sortOrderDiff;
-        return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
-      })
+    ? [...combinedItems].sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
     : combinedItems;
 
   const toggleSelection = (id: string) => {
@@ -300,81 +292,17 @@ export default function FileGrid({
     
     const { draggableId, source, destination } = result;
     
-    // In kanban view, handle reordering within and across columns
+    // In kanban view, droppable is the status column
     if (viewMode === 'kanban') {
-      const sourceStatus = source.droppableId;
-      const destStatus = destination.droppableId;
-      const destIndex = destination.index;
+      const newStatus = destination.droppableId;
+      const file = files.find((f) => f.id === draggableId);
+      const folder = folders.find((f) => f.id === draggableId);
       
-      // Helper to determine item status for filtering
-      const getItemStatus = (item: GridItem, stageIndex: number) => {
-        const itemStatus = item.status;
-        const generationStatuses = ['processing', 'completed', 'failed', 'active', undefined, null, ''];
-        if (generationStatuses.includes(itemStatus as any)) {
-          return stageIndex === 0;
-        }
-        return itemStatus === stages[stageIndex]?.id;
-      };
-      
-      // Get destination stage index
-      const destStageIndex = stages.findIndex(s => s.id === destStatus);
-      
-      // Get items in destination column (excluding the dragged item if same column)
-      const destItems = allItems.filter(item => {
-        if (item.id === draggableId && sourceStatus === destStatus) return false;
-        const itemStatus = item.status;
-        const generationStatuses = ['processing', 'completed', 'failed', 'active', undefined, null, ''];
-        if (generationStatuses.includes(itemStatus as any)) {
-          return destStageIndex === 0;
-        }
-        return itemStatus === destStatus;
-      });
-      
-      // Insert the dragged item at the new position
-      const draggedItem = allItems.find(item => item.id === draggableId);
-      if (!draggedItem) return;
-      
-      // Create new order array with the dragged item inserted
-      const newOrder = [...destItems];
-      newOrder.splice(destIndex, 0, draggedItem);
-      
-      // Separate files and folders for updates
-      const fileUpdates: { id: string; sort_order: number; status?: string }[] = [];
-      const folderUpdates: { id: string; sort_order: number; status?: string }[] = [];
-      
-      newOrder.forEach((item, index) => {
-        const update = {
-          id: item.id,
-          sort_order: index,
-          // Include status update if moving to different column or if item is the dragged one
-          status: item.id === draggableId ? destStatus : undefined,
-        };
-        
-        if (item.itemType === 'file') {
-          fileUpdates.push(update);
-        } else {
-          folderUpdates.push(update);
-        }
-      });
-      
-      // Also update sort_order for the dragged item if moving across columns
-      if (sourceStatus !== destStatus) {
-        const draggedUpdate = draggedItem.itemType === 'file' 
-          ? fileUpdates.find(u => u.id === draggableId)
-          : folderUpdates.find(u => u.id === draggableId);
-        if (draggedUpdate) {
-          draggedUpdate.status = destStatus;
-        }
+      if (file) {
+        onUpdateFileStatus?.(draggableId, newStatus);
+      } else if (folder) {
+        onUpdateFolderStatus?.(draggableId, newStatus);
       }
-      
-      // Apply updates
-      if (fileUpdates.length > 0 && onReorderFiles) {
-        onReorderFiles(fileUpdates);
-      }
-      if (folderUpdates.length > 0 && onReorderFolders) {
-        onReorderFolders(folderUpdates);
-      }
-      
       return;
     }
     
