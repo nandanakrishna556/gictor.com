@@ -314,8 +314,7 @@ serve(async (req) => {
         return new Response(
           JSON.stringify({ 
             success: false, 
-            error: 'Invalid request', 
-            details: parseResult.error.issues 
+            error: 'Invalid request. Please check your input and try again.' 
           }),
           { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
@@ -328,8 +327,7 @@ serve(async (req) => {
         return new Response(
           JSON.stringify({ 
             success: false, 
-            error: 'Invalid request', 
-            details: parseResult.error.issues 
+            error: 'Invalid request. Please check your input and try again.' 
           }),
           { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
@@ -342,8 +340,7 @@ serve(async (req) => {
         return new Response(
           JSON.stringify({ 
             success: false, 
-            error: 'Invalid request', 
-            details: parseResult.error.issues 
+            error: 'Invalid request. Please check your input and try again.' 
           }),
           { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
