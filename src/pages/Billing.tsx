@@ -13,37 +13,13 @@ import { cn } from '@/lib/utils';
 // Find the 28 credits package priceId for default selection
 const DEFAULT_PACKAGE = CREDIT_PACKAGES.find((pkg) => pkg.credits === 28)?.priceId || CREDIT_PACKAGES[1]?.priceId;
 
-// Helper to find package by credits
-const getPackageByCredits = (credits: number) => CREDIT_PACKAGES.find((pkg) => pkg.credits === credits);
-
 export default function Billing() {
   const { profile, refetch: refetchProfile } = useProfile();
   const [searchParams, setSearchParams] = useSearchParams();
-  const [selectedPackage, setSelectedPackage] = useState<string | null>(null);
+  const [selectedPackage, setSelectedPackage] = useState<string | null>(DEFAULT_PACKAGE);
   const [isLoading, setIsLoading] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [purchasedCredits, setPurchasedCredits] = useState<number | null>(null);
-
-  // Handle initial package selection from query params or default
-  useEffect(() => {
-    const packageParam = searchParams.get('package');
-    
-    if (packageParam) {
-      const credits = parseInt(packageParam, 10);
-      const pkg = getPackageByCredits(credits);
-      if (pkg) {
-        setSelectedPackage(pkg.priceId);
-        // Clear the package param to avoid reselecting on refresh
-        const newParams = new URLSearchParams(searchParams);
-        newParams.delete('package');
-        setSearchParams(newParams, { replace: true });
-      } else {
-        setSelectedPackage(DEFAULT_PACKAGE);
-      }
-    } else if (!selectedPackage) {
-      setSelectedPackage(DEFAULT_PACKAGE);
-    }
-  }, []);
 
   // Handle success/cancel from Stripe redirect
   useEffect(() => {
