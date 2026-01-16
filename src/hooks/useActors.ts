@@ -110,6 +110,13 @@ export function useActors() {
     mutationFn: async (input: CreateActorInput) => {
       if (!user) throw new Error('Not authenticated');
       if (!profile || profile.credits < 1) {
+        toast.error('Insufficient credits', { 
+          description: 'You need at least 1 credit to create an actor.',
+          action: {
+            label: 'Buy Credits',
+            onClick: () => window.location.href = '/billing',
+          },
+        });
         throw new Error('Insufficient credits');
       }
 
