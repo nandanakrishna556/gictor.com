@@ -1,13 +1,27 @@
+import { useState, useEffect } from 'react';
 import { LayoutDashboard, FolderOpen, FileVideo, Image } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useProjects } from '@/hooks/useProjects';
 import { useProfile } from '@/hooks/useProfile';
 import MainLayout from '@/components/layout/MainLayout';
 import AppHeader from '@/components/layout/AppHeader';
+import WelcomeOnboardingModal from '@/components/modals/WelcomeOnboardingModal';
 
 export default function Dashboard() {
   const { projects } = useProjects();
-  const { profile } = useProfile();
+  const { profile, isLoading: profileLoading } = useProfile();
+  const [showOnboarding, setShowOnboarding] = useState(false);
+
+  // Show onboarding modal for new users who haven't completed it
+  useEffect(() => {
+    if (!profileLoading && profile && profile.onboarding_completed === false) {
+      setShowOnboarding(true);
+    }
+  }, [profile, profileLoading]);
+
+  const handleCloseOnboarding = () => {
+    setShowOnboarding(false);
+  };
 
   const stats = [
     {
@@ -65,6 +79,11 @@ export default function Dashboard() {
           ))}
         </div>
       </div>
+
+      <WelcomeOnboardingModal 
+        open={showOnboarding} 
+        onClose={handleCloseOnboarding} 
+      />
     </MainLayout>
   );
 }
