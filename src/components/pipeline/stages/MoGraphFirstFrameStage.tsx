@@ -196,7 +196,13 @@ export default function MoGraphFirstFrameStage({ pipelineId, onComplete, onConti
     }
 
     if (!profile || (profile.credits ?? 0) < creditCost) {
-      toast.error(`Insufficient credits. You need ${creditCost} credits.`);
+      toast.error('Insufficient credits', { 
+        description: `You need ${creditCost} credits but have ${profile?.credits ?? 0}.`,
+        action: {
+          label: 'Buy Credits',
+          onClick: () => window.location.href = '/billing',
+        },
+      });
       return;
     }
 

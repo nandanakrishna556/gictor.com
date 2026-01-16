@@ -131,7 +131,13 @@ export default function ScriptForm({
     }
 
     if (!hasEnoughCredits) {
-      toast.error('Insufficient credits', { description: 'Please purchase more credits to continue.' });
+      toast.error('Insufficient credits', { 
+        description: 'You don\'t have enough credits to generate this script.',
+        action: {
+          label: 'Buy Credits',
+          onClick: () => window.location.href = '/billing',
+        },
+      });
       return;
     }
 

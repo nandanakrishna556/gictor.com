@@ -529,7 +529,13 @@ Example: Dashboard walkthrough for new users. Show: 1) Create project, 2) Add sc
     }
 
     if ((profile.credits ?? 0) < CREDIT_COST) {
-      toast.error(`Insufficient credits. You need ${CREDIT_COST} credits.`);
+      toast.error('Insufficient credits', { 
+        description: `You need ${CREDIT_COST} credits but have ${profile.credits ?? 0}.`,
+        action: {
+          label: 'Buy Credits',
+          onClick: () => window.location.href = '/billing',
+        },
+      });
       setLocalGenerating(false);
       isLocalGeneratingRef.current = false;
       return;
@@ -647,7 +653,13 @@ Example: Dashboard walkthrough for new users. Show: 1) Create project, 2) Add sc
     if (!scriptOutput || !profile || !user) return;
 
     if ((profile.credits ?? 0) < HUMANIZE_CREDIT_COST) {
-      toast.error(`Insufficient credits. You need ${HUMANIZE_CREDIT_COST} credits.`);
+      toast.error('Insufficient credits', { 
+        description: `You need ${HUMANIZE_CREDIT_COST} credits but have ${profile.credits ?? 0}.`,
+        action: {
+          label: 'Buy Credits',
+          onClick: () => window.location.href = '/billing',
+        },
+      });
       return;
     }
 
