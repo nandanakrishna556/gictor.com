@@ -129,7 +129,7 @@ export default function ProjectDetail() {
 
   const currentFolder = folderAncestry?.[folderAncestry.length - 1];
 
-  const { files, folders, isLoading, createFolder, updateFile, updateFolder, deleteFile, deleteFolder, bulkDeleteFiles, bulkUpdateFiles } = useFiles(projectId!, folderId);
+  const { files, folders, isLoading, createFile, createFolder, updateFile, updateFolder, deleteFile, deleteFolder, bulkDeleteFiles, bulkUpdateFiles } = useFiles(projectId!, folderId);
   const { pipelines, createPipeline, updatePipeline, deletePipeline, updateDefaultStages, defaultStages } = usePipelines();
   const { tags, createTag, deleteTag } = useTags();
   
@@ -315,6 +315,22 @@ export default function ProjectDetail() {
     setSelectedTags((prev) => prev.filter((t) => t !== id));
   };
 
+  const handleDuplicateFile = async (file: File) => {
+    try {
+      await createFile({
+        project_id: projectId!,
+        folder_id: file.folder_id || null,
+        name: `${file.name} (Copy)`,
+        file_type: file.file_type,
+        status: file.status || 'draft',
+        tags: file.tags || [],
+        generation_params: file.generation_params ?? undefined,
+      });
+    } catch (error) {
+      console.error('Failed to duplicate file:', error);
+    }
+  };
+
   // Handle file click - open appropriate modal based on file type
   const handleFileClick = (file: File) => {
     if (file.file_type === 'lip_sync' || file.file_type === 'talking_head') {
@@ -452,6 +468,7 @@ export default function ProjectDetail() {
               onDeleteTag={handleDeleteTag}
               onDeleteFile={handleDeleteFileRequest}
               onDeleteFolder={handleDeleteFolderRequest}
+              onDuplicateFile={handleDuplicateFile}
               onFileClick={handleFileClick}
               onUpdateFileStatus={handleUpdateFileStatus}
               onUpdateFileTags={handleUpdateFileTags}
@@ -518,6 +535,7 @@ export default function ProjectDetail() {
               onDeleteTag={handleDeleteTag}
               onDeleteFile={handleDeleteFileRequest}
               onDeleteFolder={handleDeleteFolderRequest}
+              onDuplicateFile={handleDuplicateFile}
               onFileClick={handleFileClick}
               onUpdateFileStatus={handleUpdateFileStatus}
               onUpdateFileTags={handleUpdateFileTags}

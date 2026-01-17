@@ -21,6 +21,7 @@ import {
   MousePointer2,
   FolderInput,
   Mic,
+  Copy,
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { GeneratingOverlay } from '@/components/ui/GeneratingOverlay';
@@ -73,6 +74,7 @@ interface FileGridProps {
   onDeleteTag?: (id: string) => void;
   onDeleteFile?: (id: string) => void;
   onDeleteFolder?: (id: string) => void;
+  onDuplicateFile?: (file: File) => void;
   onFileClick?: (file: File) => void;
   onUpdateFileStatus?: (id: string, status: string) => void;
   onUpdateFileTags?: (id: string, tags: string[]) => void;
@@ -151,6 +153,7 @@ export default function FileGrid({
   onDeleteTag,
   onDeleteFile,
   onDeleteFolder,
+  onDuplicateFile,
   onFileClick,
   onUpdateFileStatus,
   onUpdateFileTags,
@@ -466,6 +469,7 @@ export default function FileGrid({
                                       ? onDeleteFile
                                       : onDeleteFolder
                                   }
+                                  onDuplicate={item.itemType === 'file' ? onDuplicateFile : undefined}
                                   onTagsChange={
                                     item.itemType === 'file'
                                       ? onUpdateFileTags
@@ -628,6 +632,7 @@ export default function FileGrid({
                           }}
                           onSelect={() => toggleSelection(item.id)}
                           onDelete={onDeleteFile}
+                          onDuplicate={onDuplicateFile}
                           onStatusChange={onUpdateFileStatus}
                           onTagsChange={onUpdateFileTags}
                           onCreateTag={onCreateTag}
@@ -1084,6 +1089,7 @@ function FileCard({
   onCreateNew,
   onFileClick,
   onMove,
+  onDuplicate,
 }: {
   file: File;
   stages: PipelineStage[];
@@ -1096,6 +1102,7 @@ function FileCard({
   onSaveRename: (name: string) => void;
   onSelect: () => void;
   onDelete?: (id: string) => void;
+  onDuplicate?: (file: File) => void;
   onStatusChange?: (id: string, status: string) => void;
   onTagsChange?: (id: string, tags: string[]) => void;
   onCreateTag?: () => void;
@@ -1402,6 +1409,17 @@ function FileCard({
             Rename
           </DropdownMenuItem>
           <DropdownMenuItem
+            className="gap-2"
+            onClick={(e) => {
+              e.stopPropagation();
+              onDuplicate?.(file);
+            }}
+          >
+            <Copy className="h-4 w-4" />
+            Duplicate
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem
             className="gap-2 text-destructive"
             onClick={(e) => {
               e.stopPropagation();
@@ -1430,6 +1448,7 @@ function KanbanCard({
   onSaveRename,
   onSelect,
   onDelete,
+  onDuplicate,
   onTagsChange,
   onDeleteTag,
   onCreateTag,
@@ -1447,6 +1466,7 @@ function KanbanCard({
   onSaveRename: (name: string) => void;
   onSelect: () => void;
   onDelete?: (id: string) => void;
+  onDuplicate?: (file: File) => void;
   onTagsChange?: (id: string, tags: string[]) => void;
   onDeleteTag?: (id: string) => void;
   onCreateTag?: () => void;
@@ -1758,6 +1778,19 @@ function KanbanCard({
             <Pencil className="h-4 w-4" />
             Rename
           </DropdownMenuItem>
+          {file && (
+            <DropdownMenuItem
+              className="gap-2"
+              onClick={(e) => {
+                e.stopPropagation();
+                onDuplicate?.(file);
+              }}
+            >
+              <Copy className="h-4 w-4" />
+              Duplicate
+            </DropdownMenuItem>
+          )}
+          <DropdownMenuSeparator />
           <DropdownMenuItem
             className="gap-2 text-destructive"
             onClick={(e) => {
