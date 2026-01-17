@@ -426,14 +426,9 @@ export default function FrameModal({
     setUploadingIndex(index);
 
     try {
-      const fileName = `${user.id}/reference-images/${Date.now()}-${file.name}`;
-      const { error: uploadError } = await supabase.storage.from("uploads").upload(fileName, file);
-
-      if (uploadError) throw uploadError;
-
-      const {
-        data: { publicUrl },
-      } = supabase.storage.from("uploads").getPublicUrl(fileName);
+      // Use Cloudflare R2 upload which returns publicly accessible URLs
+      const { uploadToR2 } = await import("@/lib/cloudflare-upload");
+      const publicUrl = await uploadToR2(file, { folder: "reference-images" });
 
       setReferenceImages((prev) => {
         const newImages = [...prev];
