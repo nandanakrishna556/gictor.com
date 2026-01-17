@@ -125,7 +125,7 @@ export function useFiles(projectId: string, folderId?: string) {
   }, [projectId, queryClient, toast]);
 
   const createFileMutation = useMutation({
-    mutationFn: async (file: { id?: string; project_id: string; folder_id?: string | null; name: string; file_type: string; status?: string; tags?: string[]; generation_params?: Json; download_url?: string; preview_url?: string; script_output?: string }) => {
+    mutationFn: async (file: { id?: string; project_id: string; folder_id?: string | null; name: string; file_type: string; status?: string; tags?: string[]; generation_params?: Json; download_url?: string; preview_url?: string; generation_status?: string }) => {
       const { data, error } = await supabase
         .from('files')
         .insert([file])
