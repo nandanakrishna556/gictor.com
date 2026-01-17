@@ -113,6 +113,7 @@ export default function FrameModal({
 
   // Upload state
   const [uploadingIndex, setUploadingIndex] = useState<number | null>(null);
+  const [draggingIndex, setDraggingIndex] = useState<number | null>(null);
 
   // Generation state - localGenerating is ONLY for instant feedback before server updates
   const [localGenerating, setLocalGenerating] = useState(false);
@@ -412,9 +413,8 @@ export default function FrameModal({
     }
   };
 
-  // Handle reference image upload
-  const handleImageUpload = async (index: number, e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
+  // Handle reference image upload (works with both file input and drag-drop)
+  const handleImageUploadFromFile = async (index: number, file: File) => {
     if (!file || !user) return;
 
     // Validate file type
@@ -442,6 +442,32 @@ export default function FrameModal({
     } finally {
       setUploadingIndex(null);
     }
+  };
+
+  const handleImageUpload = async (index: number, e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) handleImageUploadFromFile(index, file);
+  };
+
+  const handleDrop = (index: number, e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDraggingIndex(null);
+    
+    const file = e.dataTransfer.files?.[0];
+    if (file) handleImageUploadFromFile(index, file);
+  };
+
+  const handleDragOver = (index: number, e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDraggingIndex(index);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDraggingIndex(null);
   };
 
   const handleRemoveImage = (index: number) => {
@@ -1039,6 +1065,7 @@ export default function FrameModal({
                   {[0, 1, 2].map((index) => {
                     const imageUrl = referenceImages[index];
                     const isUploading = uploadingIndex === index;
+                    const isDragging = draggingIndex === index;
 
                     return (
                       <div key={index} className="relative">
@@ -1058,17 +1085,25 @@ export default function FrameModal({
                           </div>
                         ) : (
                           <label
+                            onDrop={(e) => handleDrop(index, e)}
+                            onDragOver={(e) => handleDragOver(index, e)}
+                            onDragLeave={handleDragLeave}
                             className={cn(
-                              "aspect-square rounded-lg border-2 border-dashed border-border flex flex-col items-center justify-center gap-1 cursor-pointer transition-colors hover:border-primary/50",
+                              "aspect-square rounded-lg border-2 border-dashed flex flex-col items-center justify-center gap-1 cursor-pointer transition-all",
                               isUploading && "pointer-events-none",
+                              isDragging
+                                ? "border-primary bg-primary/10 scale-105"
+                                : "border-border hover:border-primary/50",
                             )}
                           >
                             {isUploading ? (
                               <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
                             ) : (
                               <>
-                                <Plus className="h-5 w-5 text-muted-foreground" />
-                                <span className="text-xs text-muted-foreground">Add</span>
+                                <Plus className={cn("h-5 w-5", isDragging ? "text-primary" : "text-muted-foreground")} />
+                                <span className={cn("text-xs", isDragging ? "text-primary" : "text-muted-foreground")}>
+                                  {isDragging ? "Drop" : "Add"}
+                                </span>
                               </>
                             )}
                             <input
