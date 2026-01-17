@@ -327,6 +327,7 @@ export default function ProjectDetail() {
         generation_params: file.generation_params ?? undefined,
         download_url: file.download_url ?? undefined,
         preview_url: file.preview_url ?? undefined,
+        generation_status: file.download_url ? 'completed' : undefined,
       });
     } catch (error) {
       console.error('Failed to duplicate file:', error);
