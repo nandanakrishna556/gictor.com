@@ -49,6 +49,7 @@ const DEFAULT_STATUS_OPTIONS: StatusOption[] = [
 
 const MAX_AUDIO_SECONDS = 600; // 10 minutes
 const CREDIT_COST_PER_SECOND = 0.15;
+const MIN_CREDIT_COST = 0.15;
 
 export default function LipSyncModal({
   open,
@@ -118,8 +119,8 @@ export default function LipSyncModal({
   // Get current status option
   const currentStatusOption = statusOptions.find(s => s.value === displayStatus) || statusOptions[0];
   
-  // Dynamic credit cost based on audio duration (0.15 per second)
-  const creditCost = Math.ceil(audioDuration * CREDIT_COST_PER_SECOND * 100) / 100;
+  // Dynamic credit cost based on audio duration (0.15 per second, minimum 0.15)
+  const creditCost = Math.max(MIN_CREDIT_COST, Math.ceil(audioDuration * CREDIT_COST_PER_SECOND * 100) / 100);
   
   // Convert tags to TagData format
   const tagData: TagData[] = tags?.map(t => ({

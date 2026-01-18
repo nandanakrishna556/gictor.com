@@ -23,6 +23,7 @@ interface LipSyncStageProps {
 
 const MAX_AUDIO_SECONDS = 600; // 10 minutes
 const CREDIT_COST_PER_SECOND = 0.15;
+const MIN_CREDIT_COST = 0.15;
 
 export default function LipSyncStage({ pipelineId, onComplete }: LipSyncStageProps) {
   const { pipeline, updateFinalVideo, isUpdating } = usePipeline(pipelineId);
@@ -49,7 +50,7 @@ export default function LipSyncStage({ pipelineId, onComplete }: LipSyncStagePro
   const [generationProgress, setGenerationProgress] = useState(0);
 
   // Calculate credit cost
-  const creditCost = Math.ceil(audioDuration * CREDIT_COST_PER_SECOND * 100) / 100;
+  const creditCost = Math.max(MIN_CREDIT_COST, Math.ceil(audioDuration * CREDIT_COST_PER_SECOND * 100) / 100);
 
   // Load existing data from pipeline
   useEffect(() => {
