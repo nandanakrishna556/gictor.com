@@ -46,7 +46,7 @@ const DEFAULT_STATUS_OPTIONS: StatusOption[] = [
   { value: 'complete', label: 'Complete', color: 'bg-emerald-500' },
 ];
 
-const MIN_AUDIO_SECONDS = 5;
+
 const MAX_AUDIO_SECONDS = 600; // 10 minutes
 const CREDIT_COST_PER_SECOND = 0.15;
 
@@ -223,9 +223,6 @@ export default function LipSyncModal({
   
   // Validate audio duration
   const validateAudioDuration = (duration: number): string | null => {
-    if (duration < MIN_AUDIO_SECONDS) {
-      return `Audio must be at least ${MIN_AUDIO_SECONDS} seconds`;
-    }
     if (duration > MAX_AUDIO_SECONDS) {
       return `Audio must be less than ${MAX_AUDIO_SECONDS / 60} minutes`;
     }
@@ -759,7 +756,7 @@ export default function LipSyncModal({
               <div className="space-y-2">
                 <label className="text-sm font-medium">Audio File (Required)</label>
                 <p className="text-xs text-muted-foreground">
-                  Min {MIN_AUDIO_SECONDS}s, Max {MAX_AUDIO_SECONDS / 60} minutes
+                  Max {MAX_AUDIO_SECONDS / 60} minutes
                 </p>
                 
                 {audioUrl ? (

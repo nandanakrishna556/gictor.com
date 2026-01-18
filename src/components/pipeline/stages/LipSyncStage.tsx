@@ -20,7 +20,7 @@ interface LipSyncStageProps {
   onComplete: () => void;
 }
 
-const MIN_AUDIO_SECONDS = 5;
+
 const MAX_AUDIO_SECONDS = 600; // 10 minutes
 const CREDIT_COST_PER_SECOND = 0.15;
 
@@ -237,7 +237,7 @@ export default function LipSyncStage({ pipelineId, onComplete }: LipSyncStagePro
 
   const hasOutput = !!pipeline?.final_video_output?.url || !!uploadedVideoUrl;
   const outputVideo = pipeline?.final_video_output;
-  const canGenerate = mode === 'upload' ? !!uploadedVideoUrl : (!!imageUrl && !!audioUrl && audioDuration >= MIN_AUDIO_SECONDS);
+  const canGenerate = mode === 'upload' ? !!uploadedVideoUrl : (!!imageUrl && !!audioUrl && audioDuration > 0);
 
   const handleDownloadVideo = async () => {
     const videoUrl = outputVideo?.url;
