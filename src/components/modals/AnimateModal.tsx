@@ -20,7 +20,7 @@ import { InputModeToggle, InputMode } from '@/components/ui/input-mode-toggle';
 import LocationSelector from '@/components/forms/LocationSelector';
 import { ArrowLeft, X, Loader2, Download, Upload, Film, Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { uploadToR2, validateFile } from '@/lib/cloudflare-upload';
+import { uploadToR2 } from '@/lib/cloudflare-upload';
 
 interface StatusOption {
   value: string;
@@ -242,28 +242,24 @@ export default function AnimateModal({
     };
   }, [hasUnsavedChanges, name, displayStatus, selectedTags, firstFrameUrl, lastFrameUrl, triggerAutoSave]);
 
-  // Handle file upload to Supabase storage
+  // Handle file upload to Cloudflare R2 (publicly accessible)
   const handleFileUpload = async (uploadedFile: globalThis.File, isFirstFrame: boolean) => {
     if (!user) return;
     
     const setUploading = isFirstFrame ? setIsUploadingFirst : setIsUploadingLast;
     const setUrl = isFirstFrame ? setFirstFrameUrl : setLastFrameUrl;
     
+    // Validate file type
+    if (!uploadedFile.type.startsWith('image/')) {
+      toast.error('Please upload an image file');
+      return;
+    }
+    
     setUploading(true);
     
     try {
-      const fileExt = uploadedFile.name.split('.').pop();
-      const fileName = `${user.id}/${Date.now()}.${fileExt}`;
-      
-      const { error: uploadError } = await supabase.storage
-        .from('uploads')
-        .upload(fileName, uploadedFile);
-      
-      if (uploadError) throw uploadError;
-      
-      const { data: { publicUrl } } = supabase.storage
-        .from('uploads')
-        .getPublicUrl(fileName);
+      // Use Cloudflare R2 upload which returns publicly accessible URLs
+      const publicUrl = await uploadToR2(uploadedFile, { folder: 'animate-frames' });
       
       setUrl(publicUrl);
       setHasUnsavedChanges(true);
