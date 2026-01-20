@@ -76,16 +76,17 @@ interface TalkingHeadQuickPayload extends BasePayload {
 type GenerationPayload = FirstFramePayload | TalkingHeadPayload | ScriptPayload | TalkingHeadQuickPayload;
 
 export const CREDIT_COSTS = {
-  first_frame: 0.25,
+  first_frame: 0.1,
   lip_sync_per_second: 0.15,
   speech_per_1000_chars: 0.25,
   script: 0.25,
-  frame: 0.25, // base cost, 4K is 0.5
+  frame: 0.1, // base cost for 1K/2K
+  frame_4k: 0.15, // 4K resolution
   animate_per_second: 0.15,
 };
 
 export const getFrameCreditCost = (resolution: '1K' | '2K' | '4K'): number => {
-  return resolution === '4K' ? 0.5 : 0.25;
+  return resolution === '4K' ? 0.15 : 0.1;
 };
 
 export interface GenerationResult {

@@ -61,7 +61,7 @@ export default function BRollLastFrameStage({ pipelineId, onComplete }: BRollLas
   const generationInitiatedRef = useRef(false); // Track if user initiated generation
 
   // Dynamic credit cost based on resolution
-  const creditCost = resolution === '4K' ? 0.5 : 0.25;
+  const creditCost = resolution === '4K' ? 0.15 : 0.1;
 
   // Derive output URL from script_output (repurposed for last frame)
   const lastFrameData = pipeline?.script_output as any;

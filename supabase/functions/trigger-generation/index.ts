@@ -54,15 +54,15 @@ function checkRateLimit(identifier: string): { allowed: boolean; remaining: numb
 // ============= Server-Side Credit Cost Calculation =============
 // SECURITY: All credit costs are calculated server-side to prevent manipulation
 const CREDIT_COSTS = {
-  first_frame: 0.25,
+  first_frame: 0.1,
   script: 0.25,
   voice_per_1000_chars: 0.25,
   video_per_second: 0.2,
   lip_sync_per_second: 0.15,
   animate_per_second: 0.15,
   speech_per_1000_chars: 0.25,
-  frame_base: 0.25,
-  frame_4k: 0.5,
+  frame_base: 0.1,
+  frame_4k: 0.15,
   actor_create: 1.0,
 };
 

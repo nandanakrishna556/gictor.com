@@ -162,7 +162,7 @@ export default function FrameModal({
     })) || [];
 
   // Dynamic credit cost based on resolution
-  const creditCost = resolution === "4K" ? 0.5 : 0.25;
+  const creditCost = resolution === "4K" ? 0.15 : 0.1;
 
   // Validation
   const canGenerate = !isGenerating && profile && (profile.credits ?? 0) >= creditCost;
@@ -1049,9 +1049,9 @@ export default function FrameModal({
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="1K">1K • 0.25 credits</SelectItem>
-                        <SelectItem value="2K">2K • 0.25 credits</SelectItem>
-                        <SelectItem value="4K">4K • 0.5 credits</SelectItem>
+                        <SelectItem value="1K">1K • 0.1 credits</SelectItem>
+                        <SelectItem value="2K">2K • 0.1 credits</SelectItem>
+                        <SelectItem value="4K">4K • 0.15 credits</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
