@@ -105,7 +105,8 @@ export interface Pipeline {
 
 // Credit costs
 export const PIPELINE_CREDITS = {
-  first_frame: 0.25,        // per generation/edit/regenerate
+  first_frame: 0.1,         // per generation/edit/regenerate (1K/2K)
+  first_frame_4k: 0.15,     // per generation/edit/regenerate (4K)
   script: 0.25,             // per generation/edit/regenerate
   voice_per_1000_chars: 0.25, // per 1000 characters
   video_per_second: 0.2,       // per second of audio

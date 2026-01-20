@@ -51,7 +51,7 @@ export default function MoGraphFirstFrameStage({ pipelineId, onComplete, onConti
   const generationInitiatedRef = useRef(false);
 
   // Dynamic credit cost based on resolution
-  const creditCost = resolution === '4K' ? 0.5 : 0.25;
+  const creditCost = resolution === '4K' ? 0.15 : 0.1;
 
   // Derive from pipeline
   const isServerProcessing = pipeline?.status === 'processing' && pipeline?.current_stage === 'first_frame';

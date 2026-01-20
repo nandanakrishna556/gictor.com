@@ -19,7 +19,8 @@ export const CREDIT_COSTS = {
   lip_sync_per_second: 0.15,
   speech_per_1000_chars: 0.25,
   script_per_generation: 0.25,
-  frame_per_generation: 0.25,
+  frame_per_generation: 0.1, // 1K/2K resolution
+  frame_4k: 0.15, // 4K resolution
   animate_per_second: 0.15,
 };
 
