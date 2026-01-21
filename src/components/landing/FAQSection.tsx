@@ -7,14 +7,14 @@ import {
 
 const faqs = [
   {
-    question: "Do the AI videos look realistic?",
+    question: "How much does it cost to create a video?",
     answer:
-      "Yes. Our lip-sync technology produces natural results that are indistinguishable from traditionally filmed content. The best test? Watch our demo video above — that's AI-generated.",
+      "Videos cost credits based on length and features used. A typical 30-second ad costs around 5-10 credits. New users get free credits to start, and credit packs start at just $10. No subscriptions required.",
   },
   {
-    question: "Can people tell it's AI?",
+    question: "What languages and accents are supported?",
     answer:
-      "Your audience isn't running forensics on your ads. They're scrolling, and something either stops them or it doesn't. What matters is whether your message resonates — and that's what Gictor helps you test and perfect.",
+      "We support 29+ languages including English, Spanish, French, German, Portuguese, and more. Each language offers multiple accent options and voice styles to match your target audience perfectly.",
   },
   {
     question: "Can I clone myself or use my own face?",
@@ -37,9 +37,9 @@ const faqs = [
       "Yes. Everything you generate is yours to use commercially however you want. No licensing restrictions, no usage fees, no surprises.",
   },
   {
-    question: "What if I want to use real creators too?",
+    question: "Can I integrate with my existing workflow?",
     answer:
-      "Perfect strategy. Use Gictor to test messages and find winners. Once you know what converts, film it with real creators if that's what your brand needs. You'll walk into that shoot knowing exactly what works.",
+      "Absolutely. Download your videos in standard formats and use them anywhere — Meta Ads, TikTok, YouTube, email campaigns, or your website. We also offer API access for enterprise customers who want to automate at scale.",
   },
 ];
 
