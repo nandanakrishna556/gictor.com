@@ -7,11 +7,6 @@ import {
 
 const faqs = [
   {
-    question: "How much does it cost to create a video?",
-    answer:
-      "Videos cost credits based on length and features used. A typical 30-second ad costs around 5-10 credits. New users get free credits to start, and credit packs start at just $10. No subscriptions required.",
-  },
-  {
     question: "What languages and accents are supported?",
     answer:
       "We support 29+ languages including English, Spanish, French, German, Portuguese, and more. Each language offers multiple accent options and voice styles to match your target audience perfectly.",
@@ -37,9 +32,9 @@ const faqs = [
       "Yes. Everything you generate is yours to use commercially however you want. No licensing restrictions, no usage fees, no surprises.",
   },
   {
-    question: "Can I integrate with my existing workflow?",
+    question: "Can I use these videos anywhere?",
     answer:
-      "Absolutely. Download your videos in standard formats and use them anywhere — Meta Ads, TikTok, YouTube, email campaigns, or your website. We also offer API access for enterprise customers who want to automate at scale.",
+      "Yes. Download your videos in standard formats and use them anywhere — Meta Ads, TikTok, YouTube, email campaigns, landing pages, or your website. No restrictions on where you publish.",
   },
 ];
 
