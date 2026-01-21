@@ -21,12 +21,6 @@ export function LandingNav() {
             Features
           </button>
           <button
-            onClick={() => scrollToSection("how-it-works")}
-            className="text-base text-muted-foreground hover:text-foreground transition-colors font-medium"
-          >
-            How It Works
-          </button>
-          <button
             onClick={() => scrollToSection("use-cases")}
             className="text-base text-muted-foreground hover:text-foreground transition-colors font-medium"
           >
