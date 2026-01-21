@@ -40,7 +40,7 @@ const faqs = [
 
 export function FAQSection() {
   return (
-    <section className="py-24 px-6">
+    <section id="faq" className="py-24 px-6">
       <div className="max-w-3xl mx-auto">
         <div className="text-center mb-16">
           <p className="text-primary font-semibold text-lg mb-4 tracking-wide uppercase">FAQ</p>

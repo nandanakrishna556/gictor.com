@@ -27,10 +27,10 @@ export function LandingNav() {
             Use Cases
           </button>
           <button
-            onClick={() => scrollToSection("pricing")}
+            onClick={() => scrollToSection("faq")}
             className="text-base text-muted-foreground hover:text-foreground transition-colors font-medium"
           >
-            Pricing
+            FAQ
           </button>
         </div>
 
