@@ -34,22 +34,18 @@ export function HeroSection() {
       <div className="max-w-5xl mx-auto text-center relative">
         <Badge variant="secondary" className="mb-8 gap-2 px-4 py-2 text-sm">
           <Zap className="h-4 w-4 text-primary" />
-          AI That Looks Real
+          AI-Powered UGC
         </Badge>
 
         <h1 className="text-5xl md:text-7xl lg:text-8xl font-bold tracking-tight mb-8 leading-[1.1]">
-          AI Videos{" "}
-          <span className="text-primary relative">
-            Indistinguishable From Real
-            <svg className="absolute -bottom-2 left-0 w-full" viewBox="0 0 300 12" fill="none">
-              <path d="M2 10C50 4 150 2 298 6" stroke="hsl(var(--primary))" strokeWidth="3" strokeLinecap="round" opacity="0.4"/>
-            </svg>
-          </span>
+          Videos That Look Human.
+          <br />
+          <span className="text-primary">Made By AI.</span>
         </h1>
 
         <p className="text-xl md:text-2xl text-muted-foreground max-w-3xl mx-auto mb-12 leading-relaxed">
-          Hyper-realistic AI actors with perfect lip-sync.{" "}
-          <span className="text-foreground font-medium">No filming, no editing, no compromises.</span>
+          Create unlimited ad variations with AI actors that{" "}
+          <span className="text-foreground font-medium">move, speak, and convert</span> like the real thing.
         </p>
 
         <div
