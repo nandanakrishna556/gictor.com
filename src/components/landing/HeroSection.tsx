@@ -34,13 +34,13 @@ export function HeroSection() {
       <div className="max-w-5xl mx-auto text-center relative">
         <Badge variant="secondary" className="mb-8 gap-2 px-4 py-2 text-sm">
           <Zap className="h-4 w-4 text-primary" />
-          AI-Powered Video Creation
+          Create Ads That Convert
         </Badge>
 
         <h1 className="text-5xl md:text-7xl lg:text-8xl font-bold tracking-tight mb-8 leading-[1.1]">
-          Your Next Winning Ad Is{" "}
+          Stop Guessing.{" "}
           <span className="text-primary relative">
-            One Test Away
+            Start Scaling.
             <svg className="absolute -bottom-2 left-0 w-full" viewBox="0 0 300 12" fill="none">
               <path d="M2 10C50 4 150 2 298 6" stroke="hsl(var(--primary))" strokeWidth="3" strokeLinecap="round" opacity="0.4"/>
             </svg>
@@ -48,8 +48,8 @@ export function HeroSection() {
         </h1>
 
         <p className="text-xl md:text-2xl text-muted-foreground max-w-3xl mx-auto mb-12 leading-relaxed">
-          Test more messages. Find winners faster. Scale what works.{" "}
-          <span className="text-foreground font-medium">Create studio-quality UGC videos in minutes</span> with AI.
+          Generate unlimited ad variations in minutes, not days.{" "}
+          <span className="text-foreground font-medium">AI-powered UGC videos</span> that look real and convert better.
         </p>
 
         <div
