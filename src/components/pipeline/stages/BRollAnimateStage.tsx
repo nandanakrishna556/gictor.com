@@ -13,6 +13,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useQueryClient } from '@tanstack/react-query';
 import { InputModeToggle, InputMode } from '@/components/ui/input-mode-toggle';
+import { uploadToR2 } from '@/lib/cloudflare-upload';
 
 interface BRollAnimateStageProps {
   pipelineId: string;
@@ -160,18 +161,8 @@ export default function BRollAnimateStage({ pipelineId, onComplete }: BRollAnima
     setUploading(true);
     
     try {
-      const fileExt = uploadedFile.name.split('.').pop();
-      const fileName = `${user.id}/${Date.now()}.${fileExt}`;
-      
-      const { error: uploadError } = await supabase.storage
-        .from('uploads')
-        .upload(fileName, uploadedFile);
-      
-      if (uploadError) throw uploadError;
-      
-      const { data: { publicUrl } } = supabase.storage
-        .from('uploads')
-        .getPublicUrl(fileName);
+      // Use Cloudflare R2 for publicly accessible URLs
+      const publicUrl = await uploadToR2(uploadedFile, { folder: 'animate-frames' });
       
       setUrl(publicUrl);
       toast.success(`${isFirstFrame ? 'First' : 'Last'} frame uploaded`);
@@ -330,11 +321,8 @@ export default function BRollAnimateStage({ pipelineId, onComplete }: BRollAnima
                       
                       setIsUploadingVideo(true);
                       try {
-                        const fileName = `${user.id}/videos/${Date.now()}-${f.name}`;
-                        const { error: uploadError } = await supabase.storage.from('uploads').upload(fileName, f);
-                        if (uploadError) throw uploadError;
-                        
-                        const { data: { publicUrl } } = supabase.storage.from('uploads').getPublicUrl(fileName);
+                        // Use Cloudflare R2 for publicly accessible URLs
+                        const publicUrl = await uploadToR2(f, { folder: 'videos' });
                         setUploadedVideoUrl(publicUrl);
                         toast.success('Video uploaded');
                       } catch (error) {

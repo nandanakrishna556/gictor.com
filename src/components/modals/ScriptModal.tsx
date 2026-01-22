@@ -17,6 +17,7 @@ import { TagList, TagSelector, TagData } from '@/components/ui/tag-badge';
 import { InputModeToggle, InputMode } from '@/components/ui/input-mode-toggle';
 import { ArrowLeft, X, Check, Loader2, FileText, Sparkles, RefreshCw, Wand2, Minus, Plus, Upload, Link, Copy, Download, Video } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { uploadToR2 } from '@/lib/cloudflare-upload';
 interface StatusOption {
   value: string;
   label: string;
@@ -438,19 +439,9 @@ export default function ScriptModal({
     setIsUploadingVideo(true);
 
     try {
-      const fileExt = uploadedFile.name.split('.').pop();
-      const fileName = `${user.id}/videos/${Date.now()}.${fileExt}`;
-
-      const { error: uploadError } = await supabase.storage
-        .from('uploads')
-        .upload(fileName, uploadedFile);
-
-      if (uploadError) throw uploadError;
-
-      const { data: { publicUrl } } = supabase.storage
-        .from('uploads')
-        .getPublicUrl(fileName);
-
+      // Use Cloudflare R2 for publicly accessible URLs
+      const publicUrl = await uploadToR2(uploadedFile, { folder: 'videos' });
+      
       setUploadedVideoUrl(publicUrl);
       setHasUnsavedChanges(true);
       toast.success('Video uploaded successfully');

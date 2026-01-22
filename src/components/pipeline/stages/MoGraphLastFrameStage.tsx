@@ -14,6 +14,7 @@ import StageLayout from './StageLayout';
 import { useProfile } from '@/hooks/useProfile';
 import { useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/contexts/AuthContext';
+import { uploadToR2 } from '@/lib/cloudflare-upload';
 
 interface MoGraphLastFrameStageProps {
   pipelineId: string;
@@ -153,12 +154,8 @@ export default function MoGraphLastFrameStage({ pipelineId, onComplete, onContin
     setUploadingIndex(index);
 
     try {
-      const fileName = `${user.id}/reference-images/${Date.now()}-${file.name}`;
-      const { error: uploadError } = await supabase.storage.from('uploads').upload(fileName, file);
-
-      if (uploadError) throw uploadError;
-
-      const { data: { publicUrl } } = supabase.storage.from('uploads').getPublicUrl(fileName);
+      // Use Cloudflare R2 for publicly accessible URLs
+      const publicUrl = await uploadToR2(file, { folder: 'reference-images' });
 
       setReferenceImages((prev) => {
         const newImages = [...prev];
