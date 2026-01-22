@@ -647,11 +647,8 @@ export default function AnimateModal({
                           
                           setIsUploadingVideo(true);
                           try {
-                            const fileName = `${user.id}/videos/${Date.now()}-${f.name}`;
-                            const { error: uploadError } = await supabase.storage.from('uploads').upload(fileName, f);
-                            if (uploadError) throw uploadError;
-                            
-                            const { data: { publicUrl } } = supabase.storage.from('uploads').getPublicUrl(fileName);
+                            // Use Cloudflare R2 for publicly accessible URLs
+                            const publicUrl = await uploadToR2(f, { folder: 'videos' });
                             setUploadedVideoUrl(publicUrl);
                             toast.success('Video uploaded');
                           } catch (error) {
