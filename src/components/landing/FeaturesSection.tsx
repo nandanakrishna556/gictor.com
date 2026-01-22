@@ -1,48 +1,55 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { User, Copy, FileText, Film, Wand2, LayoutGrid } from "lucide-react";
 
+import screenshotCustomAiActors from "@/assets/screenshot-custom-ai-actors.webp";
+import screenshotCloneYourself from "@/assets/screenshot-clone-yourself.webp";
+import screenshotHumanizedScripts from "@/assets/screenshot-humanized-scripts.webp";
+import screenshotRealisticBroll from "@/assets/screenshot-realistic-broll.webp";
+import screenshotMotionGraphics from "@/assets/screenshot-motion-graphics.webp";
+import screenshotKanbanView from "@/assets/screenshot-kanban-view.webp";
+
 const features = [
   {
     icon: User,
     title: "Custom AI Actors",
     description:
       "Create unique, fully customizable AI spokespersons. Your brand's face, available on demand.",
-    image: "screenshot-custom-ai-actors.png",
+    image: screenshotCustomAiActors,
   },
   {
     icon: Copy,
     title: "Clone Yourself",
     description:
       "Upload your photo and voice. Create an AI version of yourself for unlimited content.",
-    image: "screenshot-clone-yourself.png",
+    image: screenshotCloneYourself,
   },
   {
     icon: FileText,
     title: "Humanized Scripts",
     description:
       "AI that writes like humans talk. Natural pauses, real emotions, authentic delivery.",
-    image: "screenshot-humanized-scripts.png",
+    image: screenshotHumanizedScripts,
   },
   {
     icon: Film,
     title: "Realistic B-Roll",
     description:
       "Generate stunning B-roll footage. First-person and third-person perspectives that look authentic.",
-    image: "screenshot-realistic-broll.png",
+    image: screenshotRealisticBroll,
   },
   {
     icon: Wand2,
     title: "Motion Graphics",
     description:
       "Create animated visuals and motion graphics to enhance your video content.",
-    image: "screenshot-motion-graphics.png",
+    image: screenshotMotionGraphics,
   },
   {
     icon: LayoutGrid,
     title: "Kanban Organization",
     description:
       "Organize all your projects and assets in an intuitive kanban board. Stay on top of every creative.",
-    image: "screenshot-kanban-view.png",
+    image: screenshotKanbanView,
   },
 ];
 
@@ -66,17 +73,20 @@ export function FeaturesSection() {
               key={index}
               className="overflow-hidden border-border bg-background hover:border-primary/30 transition-all duration-300 group"
             >
-              <div className="aspect-video bg-muted flex items-center justify-center relative overflow-hidden">
-                <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                <div className="text-center text-muted-foreground relative">
-                  <div className="h-14 w-14 rounded-xl bg-primary/10 flex items-center justify-center mx-auto mb-3 group-hover:bg-primary/20 group-hover:scale-110 transition-all">
-                    <feature.icon className="h-7 w-7 text-primary" />
-                  </div>
-                  <p className="text-base">{feature.image}</p>
-                </div>
+              <div className="aspect-[4/3] bg-muted flex items-center justify-center relative overflow-hidden">
+                <img
+                  src={feature.image}
+                  alt={feature.title}
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                />
               </div>
               <CardContent className="pt-6 pb-6">
-                <h3 className="text-xl font-bold mb-3">{feature.title}</h3>
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                    <feature.icon className="h-5 w-5 text-primary" />
+                  </div>
+                  <h3 className="text-xl font-bold">{feature.title}</h3>
+                </div>
                 <p className="text-lg text-muted-foreground leading-relaxed">
                   {feature.description}
                 </p>
