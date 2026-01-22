@@ -73,7 +73,7 @@ export function FeaturesSection() {
               key={index}
               className="overflow-hidden border-border bg-background hover:border-primary/30 transition-all duration-300 group"
             >
-              <div className="aspect-[4/3] bg-muted flex items-center justify-center relative overflow-hidden">
+              <div className="aspect-[3/2] bg-muted flex items-center justify-center relative overflow-hidden">
                 <img
                   src={feature.image}
                   alt={feature.title}
