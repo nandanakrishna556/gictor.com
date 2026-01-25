@@ -431,12 +431,24 @@ serve(async (req) => {
 
     // Forward request to n8n with the secret API key (server-side only)
     // Include server-calculated cost for downstream status updates
+    
+    // Map pipeline_humanize to humanize for n8n compatibility (n8n only knows 'humanize')
+    // Include pipeline_id so the callback knows to update the pipeline
+    let n8nType = validatedBody.type;
+    const isPipelineHumanize = validatedBody.type === 'pipeline_humanize';
+    if (isPipelineHumanize) {
+      n8nType = 'humanize';
+    }
+    
     const n8nPayload = {
       ...validatedBody,
+      type: n8nType,
       payload: {
         ...validatedBody.payload,
         user_id: user.id,
         credits_cost: actualCost, // Server-calculated cost for n8n/status updates
+        // For pipeline humanize, include pipeline_id for callback routing
+        ...(isPipelineHumanize && { is_pipeline: true }),
       }
     };
 
