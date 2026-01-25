@@ -316,6 +316,7 @@ Example: Dashboard walkthrough for new users. Show: 1) Create project, 2) Add sc
           estimated_duration_seconds: 30,
           generation_params: { 
             pipeline_id: pipelineId,
+            is_internal: true,
             script_type: scriptType,
             perspective,
             duration_value: durationValue,
@@ -404,6 +405,7 @@ Example: Dashboard walkthrough for new users. Show: 1) Create project, 2) Add sc
           estimated_duration_seconds: 15,
           generation_params: { 
             pipeline_id: pipelineId,
+            is_internal: true,
             is_humanize: true,
           }
         })

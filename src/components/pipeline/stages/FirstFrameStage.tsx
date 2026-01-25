@@ -259,6 +259,7 @@ export default function FirstFrameStage({ pipelineId, onContinue }: FirstFrameSt
           estimated_duration_seconds: 60,
           generation_params: { 
             pipeline_id: pipelineId,
+            is_internal: true,
             frame_type: 'first',
             style,
             substyle: style !== 'motion_graphics' ? subStyle : null,

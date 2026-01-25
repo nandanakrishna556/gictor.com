@@ -183,6 +183,7 @@ export default function LipSyncStage({ pipelineId, onComplete }: LipSyncStagePro
           estimated_duration_seconds: Math.max(120, Math.ceil((audioDuration / 8) * 240)),
           generation_params: { 
             pipeline_id: pipelineId,
+            is_internal: true,
             first_frame_url: imageUrl,
             audio_url: audioUrl,
             audio_duration: audioDuration,
