@@ -63,7 +63,7 @@ const CREDIT_COSTS = {
   speech_per_1000_chars: 0.25,
   frame_base: 0.1,
   frame_4k: 0.15,
-  actor_create: 1.0,
+  actor_create: 0.5,
 };
 
 function calculateServerSideCost(type: string, payload: Record<string, unknown>): number {
