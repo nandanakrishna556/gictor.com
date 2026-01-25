@@ -246,8 +246,21 @@ export default function SpeechStage({ pipelineId, onContinue }: SpeechStageProps
       // Set pipeline status to processing so usePipeline starts polling
       await supabase
         .from('pipelines')
-        .update({ status: 'processing' })
+        .update({ status: 'processing', current_stage: 'speech' })
         .eq('id', pipelineId);
+
+      // Also sync linked file to show processing in project grid
+      const { data: linkedFiles } = await supabase
+        .from('files')
+        .select('id')
+        .eq('generation_params->>pipeline_id', pipelineId);
+
+      if (linkedFiles && linkedFiles.length > 0) {
+        await supabase
+          .from('files')
+          .update({ generation_status: 'processing' })
+          .eq('id', linkedFiles[0].id);
+      }
 
       // Prepare payload for edge function - use pipeline_speech to update pipeline directly
       const requestPayload = {

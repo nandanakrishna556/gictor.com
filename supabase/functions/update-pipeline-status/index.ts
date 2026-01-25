@@ -95,20 +95,25 @@ serve(async (req) => {
           updateData.voice_complete = true;
           break;
           
+        case 'lip_sync':
         case 'final_video':
           updateData.final_video_output = {
             url: output_url,
             duration_seconds: duration_seconds || null,
             generated_at: new Date().toISOString(),
           };
+          // Mark pipeline as completed when final video is done
+          updateData.status = 'completed';
           break;
           
         default:
           console.warn('Unknown stage:', stage);
       }
       
-      // Reset pipeline status to draft (no longer processing)
-      updateData.status = 'draft';
+      // Reset pipeline status to draft (no longer processing) - unless it's final video which marks as completed
+      if (stage !== 'lip_sync' && stage !== 'final_video') {
+        updateData.status = 'draft';
+      }
       
     } else if (status === 'failed') {
       // Reset pipeline status and don't mark stage as complete
@@ -142,6 +147,36 @@ serve(async (req) => {
     if (updateError) {
       console.error('Error updating pipeline:', updateError);
       throw updateError;
+    }
+
+    // Also sync the linked file's generation_status
+    // Find the file linked to this pipeline via generation_params
+    const { data: linkedFiles } = await supabase
+      .from('files')
+      .select('id')
+      .eq('generation_params->>pipeline_id', pipeline_id);
+
+    if (linkedFiles && linkedFiles.length > 0) {
+      const fileUpdate: Record<string, unknown> = {
+        generation_status: status === 'completed' && (stage === 'lip_sync' || stage === 'final_video') 
+          ? 'completed' 
+          : status === 'processing' 
+            ? 'processing' 
+            : 'draft',
+      };
+      
+      // If final video is complete, also set the preview URL
+      if ((stage === 'lip_sync' || stage === 'final_video') && status === 'completed' && output_url) {
+        fileUpdate.preview_url = output_url;
+        fileUpdate.download_url = output_url;
+      }
+      
+      await supabase
+        .from('files')
+        .update(fileUpdate)
+        .eq('id', linkedFiles[0].id);
+      
+      console.log('Synced file status:', { fileId: linkedFiles[0].id, status: fileUpdate.generation_status });
     }
 
     console.log('Pipeline updated successfully:', { pipeline_id, stage, status });
