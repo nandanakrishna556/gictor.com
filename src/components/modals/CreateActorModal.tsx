@@ -365,7 +365,7 @@ export default function CreateActorModal({ open, onOpenChange }: CreateActorModa
                       Creating...
                     </>
                   ) : (
-                    'Create Actor • 1 credit'
+                    'Create Actor • 0.5 credits'
                   )}
                 </Button>
               </div>
@@ -496,7 +496,7 @@ export default function CreateActorModal({ open, onOpenChange }: CreateActorModa
                       Creating...
                     </>
                   ) : (
-                    'Create Actor • 1 credit'
+                    'Create Actor • 0.5 credits'
                   )}
                 </Button>
               </div>
