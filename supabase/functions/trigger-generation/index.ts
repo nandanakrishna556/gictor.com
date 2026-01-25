@@ -146,6 +146,7 @@ const PipelinePayloadSchema = z.object({
   ]),
   payload: z.object({
     pipeline_id: z.string().uuid(),
+    user_id: z.string().uuid().optional(),
     prompt: z.string().max(2000).optional(),
     image_type: z.enum(['ugc', 'studio']).optional(),
     aspect_ratio: z.string().optional(),
@@ -154,7 +155,7 @@ const PipelinePayloadSchema = z.object({
     description: z.string().max(2000).optional(),
     script_type: z.string().optional(),
     duration_seconds: z.number().positive().max(1800).optional(),
-    previous_script: z.string().max(10000).optional(),
+    previous_script: z.string().max(50000).optional(),
     script_text: z.string().max(10000).optional(),
     voice_id: z.string().optional(),
     voice_settings: z.object({
@@ -170,10 +171,24 @@ const PipelinePayloadSchema = z.object({
     audio_duration_seconds: z.number().positive().max(300).optional(),
     resolution: z.string().optional(),
     pipeline_type: z.string().optional(),
+    // Frame generation fields
+    frame_type: z.enum(['first', 'last']).optional(),
+    style: z.enum(['talking_head', 'broll', 'motion_graphics']).optional(),
+    substyle: z.enum(['ugc', 'studio']).nullable().optional(),
+    actor_id: z.string().uuid().nullable().optional(),
+    actor_360_url: z.string().url().nullable().optional(),
+    camera_perspective: z.enum(['1st_person', '3rd_person']).nullable().optional(),
+    frame_resolution: z.enum(['1K', '2K', '4K']).optional(),
+    // Script generation fields
+    script_format: z.enum(['demo', 'listicle', 'problem-solution', 'educational', 'comparison', 'promotional', 'vsl']).optional(),
+    perspective: z.enum(['mixed', '1st', '2nd', '3rd']).optional(),
+    is_refine: z.boolean().optional(),
     // Motion settings for B-Roll
     motion_prompt: z.string().max(2000).optional(),
     camera_motion: z.string().optional(),
     motion_intensity: z.number().min(0).max(100).optional(),
+    // Supabase URL for callbacks
+    supabase_url: z.string().url().optional(),
   }),
 });
 

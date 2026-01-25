@@ -157,7 +157,7 @@ export default function LipSyncStage({ pipelineId, onComplete }: LipSyncStagePro
           image_url: imageUrl,
           audio_url: audioUrl,
           audio_duration: audioDuration,
-          credits_cost: creditCost,
+          supabase_url: import.meta.env.VITE_SUPABASE_URL,
         },
       };
 

@@ -267,7 +267,7 @@ export default function FirstFrameStage({ pipelineId, onContinue }: FirstFrameSt
             actor_360_url: (style === 'talking_head' || style === 'broll') ? selectedActor?.profile_360_url : null,
             reference_images: referenceImages,
             pipeline_type: 'lip_sync',
-            credits_cost: creditCost,
+            supabase_url: import.meta.env.VITE_SUPABASE_URL,
           },
         },
       });

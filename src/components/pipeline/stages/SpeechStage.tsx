@@ -271,6 +271,7 @@ export default function SpeechStage({ pipelineId, onContinue }: SpeechStageProps
           script,
           actor_voice_url: selectedActor.voice_url,
           char_count: script.length,
+          supabase_url: import.meta.env.VITE_SUPABASE_URL,
         },
       };
 
