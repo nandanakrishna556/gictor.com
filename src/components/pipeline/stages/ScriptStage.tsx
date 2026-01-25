@@ -312,62 +312,36 @@ Example: Dashboard walkthrough for new users. Show: 1) Create project, 2) Add sc
     }
   };
 
-  // Humanize file tracking for n8n compatibility
-  const [humanizeFileId, setHumanizeFileId] = useState<string | null>(null);
+  // Watch for humanize completion via pipeline script_output changes
+  const prevScriptOutputRef = useRef<string | null>(null);
   
-  // Poll for humanize file updates
-  const { data: humanizeFile } = useQuery({
-    queryKey: ['humanize-file', humanizeFileId],
-    queryFn: async () => {
-      if (!humanizeFileId) return null;
-      const { data, error } = await supabase
-        .from('files')
-        .select('*')
-        .eq('id', humanizeFileId)
-        .single();
-      if (error) throw error;
-      return data;
-    },
-    enabled: !!humanizeFileId && isHumanizing,
-    refetchInterval: 2000, // Poll every 2 seconds while humanizing
-  });
-
-  // Watch for humanize completion
   useEffect(() => {
-    if (!humanizeFile || !isHumanizing) return;
+    if (!isHumanizing || !pipeline?.script_output?.text) return;
     
-    if (humanizeFile.generation_status === 'completed' && humanizeFile.script_output) {
-      // Sync result back to pipeline
-      updateScript({
-        output: {
-          text: humanizeFile.script_output,
-          char_count: humanizeFile.script_output.length,
-          estimated_duration: Math.ceil(humanizeFile.script_output.length / 17),
-        },
-        complete: true,
-      }).then(async () => {
-        toast.success('Script humanized!');
-        setIsHumanizing(false);
-        
-        // Clean up temporary file
-        if (humanizeFileId) {
-          await supabase.from('files').delete().eq('id', humanizeFileId);
-        }
-        setHumanizeFileId(null);
-        
-        queryClient.invalidateQueries({ queryKey: ['pipeline', pipelineId] });
-      });
-    } else if (humanizeFile.generation_status === 'failed') {
-      toast.error('Humanization failed');
+    const currentOutput = pipeline.script_output.text;
+    
+    // If we're humanizing and the output changed, it means humanization completed
+    if (currentOutput !== prevScriptOutputRef.current && prevScriptOutputRef.current !== null) {
+      toast.success('Script humanized!');
       setIsHumanizing(false);
-      
-      // Clean up temporary file on failure too
-      if (humanizeFileId) {
-        supabase.from('files').delete().eq('id', humanizeFileId);
-      }
-      setHumanizeFileId(null);
+      queryClient.invalidateQueries({ queryKey: ['pipeline', pipelineId] });
     }
-  }, [humanizeFile, isHumanizing, updateScript, pipelineId, queryClient, humanizeFileId]);
+    
+    prevScriptOutputRef.current = currentOutput;
+  }, [pipeline?.script_output?.text, isHumanizing, queryClient, pipelineId]);
+
+  // Reset humanizing state when pipeline status changes from processing
+  useEffect(() => {
+    if (isHumanizing && pipeline?.status !== 'processing') {
+      // Small delay to ensure output is updated
+      const timer = setTimeout(() => {
+        if (pipeline?.script_output?.text) {
+          setIsHumanizing(false);
+        }
+      }, 500);
+      return () => clearTimeout(timer);
+    }
+  }, [pipeline?.status, isHumanizing, pipeline?.script_output?.text]);
 
   const handleHumanize = async () => {
     if (!outputScript?.text || !profile || !user || !pipeline) return;
@@ -384,40 +358,23 @@ Example: Dashboard walkthrough for new users. Show: 1) Create project, 2) Add sc
     }
 
     setIsHumanizing(true);
+    prevScriptOutputRef.current = outputScript.text;
 
     try {
-      // Create a temporary file for n8n to update (n8n expects file_id)
-      const { data: tempFile, error: createError } = await supabase
-        .from('files')
-        .insert({
-          project_id: pipeline.project_id,
-          folder_id: pipeline.folder_id || null,
-          name: `Humanize - ${pipeline.name}`,
-          file_type: 'script',
-          status: 'processing',
-          generation_status: 'processing',
-          generation_started_at: new Date().toISOString(),
-        })
-        .select()
-        .single();
+      // Set pipeline to processing so usePipeline starts polling
+      await supabase
+        .from('pipelines')
+        .update({ status: 'processing' })
+        .eq('id', pipelineId);
 
-      if (createError || !tempFile) {
-        throw new Error('Failed to create temporary file for humanization');
-      }
-
-      setHumanizeFileId(tempFile.id);
-
-      // Use the standard 'humanize' type that n8n understands
+      // Use pipeline_humanize type - updates pipeline directly, no file created
       const { data, error } = await supabase.functions.invoke('trigger-generation', {
         body: {
-          type: 'humanize',
+          type: 'pipeline_humanize',
           payload: {
-            file_id: tempFile.id,
+            pipeline_id: pipelineId,
             user_id: user.id,
-            project_id: pipeline.project_id,
             script: outputScript.text,
-            supabase_url: import.meta.env.VITE_SUPABASE_URL,
-            credits_cost: HUMANIZE_CREDIT_COST,
           },
         },
       });
@@ -432,7 +389,11 @@ Example: Dashboard walkthrough for new users. Show: 1) Create project, 2) Add sc
       console.error('Humanize error:', error);
       toast.error(error instanceof Error ? error.message : 'Failed to humanize script');
       setIsHumanizing(false);
-      setHumanizeFileId(null);
+      // Reset pipeline status on error
+      await supabase
+        .from('pipelines')
+        .update({ status: 'draft' })
+        .eq('id', pipelineId);
     }
   };
 

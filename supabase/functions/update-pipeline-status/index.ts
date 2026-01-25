@@ -67,9 +67,22 @@ serve(async (req) => {
         case 'script':
           updateData.script_output = {
             text: body.script_text || '',
+            char_count: (body.script_text || '').length,
+            estimated_duration: Math.ceil((body.script_text || '').length / 17),
             generated_at: new Date().toISOString(),
           };
           updateData.script_complete = true;
+          break;
+        
+        case 'humanize':
+          // Humanize updates the script output with the humanized text
+          updateData.script_output = {
+            text: body.script_text || '',
+            char_count: (body.script_text || '').length,
+            estimated_duration: Math.ceil((body.script_text || '').length / 17),
+            generated_at: new Date().toISOString(),
+          };
+          // Script is already complete, just updating the text
           break;
           
         case 'voice':
