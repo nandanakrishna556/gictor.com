@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
-import { Upload, Play, Pause, Download, X, Loader2, Video, AlertCircle } from 'lucide-react';
+import { Upload, Download, X, Video, AlertCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { usePipeline } from '@/hooks/usePipeline';
 import { useProfile } from '@/hooks/useProfile';
@@ -9,11 +9,8 @@ import { toast } from 'sonner';
 import StageLayout from './StageLayout';
 import { uploadToR2, validateFile } from '@/lib/cloudflare-upload';
 import { supabase } from '@/integrations/supabase/client';
-import { SingleImageUpload } from '@/components/ui/single-image-upload';
-import { VideoPlayer } from '@/components/ui/video-player';
-import { AudioPlayer } from '@/components/ui/audio-player';
 import { InputModeToggle, InputMode } from '@/components/ui/input-mode-toggle';
-import { useQueryClient, useQuery } from '@tanstack/react-query';
+import { useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/contexts/AuthContext';
 
 interface LipSyncStageProps {
@@ -47,36 +44,16 @@ export default function LipSyncStage({ pipelineId, onComplete }: LipSyncStagePro
   const [isUploadingVideo, setIsUploadingVideo] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   
-  // Generation state
+  // Generation state - watch pipeline status directly
   const [localGenerating, setLocalGenerating] = useState(false);
   const generationInitiatedRef = useRef(false);
-
-  // Fetch linked file for realtime updates
-  const { data: linkedFile } = useQuery({
-    queryKey: ['pipeline-lipsync-file', pipelineId],
-    queryFn: async () => {
-      const { data } = await supabase
-        .from('files')
-        .select('*')
-        .eq('generation_params->>pipeline_id', pipelineId)
-        .eq('file_type', 'lip_sync')
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .maybeSingle();
-      return data;
-    },
-    enabled: !!pipelineId,
-    refetchInterval: (query) => {
-      const file = query.state.data;
-      return (localGenerating || file?.generation_status === 'processing') ? 2000 : false;
-    },
-  });
+  const prevFinalVideoOutputRef = useRef<string | null>(null);
 
   // Calculate credit cost
   const creditCost = Math.max(MIN_CREDIT_COST, Math.ceil(audioDuration * CREDIT_COST_PER_SECOND * 100) / 100);
 
-  // Derive generating state from linked file
-  const isServerProcessing = linkedFile?.generation_status === 'processing';
+  // Derive generating state from pipeline
+  const isServerProcessing = pipeline?.status === 'processing';
   const isGenerating = localGenerating || (isServerProcessing && generationInitiatedRef.current);
 
   // Load existing data from pipeline
@@ -94,36 +71,22 @@ export default function LipSyncStage({ pipelineId, onComplete }: LipSyncStagePro
     }
   }, [pipeline]);
 
-  // Watch linked file for completion and sync to pipeline
+  // Watch pipeline for completion - n8n calls update-pipeline-status which updates final_video_output
   useEffect(() => {
-    if (!linkedFile || !generationInitiatedRef.current) return;
+    if (!pipeline || !generationInitiatedRef.current) return;
     
-    if (linkedFile.generation_status === 'completed' && linkedFile.download_url) {
-      // Sync to pipeline
-      updateFinalVideo({
-        output: { 
-          url: linkedFile.download_url, 
-          duration_seconds: audioDuration, 
-          generated_at: new Date().toISOString() 
-        },
-      });
-      
-      // Clean up the temporary file
-      supabase.from('files').delete().eq('id', linkedFile.id).then(() => {
-        queryClient.invalidateQueries({ queryKey: ['pipeline-lipsync-file', pipelineId] });
-      });
-      
+    const currentOutput = pipeline.final_video_output?.url;
+    
+    // Detect when new output arrives
+    if (currentOutput && currentOutput !== prevFinalVideoOutputRef.current) {
       setLocalGenerating(false);
       generationInitiatedRef.current = false;
       toast.success('Lip sync video generated!');
-      queryClient.invalidateQueries({ queryKey: ['pipeline', pipelineId] });
       queryClient.invalidateQueries({ queryKey: ['profile'] });
-    } else if (linkedFile.generation_status === 'failed') {
-      setLocalGenerating(false);
-      generationInitiatedRef.current = false;
-      toast.error(linkedFile.error_message || 'Lip sync generation failed');
     }
-  }, [linkedFile, pipelineId, queryClient, updateFinalVideo, audioDuration]);
+    
+    prevFinalVideoOutputRef.current = currentOutput || null;
+  }, [pipeline?.final_video_output?.url, queryClient]);
 
   const handleGenerate = async () => {
     if (mode === 'upload') {
@@ -170,46 +133,17 @@ export default function LipSyncStage({ pipelineId, onComplete }: LipSyncStagePro
         throw new Error('Session expired. Please log in again.');
       }
 
-      // Create a temporary file record (same as standalone LipSyncModal)
-      const { data: newFile, error: createError } = await supabase
-        .from('files')
-        .insert({
-          name: 'Pipeline Lip Sync',
-          file_type: 'lip_sync',
-          project_id: pipeline?.project_id,
-          status: 'draft',
-          generation_status: 'processing',
-          generation_started_at: new Date().toISOString(),
-          estimated_duration_seconds: Math.max(120, Math.ceil((audioDuration / 8) * 240)),
-          generation_params: { 
-            pipeline_id: pipelineId,
-            is_internal: true,
-            first_frame_url: imageUrl,
-            audio_url: audioUrl,
-            audio_duration: audioDuration,
-          }
-        })
-        .select()
-        .single();
-
-      if (createError || !newFile) {
-        throw new Error('Failed to create file record');
-      }
-
-      // Use 'lip_sync' type like standalone LipSyncModal
+      // Use pipeline_final_video type - n8n routes to update-pipeline-status
       const { data, error } = await supabase.functions.invoke('trigger-generation', {
         body: {
-          type: 'lip_sync',
+          type: 'pipeline_final_video',
           payload: {
-            file_id: newFile.id,
+            pipeline_id: pipelineId,
             user_id: sessionData.session.user.id,
-            project_id: pipeline?.project_id,
-            image_url: imageUrl,
+            first_frame_url: imageUrl,
             audio_url: audioUrl,
-            audio_duration: audioDuration,
-            duration_seconds: audioDuration,
+            audio_duration_seconds: audioDuration,
             resolution: '720p',
-            credits_cost: creditCost,
             supabase_url: import.meta.env.VITE_SUPABASE_URL,
           },
         },
@@ -219,7 +153,6 @@ export default function LipSyncStage({ pipelineId, onComplete }: LipSyncStagePro
       if (!data?.success) throw new Error(data?.error || 'Generation failed');
 
       toast.success('Lip sync generation started!');
-      queryClient.invalidateQueries({ queryKey: ['pipeline-lipsync-file', pipelineId] });
     } catch (error) {
       console.error('Generation error:', error);
       setLocalGenerating(false);

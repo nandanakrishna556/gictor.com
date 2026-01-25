@@ -10,7 +10,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import StageLayout from './StageLayout';
 import { useProfile } from '@/hooks/useProfile';
-import { useQueryClient, useQuery } from '@tanstack/react-query';
+import { useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/contexts/AuthContext';
 
 interface ScriptStageProps {
@@ -94,38 +94,14 @@ export default function ScriptStage({ pipelineId, onContinue }: ScriptStageProps
   const [isRefineMode, setIsRefineMode] = useState(false);
   const [isHumanizing, setIsHumanizing] = useState(false);
   
-  // Generation state
+  // Generation state - watch pipeline status directly
   const [localGenerating, setLocalGenerating] = useState(false);
-  const isLocalGeneratingRef = useRef(false);
   const generationInitiatedRef = useRef(false);
   const initialLoadDone = useRef(false);
-  
-  // Linked file for generation
-  const [linkedFileId, setLinkedFileId] = useState<string | null>(null);
+  const prevScriptOutputRef = useRef<string | null>(null);
 
-  // Fetch linked file for realtime updates
-  const { data: linkedFile } = useQuery({
-    queryKey: ['pipeline-script-file', pipelineId],
-    queryFn: async () => {
-      const { data } = await supabase
-        .from('files')
-        .select('*')
-        .eq('generation_params->>pipeline_id', pipelineId)
-        .eq('file_type', 'script')
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .maybeSingle();
-      return data;
-    },
-    enabled: !!pipelineId,
-    refetchInterval: (query) => {
-      const file = query.state.data;
-      return (localGenerating || file?.generation_status === 'processing') ? 2000 : false;
-    },
-  });
-
-  // Derive from pipeline and linked file
-  const isServerProcessing = linkedFile?.generation_status === 'processing';
+  // Derive from pipeline status
+  const isServerProcessing = pipeline?.status === 'processing';
   const isGenerating = localGenerating || (isServerProcessing && generationInitiatedRef.current);
   const hasOutput = !!pipeline?.script_output?.text;
   const outputScript = pipeline?.script_output;
@@ -151,39 +127,23 @@ export default function ScriptStage({ pipelineId, onContinue }: ScriptStageProps
     }
   }, [pipeline?.script_input]);
 
-  // Watch linked file for completion and sync to pipeline
+  // Watch pipeline for completion - n8n calls update-pipeline-status which updates script_output
   useEffect(() => {
-    if (!linkedFile || !generationInitiatedRef.current) return;
+    if (!pipeline || !generationInitiatedRef.current) return;
     
-    if (linkedFile.generation_status === 'completed' && linkedFile.script_output) {
-      // Sync script output to pipeline
-      updateScript({
-        output: {
-          text: linkedFile.script_output,
-          char_count: linkedFile.script_output.length,
-          estimated_duration: Math.ceil(linkedFile.script_output.length / 17),
-        },
-        complete: true,
-      });
-      
-      // Clean up the temporary file
-      supabase.from('files').delete().eq('id', linkedFile.id).then(() => {
-        queryClient.invalidateQueries({ queryKey: ['pipeline-script-file', pipelineId] });
-      });
-      
+    const currentOutput = pipeline.script_output?.text;
+    
+    // Detect when new output arrives
+    if (currentOutput && currentOutput !== prevScriptOutputRef.current) {
       setLocalGenerating(false);
       setIsHumanizing(false);
       generationInitiatedRef.current = false;
       toast.success('Script generated!');
-      queryClient.invalidateQueries({ queryKey: ['pipeline', pipelineId] });
       queryClient.invalidateQueries({ queryKey: ['profile'] });
-    } else if (linkedFile.generation_status === 'failed') {
-      setLocalGenerating(false);
-      setIsHumanizing(false);
-      generationInitiatedRef.current = false;
-      toast.error(linkedFile.error_message || 'Script generation failed');
     }
-  }, [linkedFile, pipelineId, queryClient, updateScript]);
+    
+    prevScriptOutputRef.current = currentOutput || null;
+  }, [pipeline?.script_output?.text, queryClient]);
 
   // Save input changes
   const saveInput = async () => {
@@ -296,64 +256,27 @@ Example: Dashboard walkthrough for new users. Show: 1) Create project, 2) Add sc
       return;
     }
 
-    isLocalGeneratingRef.current = true;
     generationInitiatedRef.current = true;
     setLocalGenerating(true);
 
     try {
       await saveInput();
 
-      // Create a temporary file record for this generation (same as standalone modal)
-      const { data: newFile, error: createError } = await supabase
-        .from('files')
-        .insert({
-          name: 'Pipeline Script',
-          file_type: 'script',
-          project_id: pipeline?.project_id,
-          status: 'draft',
-          generation_status: 'processing',
-          generation_started_at: new Date().toISOString(),
-          estimated_duration_seconds: 30,
-          generation_params: { 
-            pipeline_id: pipelineId,
-            is_internal: true,
-            script_type: scriptType,
-            perspective,
-            duration_value: durationValue,
-            duration_unit: durationUnit,
-            duration_seconds: durationUnit === 'minutes' ? durationValue * 60 : durationValue,
-            script_format: scriptFormat,
-            prompt,
-            is_refine: isRefineMode,
-            previous_script: isRefineMode ? outputScript?.text : undefined,
-          }
-        })
-        .select()
-        .single();
-
-      if (createError || !newFile) {
-        throw new Error('Failed to create file record');
-      }
-
-      setLinkedFileId(newFile.id);
-
-      // Use the SAME type as ScriptModal - 'script' not 'pipeline_script'
+      // Use pipeline type - n8n routes to update-pipeline-status instead of update-file-status
       const { data, error } = await supabase.functions.invoke('trigger-generation', {
         body: {
-          type: 'script',
+          type: 'pipeline_script',
           payload: {
-            file_id: newFile.id,
+            pipeline_id: pipelineId,
             user_id: user?.id,
-            project_id: pipeline?.project_id,
+            description: prompt,
             script_type: scriptType,
+            script_format: scriptFormat,
             perspective,
             duration_seconds: durationUnit === 'minutes' ? durationValue * 60 : durationValue,
-            script_format: scriptFormat,
-            prompt,
             is_refine: isRefineMode,
             previous_script: isRefineMode ? outputScript?.text : undefined,
             supabase_url: import.meta.env.VITE_SUPABASE_URL,
-            credits_cost: CREDIT_COST,
           },
         },
       });
@@ -364,12 +287,10 @@ Example: Dashboard walkthrough for new users. Show: 1) Create project, 2) Add sc
 
       setIsRefineMode(false);
       toast.success('Script generation started!');
-      queryClient.invalidateQueries({ queryKey: ['pipeline-script-file', pipelineId] });
     } catch (error) {
       console.error('Generation error:', error);
       toast.error(error instanceof Error ? error.message : 'Failed to start generation');
       setLocalGenerating(false);
-      isLocalGeneratingRef.current = false;
       generationInitiatedRef.current = false;
     }
   };
@@ -392,36 +313,12 @@ Example: Dashboard walkthrough for new users. Show: 1) Create project, 2) Add sc
     generationInitiatedRef.current = true;
 
     try {
-      // Create a temporary file for humanization
-      const { data: newFile, error: createError } = await supabase
-        .from('files')
-        .insert({
-          name: 'Pipeline Humanize',
-          file_type: 'script',
-          project_id: pipeline.project_id,
-          status: 'draft',
-          generation_status: 'processing',
-          generation_started_at: new Date().toISOString(),
-          estimated_duration_seconds: 15,
-          generation_params: { 
-            pipeline_id: pipelineId,
-            is_internal: true,
-            is_humanize: true,
-          }
-        })
-        .select()
-        .single();
-
-      if (createError || !newFile) {
-        throw new Error('Failed to create file record');
-      }
-
-      // Use 'humanize' type with file_id
+      // Use pipeline_humanize type - n8n routes to update-pipeline-status
       const { data, error } = await supabase.functions.invoke('trigger-generation', {
         body: {
-          type: 'humanize',
+          type: 'pipeline_humanize',
           payload: {
-            file_id: newFile.id,
+            pipeline_id: pipelineId,
             user_id: user.id,
             script: outputScript.text,
             supabase_url: import.meta.env.VITE_SUPABASE_URL,
@@ -434,7 +331,6 @@ Example: Dashboard walkthrough for new users. Show: 1) Create project, 2) Add sc
       }
 
       toast.success('Humanizing script...');
-      queryClient.invalidateQueries({ queryKey: ['pipeline-script-file', pipelineId] });
     } catch (error) {
       console.error('Humanize error:', error);
       toast.error(error instanceof Error ? error.message : 'Failed to humanize script');
