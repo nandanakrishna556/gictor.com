@@ -345,18 +345,29 @@ Example: Dashboard walkthrough for new users. Show: 1) Create project, 2) Add sc
           estimated_duration: Math.ceil(humanizeFile.script_output.length / 17),
         },
         complete: true,
-      }).then(() => {
+      }).then(async () => {
         toast.success('Script humanized!');
         setIsHumanizing(false);
+        
+        // Clean up temporary file
+        if (humanizeFileId) {
+          await supabase.from('files').delete().eq('id', humanizeFileId);
+        }
         setHumanizeFileId(null);
+        
         queryClient.invalidateQueries({ queryKey: ['pipeline', pipelineId] });
       });
     } else if (humanizeFile.generation_status === 'failed') {
       toast.error('Humanization failed');
       setIsHumanizing(false);
+      
+      // Clean up temporary file on failure too
+      if (humanizeFileId) {
+        supabase.from('files').delete().eq('id', humanizeFileId);
+      }
       setHumanizeFileId(null);
     }
-  }, [humanizeFile, isHumanizing, updateScript, pipelineId, queryClient]);
+  }, [humanizeFile, isHumanizing, updateScript, pipelineId, queryClient, humanizeFileId]);
 
   const handleHumanize = async () => {
     if (!outputScript?.text || !profile || !user || !pipeline) return;
