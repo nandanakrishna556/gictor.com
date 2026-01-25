@@ -58,7 +58,15 @@ export function useFiles(projectId: string, folderId?: string) {
 
       const { data, error } = await query;
       if (error) throw error;
-      return data as File[];
+      
+      // Filter out pipeline-internal files (files with pipeline_id in generation_params)
+      // These are temporary files used for pipeline stage generations
+      const visibleFiles = (data as File[]).filter(file => {
+        const params = file.generation_params as Record<string, unknown> | null;
+        return !params?.pipeline_id;
+      });
+      
+      return visibleFiles;
     },
     enabled: !!projectId,
   });
