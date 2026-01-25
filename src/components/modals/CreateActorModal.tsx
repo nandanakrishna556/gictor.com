@@ -158,76 +158,68 @@ export default function CreateActorModal({ open, onOpenChange }: CreateActorModa
         <div className="p-6">
           {/* STEP 1: Choose Mode */}
           {step === 'choose' && (
-            <div className="space-y-4 animate-fade-in">
-              {/* Credit cost info banner */}
-              <div className="flex items-center justify-center gap-2 py-2 px-4 rounded-xl bg-primary/10 border border-primary/20">
-                <span className="text-sm font-medium text-primary">0.5 credits</span>
-                <span className="text-sm text-muted-foreground">per actor creation</span>
-              </div>
+            <div className="grid grid-cols-2 gap-4 animate-fade-in">
+              {/* Generate AI Actor Card */}
+              <button
+                onClick={() => setStep('generate')}
+                className={cn(
+                  "group relative flex flex-col items-center justify-center",
+                  "p-6 sm:p-8 rounded-2xl",
+                  "bg-gradient-to-b from-background to-muted/50",
+                  "border-2 border-border/60",
+                  "hover:border-primary/50 hover:shadow-2xl hover:shadow-primary/10",
+                  "transition-all duration-300 ease-out",
+                  "hover:-translate-y-1",
+                  "focus:outline-none focus:ring-2 focus:ring-primary/30 focus:ring-offset-2 focus:ring-offset-background"
+                )}
+              >
+                {/* Icon Container */}
+                <div className="flex h-16 w-16 sm:h-20 sm:w-20 items-center justify-center rounded-2xl bg-primary/10 mb-4 group-hover:bg-primary/20 group-hover:scale-105 transition-all duration-300">
+                  <Wand2 className="h-8 w-8 sm:h-10 sm:w-10 text-primary" strokeWidth={1.5} />
+                </div>
+                
+                {/* Text */}
+                <h3 className="font-semibold text-base sm:text-lg text-foreground mb-1">
+                  Generate AI Actor
+                </h3>
+                <p className="text-xs sm:text-sm text-muted-foreground text-center">
+                  AI creates the actor for you
+                </p>
+                
+                {/* Hover Glow */}
+                <div className="absolute inset-0 rounded-2xl bg-gradient-to-t from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
+              </button>
 
-              <div className="grid grid-cols-2 gap-4">
-                {/* Generate AI Actor Card */}
-                <button
-                  onClick={() => setStep('generate')}
-                  className={cn(
-                    "group relative flex flex-col items-center justify-center",
-                    "p-6 sm:p-8 rounded-2xl",
-                    "bg-gradient-to-b from-background to-muted/50",
-                    "border-2 border-border/60",
-                    "hover:border-primary/50 hover:shadow-2xl hover:shadow-primary/10",
-                    "transition-all duration-300 ease-out",
-                    "hover:-translate-y-1",
-                    "focus:outline-none focus:ring-2 focus:ring-primary/30 focus:ring-offset-2 focus:ring-offset-background"
-                  )}
-                >
-                  {/* Icon Container */}
-                  <div className="flex h-16 w-16 sm:h-20 sm:w-20 items-center justify-center rounded-2xl bg-primary/10 mb-4 group-hover:bg-primary/20 group-hover:scale-105 transition-all duration-300">
-                    <Wand2 className="h-8 w-8 sm:h-10 sm:w-10 text-primary" strokeWidth={1.5} />
-                  </div>
-                  
-                  {/* Text */}
-                  <h3 className="font-semibold text-base sm:text-lg text-foreground mb-1">
-                    Generate AI Actor
-                  </h3>
-                  <p className="text-xs sm:text-sm text-muted-foreground text-center">
-                    AI creates the actor for you
-                  </p>
-                  
-                  {/* Hover Glow */}
-                  <div className="absolute inset-0 rounded-2xl bg-gradient-to-t from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
-                </button>
-
-                {/* Upload Your Own Card */}
-                <button
-                  onClick={() => setStep('upload')}
-                  className={cn(
-                    "group relative flex flex-col items-center justify-center",
-                    "p-6 sm:p-8 rounded-2xl",
-                    "bg-gradient-to-b from-background to-muted/50",
-                    "border-2 border-border/60",
-                    "hover:border-primary/50 hover:shadow-2xl hover:shadow-primary/10",
-                    "transition-all duration-300 ease-out",
-                    "hover:-translate-y-1",
-                    "focus:outline-none focus:ring-2 focus:ring-primary/30 focus:ring-offset-2 focus:ring-offset-background"
-                  )}
-                >
-                  {/* Icon Container */}
-                  <div className="flex h-16 w-16 sm:h-20 sm:w-20 items-center justify-center rounded-2xl bg-orange-500/10 mb-4 group-hover:bg-orange-500/20 group-hover:scale-105 transition-all duration-300">
-                    <FolderUp className="h-8 w-8 sm:h-10 sm:w-10 text-orange-500" strokeWidth={1.5} />
-                  </div>
-                  
-                  {/* Text */}
-                  <h3 className="font-semibold text-base sm:text-lg text-foreground mb-1">
-                    Upload Your Own
-                  </h3>
-                  <p className="text-xs sm:text-sm text-muted-foreground text-center">
-                    Use your own media files
-                  </p>
-                  
-                  {/* Hover Glow */}
-                  <div className="absolute inset-0 rounded-2xl bg-gradient-to-t from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
-                </button>
-              </div>
+              {/* Upload Your Own Card */}
+              <button
+                onClick={() => setStep('upload')}
+                className={cn(
+                  "group relative flex flex-col items-center justify-center",
+                  "p-6 sm:p-8 rounded-2xl",
+                  "bg-gradient-to-b from-background to-muted/50",
+                  "border-2 border-border/60",
+                  "hover:border-primary/50 hover:shadow-2xl hover:shadow-primary/10",
+                  "transition-all duration-300 ease-out",
+                  "hover:-translate-y-1",
+                  "focus:outline-none focus:ring-2 focus:ring-primary/30 focus:ring-offset-2 focus:ring-offset-background"
+                )}
+              >
+                {/* Icon Container */}
+                <div className="flex h-16 w-16 sm:h-20 sm:w-20 items-center justify-center rounded-2xl bg-orange-500/10 mb-4 group-hover:bg-orange-500/20 group-hover:scale-105 transition-all duration-300">
+                  <FolderUp className="h-8 w-8 sm:h-10 sm:w-10 text-orange-500" strokeWidth={1.5} />
+                </div>
+                
+                {/* Text */}
+                <h3 className="font-semibold text-base sm:text-lg text-foreground mb-1">
+                  Upload Your Own
+                </h3>
+                <p className="text-xs sm:text-sm text-muted-foreground text-center">
+                  Use your own media files
+                </p>
+                
+                {/* Hover Glow */}
+                <div className="absolute inset-0 rounded-2xl bg-gradient-to-t from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
+              </button>
             </div>
           )}
 
@@ -373,7 +365,7 @@ export default function CreateActorModal({ open, onOpenChange }: CreateActorModa
                       Creating...
                     </>
                   ) : (
-                    'Create Actor • 0.5 credits'
+                    'Create Actor • 1 credit'
                   )}
                 </Button>
               </div>
@@ -504,7 +496,7 @@ export default function CreateActorModal({ open, onOpenChange }: CreateActorModa
                       Creating...
                     </>
                   ) : (
-                    'Create Actor • 0.5 credits'
+                    'Create Actor • 1 credit'
                   )}
                 </Button>
               </div>
