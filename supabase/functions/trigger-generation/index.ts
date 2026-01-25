@@ -433,16 +433,39 @@ serve(async (req) => {
     // Forward request to n8n with the secret API key (server-side only)
     // Include server-calculated cost for downstream status updates
     
-    // Map pipeline_humanize to humanize for n8n compatibility (n8n only knows 'humanize')
-    // Include pipeline_id so the callback knows to update the pipeline
-    let n8nType = validatedBody.type;
-    const isPipelineHumanize = validatedBody.type === 'pipeline_humanize';
-    if (isPipelineHumanize) {
-      n8nType = 'humanize';
-    }
+    // Map pipeline types to their base equivalents for n8n compatibility
+    // n8n only knows 'frame', 'script', 'speech', 'lip_sync', 'humanize' etc.
+    // Pipeline types need to be mapped so the same n8n workflows handle them
+    const pipelineTypeMap: Record<string, string> = {
+      'pipeline_first_frame': 'frame',
+      'pipeline_first_frame_b_roll': 'frame',
+      'pipeline_script': 'script',
+      'pipeline_humanize': 'humanize',
+      'pipeline_speech': 'speech',
+      'pipeline_voice': 'speech',
+      'pipeline_lip_sync': 'lip_sync',
+      'pipeline_final_video': 'lip_sync', // Final video uses lip_sync workflow
+    };
+    
+    const originalType = validatedBody.type;
+    const isPipelineType = originalType.startsWith('pipeline_');
+    const n8nType = pipelineTypeMap[originalType] || originalType;
     
     // Extract pipeline_id if present for explicit inclusion
     const pipelineId = validatedBody.payload?.pipeline_id;
+    
+    // Determine the callback stage name for update-pipeline-status
+    const stageMap: Record<string, string> = {
+      'pipeline_first_frame': 'first_frame',
+      'pipeline_first_frame_b_roll': 'first_frame',
+      'pipeline_script': 'script',
+      'pipeline_humanize': 'humanize',
+      'pipeline_speech': 'speech',
+      'pipeline_voice': 'speech',
+      'pipeline_lip_sync': 'lip_sync',
+      'pipeline_final_video': 'lip_sync',
+    };
+    const callbackStage = stageMap[originalType] || originalType;
     
     const n8nPayload = {
       ...validatedBody,
@@ -451,19 +474,21 @@ serve(async (req) => {
         ...validatedBody.payload,
         user_id: user.id,
         credits_cost: actualCost, // Server-calculated cost for n8n/status updates
-        // For pipeline humanize, explicitly include pipeline_id and is_pipeline flag for callback routing
-        ...(isPipelineHumanize && { 
+        // For ALL pipeline types, include routing info for callbacks
+        ...(isPipelineType && { 
           is_pipeline: true,
-          pipeline_id: pipelineId, // Ensure pipeline_id is explicitly included
+          pipeline_id: pipelineId,
+          callback_stage: callbackStage, // Tell n8n which stage to report back as
         }),
       }
     };
 
     console.log('Forwarding to n8n:', { 
-      originalType: validatedBody.type, 
+      originalType,
       mappedType: n8nType,
-      isPipelineHumanize,
+      isPipelineType,
       pipelineId: pipelineId || 'none',
+      callbackStage: isPipelineType ? callbackStage : 'n/a',
     });
 
     const controller = new AbortController();
