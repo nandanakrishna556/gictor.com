@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
-import { Upload, Download, X, Video, AlertCircle } from 'lucide-react';
+import { Upload, Play, Pause, Download, X, Loader2, Video, AlertCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { usePipeline } from '@/hooks/usePipeline';
 import { useProfile } from '@/hooks/useProfile';
@@ -9,9 +9,11 @@ import { toast } from 'sonner';
 import StageLayout from './StageLayout';
 import { uploadToR2, validateFile } from '@/lib/cloudflare-upload';
 import { supabase } from '@/integrations/supabase/client';
+import { SingleImageUpload } from '@/components/ui/single-image-upload';
+import { VideoPlayer } from '@/components/ui/video-player';
+import { AudioPlayer } from '@/components/ui/audio-player';
 import { InputModeToggle, InputMode } from '@/components/ui/input-mode-toggle';
 import { useQueryClient } from '@tanstack/react-query';
-import { useAuth } from '@/contexts/AuthContext';
 
 interface LipSyncStageProps {
   pipelineId: string;
@@ -26,7 +28,6 @@ const MIN_CREDIT_COST = 0.15;
 export default function LipSyncStage({ pipelineId, onComplete }: LipSyncStageProps) {
   const { pipeline, updateFinalVideo, isUpdating } = usePipeline(pipelineId);
   const { profile } = useProfile();
-  const { user } = useAuth();
   const queryClient = useQueryClient();
   
   // Input mode
@@ -44,17 +45,12 @@ export default function LipSyncStage({ pipelineId, onComplete }: LipSyncStagePro
   const [isUploadingVideo, setIsUploadingVideo] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   
-  // Generation state - watch pipeline status directly
-  const [localGenerating, setLocalGenerating] = useState(false);
-  const generationInitiatedRef = useRef(false);
-  const prevFinalVideoOutputRef = useRef<string | null>(null);
+  // Generation state
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [generationProgress, setGenerationProgress] = useState(0);
 
   // Calculate credit cost
   const creditCost = Math.max(MIN_CREDIT_COST, Math.ceil(audioDuration * CREDIT_COST_PER_SECOND * 100) / 100);
-
-  // Derive generating state from pipeline
-  const isServerProcessing = pipeline?.status === 'processing';
-  const isGenerating = localGenerating || (isServerProcessing && generationInitiatedRef.current);
 
   // Load existing data from pipeline
   useEffect(() => {
@@ -68,25 +64,27 @@ export default function LipSyncStage({ pipelineId, onComplete }: LipSyncStagePro
         setAudioUrl(pipeline.voice_output.url);
         setAudioDuration(pipeline.voice_output.duration_seconds || 0);
       }
+      // Check generation status
+      if (pipeline.status === 'processing') {
+        setIsGenerating(true);
+      }
     }
   }, [pipeline]);
 
-  // Watch pipeline for completion - n8n calls update-pipeline-status which updates final_video_output
+  // Poll for completion
   useEffect(() => {
-    if (!pipeline || !generationInitiatedRef.current) return;
-    
-    const currentOutput = pipeline.final_video_output?.url;
-    
-    // Detect when new output arrives
-    if (currentOutput && currentOutput !== prevFinalVideoOutputRef.current) {
-      setLocalGenerating(false);
-      generationInitiatedRef.current = false;
-      toast.success('Lip sync video generated!');
-      queryClient.invalidateQueries({ queryKey: ['profile'] });
+    if (isGenerating && pipeline) {
+      if (pipeline.status === 'completed' && pipeline.final_video_output?.url) {
+        setIsGenerating(false);
+        setGenerationProgress(100);
+        toast.success('Lip sync video generated!');
+      } else if (pipeline.status === 'failed') {
+        setIsGenerating(false);
+        setGenerationProgress(0);
+        toast.error('Generation failed');
+      }
     }
-    
-    prevFinalVideoOutputRef.current = currentOutput || null;
-  }, [pipeline?.final_video_output?.url, queryClient]);
+  }, [pipeline, isGenerating]);
 
   const handleGenerate = async () => {
     if (mode === 'upload') {
@@ -124,8 +122,8 @@ export default function LipSyncStage({ pipelineId, onComplete }: LipSyncStagePro
       return;
     }
 
-    setLocalGenerating(true);
-    generationInitiatedRef.current = true;
+    setIsGenerating(true);
+    setGenerationProgress(0);
 
     try {
       const { data: sessionData, error: sessionError } = await supabase.auth.refreshSession();
@@ -133,54 +131,47 @@ export default function LipSyncStage({ pipelineId, onComplete }: LipSyncStagePro
         throw new Error('Session expired. Please log in again.');
       }
 
-      // Create internal file for n8n to process (n8n expects file_id)
-      const { data: internalFile, error: fileError } = await supabase
-        .from('files')
-        .insert({
-          project_id: pipeline?.project_id,
-          name: `${pipeline?.name || 'Pipeline'} - Lip Sync`,
-          file_type: 'lip_sync',
-          generation_status: 'processing',
-          generation_params: {
-            pipeline_id: pipelineId,
-            is_internal: true,
-            stage: 'lip_sync',
-          },
-        })
-        .select()
-        .single();
+      // Calculate estimated duration
+      const estimatedDuration = Math.max(120, Math.ceil((audioDuration / 8) * 240));
 
-      if (fileError || !internalFile) {
-        throw new Error('Failed to create internal file');
-      }
-
-      // Use standard 'lip_sync' type - n8n processes it, update-file-status syncs back to pipeline
-      const { data, error } = await supabase.functions.invoke('trigger-generation', {
-        body: {
-          type: 'lip_sync',
-          payload: {
-            file_id: internalFile.id,
-            user_id: sessionData.session.user.id,
-            image_url: imageUrl,
+      // Update pipeline status
+      await supabase
+        .from('pipelines')
+        .update({
+          status: 'processing',
+          final_video_input: {
+            first_frame_url: imageUrl,
             audio_url: audioUrl,
             audio_duration: audioDuration,
-            resolution: '720p',
-            supabase_url: import.meta.env.VITE_SUPABASE_URL,
           },
+        })
+        .eq('id', pipelineId);
+
+      // Prepare payload for edge function
+      const requestPayload = {
+        type: 'pipeline_lip_sync',
+        payload: {
+          pipeline_id: pipelineId,
+          user_id: sessionData.session.user.id,
+          image_url: imageUrl,
+          audio_url: audioUrl,
+          audio_duration: audioDuration,
+          credits_cost: creditCost,
         },
+      };
+
+      const { data, error } = await supabase.functions.invoke('trigger-generation', {
+        body: requestPayload,
       });
 
-      if (error || !data?.success) {
-        // Clean up internal file on failure
-        await supabase.from('files').delete().eq('id', internalFile.id);
-        throw new Error(error?.message || data?.error || 'Generation failed');
-      }
+      if (error) throw error;
+      if (!data?.success) throw new Error(data?.error || 'Generation failed');
 
       toast.success('Lip sync generation started!');
+      queryClient.invalidateQueries({ queryKey: ['profile'] });
     } catch (error) {
       console.error('Generation error:', error);
-      setLocalGenerating(false);
-      generationInitiatedRef.current = false;
+      setIsGenerating(false);
       toast.error('Failed to start generation');
     }
   };

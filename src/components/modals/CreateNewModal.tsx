@@ -48,18 +48,21 @@ const workflows = [
     icon: Video,
     title: 'Talking Head',
     description: 'Create talking head video',
+    comingSoon: true,
   },
   {
     id: 'b_roll' as WorkflowType,
     icon: Film,
     title: 'B-Roll',
     description: 'Generate video clips',
+    comingSoon: true,
   },
   {
     id: 'motion_graphics' as WorkflowType,
     icon: Sparkles,
     title: 'Motion Graphics',
     description: 'Generate motion graphics',
+    comingSoon: true,
   },
 ];
 
@@ -324,7 +327,7 @@ export default function CreateNewModal({
           </DialogHeader>
 
           <div className="flex-1 overflow-y-auto p-6 space-y-6">
-            {/* Workflows Section */}
+            {/* Workflows Section - Temporarily hidden, uncomment to re-enable
             <div>
               <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-4">
                 Workflows
@@ -366,6 +369,7 @@ export default function CreateNewModal({
             </div>
 
             <div className="border-t border-border" />
+            */}
 
             {/* Elements Section */}
             <div>

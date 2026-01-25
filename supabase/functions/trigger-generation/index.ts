@@ -74,12 +74,10 @@ function calculateServerSideCost(type: string, payload: Record<string, unknown>)
       return CREDIT_COSTS.first_frame;
     
     case 'pipeline_script':
-    case 'pipeline_humanize':
       return CREDIT_COSTS.script;
     
     case 'pipeline_voice':
-    case 'pipeline_speech':
-      const charCount = (payload.char_count as number) || (payload.script_text as string)?.length || (payload.script as string)?.length || 0;
+      const charCount = (payload.char_count as number) || (payload.script_text as string)?.length || 0;
       return Math.ceil(charCount / 1000) * CREDIT_COSTS.voice_per_1000_chars;
     
     case 'pipeline_final_video':
@@ -137,16 +135,12 @@ const PipelinePayloadSchema = z.object({
   type: z.enum([
     'pipeline_first_frame', 
     'pipeline_first_frame_b_roll', 
-    'pipeline_script',
-    'pipeline_humanize',
-    'pipeline_voice',
-    'pipeline_speech',
-    'pipeline_final_video',
-    'pipeline_lip_sync'
+    'pipeline_script', 
+    'pipeline_voice', 
+    'pipeline_final_video'
   ]),
   payload: z.object({
     pipeline_id: z.string().uuid(),
-    user_id: z.string().uuid().optional(),
     prompt: z.string().max(2000).optional(),
     image_type: z.enum(['ugc', 'studio']).optional(),
     aspect_ratio: z.string().optional(),
@@ -155,7 +149,7 @@ const PipelinePayloadSchema = z.object({
     description: z.string().max(2000).optional(),
     script_type: z.string().optional(),
     duration_seconds: z.number().positive().max(1800).optional(),
-    previous_script: z.string().max(50000).optional(),
+    previous_script: z.string().max(10000).optional(),
     script_text: z.string().max(10000).optional(),
     voice_id: z.string().optional(),
     voice_settings: z.object({
@@ -164,31 +158,15 @@ const PipelinePayloadSchema = z.object({
       speed: z.number().min(0.5).max(2).optional(),
     }).optional(),
     char_count: z.number().optional(),
-    script: z.string().max(10000).optional(),
-    actor_voice_url: z.string().url().optional(),
     first_frame_url: z.string().url().optional(),
     audio_url: z.string().url().optional(),
     audio_duration_seconds: z.number().positive().max(300).optional(),
     resolution: z.string().optional(),
     pipeline_type: z.string().optional(),
-    // Frame generation fields
-    frame_type: z.enum(['first', 'last']).optional(),
-    style: z.enum(['talking_head', 'broll', 'motion_graphics']).optional(),
-    substyle: z.enum(['ugc', 'studio']).nullable().optional(),
-    actor_id: z.string().uuid().nullable().optional(),
-    actor_360_url: z.string().url().nullable().optional(),
-    camera_perspective: z.enum(['1st_person', '3rd_person']).nullable().optional(),
-    frame_resolution: z.enum(['1K', '2K', '4K']).optional(),
-    // Script generation fields
-    script_format: z.enum(['demo', 'listicle', 'problem-solution', 'educational', 'comparison', 'promotional', 'vsl']).optional(),
-    perspective: z.enum(['mixed', '1st', '2nd', '3rd']).optional(),
-    is_refine: z.boolean().optional(),
     // Motion settings for B-Roll
     motion_prompt: z.string().max(2000).optional(),
     camera_motion: z.string().optional(),
     motion_intensity: z.number().min(0).max(100).optional(),
-    // Supabase URL for callbacks
-    supabase_url: z.string().url().optional(),
   }),
 });
 
@@ -447,64 +425,16 @@ serve(async (req) => {
 
     // Forward request to n8n with the secret API key (server-side only)
     // Include server-calculated cost for downstream status updates
-    
-    // Map pipeline types to their base equivalents for n8n compatibility
-    // n8n only knows 'frame', 'script', 'speech', 'lip_sync', 'humanize' etc.
-    // Pipeline types need to be mapped so the same n8n workflows handle them
-    const pipelineTypeMap: Record<string, string> = {
-      'pipeline_first_frame': 'frame',
-      'pipeline_first_frame_b_roll': 'frame',
-      'pipeline_script': 'script',
-      'pipeline_humanize': 'humanize',
-      'pipeline_speech': 'speech',
-      'pipeline_voice': 'speech',
-      'pipeline_lip_sync': 'lip_sync',
-      'pipeline_final_video': 'lip_sync', // Final video uses lip_sync workflow
-    };
-    
-    const originalType = validatedBody.type;
-    const isPipelineType = originalType.startsWith('pipeline_');
-    const n8nType = pipelineTypeMap[originalType] || originalType;
-    
-    // Extract pipeline_id if present for explicit inclusion
-    const pipelineId = validatedBody.payload?.pipeline_id;
-    
-    // Determine the callback stage name for update-pipeline-status
-    const stageMap: Record<string, string> = {
-      'pipeline_first_frame': 'first_frame',
-      'pipeline_first_frame_b_roll': 'first_frame',
-      'pipeline_script': 'script',
-      'pipeline_humanize': 'humanize',
-      'pipeline_speech': 'speech',
-      'pipeline_voice': 'speech',
-      'pipeline_lip_sync': 'lip_sync',
-      'pipeline_final_video': 'lip_sync',
-    };
-    const callbackStage = stageMap[originalType] || originalType;
-    
     const n8nPayload = {
       ...validatedBody,
-      type: n8nType,
       payload: {
         ...validatedBody.payload,
         user_id: user.id,
         credits_cost: actualCost, // Server-calculated cost for n8n/status updates
-        // For ALL pipeline types, include routing info for callbacks
-        ...(isPipelineType && { 
-          is_pipeline: true,
-          pipeline_id: pipelineId,
-          callback_stage: callbackStage, // Tell n8n which stage to report back as
-        }),
       }
     };
 
-    console.log('Forwarding to n8n:', { 
-      originalType,
-      mappedType: n8nType,
-      isPipelineType,
-      pipelineId: pipelineId || 'none',
-      callbackStage: isPipelineType ? callbackStage : 'n/a',
-    });
+    console.log('Forwarding to n8n:', { type: validatedBody.type });
 
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout

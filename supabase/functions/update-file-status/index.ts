@@ -53,12 +53,11 @@ function checkRateLimit(identifier: string): { allowed: boolean; remaining: numb
 
 // ============= Input Validation Schemas =============
 const PipelineUpdateSchema = z.object({
-  type: z.enum(['pipeline_first_frame', 'pipeline_first_frame_b_roll', 'pipeline_script', 'pipeline_humanize', 'pipeline_voice', 'pipeline_speech', 'pipeline_final_video']),
+  type: z.enum(['pipeline_first_frame', 'pipeline_first_frame_b_roll', 'pipeline_script', 'pipeline_voice', 'pipeline_final_video']),
   pipeline_id: z.string().uuid(),
   status: z.enum(['completed', 'failed', 'processing']).optional(),
   output: z.object({
-    url: z.string().url().optional(),
-    text: z.string().max(50000).optional(),
+    url: z.string().url(),
     duration_seconds: z.number().optional(),
   }).optional(),
   error_message: z.string().max(1000).optional(),
@@ -67,10 +66,7 @@ const PipelineUpdateSchema = z.object({
 });
 
 const FileUpdateSchema = z.object({
-  file_id: z.string().uuid().optional(), // Optional for pipeline updates
-  pipeline_id: z.string().uuid().optional(), // For pipeline routing
-  is_pipeline: z.boolean().optional(), // Flag from trigger-generation
-  callback_stage: z.string().optional(), // Stage name for pipeline updates (first_frame, script, speech, lip_sync)
+  file_id: z.string().uuid(),
   status: z.enum(['completed', 'failed', 'processing']),
   generation_status: z.enum(['completed', 'failed', 'processing']).optional(),
   progress: z.number().min(0).max(100).optional(),
@@ -81,7 +77,6 @@ const FileUpdateSchema = z.object({
   metadata: z.record(z.unknown()).optional(),
   user_id: z.string().uuid().optional(),
   credits_cost: z.number().positive().optional(),
-  duration_seconds: z.number().optional(), // For audio/video duration
 });
 
 type PipelineUpdateInput = z.infer<typeof PipelineUpdateSchema>;
@@ -130,17 +125,9 @@ serve(async (req) => {
     }
 
     const body = await req.json();
-    const { type, pipeline_id, is_pipeline, file_id, script_output, status } = body;
+    const { type } = body;
 
-    console.log('Received update request:', { 
-      type, 
-      pipeline_id: pipeline_id || 'none',
-      is_pipeline: is_pipeline || false,
-      file_id: file_id || 'none',
-      hasScriptOutput: !!script_output,
-      status,
-      ip: clientIP 
-    });
+    console.log('Received update request:', { type, ip: clientIP });
 
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
@@ -217,36 +204,28 @@ async function handlePipelineUpdate(
       break;
 
     case 'pipeline_script':
-    case 'pipeline_humanize':
       if (status === 'completed' && output) {
-        // Script output can be either { text: string } or { url: string } depending on generation type
         updates.script_output = output;
         updates.script_complete = true;
-        updates.status = 'draft'; // Reset status after script generation completes
       } else if (status === 'failed') {
         updates.script_output = null;
-        updates.status = 'draft'; // Reset status on failure
         if (user_id && credits_cost) {
-          await refundCredits(supabase, user_id, credits_cost, type === 'pipeline_humanize' ? 'humanize' : 'script', pipeline_id);
+          await refundCredits(supabase, user_id, credits_cost, 'script', pipeline_id);
         }
       }
       break;
 
     case 'pipeline_voice':
-    case 'pipeline_speech':
       if (status === 'completed' && output) {
         updates.voice_output = output;
         updates.voice_complete = true;
-        updates.status = 'draft';
       } else if (status === 'failed') {
         updates.voice_output = null;
-        updates.status = 'draft';
         if (user_id && credits_cost) {
           await refundCredits(supabase, user_id, credits_cost, 'voice', pipeline_id);
         }
       }
       break;
-
 
     case 'pipeline_final_video':
       if (status === 'completed' && output) {
@@ -333,149 +312,7 @@ async function handleFileUpdate(
   corsHeaders: Record<string, string>,
   remaining: number
 ) {
-  const { file_id, pipeline_id, is_pipeline, callback_stage, status, progress, preview_url, download_url, script_output, error_message, metadata, user_id, credits_cost, duration_seconds } = body;
-
-  // Route to pipeline update if this is a pipeline request (has is_pipeline flag or pipeline_id without file_id)
-  if (pipeline_id && (is_pipeline || !file_id)) {
-    const stage = callback_stage || 'humanize'; // Default to humanize for backwards compatibility
-    console.log('Routing to pipeline update:', { pipeline_id, stage, status });
-    
-    // deno-lint-ignore no-explicit-any
-    const pipelineUpdates: Record<string, any> = {
-      updated_at: new Date().toISOString(),
-    };
-    
-    if (status === 'completed') {
-      // Route update based on stage
-      switch (stage) {
-        case 'first_frame':
-          if (preview_url || download_url) {
-            pipelineUpdates.first_frame_output = {
-              url: preview_url || download_url,
-              generated_at: new Date().toISOString(),
-            };
-            pipelineUpdates.first_frame_complete = true;
-          }
-          break;
-          
-        case 'script':
-        case 'humanize':
-          if (script_output) {
-            pipelineUpdates.script_output = {
-              text: script_output,
-              char_count: script_output.length,
-              estimated_duration: Math.ceil(script_output.length / 17),
-              generated_at: new Date().toISOString(),
-            };
-            pipelineUpdates.script_complete = true;
-          }
-          break;
-          
-        case 'speech':
-        case 'voice':
-          if (preview_url || download_url) {
-            pipelineUpdates.voice_output = {
-              url: preview_url || download_url,
-              duration_seconds: duration_seconds || null,
-              generated_at: new Date().toISOString(),
-            };
-            pipelineUpdates.voice_complete = true;
-          }
-          break;
-          
-        case 'lip_sync':
-        case 'final_video':
-          if (preview_url || download_url) {
-            pipelineUpdates.final_video_output = {
-              url: preview_url || download_url,
-              duration_seconds: duration_seconds || null,
-              generated_at: new Date().toISOString(),
-            };
-            pipelineUpdates.status = 'completed';
-            
-            // Create output file for final video
-            const { data: pipeline } = await supabase
-              .from('pipelines')
-              .select('project_id, folder_id, name, tags, pipeline_type')
-              .eq('id', pipeline_id)
-              .single();
-
-            if (pipeline) {
-              const { data: file } = await supabase
-                .from('files')
-                .insert({
-                  project_id: pipeline.project_id,
-                  folder_id: pipeline.folder_id,
-                  name: pipeline.name,
-                  file_type: pipeline.pipeline_type || 'talking_head',
-                  status: 'completed',
-                  tags: pipeline.tags,
-                  preview_url: preview_url || download_url,
-                  download_url: download_url || preview_url,
-                  metadata: { pipeline_id, duration: duration_seconds },
-                  progress: 100,
-                })
-                .select()
-                .single();
-
-              if (file) {
-                pipelineUpdates.output_file_id = file.id;
-                console.log('Created output file:', file.id);
-              }
-            }
-          }
-          break;
-          
-        default:
-          console.warn('Unknown pipeline stage:', stage);
-      }
-      
-      // Reset status to draft after completion (except for final video)
-      if (stage !== 'lip_sync' && stage !== 'final_video') {
-        pipelineUpdates.status = 'draft';
-      }
-    } else if (status === 'failed') {
-      pipelineUpdates.status = 'draft';
-      if (user_id && credits_cost) {
-        await refundCredits(supabase, user_id, credits_cost, stage, pipeline_id);
-      }
-    }
-    
-    const { error } = await supabase
-      .from('pipelines')
-      .update(pipelineUpdates)
-      .eq('id', pipeline_id);
-    
-    if (error) {
-      console.error('Pipeline update error:', error);
-      return new Response(
-        JSON.stringify({ success: false, error: 'Failed to update pipeline', details: error.message }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-    
-    console.log('Pipeline updated successfully:', { pipeline_id, stage, updates: Object.keys(pipelineUpdates) });
-    
-    return new Response(
-      JSON.stringify({ success: true, pipeline_id, stage, status }),
-      { 
-        status: 200, 
-        headers: { 
-          ...corsHeaders, 
-          'Content-Type': 'application/json',
-          'X-RateLimit-Remaining': String(remaining),
-        } 
-      }
-    );
-  }
-
-  // Regular file update
-  if (!file_id) {
-    return new Response(
-      JSON.stringify({ success: false, error: 'Missing file_id or pipeline_id' }),
-      { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
-  }
+  const { file_id, status, generation_status, progress, preview_url, download_url, script_output, error_message, metadata, user_id, credits_cost } = body;
 
   // deno-lint-ignore no-explicit-any
   const updateData: Record<string, any> = {
@@ -497,7 +334,7 @@ async function handleFileUpdate(
     updateData.metadata = metadata || {};
     updateData.progress = 0;
     
-    if (user_id && credits_cost && file_id) {
+    if (user_id && credits_cost) {
       await refundCredits(supabase, user_id, credits_cost, 'file', file_id);
     }
   }
@@ -518,127 +355,6 @@ async function handleFileUpdate(
   }
 
   console.log('File updated successfully:', file_id);
-
-  // Check if this file is linked to a pipeline and sync results back
-  const { data: fileData } = await supabase
-    .from('files')
-    .select('generation_params, file_type')
-    .eq('id', file_id)
-    .single();
-
-  if (fileData?.generation_params?.pipeline_id && fileData.generation_params.is_internal) {
-    const pipelineId = fileData.generation_params.pipeline_id;
-    const stage = fileData.generation_params.stage || fileData.file_type;
-    
-    console.log('Syncing to pipeline:', { pipelineId, stage, status });
-    
-    // deno-lint-ignore no-explicit-any
-    const pipelineUpdates: Record<string, any> = {
-      updated_at: new Date().toISOString(),
-    };
-    
-    if (status === 'completed') {
-      switch (stage) {
-        case 'frame':
-        case 'first_frame':
-          if (preview_url || download_url) {
-            pipelineUpdates.first_frame_output = {
-              url: preview_url || download_url,
-              generated_at: new Date().toISOString(),
-            };
-            pipelineUpdates.first_frame_complete = true;
-          }
-          break;
-          
-        case 'script':
-        case 'humanize':
-          if (script_output) {
-            pipelineUpdates.script_output = {
-              text: script_output,
-              char_count: script_output.length,
-              estimated_duration: Math.ceil(script_output.length / 17),
-              generated_at: new Date().toISOString(),
-            };
-            pipelineUpdates.script_complete = true;
-          }
-          break;
-          
-        case 'speech':
-          if (preview_url || download_url) {
-            pipelineUpdates.voice_output = {
-              url: preview_url || download_url,
-              duration_seconds: duration_seconds || null,
-              generated_at: new Date().toISOString(),
-            };
-            pipelineUpdates.voice_complete = true;
-          }
-          break;
-          
-        case 'lip_sync':
-          if (preview_url || download_url) {
-            pipelineUpdates.final_video_output = {
-              url: preview_url || download_url,
-              duration_seconds: duration_seconds || null,
-              generated_at: new Date().toISOString(),
-            };
-            pipelineUpdates.status = 'completed';
-            
-            // Create output file for final video
-            const { data: pipelineData } = await supabase
-              .from('pipelines')
-              .select('project_id, folder_id, name, tags, pipeline_type')
-              .eq('id', pipelineId)
-              .single();
-
-            if (pipelineData) {
-              const { data: outputFile } = await supabase
-                .from('files')
-                .insert({
-                  project_id: pipelineData.project_id,
-                  folder_id: pipelineData.folder_id,
-                  name: pipelineData.name,
-                  file_type: pipelineData.pipeline_type || 'talking_head',
-                  status: 'completed',
-                  tags: pipelineData.tags,
-                  preview_url: preview_url || download_url,
-                  download_url: download_url || preview_url,
-                  metadata: { pipeline_id: pipelineId, duration: duration_seconds },
-                  progress: 100,
-                })
-                .select()
-                .single();
-
-              if (outputFile) {
-                pipelineUpdates.output_file_id = outputFile.id;
-                console.log('Created output file:', outputFile.id);
-              }
-            }
-          }
-          break;
-      }
-      
-      // Reset status to draft after completion (except for final video)
-      if (stage !== 'lip_sync') {
-        pipelineUpdates.status = 'draft';
-      }
-    } else if (status === 'failed') {
-      pipelineUpdates.status = 'draft';
-      if (user_id && credits_cost) {
-        await refundCredits(supabase, user_id, credits_cost, stage, pipelineId);
-      }
-    }
-    
-    const { error: pipelineError } = await supabase
-      .from('pipelines')
-      .update(pipelineUpdates)
-      .eq('id', pipelineId);
-    
-    if (pipelineError) {
-      console.error('Pipeline sync error:', pipelineError);
-    } else {
-      console.log('Pipeline synced:', { pipelineId, stage, updates: Object.keys(pipelineUpdates) });
-    }
-  }
 
   return new Response(
     JSON.stringify({ success: true, file_id, status }),
