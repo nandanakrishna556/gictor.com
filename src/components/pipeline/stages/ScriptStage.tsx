@@ -97,13 +97,35 @@ export default function ScriptStage({ pipelineId, onContinue }: ScriptStageProps
   // Generation state
   const [localGenerating, setLocalGenerating] = useState(false);
   const isLocalGeneratingRef = useRef(false);
-  const prevStatusRef = useRef<string | null>(null);
-  const toastShownRef = useRef<string | null>(null);
   const generationInitiatedRef = useRef(false);
   const initialLoadDone = useRef(false);
+  
+  // Linked file for generation
+  const [linkedFileId, setLinkedFileId] = useState<string | null>(null);
 
-  // Derive from pipeline
-  const isServerProcessing = pipeline?.status === 'processing' && pipeline?.current_stage === 'script';
+  // Fetch linked file for realtime updates
+  const { data: linkedFile } = useQuery({
+    queryKey: ['pipeline-script-file', pipelineId],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('files')
+        .select('*')
+        .eq('generation_params->>pipeline_id', pipelineId)
+        .eq('file_type', 'script')
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      return data;
+    },
+    enabled: !!pipelineId,
+    refetchInterval: (query) => {
+      const file = query.state.data;
+      return (localGenerating || file?.generation_status === 'processing') ? 2000 : false;
+    },
+  });
+
+  // Derive from pipeline and linked file
+  const isServerProcessing = linkedFile?.generation_status === 'processing';
   const isGenerating = localGenerating || (isServerProcessing && generationInitiatedRef.current);
   const hasOutput = !!pipeline?.script_output?.text;
   const outputScript = pipeline?.script_output;
@@ -127,40 +149,41 @@ export default function ScriptStage({ pipelineId, onContinue }: ScriptStageProps
       setPrompt(input.prompt || '');
       setPastedScript(input.pasted_script || '');
     }
-    
-    if (prevStatusRef.current === null && pipeline) {
-      prevStatusRef.current = pipeline.status;
-      if (hasOutput) {
-        toastShownRef.current = pipelineId;
-      }
-    }
-  }, [pipeline?.script_input, pipeline?.status, hasOutput, pipelineId]);
+  }, [pipeline?.script_input]);
 
-  // Handle status transitions
+  // Watch linked file for completion and sync to pipeline
   useEffect(() => {
-    if (!pipeline) return;
+    if (!linkedFile || !generationInitiatedRef.current) return;
     
-    const currentStatus = pipeline.status;
-    const prevStatus = prevStatusRef.current;
-    
-    if (generationInitiatedRef.current && currentStatus === 'processing') {
-      isLocalGeneratingRef.current = false;
-      setLocalGenerating(false);
-    }
-    
-    if (generationInitiatedRef.current && prevStatus === 'processing' && currentStatus !== 'processing' && pipeline.script_output?.text) {
-      if (toastShownRef.current !== pipelineId) {
-        toastShownRef.current = pipelineId;
-        toast.success('Script generated!');
-        queryClient.invalidateQueries({ queryKey: ['pipeline', pipelineId] });
-      }
+    if (linkedFile.generation_status === 'completed' && linkedFile.script_output) {
+      // Sync script output to pipeline
+      updateScript({
+        output: {
+          text: linkedFile.script_output,
+          char_count: linkedFile.script_output.length,
+          estimated_duration: Math.ceil(linkedFile.script_output.length / 17),
+        },
+        complete: true,
+      });
+      
+      // Clean up the temporary file
+      supabase.from('files').delete().eq('id', linkedFile.id).then(() => {
+        queryClient.invalidateQueries({ queryKey: ['pipeline-script-file', pipelineId] });
+      });
+      
       setLocalGenerating(false);
       setIsHumanizing(false);
       generationInitiatedRef.current = false;
+      toast.success('Script generated!');
+      queryClient.invalidateQueries({ queryKey: ['pipeline', pipelineId] });
+      queryClient.invalidateQueries({ queryKey: ['profile'] });
+    } else if (linkedFile.generation_status === 'failed') {
+      setLocalGenerating(false);
+      setIsHumanizing(false);
+      generationInitiatedRef.current = false;
+      toast.error(linkedFile.error_message || 'Script generation failed');
     }
-    
-    prevStatusRef.current = currentStatus;
-  }, [pipeline, pipelineId, queryClient]);
+  }, [linkedFile, pipelineId, queryClient, updateScript]);
 
   // Save input changes
   const saveInput = async () => {
@@ -280,30 +303,47 @@ Example: Dashboard walkthrough for new users. Show: 1) Create project, 2) Add sc
     try {
       await saveInput();
 
-      // Set pipeline status to processing BEFORE triggering generation
-      await supabase
-        .from('pipelines')
-        .update({ status: 'processing', current_stage: 'script' })
-        .eq('id', pipelineId);
-
-      // Also sync linked file to show processing in project grid
-      const { data: linkedFiles } = await supabase
+      // Create a temporary file record for this generation (same as standalone modal)
+      const { data: newFile, error: createError } = await supabase
         .from('files')
-        .select('id')
-        .eq('generation_params->>pipeline_id', pipelineId);
+        .insert({
+          name: 'Pipeline Script',
+          file_type: 'script',
+          project_id: pipeline?.project_id,
+          status: 'draft',
+          generation_status: 'processing',
+          generation_started_at: new Date().toISOString(),
+          estimated_duration_seconds: 30,
+          generation_params: { 
+            pipeline_id: pipelineId,
+            script_type: scriptType,
+            perspective,
+            duration_value: durationValue,
+            duration_unit: durationUnit,
+            duration_seconds: durationUnit === 'minutes' ? durationValue * 60 : durationValue,
+            script_format: scriptFormat,
+            prompt,
+            is_refine: isRefineMode,
+            previous_script: isRefineMode ? outputScript?.text : undefined,
+          }
+        })
+        .select()
+        .single();
 
-      if (linkedFiles && linkedFiles.length > 0) {
-        await supabase
-          .from('files')
-          .update({ generation_status: 'processing' })
-          .eq('id', linkedFiles[0].id);
+      if (createError || !newFile) {
+        throw new Error('Failed to create file record');
       }
 
+      setLinkedFileId(newFile.id);
+
+      // Use the SAME type as ScriptModal - 'script' not 'pipeline_script'
       const { data, error } = await supabase.functions.invoke('trigger-generation', {
         body: {
-          type: 'pipeline_script',
+          type: 'script',
           payload: {
-            pipeline_id: pipelineId,
+            file_id: newFile.id,
+            user_id: user?.id,
+            project_id: pipeline?.project_id,
             script_type: scriptType,
             perspective,
             duration_seconds: durationUnit === 'minutes' ? durationValue * 60 : durationValue,
@@ -312,6 +352,7 @@ Example: Dashboard walkthrough for new users. Show: 1) Create project, 2) Add sc
             is_refine: isRefineMode,
             previous_script: isRefineMode ? outputScript?.text : undefined,
             supabase_url: import.meta.env.VITE_SUPABASE_URL,
+            credits_cost: CREDIT_COST,
           },
         },
       });
@@ -322,50 +363,15 @@ Example: Dashboard walkthrough for new users. Show: 1) Create project, 2) Add sc
 
       setIsRefineMode(false);
       toast.success('Script generation started!');
-      queryClient.invalidateQueries({ queryKey: ['profile'] });
+      queryClient.invalidateQueries({ queryKey: ['pipeline-script-file', pipelineId] });
     } catch (error) {
       console.error('Generation error:', error);
       toast.error(error instanceof Error ? error.message : 'Failed to start generation');
       setLocalGenerating(false);
       isLocalGeneratingRef.current = false;
-      // Reset pipeline status on error
-      await supabase
-        .from('pipelines')
-        .update({ status: 'draft' })
-        .eq('id', pipelineId);
+      generationInitiatedRef.current = false;
     }
   };
-
-  // Watch for humanize completion via pipeline script_output changes
-  const prevScriptOutputRef = useRef<string | null>(null);
-  
-  useEffect(() => {
-    if (!isHumanizing || !pipeline?.script_output?.text) return;
-    
-    const currentOutput = pipeline.script_output.text;
-    
-    // If we're humanizing and the output changed, it means humanization completed
-    if (currentOutput !== prevScriptOutputRef.current && prevScriptOutputRef.current !== null) {
-      toast.success('Script humanized!');
-      setIsHumanizing(false);
-      queryClient.invalidateQueries({ queryKey: ['pipeline', pipelineId] });
-    }
-    
-    prevScriptOutputRef.current = currentOutput;
-  }, [pipeline?.script_output?.text, isHumanizing, queryClient, pipelineId]);
-
-  // Reset humanizing state when pipeline status changes from processing
-  useEffect(() => {
-    if (isHumanizing && pipeline?.status !== 'processing') {
-      // Small delay to ensure output is updated
-      const timer = setTimeout(() => {
-        if (pipeline?.script_output?.text) {
-          setIsHumanizing(false);
-        }
-      }, 500);
-      return () => clearTimeout(timer);
-    }
-  }, [pipeline?.status, isHumanizing, pipeline?.script_output?.text]);
 
   const handleHumanize = async () => {
     if (!outputScript?.text || !profile || !user || !pipeline) return;
@@ -382,21 +388,38 @@ Example: Dashboard walkthrough for new users. Show: 1) Create project, 2) Add sc
     }
 
     setIsHumanizing(true);
-    prevScriptOutputRef.current = outputScript.text;
+    generationInitiatedRef.current = true;
 
     try {
-      // Set pipeline to processing so usePipeline starts polling
-      await supabase
-        .from('pipelines')
-        .update({ status: 'processing' })
-        .eq('id', pipelineId);
+      // Create a temporary file for humanization
+      const { data: newFile, error: createError } = await supabase
+        .from('files')
+        .insert({
+          name: 'Pipeline Humanize',
+          file_type: 'script',
+          project_id: pipeline.project_id,
+          status: 'draft',
+          generation_status: 'processing',
+          generation_started_at: new Date().toISOString(),
+          estimated_duration_seconds: 15,
+          generation_params: { 
+            pipeline_id: pipelineId,
+            is_humanize: true,
+          }
+        })
+        .select()
+        .single();
 
-      // Use pipeline_humanize type - updates pipeline directly, no file created
+      if (createError || !newFile) {
+        throw new Error('Failed to create file record');
+      }
+
+      // Use 'humanize' type with file_id
       const { data, error } = await supabase.functions.invoke('trigger-generation', {
         body: {
-          type: 'pipeline_humanize',
+          type: 'humanize',
           payload: {
-            pipeline_id: pipelineId,
+            file_id: newFile.id,
             user_id: user.id,
             script: outputScript.text,
             supabase_url: import.meta.env.VITE_SUPABASE_URL,
@@ -409,16 +432,12 @@ Example: Dashboard walkthrough for new users. Show: 1) Create project, 2) Add sc
       }
 
       toast.success('Humanizing script...');
-      queryClient.invalidateQueries({ queryKey: ['profile'] });
+      queryClient.invalidateQueries({ queryKey: ['pipeline-script-file', pipelineId] });
     } catch (error) {
       console.error('Humanize error:', error);
       toast.error(error instanceof Error ? error.message : 'Failed to humanize script');
       setIsHumanizing(false);
-      // Reset pipeline status on error
-      await supabase
-        .from('pipelines')
-        .update({ status: 'draft' })
-        .eq('id', pipelineId);
+      generationInitiatedRef.current = false;
     }
   };
 
@@ -473,19 +492,19 @@ Example: Dashboard walkthrough for new users. Show: 1) Create project, 2) Add sc
           {/* Script Type */}
           <div className="space-y-2">
             <label className="text-sm font-medium">Script Type</label>
-            <div className="flex gap-2">
+            <div className="grid grid-cols-3 gap-2">
               {(['prompt', 'recreate', 'walkthrough'] as ScriptType[]).map((type) => (
                 <button
                   key={type}
                   onClick={() => setScriptType(type)}
                   className={cn(
-                    'flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-all',
+                    "px-3 py-2 rounded-lg text-sm font-medium border transition-all",
                     scriptType === type
-                      ? 'bg-primary text-primary-foreground'
-                      : 'bg-secondary text-muted-foreground hover:bg-secondary/80 hover:text-foreground'
+                      ? "border-primary bg-primary/10 text-primary"
+                      : "border-border hover:border-primary/50"
                   )}
                 >
-                  {type.charAt(0).toUpperCase() + type.slice(1)}
+                  {type === 'prompt' ? 'Prompt' : type === 'recreate' ? 'Recreate' : 'Walkthrough'}
                 </button>
               ))}
             </div>
@@ -494,237 +513,211 @@ Example: Dashboard walkthrough for new users. Show: 1) Create project, 2) Add sc
           {/* Perspective */}
           <div className="space-y-2">
             <label className="text-sm font-medium">Perspective</label>
-            <div className="grid grid-cols-2 gap-2">
+            <div className="flex flex-wrap gap-2">
               {perspectives.map((p) => (
                 <button
                   key={p.value}
                   onClick={() => setPerspective(p.value)}
                   className={cn(
-                    'p-2.5 rounded-lg border text-left transition-all',
+                    "px-3 py-1.5 rounded-lg text-sm border transition-all",
                     perspective === p.value
-                      ? 'border-primary bg-primary/5'
-                      : 'border-border hover:border-primary/50 bg-card'
+                      ? "border-primary bg-primary/10 text-primary"
+                      : "border-border hover:border-primary/50"
                   )}
                 >
-                  <div className="flex items-center gap-2">
-                    <div className={cn(
-                      'w-3.5 h-3.5 rounded-full border-2 flex items-center justify-center shrink-0',
-                      perspective === p.value ? 'border-primary' : 'border-muted-foreground/50'
-                    )}>
-                      {perspective === p.value && (
-                        <div className="w-1.5 h-1.5 rounded-full bg-primary" />
-                      )}
-                    </div>
-                    <span className="font-medium text-sm">{p.label}</span>
-                  </div>
-                  <p className="text-xs text-muted-foreground mt-0.5 ml-5">{p.desc}</p>
+                  {p.label}
                 </button>
               ))}
             </div>
           </div>
 
-          {/* Duration - Only for prompt type */}
+          {/* Duration */}
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Duration</label>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="icon"
+                className="h-9 w-9"
+                onClick={handleDecrement}
+                disabled={durationValue <= minValue}
+              >
+                <Minus className="h-4 w-4" />
+              </Button>
+              <span className="w-16 text-center font-medium">{durationValue}</span>
+              <Button
+                variant="outline"
+                size="icon"
+                className="h-9 w-9"
+                onClick={handleIncrement}
+                disabled={(durationUnit === 'minutes' && durationValue >= 30) || 
+                         (durationUnit === 'seconds' && durationValue >= MAX_DURATION_SECONDS)}
+              >
+                <Plus className="h-4 w-4" />
+              </Button>
+              <div className="flex gap-1">
+                <button
+                  onClick={() => handleUnitChange('seconds')}
+                  className={cn(
+                    "px-3 py-1.5 rounded-lg text-sm border transition-all",
+                    durationUnit === 'seconds'
+                      ? "border-primary bg-primary/10 text-primary"
+                      : "border-border hover:border-primary/50"
+                  )}
+                >
+                  sec
+                </button>
+                <button
+                  onClick={() => handleUnitChange('minutes')}
+                  className={cn(
+                    "px-3 py-1.5 rounded-lg text-sm border transition-all",
+                    durationUnit === 'minutes'
+                      ? "border-primary bg-primary/10 text-primary"
+                      : "border-border hover:border-primary/50"
+                  )}
+                >
+                  min
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Script Format */}
           {scriptType === 'prompt' && (
-            <>
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Estimated Duration</label>
-                <div className="flex gap-2">
-                  {/* Stepper */}
-                  <div className="flex-1 flex items-center border border-border rounded-lg overflow-hidden">
-                    <button
-                      onClick={handleDecrement}
-                      className="h-9 w-9 flex items-center justify-center hover:bg-secondary transition-colors shrink-0"
-                    >
-                      <Minus className="h-4 w-4" />
-                    </button>
-                    <input
-                      type="number"
-                      value={durationValue}
-                      onChange={(e) => { 
-                        const val = parseInt(e.target.value) || minValue;
-                        setDurationValue(Math.min(maxValue, Math.max(minValue, val))); 
-                      }}
-                      className="h-9 flex-1 min-w-0 bg-secondary border-x border-border text-center text-sm font-medium focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                    />
-                    <button
-                      onClick={handleIncrement}
-                      className="h-9 w-9 flex items-center justify-center hover:bg-secondary transition-colors shrink-0"
-                    >
-                      <Plus className="h-4 w-4" />
-                    </button>
-                  </div>
-
-                  {/* Unit Toggle */}
-                  <div className="flex-1 flex items-center bg-secondary rounded-lg p-1">
-                    <button
-                      onClick={() => handleUnitChange('seconds')}
-                      className={cn(
-                        'flex-1 py-1.5 rounded-md text-sm font-medium transition-all',
-                        durationUnit === 'seconds'
-                          ? 'bg-primary text-primary-foreground shadow-sm'
-                          : 'text-muted-foreground hover:text-foreground'
-                      )}
-                    >
-                      Seconds
-                    </button>
-                    <button
-                      onClick={() => handleUnitChange('minutes')}
-                      className={cn(
-                        'flex-1 py-1.5 rounded-md text-sm font-medium transition-all',
-                        durationUnit === 'minutes'
-                          ? 'bg-primary text-primary-foreground shadow-sm'
-                          : 'text-muted-foreground hover:text-foreground'
-                      )}
-                    >
-                      Minutes
-                    </button>
-                  </div>
-                </div>
-              </div>
-
-              {/* Script Format */}
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Script Format</label>
-                <Select value={scriptFormat} onValueChange={(v) => setScriptFormat(v as ScriptFormat)}>
-                  <SelectTrigger className="h-auto py-2.5 px-3">
-                    <div className="flex flex-col items-start text-left w-full">
-                      <span className="font-medium text-sm">{scriptFormats.find(f => f.value === scriptFormat)?.label}</span>
-                      <span className="text-xs text-muted-foreground">{scriptFormats.find(f => f.value === scriptFormat)?.desc}</span>
-                    </div>
-                  </SelectTrigger>
-                  <SelectContent>
-                    {scriptFormats.map((f) => (
-                      <SelectItem key={f.value} value={f.value} className="py-2">
-                        <div className="flex flex-col items-start text-left">
-                          <span className="font-medium">{f.label}</span>
-                          <span className="text-xs text-muted-foreground">{f.desc}</span>
-                        </div>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Script Format</label>
+              <Select value={scriptFormat} onValueChange={(v: ScriptFormat) => setScriptFormat(v)}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {scriptFormats.map((format) => (
+                    <SelectItem key={format.value} value={format.value}>
+                      <div className="flex flex-col items-start">
+                        <span>{format.label}</span>
+                        <span className="text-xs text-muted-foreground">{format.desc}</span>
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           )}
 
           {/* Prompt */}
           <div className="space-y-2">
-            <div className="flex items-center gap-2">
-              <label className="text-sm font-medium">Prompt</label>
+            <div className="flex items-center justify-between">
+              <label className="text-sm font-medium">
+                {isRefineMode ? 'Refinement Instructions' : 'Prompt'}
+              </label>
               {isRefineMode && (
-                <span className="text-xs text-primary font-medium">(Refine Mode)</span>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setIsRefineMode(false)}
+                  className="h-6 text-xs"
+                >
+                  Cancel Refine
+                </Button>
               )}
             </div>
             <Textarea
               value={prompt}
               onChange={(e) => setPrompt(e.target.value)}
               placeholder={getPlaceholder()}
-              className="min-h-[120px] resize-none text-sm"
+              className="min-h-[120px] resize-none"
             />
           </div>
         </>
       ) : (
         /* Paste Mode */
-        <div className="space-y-2">
-          <div className="flex items-center justify-between">
-            <label className="text-sm font-medium">Paste Your Script</label>
-            <span className={cn(
-              "text-xs",
-              pastedCharCount > 50000 ? "text-destructive" : "text-muted-foreground"
-            )}>
-              {pastedCharCount.toLocaleString()} characters
-            </span>
+        <div className="space-y-4">
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <label className="text-sm font-medium">Paste Your Script</label>
+              {pastedCharCount > 0 && (
+                <span className="text-xs text-muted-foreground">
+                  {pastedCharCount.toLocaleString()} chars • ~{pastedEstimatedSeconds}s
+                </span>
+              )}
+            </div>
+            <Textarea
+              value={pastedScript}
+              onChange={(e) => setPastedScript(e.target.value)}
+              placeholder="Paste your script here..."
+              className="min-h-[200px] resize-none"
+            />
           </div>
-          <Textarea
-            value={pastedScript}
-            onChange={(e) => setPastedScript(e.target.value)}
-            placeholder="Paste your script here..."
-            className="min-h-[300px] resize-none text-sm"
-          />
-          {pastedCharCount > 0 && (
-            <p className="text-xs text-muted-foreground">
-              Estimated duration: ~{pastedEstimatedSeconds} seconds
-            </p>
-          )}
         </div>
       )}
     </div>
   );
 
-  const outputContent = isGenerating || isHumanizing ? (
-    <div className="h-64 rounded-xl bg-card border border-border flex flex-col items-center justify-center gap-3 animate-fade-in">
-      <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      <p className="text-sm text-muted-foreground">
-        {isHumanizing ? 'Humanizing your script...' : 'Generating your script...'}
-      </p>
-    </div>
-  ) : outputScript?.text ? (
-    <div className="space-y-4 animate-fade-in">
-      <div className="bg-card rounded-xl p-5 border border-border">
-        <p className="text-sm leading-relaxed whitespace-pre-wrap">{outputScript.text}</p>
-      </div>
-
-      <div className="flex items-center justify-between text-sm text-muted-foreground px-2">
-        <span>{charCount.toLocaleString()} characters</span>
-        <span>~{estimatedSeconds} seconds</span>
-      </div>
-
-      {/* Action Buttons */}
-      <div className="flex gap-2">
-        <Button
-          variant="secondary"
-          onClick={handleGenerate}
-          disabled={isGenerating}
-          className="flex-1"
-        >
-          <RefreshCw className="h-4 w-4 mr-2" />
-          Regenerate
-        </Button>
-        <Button
-          variant={isRefineMode ? 'default' : 'secondary'}
-          onClick={() => setIsRefineMode(!isRefineMode)}
-          className="flex-1"
-        >
-          <Wand2 className="h-4 w-4 mr-2" />
-          Refine
-        </Button>
-      </div>
-
-      {/* Humanize Button */}
-      <Button
-        variant="outline"
-        onClick={handleHumanize}
-        disabled={isHumanizing || isGenerating}
-        className="w-full"
-      >
-        <Wand2 className="h-4 w-4 mr-2" />
-        Humanize Script • {HUMANIZE_CREDIT_COST} credits
-      </Button>
-
-      {isRefineMode && (
-        <div className="bg-primary/10 border border-primary/30 rounded-lg p-3 text-sm">
-          <p className="text-primary">
-            <strong>Refine Mode:</strong> Describe your changes in the Prompt field, then click Generate.
-          </p>
+  const outputContent = hasOutput ? (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          <FileText className="h-4 w-4" />
+          <span>{charCount.toLocaleString()} characters</span>
+          <span>•</span>
+          <span>~{Math.floor(estimatedSeconds / 60)}:{(estimatedSeconds % 60).toString().padStart(2, '0')}</span>
         </div>
-      )}
+      </div>
+      <div className="bg-secondary/30 rounded-xl p-4 max-h-[400px] overflow-y-auto">
+        <p className="text-sm whitespace-pre-wrap leading-relaxed">{outputScript?.text}</p>
+      </div>
     </div>
   ) : null;
 
-  const outputActions = outputScript?.text && !isGenerating && !isHumanizing ? (
+  const outputActions = hasOutput ? (
     <div className="flex items-center gap-2">
-      <Button variant="ghost" size="sm" onClick={handleCopyScript}>
-        <Copy className="h-4 w-4 mr-2" />
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={handleCopyScript}
+        className="h-8"
+      >
+        <Copy className="h-4 w-4 mr-1" />
         Copy
       </Button>
-      <Button variant="ghost" size="sm" onClick={handleDownload}>
-        <Download className="h-4 w-4 mr-2" />
-        Export
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={handleDownload}
+        className="h-8"
+      >
+        <Download className="h-4 w-4 mr-1" />
+        Download
+      </Button>
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={() => {
+          setIsRefineMode(true);
+          setPrompt('');
+        }}
+        disabled={isGenerating || isHumanizing}
+        className="h-8"
+      >
+        <RefreshCw className="h-4 w-4 mr-1" />
+        Refine
+      </Button>
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={handleHumanize}
+        disabled={isGenerating || isHumanizing || (profile?.credits ?? 0) < HUMANIZE_CREDIT_COST}
+        className="h-8"
+      >
+        {isHumanizing ? (
+          <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+        ) : (
+          <Wand2 className="h-4 w-4 mr-1" />
+        )}
+        Humanize
       </Button>
     </div>
-  ) : null;
-
-  const wasAIGenerated = inputMode === 'generate';
+  ) : undefined;
 
   return (
     <StageLayout
@@ -736,13 +729,14 @@ Example: Dashboard walkthrough for new users. Show: 1) Create project, 2) Add sc
       onContinue={handleContinue}
       isGenerating={isGenerating || isHumanizing || isUpdating}
       canContinue={hasOutput}
-      generateLabel={inputMode === 'upload' ? 'Save Script • Free' : (isRefineMode ? `Refine Script • ${CREDIT_COST} Credits` : `Generate Script • ${CREDIT_COST} Credits`)}
-      creditsCost={inputMode === 'upload' ? 'Free' : `${CREDIT_COST} Credits`}
-      isAIGenerated={wasAIGenerated}
+      generateLabel={inputMode === 'upload' ? 'Save Script • Free' : isRefineMode ? 'Refine Script' : 'Generate Script'}
+      creditsCost={inputMode === 'upload' ? '' : `${CREDIT_COST} credits`}
+      generateDisabled={inputMode === 'generate' && !prompt.trim()}
+      isAIGenerated={inputMode === 'generate'}
       outputActions={outputActions}
-      emptyStateIcon={<FileText className="h-12 w-12 text-muted-foreground/50" />}
-      emptyStateTitle="No script yet"
-      emptyStateSubtitle="Generate or paste a script to get started"
+      emptyStateIcon={<FileText className="h-10 w-10 text-muted-foreground/50" strokeWidth={1.5} />}
+      emptyStateTitle="Generated script will appear here"
+      emptyStateSubtitle="Enter a prompt and click Generate"
     />
   );
 }
