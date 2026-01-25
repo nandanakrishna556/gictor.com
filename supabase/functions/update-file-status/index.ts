@@ -519,6 +519,127 @@ async function handleFileUpdate(
 
   console.log('File updated successfully:', file_id);
 
+  // Check if this file is linked to a pipeline and sync results back
+  const { data: fileData } = await supabase
+    .from('files')
+    .select('generation_params, file_type')
+    .eq('id', file_id)
+    .single();
+
+  if (fileData?.generation_params?.pipeline_id && fileData.generation_params.is_internal) {
+    const pipelineId = fileData.generation_params.pipeline_id;
+    const stage = fileData.generation_params.stage || fileData.file_type;
+    
+    console.log('Syncing to pipeline:', { pipelineId, stage, status });
+    
+    // deno-lint-ignore no-explicit-any
+    const pipelineUpdates: Record<string, any> = {
+      updated_at: new Date().toISOString(),
+    };
+    
+    if (status === 'completed') {
+      switch (stage) {
+        case 'frame':
+        case 'first_frame':
+          if (preview_url || download_url) {
+            pipelineUpdates.first_frame_output = {
+              url: preview_url || download_url,
+              generated_at: new Date().toISOString(),
+            };
+            pipelineUpdates.first_frame_complete = true;
+          }
+          break;
+          
+        case 'script':
+        case 'humanize':
+          if (script_output) {
+            pipelineUpdates.script_output = {
+              text: script_output,
+              char_count: script_output.length,
+              estimated_duration: Math.ceil(script_output.length / 17),
+              generated_at: new Date().toISOString(),
+            };
+            pipelineUpdates.script_complete = true;
+          }
+          break;
+          
+        case 'speech':
+          if (preview_url || download_url) {
+            pipelineUpdates.voice_output = {
+              url: preview_url || download_url,
+              duration_seconds: duration_seconds || null,
+              generated_at: new Date().toISOString(),
+            };
+            pipelineUpdates.voice_complete = true;
+          }
+          break;
+          
+        case 'lip_sync':
+          if (preview_url || download_url) {
+            pipelineUpdates.final_video_output = {
+              url: preview_url || download_url,
+              duration_seconds: duration_seconds || null,
+              generated_at: new Date().toISOString(),
+            };
+            pipelineUpdates.status = 'completed';
+            
+            // Create output file for final video
+            const { data: pipelineData } = await supabase
+              .from('pipelines')
+              .select('project_id, folder_id, name, tags, pipeline_type')
+              .eq('id', pipelineId)
+              .single();
+
+            if (pipelineData) {
+              const { data: outputFile } = await supabase
+                .from('files')
+                .insert({
+                  project_id: pipelineData.project_id,
+                  folder_id: pipelineData.folder_id,
+                  name: pipelineData.name,
+                  file_type: pipelineData.pipeline_type || 'talking_head',
+                  status: 'completed',
+                  tags: pipelineData.tags,
+                  preview_url: preview_url || download_url,
+                  download_url: download_url || preview_url,
+                  metadata: { pipeline_id: pipelineId, duration: duration_seconds },
+                  progress: 100,
+                })
+                .select()
+                .single();
+
+              if (outputFile) {
+                pipelineUpdates.output_file_id = outputFile.id;
+                console.log('Created output file:', outputFile.id);
+              }
+            }
+          }
+          break;
+      }
+      
+      // Reset status to draft after completion (except for final video)
+      if (stage !== 'lip_sync') {
+        pipelineUpdates.status = 'draft';
+      }
+    } else if (status === 'failed') {
+      pipelineUpdates.status = 'draft';
+      if (user_id && credits_cost) {
+        await refundCredits(supabase, user_id, credits_cost, stage, pipelineId);
+      }
+    }
+    
+    const { error: pipelineError } = await supabase
+      .from('pipelines')
+      .update(pipelineUpdates)
+      .eq('id', pipelineId);
+    
+    if (pipelineError) {
+      console.error('Pipeline sync error:', pipelineError);
+    } else {
+      console.log('Pipeline synced:', { pipelineId, stage, updates: Object.keys(pipelineUpdates) });
+    }
+  }
+
   return new Response(
     JSON.stringify({ success: true, file_id, status }),
     { 

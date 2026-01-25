@@ -262,14 +262,35 @@ Example: Dashboard walkthrough for new users. Show: 1) Create project, 2) Add sc
     try {
       await saveInput();
 
-      // Use pipeline type - n8n routes to update-pipeline-status instead of update-file-status
+      // Create internal file for n8n to process (n8n expects file_id)
+      const { data: internalFile, error: fileError } = await supabase
+        .from('files')
+        .insert({
+          project_id: pipeline?.project_id,
+          name: `${pipeline?.name || 'Pipeline'} - Script`,
+          file_type: 'script',
+          generation_status: 'processing',
+          generation_params: {
+            pipeline_id: pipelineId,
+            is_internal: true,
+            stage: 'script',
+          },
+        })
+        .select()
+        .single();
+
+      if (fileError || !internalFile) {
+        throw new Error('Failed to create internal file');
+      }
+
+      // Use standard 'script' type - n8n processes it, update-file-status syncs back to pipeline
       const { data, error } = await supabase.functions.invoke('trigger-generation', {
         body: {
-          type: 'pipeline_script',
+          type: 'script',
           payload: {
-            pipeline_id: pipelineId,
+            file_id: internalFile.id,
             user_id: user?.id,
-            description: prompt,
+            prompt: prompt,
             script_type: scriptType,
             script_format: scriptFormat,
             perspective,
@@ -282,6 +303,8 @@ Example: Dashboard walkthrough for new users. Show: 1) Create project, 2) Add sc
       });
 
       if (error || !data?.success) {
+        // Clean up internal file on failure
+        await supabase.from('files').delete().eq('id', internalFile.id);
         throw new Error(error?.message || data?.error || 'Generation failed');
       }
 
@@ -313,12 +336,33 @@ Example: Dashboard walkthrough for new users. Show: 1) Create project, 2) Add sc
     generationInitiatedRef.current = true;
 
     try {
-      // Use pipeline_humanize type - n8n routes to update-pipeline-status
+      // Create internal file for n8n to process
+      const { data: internalFile, error: fileError } = await supabase
+        .from('files')
+        .insert({
+          project_id: pipeline?.project_id,
+          name: `${pipeline?.name || 'Pipeline'} - Humanize`,
+          file_type: 'script',
+          generation_status: 'processing',
+          generation_params: {
+            pipeline_id: pipelineId,
+            is_internal: true,
+            stage: 'humanize',
+          },
+        })
+        .select()
+        .single();
+
+      if (fileError || !internalFile) {
+        throw new Error('Failed to create internal file');
+      }
+
+      // Use 'humanize' type - n8n processes it, update-file-status syncs back to pipeline
       const { data, error } = await supabase.functions.invoke('trigger-generation', {
         body: {
-          type: 'pipeline_humanize',
+          type: 'humanize',
           payload: {
-            pipeline_id: pipelineId,
+            file_id: internalFile.id,
             user_id: user.id,
             script: outputScript.text,
             supabase_url: import.meta.env.VITE_SUPABASE_URL,
@@ -327,6 +371,8 @@ Example: Dashboard walkthrough for new users. Show: 1) Create project, 2) Add sc
       });
 
       if (error || !data?.success) {
+        // Clean up internal file on failure
+        await supabase.from('files').delete().eq('id', internalFile.id);
         throw new Error(error?.message || data?.error || 'Humanization failed');
       }
 
