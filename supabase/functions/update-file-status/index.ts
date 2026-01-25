@@ -67,7 +67,9 @@ const PipelineUpdateSchema = z.object({
 });
 
 const FileUpdateSchema = z.object({
-  file_id: z.string().uuid(),
+  file_id: z.string().uuid().optional(), // Optional for pipeline humanize
+  pipeline_id: z.string().uuid().optional(), // For pipeline humanize routing
+  is_pipeline: z.boolean().optional(), // Flag from trigger-generation
   status: z.enum(['completed', 'failed', 'processing']),
   generation_status: z.enum(['completed', 'failed', 'processing']).optional(),
   progress: z.number().min(0).max(100).optional(),
@@ -321,7 +323,63 @@ async function handleFileUpdate(
   corsHeaders: Record<string, string>,
   remaining: number
 ) {
-  const { file_id, status, generation_status, progress, preview_url, download_url, script_output, error_message, metadata, user_id, credits_cost } = body;
+  const { file_id, pipeline_id, is_pipeline, status, progress, preview_url, download_url, script_output, error_message, metadata, user_id, credits_cost } = body;
+
+  // Route to pipeline update if this is a pipeline humanize request
+  if (pipeline_id && (is_pipeline || !file_id)) {
+    console.log('Routing to pipeline update for humanize:', { pipeline_id, status });
+    
+    // deno-lint-ignore no-explicit-any
+    const pipelineUpdates: Record<string, any> = {
+      updated_at: new Date().toISOString(),
+    };
+    
+    if (status === 'completed' && script_output) {
+      pipelineUpdates.script_output = { text: script_output };
+      pipelineUpdates.script_complete = true;
+      pipelineUpdates.status = 'draft'; // Reset from processing
+    } else if (status === 'failed') {
+      pipelineUpdates.status = 'draft'; // Reset from processing
+      if (user_id && credits_cost) {
+        await refundCredits(supabase, user_id, credits_cost, 'humanize', pipeline_id);
+      }
+    }
+    
+    const { error } = await supabase
+      .from('pipelines')
+      .update(pipelineUpdates)
+      .eq('id', pipeline_id);
+    
+    if (error) {
+      console.error('Pipeline update error:', error);
+      return new Response(
+        JSON.stringify({ success: false, error: 'Failed to update pipeline', details: error.message }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+    
+    console.log('Pipeline updated successfully:', pipeline_id);
+    
+    return new Response(
+      JSON.stringify({ success: true, pipeline_id, status }),
+      { 
+        status: 200, 
+        headers: { 
+          ...corsHeaders, 
+          'Content-Type': 'application/json',
+          'X-RateLimit-Remaining': String(remaining),
+        } 
+      }
+    );
+  }
+
+  // Regular file update
+  if (!file_id) {
+    return new Response(
+      JSON.stringify({ success: false, error: 'Missing file_id or pipeline_id' }),
+      { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
+  }
 
   // deno-lint-ignore no-explicit-any
   const updateData: Record<string, any> = {
@@ -343,7 +401,7 @@ async function handleFileUpdate(
     updateData.metadata = metadata || {};
     updateData.progress = 0;
     
-    if (user_id && credits_cost) {
+    if (user_id && credits_cost && file_id) {
       await refundCredits(supabase, user_id, credits_cost, 'file', file_id);
     }
   }
