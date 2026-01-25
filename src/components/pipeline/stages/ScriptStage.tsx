@@ -311,7 +311,7 @@ Example: Dashboard walkthrough for new users. Show: 1) Create project, 2) Add sc
             prompt,
             is_refine: isRefineMode,
             previous_script: isRefineMode ? outputScript?.text : undefined,
-            credits_cost: CREDIT_COST,
+            supabase_url: import.meta.env.VITE_SUPABASE_URL,
           },
         },
       });
@@ -399,6 +399,7 @@ Example: Dashboard walkthrough for new users. Show: 1) Create project, 2) Add sc
             pipeline_id: pipelineId,
             user_id: user.id,
             script: outputScript.text,
+            supabase_url: import.meta.env.VITE_SUPABASE_URL,
           },
         },
       });
