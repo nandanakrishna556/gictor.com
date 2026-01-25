@@ -301,6 +301,7 @@ export default function SpeechStage({ pipelineId, onContinue }: SpeechStageProps
           estimated_duration_seconds: Math.max(10, Math.ceil((script.length / 20) * 5)),
           generation_params: { 
             pipeline_id: pipelineId,
+            is_internal: true,
             script,
             actor_id: selectedActorId,
             actor_voice_url: selectedActor.voice_url,
