@@ -74,6 +74,7 @@ function calculateServerSideCost(type: string, payload: Record<string, unknown>)
       return CREDIT_COSTS.first_frame;
     
     case 'pipeline_script':
+    case 'pipeline_humanize':
       return CREDIT_COSTS.script;
     
     case 'pipeline_voice':
@@ -136,7 +137,8 @@ const PipelinePayloadSchema = z.object({
   type: z.enum([
     'pipeline_first_frame', 
     'pipeline_first_frame_b_roll', 
-    'pipeline_script', 
+    'pipeline_script',
+    'pipeline_humanize',
     'pipeline_voice',
     'pipeline_speech',
     'pipeline_final_video'
