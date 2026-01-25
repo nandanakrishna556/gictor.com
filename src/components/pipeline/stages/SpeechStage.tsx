@@ -249,12 +249,33 @@ export default function SpeechStage({ pipelineId, onContinue }: SpeechStageProps
         },
       });
 
-      // Use pipeline_speech type - n8n routes to update-pipeline-status
+      // Create internal file for n8n to process (n8n expects file_id)
+      const { data: internalFile, error: fileError } = await supabase
+        .from('files')
+        .insert({
+          project_id: pipeline?.project_id,
+          name: `${pipeline?.name || 'Pipeline'} - Speech`,
+          file_type: 'speech',
+          generation_status: 'processing',
+          generation_params: {
+            pipeline_id: pipelineId,
+            is_internal: true,
+            stage: 'speech',
+          },
+        })
+        .select()
+        .single();
+
+      if (fileError || !internalFile) {
+        throw new Error('Failed to create internal file');
+      }
+
+      // Use standard 'speech' type - n8n processes it, update-file-status syncs back to pipeline
       const { data, error } = await supabase.functions.invoke('trigger-generation', {
         body: {
-          type: 'pipeline_speech',
+          type: 'speech',
           payload: {
-            pipeline_id: pipelineId,
+            file_id: internalFile.id,
             user_id: sessionData.session.user.id,
             script: script,
             actor_voice_url: selectedActor.voice_url,
@@ -264,8 +285,11 @@ export default function SpeechStage({ pipelineId, onContinue }: SpeechStageProps
         },
       });
 
-      if (error) throw error;
-      if (!data?.success) throw new Error(data?.error || 'Generation failed');
+      if (error || !data?.success) {
+        // Clean up internal file on failure
+        await supabase.from('files').delete().eq('id', internalFile.id);
+        throw new Error(error?.message || data?.error || 'Generation failed');
+      }
 
       toast.success('Speech generation started!');
     } catch (error) {

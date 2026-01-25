@@ -133,24 +133,48 @@ export default function LipSyncStage({ pipelineId, onComplete }: LipSyncStagePro
         throw new Error('Session expired. Please log in again.');
       }
 
-      // Use pipeline_final_video type - n8n routes to update-pipeline-status
+      // Create internal file for n8n to process (n8n expects file_id)
+      const { data: internalFile, error: fileError } = await supabase
+        .from('files')
+        .insert({
+          project_id: pipeline?.project_id,
+          name: `${pipeline?.name || 'Pipeline'} - Lip Sync`,
+          file_type: 'lip_sync',
+          generation_status: 'processing',
+          generation_params: {
+            pipeline_id: pipelineId,
+            is_internal: true,
+            stage: 'lip_sync',
+          },
+        })
+        .select()
+        .single();
+
+      if (fileError || !internalFile) {
+        throw new Error('Failed to create internal file');
+      }
+
+      // Use standard 'lip_sync' type - n8n processes it, update-file-status syncs back to pipeline
       const { data, error } = await supabase.functions.invoke('trigger-generation', {
         body: {
-          type: 'pipeline_final_video',
+          type: 'lip_sync',
           payload: {
-            pipeline_id: pipelineId,
+            file_id: internalFile.id,
             user_id: sessionData.session.user.id,
-            first_frame_url: imageUrl,
+            image_url: imageUrl,
             audio_url: audioUrl,
-            audio_duration_seconds: audioDuration,
+            audio_duration: audioDuration,
             resolution: '720p',
             supabase_url: import.meta.env.VITE_SUPABASE_URL,
           },
         },
       });
 
-      if (error) throw error;
-      if (!data?.success) throw new Error(data?.error || 'Generation failed');
+      if (error || !data?.success) {
+        // Clean up internal file on failure
+        await supabase.from('files').delete().eq('id', internalFile.id);
+        throw new Error(error?.message || data?.error || 'Generation failed');
+      }
 
       toast.success('Lip sync generation started!');
     } catch (error) {

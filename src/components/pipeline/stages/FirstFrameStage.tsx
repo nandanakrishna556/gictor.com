@@ -209,21 +209,44 @@ export default function FirstFrameStage({ pipelineId, onContinue }: FirstFrameSt
     try {
       await saveInput();
 
-      // Use pipeline type - n8n routes to update-pipeline-status instead of update-file-status
+      // Create internal file for n8n to process (n8n expects file_id)
+      const { data: internalFile, error: fileError } = await supabase
+        .from('files')
+        .insert({
+          project_id: pipeline?.project_id,
+          name: `${pipeline?.name || 'Pipeline'} - First Frame`,
+          file_type: 'frame',
+          generation_status: 'processing',
+          generation_params: {
+            pipeline_id: pipelineId,
+            is_internal: true,
+            stage: 'first_frame',
+          },
+        })
+        .select()
+        .single();
+
+      if (fileError || !internalFile) {
+        throw new Error('Failed to create internal file');
+      }
+
+      // Use standard 'frame' type - n8n processes it, update-file-status syncs back to pipeline
       const { data, error } = await supabase.functions.invoke('trigger-generation', {
         body: {
-          type: 'pipeline_first_frame',
+          type: 'frame',
           payload: {
-            pipeline_id: pipelineId,
+            file_id: internalFile.id,
             user_id: user?.id,
             prompt,
-            image_type: subStyle, // UGC/Studio maps to image_type
+            image_type: subStyle,
             aspect_ratio: aspectRatio,
             reference_images: referenceImages,
-            style,
+            content_type: style,
+            style: subStyle,
             substyle: style !== 'motion_graphics' ? subStyle : null,
             camera_perspective: style === 'broll' ? cameraPerspective : null,
             frame_resolution: resolution,
+            resolution,
             actor_id: (style === 'talking_head' || style === 'broll') ? selectedActorId : null,
             actor_360_url: (style === 'talking_head' || style === 'broll') ? selectedActor?.profile_360_url : null,
             supabase_url: import.meta.env.VITE_SUPABASE_URL,
@@ -232,6 +255,8 @@ export default function FirstFrameStage({ pipelineId, onContinue }: FirstFrameSt
       });
 
       if (error || !data?.success) {
+        // Clean up internal file on failure
+        await supabase.from('files').delete().eq('id', internalFile.id);
         throw new Error(error?.message || data?.error || 'Generation failed');
       }
 
