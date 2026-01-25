@@ -234,7 +234,7 @@ export default function AppSidebar() {
           className="flex items-center gap-2.5 rounded-sm px-3 py-2.5 text-sm text-sidebar-muted transition-fast hover:bg-sidebar-border/50 hover:text-sidebar-foreground"
         >
           <Coins className="h-[18px] w-[18px] text-primary" strokeWidth={1.5} />
-          <span className="flex-1">{profile?.credits ?? 0} Credits</span>
+          <span className="flex-1">{(profile?.credits ?? 0).toFixed(2)} Credits</span>
           <Plus className="h-3.5 w-3.5" strokeWidth={1.5} />
         </Link>
 

@@ -115,7 +115,7 @@ export default function Billing() {
                     Available Credits
                   </p>
                   <p className="text-4xl font-semibold text-foreground">
-                    {profile?.credits ?? 0}
+                    {(profile?.credits ?? 0).toFixed(2)}
                   </p>
                 </div>
               </div>
