@@ -141,7 +141,8 @@ const PipelinePayloadSchema = z.object({
     'pipeline_humanize',
     'pipeline_voice',
     'pipeline_speech',
-    'pipeline_final_video'
+    'pipeline_final_video',
+    'pipeline_lip_sync'
   ]),
   payload: z.object({
     pipeline_id: z.string().uuid(),

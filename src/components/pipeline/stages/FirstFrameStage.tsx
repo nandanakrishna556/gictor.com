@@ -231,6 +231,26 @@ export default function FirstFrameStage({ pipelineId, onContinue }: FirstFrameSt
     try {
       await saveInput();
 
+      // Set pipeline status to processing BEFORE triggering generation
+      // This ensures UI shows loading state and polling starts
+      await supabase
+        .from('pipelines')
+        .update({ status: 'processing', current_stage: 'first_frame' })
+        .eq('id', pipelineId);
+
+      // Also sync linked file to show processing in project grid
+      const { data: linkedFiles } = await supabase
+        .from('files')
+        .select('id')
+        .eq('generation_params->>pipeline_id', pipelineId);
+
+      if (linkedFiles && linkedFiles.length > 0) {
+        await supabase
+          .from('files')
+          .update({ generation_status: 'processing' })
+          .eq('id', linkedFiles[0].id);
+      }
+
       const { data, error } = await supabase.functions.invoke('trigger-generation', {
         body: {
           type: 'pipeline_first_frame',
@@ -263,6 +283,11 @@ export default function FirstFrameStage({ pipelineId, onContinue }: FirstFrameSt
       toast.error(error instanceof Error ? error.message : 'Failed to start generation');
       setLocalGenerating(false);
       isLocalGeneratingRef.current = false;
+      // Reset pipeline status on error
+      await supabase
+        .from('pipelines')
+        .update({ status: 'draft' })
+        .eq('id', pipelineId);
     }
   };
 

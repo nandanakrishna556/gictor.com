@@ -139,6 +139,7 @@ export default function LipSyncStage({ pipelineId, onComplete }: LipSyncStagePro
         .from('pipelines')
         .update({
           status: 'processing',
+          current_stage: 'lip_sync',
           final_video_input: {
             first_frame_url: imageUrl,
             audio_url: audioUrl,
@@ -147,7 +148,7 @@ export default function LipSyncStage({ pipelineId, onComplete }: LipSyncStagePro
         })
         .eq('id', pipelineId);
 
-      // Prepare payload for edge function
+      // Prepare payload for edge function - use pipeline_lip_sync type
       const requestPayload = {
         type: 'pipeline_lip_sync',
         payload: {
@@ -159,6 +160,19 @@ export default function LipSyncStage({ pipelineId, onComplete }: LipSyncStagePro
           credits_cost: creditCost,
         },
       };
+
+      // Also sync linked file to show processing
+      const { data: linkedFiles } = await supabase
+        .from('files')
+        .select('id')
+        .eq('generation_params->>pipeline_id', pipelineId);
+
+      if (linkedFiles && linkedFiles.length > 0) {
+        await supabase
+          .from('files')
+          .update({ generation_status: 'processing' })
+          .eq('id', linkedFiles[0].id);
+      }
 
       const { data, error } = await supabase.functions.invoke('trigger-generation', {
         body: requestPayload,
