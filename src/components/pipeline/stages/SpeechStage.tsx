@@ -15,6 +15,8 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { InputModeToggle, InputMode } from '@/components/ui/input-mode-toggle';
 import { AudioPlayer } from '@/components/ui/AudioPlayer';
+import { useQueryClient, useQuery } from '@tanstack/react-query';
+import { useAuth } from '@/contexts/AuthContext';
 
 
 interface SpeechStageProps {
@@ -30,6 +32,8 @@ export default function SpeechStage({ pipelineId, onContinue }: SpeechStageProps
   const { pipeline, updateVoice, isUpdating } = usePipeline(pipelineId);
   const { actors } = useActors();
   const { profile } = useProfile();
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
   
   
   // Input mode
@@ -47,30 +51,70 @@ export default function SpeechStage({ pipelineId, onContinue }: SpeechStageProps
   const [isDragging, setIsDragging] = useState(false);
   
   
-  // Generation state - local tracking + pipeline status tracking
+  // Generation state
   const [localGenerating, setLocalGenerating] = useState(false);
-  const prevVoiceOutputRef = useRef<string | null>(null);
+  const generationInitiatedRef = useRef(false);
 
-  // Derive generating state from pipeline status or local state
-  const isGenerating = localGenerating || pipeline?.status === 'processing';
+  // Fetch linked file for realtime updates
+  const { data: linkedFile } = useQuery({
+    queryKey: ['pipeline-speech-file', pipelineId],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('files')
+        .select('*')
+        .eq('generation_params->>pipeline_id', pipelineId)
+        .eq('file_type', 'speech')
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      return data;
+    },
+    enabled: !!pipelineId,
+    refetchInterval: (query) => {
+      const file = query.state.data;
+      return (localGenerating || file?.generation_status === 'processing') ? 2000 : false;
+    },
+  });
 
-  // Watch for voice output changes to detect completion
+  // Derive generating state from linked file
+  const isServerProcessing = linkedFile?.generation_status === 'processing';
+  const isGenerating = localGenerating || (isServerProcessing && generationInitiatedRef.current);
+
+  // Watch linked file for completion and sync to pipeline
   useEffect(() => {
-    const currentOutput = pipeline?.voice_output?.url;
+    if (!linkedFile || !generationInitiatedRef.current) return;
     
-    // If we were generating and now have output, show success
-    if (localGenerating && currentOutput && currentOutput !== prevVoiceOutputRef.current) {
+    if (linkedFile.generation_status === 'completed' && linkedFile.download_url) {
+      // Get duration from file
+      const metadata = linkedFile.metadata as any;
+      const duration = metadata?.duration_seconds || 0;
+      
+      // Sync to pipeline
+      updateVoice({
+        output: { 
+          url: linkedFile.download_url, 
+          duration_seconds: duration, 
+          generated_at: new Date().toISOString() 
+        },
+        complete: true,
+      });
+      
+      // Clean up the temporary file
+      supabase.from('files').delete().eq('id', linkedFile.id).then(() => {
+        queryClient.invalidateQueries({ queryKey: ['pipeline-speech-file', pipelineId] });
+      });
+      
       setLocalGenerating(false);
+      generationInitiatedRef.current = false;
       toast.success('Speech generated successfully!');
-    }
-    
-    // Reset local generating if pipeline status changed from processing
-    if (localGenerating && pipeline?.status === 'draft' && currentOutput) {
+      queryClient.invalidateQueries({ queryKey: ['pipeline', pipelineId] });
+      queryClient.invalidateQueries({ queryKey: ['profile'] });
+    } else if (linkedFile.generation_status === 'failed') {
       setLocalGenerating(false);
+      generationInitiatedRef.current = false;
+      toast.error(linkedFile.error_message || 'Speech generation failed');
     }
-    
-    prevVoiceOutputRef.current = currentOutput || null;
-  }, [pipeline?.voice_output?.url, pipeline?.status, localGenerating]);
+  }, [linkedFile, pipelineId, queryClient, updateVoice]);
 
   // Get available actors
   const availableActors = actors?.filter(
@@ -228,6 +272,7 @@ export default function SpeechStage({ pipelineId, onContinue }: SpeechStageProps
     }
 
     setLocalGenerating(true);
+    generationInitiatedRef.current = true;
 
     try {
       const { data: sessionData, error: sessionError } = await supabase.auth.refreshSession();
@@ -235,7 +280,7 @@ export default function SpeechStage({ pipelineId, onContinue }: SpeechStageProps
         throw new Error('Session expired. Please log in again.');
       }
 
-      // Store input data and set pipeline to processing for polling
+      // Store input data
       await updateVoice({
         input: {
           mode: 'generate',
@@ -243,55 +288,57 @@ export default function SpeechStage({ pipelineId, onContinue }: SpeechStageProps
         },
       });
 
-      // Set pipeline status to processing so usePipeline starts polling
-      await supabase
-        .from('pipelines')
-        .update({ status: 'processing', current_stage: 'speech' })
-        .eq('id', pipelineId);
-
-      // Also sync linked file to show processing in project grid
-      const { data: linkedFiles } = await supabase
+      // Create a temporary file record (same as standalone SpeechModal)
+      const { data: newFile, error: createError } = await supabase
         .from('files')
-        .select('id')
-        .eq('generation_params->>pipeline_id', pipelineId);
+        .insert({
+          name: 'Pipeline Speech',
+          file_type: 'speech',
+          project_id: pipeline?.project_id,
+          status: 'draft',
+          generation_status: 'processing',
+          generation_started_at: new Date().toISOString(),
+          estimated_duration_seconds: Math.max(10, Math.ceil((script.length / 20) * 5)),
+          generation_params: { 
+            pipeline_id: pipelineId,
+            script,
+            actor_id: selectedActorId,
+            actor_voice_url: selectedActor.voice_url,
+          }
+        })
+        .select()
+        .single();
 
-      if (linkedFiles && linkedFiles.length > 0) {
-        await supabase
-          .from('files')
-          .update({ generation_status: 'processing' })
-          .eq('id', linkedFiles[0].id);
+      if (createError || !newFile) {
+        throw new Error('Failed to create file record');
       }
 
-      // Prepare payload for edge function - use pipeline_speech to update pipeline directly
-      const requestPayload = {
-        type: 'pipeline_speech',
-        payload: {
-          pipeline_id: pipelineId,
-          user_id: sessionData.session.user.id,
-          script,
-          actor_voice_url: selectedActor.voice_url,
-          char_count: script.length,
-          supabase_url: import.meta.env.VITE_SUPABASE_URL,
-        },
-      };
-
+      // Use 'speech' type like standalone SpeechModal
       const { data, error } = await supabase.functions.invoke('trigger-generation', {
-        body: requestPayload,
+        body: {
+          type: 'speech',
+          payload: {
+            file_id: newFile.id,
+            user_id: sessionData.session.user.id,
+            project_id: pipeline?.project_id,
+            script: script,
+            actor_voice_url: selectedActor.voice_url,
+            credits_cost: creditCost,
+            supabase_url: import.meta.env.VITE_SUPABASE_URL,
+          },
+        },
       });
 
       if (error) throw error;
       if (!data?.success) throw new Error(data?.error || 'Generation failed');
 
       toast.success('Speech generation started!');
+      queryClient.invalidateQueries({ queryKey: ['pipeline-speech-file', pipelineId] });
     } catch (error) {
       console.error('Generation error:', error);
       toast.error('Failed to start generation');
       setLocalGenerating(false);
-      // Reset pipeline status on error
-      await supabase
-        .from('pipelines')
-        .update({ status: 'draft' })
-        .eq('id', pipelineId);
+      generationInitiatedRef.current = false;
     }
   };
 
@@ -461,7 +508,11 @@ export default function SpeechStage({ pipelineId, onContinue }: SpeechStageProps
                               <Check className="h-4 w-4 text-primary" />
                             )}
                             {actor.voice_url && (
-                              <audio id={`preview-audio-${actor.id}`} src={actor.voice_url} preload="none" className="hidden" />
+                              <audio
+                                id={`preview-audio-${actor.id}`}
+                                src={actor.voice_url}
+                                className="hidden"
+                              />
                             )}
                           </div>
                         </CommandItem>
@@ -472,40 +523,11 @@ export default function SpeechStage({ pipelineId, onContinue }: SpeechStageProps
               </PopoverContent>
             </Popover>
           </div>
-
-          {/* Selected Actor Voice Preview */}
-          {selectedActor && selectedActor.voice_url && (
-            <div className="rounded-xl border border-border bg-card p-4 space-y-3">
-              <div className="flex items-center gap-3">
-                {selectedActor.profile_image_url ? (
-                  <img
-                    src={selectedActor.profile_image_url}
-                    alt={selectedActor.name}
-                    className="h-10 w-10 rounded-full object-cover"
-                  />
-                ) : (
-                  <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center">
-                    <User className="h-5 w-5 text-muted-foreground" />
-                  </div>
-                )}
-                <div>
-                  <p className="font-medium text-sm">{selectedActor.name}</p>
-                  <p className="text-xs text-muted-foreground">Voice Preview</p>
-                </div>
-              </div>
-              <AudioPlayer src={selectedActor.voice_url} />
-            </div>
-          )}
-
-          {/* Credit cost info */}
-          <div className="text-xs text-muted-foreground">
-            {CREDIT_COST_PER_1000_CHARS} credits per 1,000 characters
-          </div>
         </>
       ) : (
         /* Upload Mode */
         <div className="space-y-4">
-          <Label>Upload voice audio</Label>
+          <Label>Upload audio file</Label>
           <label 
             className={cn(
               "flex flex-col items-center justify-center rounded-xl border-2 border-dashed p-8 cursor-pointer transition-colors",
@@ -539,7 +561,7 @@ export default function SpeechStage({ pipelineId, onContinue }: SpeechStageProps
               >
                 <X className="h-4 w-4" />
               </button>
-              <AudioPlayer src={uploadedUrl} />
+              <audio src={uploadedUrl} controls className="w-full" />
             </div>
           )}
         </div>
@@ -547,59 +569,46 @@ export default function SpeechStage({ pipelineId, onContinue }: SpeechStageProps
     </div>
   );
 
-  const handleDownloadAudio = async () => {
-    const audioUrl = outputAudio?.url;
-    if (!audioUrl) return;
-    try {
-      const response = await fetch(audioUrl);
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `speech-${Date.now()}.mp3`;
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
-      toast.success('Audio downloaded');
-    } catch (error) {
-      toast.error('Failed to download audio');
-    }
-  };
-
-  const outputContent = outputAudio ? (
-    <div className="flex flex-col items-center justify-center h-full gap-6 px-4">
-      {/* Audio Generated Banner */}
-      <div className="w-full rounded-xl border border-border bg-card p-6">
-        <div className="flex items-center gap-4 mb-4">
-          <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
-            <Check className="h-6 w-6 text-primary" />
-          </div>
-          <div>
-            <p className="font-medium">Audio Generated</p>
-            <p className="text-sm text-muted-foreground">{characterCount.toLocaleString()} characters</p>
-          </div>
-        </div>
-        <AudioPlayer src={outputAudio.url} />
+  const outputContent = hasOutput && outputAudio ? (
+    <div className="space-y-4">
+      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+        <Mic className="h-4 w-4" />
+        <span>Duration: {formatDuration(outputAudio.duration_seconds || 0)}</span>
       </div>
-      
-      <div className="text-center">
-        <p className="text-lg font-medium">
-          {formatDuration(outputAudio.duration_seconds)}
-        </p>
-        <p className="text-sm text-muted-foreground">Duration</p>
-      </div>
+      <AudioPlayer src={outputAudio.url} />
     </div>
   ) : null;
 
-  const outputActions = (
+  const outputActions = hasOutput ? (
     <div className="flex items-center gap-2">
-      <Button variant="ghost" size="sm" onClick={handleDownloadAudio}>
-        <Download className="h-4 w-4 mr-2" />
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={async () => {
+          if (!outputAudio?.url) return;
+          try {
+            const response = await fetch(outputAudio.url);
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `speech-${Date.now()}.mp3`;
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+            toast.success('Audio downloaded');
+          } catch (error) {
+            toast.error('Failed to download audio');
+          }
+        }}
+        className="h-8"
+      >
+        <Download className="h-4 w-4 mr-1" />
         Download
       </Button>
     </div>
-  );
+  ) : undefined;
 
   return (
     <StageLayout
@@ -611,14 +620,14 @@ export default function SpeechStage({ pipelineId, onContinue }: SpeechStageProps
       onContinue={handleContinue}
       isGenerating={isGenerating || isUploading || isUpdating}
       canContinue={hasOutput}
-      generateLabel={mode === 'upload' ? 'Use Uploaded Audio' : 'Generate Speech'}
-      creditsCost={mode === 'upload' ? 'Free' : `${creditCost.toFixed(2)} credits`}
+      generateLabel={mode === 'upload' ? 'Save Audio • Free' : 'Generate Speech'}
+      creditsCost={mode === 'upload' ? '' : `${creditCost.toFixed(2)} credits`}
       generateDisabled={!canGenerate}
       isAIGenerated={mode === 'generate'}
-      outputActions={hasOutput ? outputActions : undefined}
+      outputActions={outputActions}
       emptyStateIcon={<Mic className="h-10 w-10 text-muted-foreground/50" strokeWidth={1.5} />}
-      emptyStateTitle="Generated speech will appear here"
-      emptyStateSubtitle="Enter script and select an actor"
+      emptyStateTitle="Generated audio will appear here"
+      emptyStateSubtitle="Enter a script and select an actor voice"
     />
   );
 }

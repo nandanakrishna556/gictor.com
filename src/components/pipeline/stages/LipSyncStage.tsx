@@ -13,7 +13,8 @@ import { SingleImageUpload } from '@/components/ui/single-image-upload';
 import { VideoPlayer } from '@/components/ui/video-player';
 import { AudioPlayer } from '@/components/ui/audio-player';
 import { InputModeToggle, InputMode } from '@/components/ui/input-mode-toggle';
-import { useQueryClient } from '@tanstack/react-query';
+import { useQueryClient, useQuery } from '@tanstack/react-query';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface LipSyncStageProps {
   pipelineId: string;
@@ -28,6 +29,7 @@ const MIN_CREDIT_COST = 0.15;
 export default function LipSyncStage({ pipelineId, onComplete }: LipSyncStageProps) {
   const { pipeline, updateFinalVideo, isUpdating } = usePipeline(pipelineId);
   const { profile } = useProfile();
+  const { user } = useAuth();
   const queryClient = useQueryClient();
   
   // Input mode
@@ -46,11 +48,36 @@ export default function LipSyncStage({ pipelineId, onComplete }: LipSyncStagePro
   const [isDragging, setIsDragging] = useState(false);
   
   // Generation state
-  const [isGenerating, setIsGenerating] = useState(false);
-  const [generationProgress, setGenerationProgress] = useState(0);
+  const [localGenerating, setLocalGenerating] = useState(false);
+  const generationInitiatedRef = useRef(false);
+
+  // Fetch linked file for realtime updates
+  const { data: linkedFile } = useQuery({
+    queryKey: ['pipeline-lipsync-file', pipelineId],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('files')
+        .select('*')
+        .eq('generation_params->>pipeline_id', pipelineId)
+        .eq('file_type', 'lip_sync')
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      return data;
+    },
+    enabled: !!pipelineId,
+    refetchInterval: (query) => {
+      const file = query.state.data;
+      return (localGenerating || file?.generation_status === 'processing') ? 2000 : false;
+    },
+  });
 
   // Calculate credit cost
   const creditCost = Math.max(MIN_CREDIT_COST, Math.ceil(audioDuration * CREDIT_COST_PER_SECOND * 100) / 100);
+
+  // Derive generating state from linked file
+  const isServerProcessing = linkedFile?.generation_status === 'processing';
+  const isGenerating = localGenerating || (isServerProcessing && generationInitiatedRef.current);
 
   // Load existing data from pipeline
   useEffect(() => {
@@ -64,27 +91,39 @@ export default function LipSyncStage({ pipelineId, onComplete }: LipSyncStagePro
         setAudioUrl(pipeline.voice_output.url);
         setAudioDuration(pipeline.voice_output.duration_seconds || 0);
       }
-      // Check generation status
-      if (pipeline.status === 'processing') {
-        setIsGenerating(true);
-      }
     }
   }, [pipeline]);
 
-  // Poll for completion
+  // Watch linked file for completion and sync to pipeline
   useEffect(() => {
-    if (isGenerating && pipeline) {
-      if (pipeline.status === 'completed' && pipeline.final_video_output?.url) {
-        setIsGenerating(false);
-        setGenerationProgress(100);
-        toast.success('Lip sync video generated!');
-      } else if (pipeline.status === 'failed') {
-        setIsGenerating(false);
-        setGenerationProgress(0);
-        toast.error('Generation failed');
-      }
+    if (!linkedFile || !generationInitiatedRef.current) return;
+    
+    if (linkedFile.generation_status === 'completed' && linkedFile.download_url) {
+      // Sync to pipeline
+      updateFinalVideo({
+        output: { 
+          url: linkedFile.download_url, 
+          duration_seconds: audioDuration, 
+          generated_at: new Date().toISOString() 
+        },
+      });
+      
+      // Clean up the temporary file
+      supabase.from('files').delete().eq('id', linkedFile.id).then(() => {
+        queryClient.invalidateQueries({ queryKey: ['pipeline-lipsync-file', pipelineId] });
+      });
+      
+      setLocalGenerating(false);
+      generationInitiatedRef.current = false;
+      toast.success('Lip sync video generated!');
+      queryClient.invalidateQueries({ queryKey: ['pipeline', pipelineId] });
+      queryClient.invalidateQueries({ queryKey: ['profile'] });
+    } else if (linkedFile.generation_status === 'failed') {
+      setLocalGenerating(false);
+      generationInitiatedRef.current = false;
+      toast.error(linkedFile.error_message || 'Lip sync generation failed');
     }
-  }, [pipeline, isGenerating]);
+  }, [linkedFile, pipelineId, queryClient, updateFinalVideo, audioDuration]);
 
   const handleGenerate = async () => {
     if (mode === 'upload') {
@@ -122,8 +161,8 @@ export default function LipSyncStage({ pipelineId, onComplete }: LipSyncStagePro
       return;
     }
 
-    setIsGenerating(true);
-    setGenerationProgress(0);
+    setLocalGenerating(true);
+    generationInitiatedRef.current = true;
 
     try {
       const { data: sessionData, error: sessionError } = await supabase.auth.refreshSession();
@@ -131,61 +170,59 @@ export default function LipSyncStage({ pipelineId, onComplete }: LipSyncStagePro
         throw new Error('Session expired. Please log in again.');
       }
 
-      // Calculate estimated duration
-      const estimatedDuration = Math.max(120, Math.ceil((audioDuration / 8) * 240));
-
-      // Update pipeline status
-      await supabase
-        .from('pipelines')
-        .update({
-          status: 'processing',
-          current_stage: 'lip_sync',
-          final_video_input: {
+      // Create a temporary file record (same as standalone LipSyncModal)
+      const { data: newFile, error: createError } = await supabase
+        .from('files')
+        .insert({
+          name: 'Pipeline Lip Sync',
+          file_type: 'lip_sync',
+          project_id: pipeline?.project_id,
+          status: 'draft',
+          generation_status: 'processing',
+          generation_started_at: new Date().toISOString(),
+          estimated_duration_seconds: Math.max(120, Math.ceil((audioDuration / 8) * 240)),
+          generation_params: { 
+            pipeline_id: pipelineId,
             first_frame_url: imageUrl,
             audio_url: audioUrl,
             audio_duration: audioDuration,
-          },
+          }
         })
-        .eq('id', pipelineId);
+        .select()
+        .single();
 
-      // Prepare payload for edge function - use pipeline_lip_sync type
-      const requestPayload = {
-        type: 'pipeline_lip_sync',
-        payload: {
-          pipeline_id: pipelineId,
-          user_id: sessionData.session.user.id,
-          image_url: imageUrl,
-          audio_url: audioUrl,
-          audio_duration: audioDuration,
-          supabase_url: import.meta.env.VITE_SUPABASE_URL,
-        },
-      };
-
-      // Also sync linked file to show processing
-      const { data: linkedFiles } = await supabase
-        .from('files')
-        .select('id')
-        .eq('generation_params->>pipeline_id', pipelineId);
-
-      if (linkedFiles && linkedFiles.length > 0) {
-        await supabase
-          .from('files')
-          .update({ generation_status: 'processing' })
-          .eq('id', linkedFiles[0].id);
+      if (createError || !newFile) {
+        throw new Error('Failed to create file record');
       }
 
+      // Use 'lip_sync' type like standalone LipSyncModal
       const { data, error } = await supabase.functions.invoke('trigger-generation', {
-        body: requestPayload,
+        body: {
+          type: 'lip_sync',
+          payload: {
+            file_id: newFile.id,
+            user_id: sessionData.session.user.id,
+            project_id: pipeline?.project_id,
+            image_url: imageUrl,
+            audio_url: audioUrl,
+            audio_duration: audioDuration,
+            duration_seconds: audioDuration,
+            resolution: '720p',
+            credits_cost: creditCost,
+            supabase_url: import.meta.env.VITE_SUPABASE_URL,
+          },
+        },
       });
 
       if (error) throw error;
       if (!data?.success) throw new Error(data?.error || 'Generation failed');
 
       toast.success('Lip sync generation started!');
-      queryClient.invalidateQueries({ queryKey: ['profile'] });
+      queryClient.invalidateQueries({ queryKey: ['pipeline-lipsync-file', pipelineId] });
     } catch (error) {
       console.error('Generation error:', error);
-      setIsGenerating(false);
+      setLocalGenerating(false);
+      generationInitiatedRef.current = false;
       toast.error('Failed to start generation');
     }
   };

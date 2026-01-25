@@ -12,7 +12,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import StageLayout from './StageLayout';
 import { useProfile } from '@/hooks/useProfile';
-import { useQueryClient } from '@tanstack/react-query';
+import { useQueryClient, useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/contexts/AuthContext';
 import { Actor } from '@/hooks/useActors';
 import { uploadToR2 } from '@/lib/cloudflare-upload';
@@ -53,15 +53,34 @@ export default function FirstFrameStage({ pipelineId, onContinue }: FirstFrameSt
   // Generation state
   const [localGenerating, setLocalGenerating] = useState(false);
   const isLocalGeneratingRef = useRef(false);
-  const prevStatusRef = useRef<string | null>(null);
-  const toastShownRef = useRef<string | null>(null);
   const generationInitiatedRef = useRef(false);
+
+  // Fetch linked file for realtime updates
+  const { data: linkedFile } = useQuery({
+    queryKey: ['pipeline-frame-file', pipelineId],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('files')
+        .select('*')
+        .eq('generation_params->>pipeline_id', pipelineId)
+        .eq('file_type', 'frame')
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      return data;
+    },
+    enabled: !!pipelineId,
+    refetchInterval: (query) => {
+      const file = query.state.data;
+      return (localGenerating || file?.generation_status === 'processing') ? 2000 : false;
+    },
+  });
 
   // Dynamic credit cost based on resolution
   const creditCost = resolution === '4K' ? 0.15 : 0.1;
 
-  // Derive from pipeline
-  const isServerProcessing = pipeline?.status === 'processing' && pipeline?.current_stage === 'first_frame';
+  // Derive from pipeline and linked file
+  const isServerProcessing = linkedFile?.generation_status === 'processing';
   const isGenerating = localGenerating || (isServerProcessing && generationInitiatedRef.current);
   const hasOutput = !!pipeline?.first_frame_output?.url;
   const outputUrl = pipeline?.first_frame_output?.url;
@@ -85,42 +104,38 @@ export default function FirstFrameStage({ pipelineId, onContinue }: FirstFrameSt
       setPrompt(input.prompt || '');
       setUploadedUrl(input.uploaded_url || '');
     }
-    
-    // Initialize prev status
-    if (prevStatusRef.current === null && pipeline) {
-      prevStatusRef.current = pipeline.status;
-      if (hasOutput) {
-        toastShownRef.current = pipelineId;
-      }
-    }
-  }, [pipeline?.first_frame_input, pipeline?.status, hasOutput, pipelineId]);
+  }, [pipeline?.first_frame_input]);
 
-  // Handle status transitions
+  // Watch linked file for completion and sync to pipeline
   useEffect(() => {
-    if (!pipeline) return;
+    if (!linkedFile || !generationInitiatedRef.current) return;
     
-    const currentStatus = pipeline.status;
-    const prevStatus = prevStatusRef.current;
-    
-    // Server confirmed processing - clear local generating state
-    if (generationInitiatedRef.current && currentStatus === 'processing') {
-      isLocalGeneratingRef.current = false;
-      setLocalGenerating(false);
-    }
-    
-    // Completed transition - only react if we initiated generation
-    if (generationInitiatedRef.current && prevStatus === 'processing' && currentStatus !== 'processing' && pipeline.first_frame_output?.url) {
-      if (toastShownRef.current !== pipelineId) {
-        toastShownRef.current = pipelineId;
-        toast.success('First frame generated!');
-        queryClient.invalidateQueries({ queryKey: ['pipeline', pipelineId] });
-      }
+    if (linkedFile.generation_status === 'completed' && linkedFile.download_url) {
+      // Sync to pipeline
+      updateFirstFrame({
+        output: {
+          url: linkedFile.download_url,
+          generated_at: new Date().toISOString(),
+        },
+        complete: true,
+      });
+      
+      // Clean up the temporary file
+      supabase.from('files').delete().eq('id', linkedFile.id).then(() => {
+        queryClient.invalidateQueries({ queryKey: ['pipeline-frame-file', pipelineId] });
+      });
+      
       setLocalGenerating(false);
       generationInitiatedRef.current = false;
+      toast.success('First frame generated!');
+      queryClient.invalidateQueries({ queryKey: ['pipeline', pipelineId] });
+      queryClient.invalidateQueries({ queryKey: ['profile'] });
+    } else if (linkedFile.generation_status === 'failed') {
+      setLocalGenerating(false);
+      generationInitiatedRef.current = false;
+      toast.error(linkedFile.error_message || 'First frame generation failed');
     }
-    
-    prevStatusRef.current = currentStatus;
-  }, [pipeline, pipelineId, queryClient]);
+  }, [linkedFile, pipelineId, queryClient, updateFirstFrame]);
 
   // Save input changes
   const saveInput = async () => {
@@ -231,32 +246,45 @@ export default function FirstFrameStage({ pipelineId, onContinue }: FirstFrameSt
     try {
       await saveInput();
 
-      // Set pipeline status to processing BEFORE triggering generation
-      // This ensures UI shows loading state and polling starts
-      await supabase
-        .from('pipelines')
-        .update({ status: 'processing', current_stage: 'first_frame' })
-        .eq('id', pipelineId);
-
-      // Also sync linked file to show processing in project grid
-      const { data: linkedFiles } = await supabase
+      // Create a temporary file record (same as standalone FrameModal)
+      const { data: newFile, error: createError } = await supabase
         .from('files')
-        .select('id')
-        .eq('generation_params->>pipeline_id', pipelineId);
+        .insert({
+          name: 'Pipeline Frame',
+          file_type: 'frame',
+          project_id: pipeline?.project_id,
+          status: 'draft',
+          generation_status: 'processing',
+          generation_started_at: new Date().toISOString(),
+          estimated_duration_seconds: 60,
+          generation_params: { 
+            pipeline_id: pipelineId,
+            frame_type: 'first',
+            style,
+            substyle: style !== 'motion_graphics' ? subStyle : null,
+            aspect_ratio: aspectRatio,
+            actor_id: (style === 'talking_head' || style === 'broll') ? selectedActorId : null,
+            reference_images: referenceImages,
+            prompt,
+            camera_perspective: style === 'broll' ? cameraPerspective : null,
+            resolution,
+          }
+        })
+        .select()
+        .single();
 
-      if (linkedFiles && linkedFiles.length > 0) {
-        await supabase
-          .from('files')
-          .update({ generation_status: 'processing' })
-          .eq('id', linkedFiles[0].id);
+      if (createError || !newFile) {
+        throw new Error('Failed to create file record');
       }
 
+      // Use 'frame' type like standalone FrameModal
       const { data, error } = await supabase.functions.invoke('trigger-generation', {
         body: {
-          type: 'pipeline_first_frame',
+          type: 'frame',
           payload: {
-            pipeline_id: pipelineId,
-            prompt,
+            file_id: newFile.id,
+            user_id: user?.id,
+            project_id: pipeline?.project_id,
             frame_type: 'first',
             style,
             substyle: style !== 'motion_graphics' ? subStyle : null,
@@ -266,7 +294,8 @@ export default function FirstFrameStage({ pipelineId, onContinue }: FirstFrameSt
             actor_id: (style === 'talking_head' || style === 'broll') ? selectedActorId : null,
             actor_360_url: (style === 'talking_head' || style === 'broll') ? selectedActor?.profile_360_url : null,
             reference_images: referenceImages,
-            pipeline_type: 'lip_sync',
+            prompt,
+            credits_cost: creditCost,
             supabase_url: import.meta.env.VITE_SUPABASE_URL,
           },
         },
@@ -277,17 +306,13 @@ export default function FirstFrameStage({ pipelineId, onContinue }: FirstFrameSt
       }
 
       toast.success('First frame generation started!');
-      queryClient.invalidateQueries({ queryKey: ['profile'] });
+      queryClient.invalidateQueries({ queryKey: ['pipeline-frame-file', pipelineId] });
     } catch (error) {
       console.error('Generation error:', error);
       toast.error(error instanceof Error ? error.message : 'Failed to start generation');
       setLocalGenerating(false);
       isLocalGeneratingRef.current = false;
-      // Reset pipeline status on error
-      await supabase
-        .from('pipelines')
-        .update({ status: 'draft' })
-        .eq('id', pipelineId);
+      generationInitiatedRef.current = false;
     }
   };
 
@@ -462,13 +487,13 @@ export default function FirstFrameStage({ pipelineId, onContinue }: FirstFrameSt
               </div>
             </div>
             <p className="text-xs text-muted-foreground mt-2">
-              {style === 'talking_head' && "Person looking directly at camera"}
-              {style === 'broll' && "Person captured mid-action, natural movement"}
-              {style === 'motion_graphics' && "Background only - colors, gradients, patterns"}
+              {style === 'talking_head' && 'AI-generated person speaking to camera'}
+              {style === 'broll' && 'Cinematic supplementary footage'}
+              {style === 'motion_graphics' && 'Animated graphics and text overlays'}
             </p>
           </div>
 
-          {/* Camera Perspective - Only show for B-Roll */}
+          {/* B-Roll Camera Perspective */}
           {style === 'broll' && (
             <div className="space-y-2">
               <label className="text-sm font-medium">Camera Perspective</label>
@@ -476,7 +501,6 @@ export default function FirstFrameStage({ pipelineId, onContinue }: FirstFrameSt
                 <Button
                   variant={cameraPerspective === '1st_person' ? 'default' : 'outline'}
                   size="sm"
-                  className="flex-1"
                   onClick={() => setCameraPerspective('1st_person')}
                 >
                   1st Person
@@ -484,24 +508,18 @@ export default function FirstFrameStage({ pipelineId, onContinue }: FirstFrameSt
                 <Button
                   variant={cameraPerspective === '3rd_person' ? 'default' : 'outline'}
                   size="sm"
-                  className="flex-1"
                   onClick={() => setCameraPerspective('3rd_person')}
                 >
                   3rd Person
                 </Button>
               </div>
-              <p className="text-xs text-muted-foreground">
-                {cameraPerspective === '1st_person'
-                  ? "First person view - camera shows what subject sees"
-                  : "Observer view - camera captures the subject from outside"}
-              </p>
             </div>
           )}
 
-          {/* Actor Selector - Show for Talking Head and B-Roll */}
+          {/* Actor Selector for Talking Head and B-Roll */}
           {(style === 'talking_head' || style === 'broll') && (
             <div className="space-y-2">
-              <label className="text-sm font-medium">Select Actor</label>
+              <label className="text-sm font-medium">Actor</label>
               <ActorSelectorPopover
                 selectedActorId={selectedActorId}
                 onSelect={handleActorSelect}
@@ -509,49 +527,54 @@ export default function FirstFrameStage({ pipelineId, onContinue }: FirstFrameSt
             </div>
           )}
 
-          {/* Aspect Ratio and Resolution Row */}
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Aspect Ratio</label>
-              <Select value={aspectRatio} onValueChange={(v) => setAspectRatio(v as AspectRatio)}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="9:16">9:16 (Portrait)</SelectItem>
-                  <SelectItem value="16:9">16:9 (Horizontal)</SelectItem>
-                  <SelectItem value="1:1">1:1 (Square)</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Resolution</label>
-              <Select value={resolution} onValueChange={(v) => setResolution(v as Resolution)}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="1K">1K • {0.1} credits</SelectItem>
-                  <SelectItem value="2K">2K • {0.1} credits</SelectItem>
-                  <SelectItem value="4K">4K • {0.15} credits</SelectItem>
-                </SelectContent>
-              </Select>
+          {/* Aspect Ratio */}
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Aspect Ratio</label>
+            <div className="flex gap-2">
+              {(['9:16', '16:9', '1:1'] as AspectRatio[]).map((ratio) => (
+                <Button
+                  key={ratio}
+                  variant={aspectRatio === ratio ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setAspectRatio(ratio)}
+                >
+                  {ratio}
+                </Button>
+              ))}
             </div>
           </div>
 
-          {/* Reference Images - Up to 3 individual slots */}
+          {/* Resolution */}
           <div className="space-y-2">
-            <label className="text-sm font-medium">Reference Images (Optional, up to 3)</label>
+            <label className="text-sm font-medium">Resolution</label>
+            <div className="flex gap-2">
+              {(['1K', '2K', '4K'] as Resolution[]).map((res) => (
+                <Button
+                  key={res}
+                  variant={resolution === res ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setResolution(res)}
+                  className="relative"
+                >
+                  {res}
+                  {res === '4K' && (
+                    <span className="absolute -top-1 -right-1 text-[10px] bg-primary text-primary-foreground px-1 rounded">
+                      +0.05
+                    </span>
+                  )}
+                </Button>
+              ))}
+            </div>
+          </div>
+
+          {/* Reference Images */}
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Reference Images (Optional)</label>
             <div className="grid grid-cols-3 gap-2">
               {[0, 1, 2].map((index) => (
                 <div
                   key={index}
-                  className={cn(
-                    "aspect-square rounded-lg border-2 border-dashed flex items-center justify-center relative overflow-hidden transition-all",
-                    referenceImages[index]
-                      ? "border-border"
-                      : "border-border hover:border-primary/50 cursor-pointer"
-                  )}
+                  className="aspect-square rounded-lg border-2 border-dashed border-border hover:border-primary/50 transition-colors relative overflow-hidden"
                 >
                   {referenceImages[index] ? (
                     <>
@@ -561,25 +584,26 @@ export default function FirstFrameStage({ pipelineId, onContinue }: FirstFrameSt
                         className="w-full h-full object-cover"
                       />
                       <button
-                        type="button"
                         onClick={() => handleRemoveImage(index)}
-                        className="absolute top-1 right-1 h-5 w-5 rounded-full bg-background/80 hover:bg-background flex items-center justify-center"
+                        className="absolute top-1 right-1 p-1 rounded-full bg-background/80 hover:bg-background transition-colors"
                       >
                         <X className="h-3 w-3" />
                       </button>
                     </>
-                  ) : uploadingIndex === index ? (
-                    <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
                   ) : (
                     <label className="w-full h-full flex flex-col items-center justify-center cursor-pointer">
-                      <Plus className="h-5 w-5 text-muted-foreground" />
-                      <span className="text-xs text-muted-foreground mt-1">Add</span>
                       <input
                         type="file"
                         accept="image/*"
-                        className="hidden"
                         onChange={(e) => handleImageUpload(index, e)}
+                        className="hidden"
+                        disabled={uploadingIndex !== null}
                       />
+                      {uploadingIndex === index ? (
+                        <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+                      ) : (
+                        <Plus className="h-5 w-5 text-muted-foreground" />
+                      )}
                     </label>
                   )}
                 </div>
@@ -593,8 +617,8 @@ export default function FirstFrameStage({ pipelineId, onContinue }: FirstFrameSt
             <Textarea
               value={prompt}
               onChange={(e) => setPrompt(e.target.value)}
-              placeholder="Describe the action, scene, and environment (person will be captured mid-action)..."
-              className="min-h-24 resize-none"
+              placeholder="Describe the scene you want to generate..."
+              className="min-h-[100px] resize-none"
             />
           </div>
         </>
@@ -602,24 +626,26 @@ export default function FirstFrameStage({ pipelineId, onContinue }: FirstFrameSt
     </div>
   );
 
-  const outputContent = outputUrl ? (
-    <div className="w-full max-w-md mx-auto animate-fade-in">
-      <img
-        src={outputUrl}
-        alt="Generated first frame"
-        className="w-full rounded-xl shadow-lg"
-      />
+  const outputContent = hasOutput && outputUrl ? (
+    <div className="space-y-4">
+      <div className="aspect-square rounded-xl overflow-hidden bg-secondary/30">
+        <img
+          src={outputUrl}
+          alt="Generated first frame"
+          className="w-full h-full object-contain"
+        />
+      </div>
     </div>
   ) : null;
 
-  const outputActions = outputUrl ? (
-    <Button variant="outline" size="sm" onClick={handleDownload}>
-      <Download className="h-4 w-4 mr-2" />
-      Download Image
-    </Button>
-  ) : null;
-
-  const wasAIGenerated = inputMode === 'generate';
+  const outputActions = hasOutput ? (
+    <div className="flex items-center gap-2">
+      <Button variant="ghost" size="sm" onClick={handleDownload} className="h-8">
+        <Download className="h-4 w-4 mr-1" />
+        Download
+      </Button>
+    </div>
+  ) : undefined;
 
   return (
     <StageLayout
@@ -631,13 +657,14 @@ export default function FirstFrameStage({ pipelineId, onContinue }: FirstFrameSt
       onContinue={handleContinue}
       isGenerating={isGenerating || isUpdating}
       canContinue={hasOutput}
-      generateLabel={inputMode === 'upload' ? 'Save • Free' : `Generate First Frame • ${creditCost} Credits`}
-      creditsCost={inputMode === 'upload' ? 'Free' : `${creditCost} Credits`}
-      isAIGenerated={wasAIGenerated}
+      generateLabel={inputMode === 'upload' ? 'Save Image • Free' : 'Generate First Frame'}
+      creditsCost={inputMode === 'upload' ? '' : `${creditCost} credits`}
+      generateDisabled={inputMode === 'generate' && !prompt.trim()}
+      isAIGenerated={inputMode === 'generate'}
       outputActions={outputActions}
-      emptyStateIcon={<ImageIcon className="h-12 w-12 text-muted-foreground/50" />}
-      emptyStateTitle="No first frame yet"
-      emptyStateSubtitle="Generate or upload an image to get started"
+      emptyStateIcon={<ImageIcon className="h-10 w-10 text-muted-foreground/50" strokeWidth={1.5} />}
+      emptyStateTitle="Generated image will appear here"
+      emptyStateSubtitle="Enter a prompt and click Generate"
     />
   );
 }
