@@ -10,7 +10,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import StageLayout from './StageLayout';
 import { useProfile } from '@/hooks/useProfile';
-import { useQueryClient } from '@tanstack/react-query';
+import { useQueryClient, useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/contexts/AuthContext';
 
 interface ScriptStageProps {
@@ -312,8 +312,54 @@ Example: Dashboard walkthrough for new users. Show: 1) Create project, 2) Add sc
     }
   };
 
+  // Humanize file tracking for n8n compatibility
+  const [humanizeFileId, setHumanizeFileId] = useState<string | null>(null);
+  
+  // Poll for humanize file updates
+  const { data: humanizeFile } = useQuery({
+    queryKey: ['humanize-file', humanizeFileId],
+    queryFn: async () => {
+      if (!humanizeFileId) return null;
+      const { data, error } = await supabase
+        .from('files')
+        .select('*')
+        .eq('id', humanizeFileId)
+        .single();
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!humanizeFileId && isHumanizing,
+    refetchInterval: 2000, // Poll every 2 seconds while humanizing
+  });
+
+  // Watch for humanize completion
+  useEffect(() => {
+    if (!humanizeFile || !isHumanizing) return;
+    
+    if (humanizeFile.generation_status === 'completed' && humanizeFile.script_output) {
+      // Sync result back to pipeline
+      updateScript({
+        output: {
+          text: humanizeFile.script_output,
+          char_count: humanizeFile.script_output.length,
+          estimated_duration: Math.ceil(humanizeFile.script_output.length / 17),
+        },
+        complete: true,
+      }).then(() => {
+        toast.success('Script humanized!');
+        setIsHumanizing(false);
+        setHumanizeFileId(null);
+        queryClient.invalidateQueries({ queryKey: ['pipeline', pipelineId] });
+      });
+    } else if (humanizeFile.generation_status === 'failed') {
+      toast.error('Humanization failed');
+      setIsHumanizing(false);
+      setHumanizeFileId(null);
+    }
+  }, [humanizeFile, isHumanizing, updateScript, pipelineId, queryClient]);
+
   const handleHumanize = async () => {
-    if (!outputScript?.text || !profile || !user) return;
+    if (!outputScript?.text || !profile || !user || !pipeline) return;
 
     if ((profile.credits ?? 0) < HUMANIZE_CREDIT_COST) {
       toast.error('Insufficient credits', { 
@@ -327,25 +373,39 @@ Example: Dashboard walkthrough for new users. Show: 1) Create project, 2) Add sc
     }
 
     setIsHumanizing(true);
-    generationInitiatedRef.current = true;
 
     try {
-      // Update pipeline status to processing first
-      await supabase
-        .from('pipelines')
-        .update({
+      // Create a temporary file for n8n to update (n8n expects file_id)
+      const { data: tempFile, error: createError } = await supabase
+        .from('files')
+        .insert({
+          project_id: pipeline.project_id,
+          folder_id: pipeline.folder_id || null,
+          name: `Humanize - ${pipeline.name}`,
+          file_type: 'script',
           status: 'processing',
-          current_stage: 'script',
-          updated_at: new Date().toISOString(),
+          generation_status: 'processing',
+          generation_started_at: new Date().toISOString(),
         })
-        .eq('id', pipelineId);
+        .select()
+        .single();
 
+      if (createError || !tempFile) {
+        throw new Error('Failed to create temporary file for humanization');
+      }
+
+      setHumanizeFileId(tempFile.id);
+
+      // Use the standard 'humanize' type that n8n understands
       const { data, error } = await supabase.functions.invoke('trigger-generation', {
         body: {
-          type: 'pipeline_humanize',
+          type: 'humanize',
           payload: {
-            pipeline_id: pipelineId,
+            file_id: tempFile.id,
+            user_id: user.id,
+            project_id: pipeline.project_id,
             script: outputScript.text,
+            supabase_url: import.meta.env.VITE_SUPABASE_URL,
             credits_cost: HUMANIZE_CREDIT_COST,
           },
         },
@@ -357,16 +417,11 @@ Example: Dashboard walkthrough for new users. Show: 1) Create project, 2) Add sc
 
       toast.success('Humanizing script...');
       queryClient.invalidateQueries({ queryKey: ['profile'] });
-      queryClient.invalidateQueries({ queryKey: ['pipeline', pipelineId] });
     } catch (error) {
       console.error('Humanize error:', error);
       toast.error(error instanceof Error ? error.message : 'Failed to humanize script');
       setIsHumanizing(false);
-      // Reset pipeline status on error
-      await supabase
-        .from('pipelines')
-        .update({ status: 'draft' })
-        .eq('id', pipelineId);
+      setHumanizeFileId(null);
     }
   };
 

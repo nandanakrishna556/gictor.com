@@ -128,9 +128,17 @@ serve(async (req) => {
     }
 
     const body = await req.json();
-    const { type } = body;
+    const { type, pipeline_id, is_pipeline, file_id, script_output, status } = body;
 
-    console.log('Received update request:', { type, ip: clientIP });
+    console.log('Received update request:', { 
+      type, 
+      pipeline_id: pipeline_id || 'none',
+      is_pipeline: is_pipeline || false,
+      file_id: file_id || 'none',
+      hasScriptOutput: !!script_output,
+      status,
+      ip: clientIP 
+    });
 
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;

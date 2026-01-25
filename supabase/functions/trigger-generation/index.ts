@@ -440,6 +440,9 @@ serve(async (req) => {
       n8nType = 'humanize';
     }
     
+    // Extract pipeline_id if present for explicit inclusion
+    const pipelineId = validatedBody.payload?.pipeline_id;
+    
     const n8nPayload = {
       ...validatedBody,
       type: n8nType,
@@ -447,12 +450,20 @@ serve(async (req) => {
         ...validatedBody.payload,
         user_id: user.id,
         credits_cost: actualCost, // Server-calculated cost for n8n/status updates
-        // For pipeline humanize, include pipeline_id for callback routing
-        ...(isPipelineHumanize && { is_pipeline: true }),
+        // For pipeline humanize, explicitly include pipeline_id and is_pipeline flag for callback routing
+        ...(isPipelineHumanize && { 
+          is_pipeline: true,
+          pipeline_id: pipelineId, // Ensure pipeline_id is explicitly included
+        }),
       }
     };
 
-    console.log('Forwarding to n8n:', { type: validatedBody.type });
+    console.log('Forwarding to n8n:', { 
+      originalType: validatedBody.type, 
+      mappedType: n8nType,
+      isPipelineHumanize,
+      pipelineId: pipelineId || 'none',
+    });
 
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
