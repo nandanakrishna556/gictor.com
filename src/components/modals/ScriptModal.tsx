@@ -905,20 +905,39 @@ Example: Dashboard walkthrough for new users. Show: 1) Create project, 2) Add sc
                   <div className="space-y-2">
                     <label className="text-sm font-medium">Script Type</label>
                     <div className="flex gap-2">
-                      {(['prompt', 'recreate', 'walkthrough'] as ScriptType[]).map((type) => (
-                        <button
-                          key={type}
-                          onClick={() => { setScriptType(type); setHasUnsavedChanges(true); }}
-                          className={cn(
-                            'flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-all',
-                            scriptType === type
-                              ? 'bg-primary text-primary-foreground'
-                              : 'bg-secondary text-muted-foreground hover:bg-secondary/80 hover:text-foreground'
-                          )}
-                        >
-                          {type.charAt(0).toUpperCase() + type.slice(1)}
-                        </button>
-                      ))}
+                      {(['prompt', 'recreate', 'walkthrough'] as ScriptType[]).map((type) => {
+                        const isComingSoon = type === 'recreate' || type === 'walkthrough';
+                        return (
+                          <button
+                            key={type}
+                            onClick={() => { 
+                              if (isComingSoon) {
+                                toast.info(`${type.charAt(0).toUpperCase() + type.slice(1)} coming soon!`);
+                                return;
+                              }
+                              setScriptType(type); 
+                              setHasUnsavedChanges(true); 
+                            }}
+                            disabled={isComingSoon}
+                            className={cn(
+                              'relative flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-all',
+                              scriptType === type && !isComingSoon
+                                ? 'bg-primary text-primary-foreground'
+                                : 'bg-secondary text-muted-foreground',
+                              isComingSoon 
+                                ? 'opacity-50 cursor-not-allowed' 
+                                : 'hover:bg-secondary/80 hover:text-foreground'
+                            )}
+                          >
+                            {type.charAt(0).toUpperCase() + type.slice(1)}
+                            {isComingSoon && (
+                              <span className="absolute -top-1.5 -right-1.5 text-[9px] font-medium bg-muted px-1 py-0.5 rounded text-muted-foreground">
+                                Soon
+                              </span>
+                            )}
+                          </button>
+                        );
+                      })}
                     </div>
                   </div>
 
