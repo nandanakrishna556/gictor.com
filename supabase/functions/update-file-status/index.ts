@@ -53,11 +53,12 @@ function checkRateLimit(identifier: string): { allowed: boolean; remaining: numb
 
 // ============= Input Validation Schemas =============
 const PipelineUpdateSchema = z.object({
-  type: z.enum(['pipeline_first_frame', 'pipeline_first_frame_b_roll', 'pipeline_script', 'pipeline_voice', 'pipeline_final_video']),
+  type: z.enum(['pipeline_first_frame', 'pipeline_first_frame_b_roll', 'pipeline_script', 'pipeline_humanize', 'pipeline_voice', 'pipeline_speech', 'pipeline_final_video']),
   pipeline_id: z.string().uuid(),
   status: z.enum(['completed', 'failed', 'processing']).optional(),
   output: z.object({
-    url: z.string().url(),
+    url: z.string().url().optional(),
+    text: z.string().max(50000).optional(),
     duration_seconds: z.number().optional(),
   }).optional(),
   error_message: z.string().max(1000).optional(),
@@ -204,28 +205,36 @@ async function handlePipelineUpdate(
       break;
 
     case 'pipeline_script':
+    case 'pipeline_humanize':
       if (status === 'completed' && output) {
+        // Script output can be either { text: string } or { url: string } depending on generation type
         updates.script_output = output;
         updates.script_complete = true;
+        updates.status = 'draft'; // Reset status after script generation completes
       } else if (status === 'failed') {
         updates.script_output = null;
+        updates.status = 'draft'; // Reset status on failure
         if (user_id && credits_cost) {
-          await refundCredits(supabase, user_id, credits_cost, 'script', pipeline_id);
+          await refundCredits(supabase, user_id, credits_cost, type === 'pipeline_humanize' ? 'humanize' : 'script', pipeline_id);
         }
       }
       break;
 
     case 'pipeline_voice':
+    case 'pipeline_speech':
       if (status === 'completed' && output) {
         updates.voice_output = output;
         updates.voice_complete = true;
+        updates.status = 'draft';
       } else if (status === 'failed') {
         updates.voice_output = null;
+        updates.status = 'draft';
         if (user_id && credits_cost) {
           await refundCredits(supabase, user_id, credits_cost, 'voice', pipeline_id);
         }
       }
       break;
+
 
     case 'pipeline_final_video':
       if (status === 'completed' && output) {

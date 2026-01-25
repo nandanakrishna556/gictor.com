@@ -330,6 +330,16 @@ Example: Dashboard walkthrough for new users. Show: 1) Create project, 2) Add sc
     generationInitiatedRef.current = true;
 
     try {
+      // Update pipeline status to processing first
+      await supabase
+        .from('pipelines')
+        .update({
+          status: 'processing',
+          current_stage: 'script',
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', pipelineId);
+
       const { data, error } = await supabase.functions.invoke('trigger-generation', {
         body: {
           type: 'pipeline_humanize',
@@ -347,10 +357,16 @@ Example: Dashboard walkthrough for new users. Show: 1) Create project, 2) Add sc
 
       toast.success('Humanizing script...');
       queryClient.invalidateQueries({ queryKey: ['profile'] });
+      queryClient.invalidateQueries({ queryKey: ['pipeline', pipelineId] });
     } catch (error) {
       console.error('Humanize error:', error);
       toast.error(error instanceof Error ? error.message : 'Failed to humanize script');
       setIsHumanizing(false);
+      // Reset pipeline status on error
+      await supabase
+        .from('pipelines')
+        .update({ status: 'draft' })
+        .eq('id', pipelineId);
     }
   };
 
