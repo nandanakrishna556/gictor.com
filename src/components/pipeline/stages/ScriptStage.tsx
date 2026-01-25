@@ -664,62 +664,85 @@ Example: Dashboard walkthrough for new users. Show: 1) Create project, 2) Add sc
           <span>•</span>
           <span>~{Math.floor(estimatedSeconds / 60)}:{(estimatedSeconds % 60).toString().padStart(2, '0')}</span>
         </div>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleCopyScript}
+            className="h-8"
+          >
+            <Copy className="h-4 w-4 mr-1" />
+            Copy
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleDownload}
+            className="h-8"
+          >
+            <Download className="h-4 w-4 mr-1" />
+            Export
+          </Button>
+        </div>
       </div>
-      <div className="bg-secondary/30 rounded-xl p-4 max-h-[400px] overflow-y-auto">
+      <div className="bg-secondary/30 rounded-xl p-4 max-h-[300px] overflow-y-auto">
         <p className="text-sm whitespace-pre-wrap leading-relaxed">{outputScript?.text}</p>
       </div>
-    </div>
-  ) : null;
-
-  const outputActions = hasOutput ? (
-    <div className="flex items-center gap-2">
+      
+      {/* Action buttons like ScriptModal */}
+      <div className="flex gap-2">
+        <Button
+          variant="secondary"
+          onClick={() => {
+            setIsRefineMode(false);
+            handleGenerate();
+          }}
+          disabled={isGenerating || isHumanizing}
+          className="flex-1"
+        >
+          <RefreshCw className="h-4 w-4 mr-2" />
+          Regenerate
+        </Button>
+        <Button
+          variant={isRefineMode ? 'default' : 'secondary'}
+          onClick={() => setIsRefineMode(!isRefineMode)}
+          disabled={isGenerating || isHumanizing}
+          className="flex-1"
+        >
+          <Wand2 className="h-4 w-4 mr-2" />
+          Refine
+        </Button>
+      </div>
+      
+      {/* Humanize Button */}
       <Button
-        variant="ghost"
-        size="sm"
-        onClick={handleCopyScript}
-        className="h-8"
-      >
-        <Copy className="h-4 w-4 mr-1" />
-        Copy
-      </Button>
-      <Button
-        variant="ghost"
-        size="sm"
-        onClick={handleDownload}
-        className="h-8"
-      >
-        <Download className="h-4 w-4 mr-1" />
-        Download
-      </Button>
-      <Button
-        variant="ghost"
-        size="sm"
-        onClick={() => {
-          setIsRefineMode(true);
-          setPrompt('');
-        }}
-        disabled={isGenerating || isHumanizing}
-        className="h-8"
-      >
-        <RefreshCw className="h-4 w-4 mr-1" />
-        Refine
-      </Button>
-      <Button
-        variant="ghost"
-        size="sm"
+        variant="outline"
         onClick={handleHumanize}
-        disabled={isGenerating || isHumanizing || (profile?.credits ?? 0) < HUMANIZE_CREDIT_COST}
-        className="h-8"
+        disabled={isHumanizing || isGenerating || (profile?.credits ?? 0) < HUMANIZE_CREDIT_COST}
+        className="w-full"
       >
         {isHumanizing ? (
-          <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+          <>
+            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+            Humanizing...
+          </>
         ) : (
-          <Wand2 className="h-4 w-4 mr-1" />
+          <>
+            <Wand2 className="h-4 w-4 mr-2" />
+            Humanize Script • {HUMANIZE_CREDIT_COST} credits
+          </>
         )}
-        Humanize
       </Button>
+      
+      {isRefineMode && (
+        <div className="bg-primary/10 border border-primary/30 rounded-lg p-3 text-sm">
+          <p className="text-primary">
+            <strong>Refine Mode:</strong> Describe your changes in the Prompt field, then click "Generate Script".
+          </p>
+        </div>
+      )}
     </div>
-  ) : undefined;
+  ) : null;
 
   return (
     <StageLayout
@@ -735,7 +758,6 @@ Example: Dashboard walkthrough for new users. Show: 1) Create project, 2) Add sc
       creditsCost={inputMode === 'upload' ? '' : `${CREDIT_COST} credits`}
       generateDisabled={inputMode === 'generate' && !prompt.trim()}
       isAIGenerated={inputMode === 'generate'}
-      outputActions={outputActions}
       emptyStateIcon={<FileText className="h-10 w-10 text-muted-foreground/50" strokeWidth={1.5} />}
       emptyStateTitle="Generated script will appear here"
       emptyStateSubtitle="Enter a prompt and click Generate"
