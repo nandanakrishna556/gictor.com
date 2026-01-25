@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { Upload, Play, Pause, Download, X, Search, User, Mic, Loader2, Check } from 'lucide-react';
+import { Upload, Play, Pause, Download, X, Search, User, Mic, Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { usePipeline } from '@/hooks/usePipeline';
 import { useActors } from '@/hooks/useActors';
@@ -15,7 +15,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { InputModeToggle, InputMode } from '@/components/ui/input-mode-toggle';
 import { AudioPlayer } from '@/components/ui/AudioPlayer';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+
 
 interface SpeechStageProps {
   pipelineId: string;
@@ -30,7 +30,7 @@ export default function SpeechStage({ pipelineId, onContinue }: SpeechStageProps
   const { pipeline, updateVoice, isUpdating } = usePipeline(pipelineId);
   const { actors } = useActors();
   const { profile } = useProfile();
-  const queryClient = useQueryClient();
+  
   
   // Input mode
   const [mode, setMode] = useState<InputMode>('generate');
@@ -46,83 +46,31 @@ export default function SpeechStage({ pipelineId, onContinue }: SpeechStageProps
   const [isUploading, setIsUploading] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   
-  // Playback state
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [currentTime, setCurrentTime] = useState(0);
-  const audioRef = useRef<HTMLAudioElement | null>(null);
   
-  // Generation state - track proxy file for polling
-  const [isGenerating, setIsGenerating] = useState(false);
-  const [speechFileId, setSpeechFileId] = useState<string | null>(null);
+  // Generation state - local tracking + pipeline status tracking
+  const [localGenerating, setLocalGenerating] = useState(false);
+  const prevVoiceOutputRef = useRef<string | null>(null);
 
-  // Poll for speech generation completion using proxy file
-  const { data: speechFile } = useQuery({
-    queryKey: ['speech-file', speechFileId],
-    queryFn: async () => {
-      if (!speechFileId) return null;
-      const { data, error } = await supabase
-        .from('files')
-        .select('id, generation_status, download_url, metadata')
-        .eq('id', speechFileId)
-        .single();
-      if (error) throw error;
-      return data;
-    },
-    enabled: !!speechFileId,
-    refetchInterval: (query) => {
-      const file = query.state.data;
-      // Poll every 2 seconds while processing
-      return file?.generation_status === 'processing' ? 2000 : false;
-    },
-  });
+  // Derive generating state from pipeline status or local state
+  const isGenerating = localGenerating || pipeline?.status === 'processing';
 
-  // Sync speech file result back to pipeline when completed
+  // Watch for voice output changes to detect completion
   useEffect(() => {
-    const syncSpeechResult = async () => {
-      if (!speechFileId || !speechFile) return;
-
-      if (speechFile.generation_status === 'completed' && speechFile.download_url) {
-        // Get duration from metadata or calculate it
-        const metadata = speechFile.metadata as { duration_seconds?: number } | null;
-        let duration = metadata?.duration_seconds || 0;
-        
-        if (!duration && speechFile.download_url) {
-          try {
-            duration = await getAudioDuration(speechFile.download_url);
-          } catch (e) {
-            console.error('Failed to get audio duration:', e);
-          }
-        }
-
-        // Update pipeline with the generated audio
-        await updateVoice({
-          output: {
-            url: speechFile.download_url,
-            duration_seconds: duration,
-            generated_at: new Date().toISOString(),
-          },
-          complete: true,
-        });
-
-        // Clean up the proxy file
-        await supabase.from('files').delete().eq('id', speechFileId);
-        
-        // Reset state and refresh pipeline
-        setSpeechFileId(null);
-        setIsGenerating(false);
-        queryClient.invalidateQueries({ queryKey: ['pipeline', pipelineId] });
-        toast.success('Speech generated successfully!');
-      } else if (speechFile.generation_status === 'failed') {
-        // Clean up on failure
-        await supabase.from('files').delete().eq('id', speechFileId);
-        setSpeechFileId(null);
-        setIsGenerating(false);
-        toast.error('Speech generation failed');
-      }
-    };
-
-    syncSpeechResult();
-  }, [speechFile, speechFileId, pipelineId, updateVoice, queryClient]);
+    const currentOutput = pipeline?.voice_output?.url;
+    
+    // If we were generating and now have output, show success
+    if (localGenerating && currentOutput && currentOutput !== prevVoiceOutputRef.current) {
+      setLocalGenerating(false);
+      toast.success('Speech generated successfully!');
+    }
+    
+    // Reset local generating if pipeline status changed from processing
+    if (localGenerating && pipeline?.status === 'draft' && currentOutput) {
+      setLocalGenerating(false);
+    }
+    
+    prevVoiceOutputRef.current = currentOutput || null;
+  }, [pipeline?.voice_output?.url, pipeline?.status, localGenerating]);
 
   // Get available actors
   const availableActors = actors?.filter(
@@ -155,29 +103,6 @@ export default function SpeechStage({ pipelineId, onContinue }: SpeechStageProps
     }
   }, [pipeline?.voice_input, pipeline?.script_output]);
 
-  const togglePlayback = () => {
-    const outputUrl = pipeline?.voice_output?.url;
-    if (!outputUrl) return;
-
-    if (!audioRef.current) {
-      audioRef.current = new Audio(outputUrl);
-      audioRef.current.onended = () => {
-        setIsPlaying(false);
-        setCurrentTime(0);
-      };
-      audioRef.current.ontimeupdate = () => {
-        setCurrentTime(audioRef.current?.currentTime || 0);
-      };
-    }
-
-    if (isPlaying) {
-      audioRef.current.pause();
-      setIsPlaying(false);
-    } else {
-      audioRef.current.play();
-      setIsPlaying(true);
-    }
-  };
 
   const processFile = async (file: File) => {
     if (!file.type.startsWith('audio/')) {
@@ -302,7 +227,7 @@ export default function SpeechStage({ pipelineId, onContinue }: SpeechStageProps
       return;
     }
 
-    setIsGenerating(true);
+    setLocalGenerating(true);
 
     try {
       const { data: sessionData, error: sessionError } = await supabase.auth.refreshSession();
@@ -310,7 +235,7 @@ export default function SpeechStage({ pipelineId, onContinue }: SpeechStageProps
         throw new Error('Session expired. Please log in again.');
       }
 
-      // Store input data
+      // Store input data and set pipeline to processing for polling
       await updateVoice({
         input: {
           mode: 'generate',
@@ -318,35 +243,21 @@ export default function SpeechStage({ pipelineId, onContinue }: SpeechStageProps
         },
       });
 
-      // Create a temporary proxy file for n8n to update (n8n expects file_id)
-      const { data: tempFile, error: tempFileError } = await supabase
-        .from('files')
-        .insert({
-          project_id: pipeline?.project_id,
-          name: `speech-${Date.now()}`,
-          file_type: 'audio',
-          generation_status: 'processing',
-          metadata: { pipeline_id: pipelineId, type: 'speech' },
-        })
-        .select()
-        .single();
+      // Set pipeline status to processing so usePipeline starts polling
+      await supabase
+        .from('pipelines')
+        .update({ status: 'processing' })
+        .eq('id', pipelineId);
 
-      if (tempFileError || !tempFile) {
-        throw new Error('Failed to create proxy file for speech generation');
-      }
-
-      // Track the proxy file for polling
-      setSpeechFileId(tempFile.id);
-
-      // Prepare payload for edge function - use 'speech' type for n8n compatibility
+      // Prepare payload for edge function - use pipeline_speech to update pipeline directly
       const requestPayload = {
-        type: 'speech',
+        type: 'pipeline_speech',
         payload: {
-          file_id: tempFile.id,
+          pipeline_id: pipelineId,
           user_id: sessionData.session.user.id,
           script,
           actor_voice_url: selectedActor.voice_url,
-          credits_cost: creditCost,
+          char_count: script.length,
         },
       };
 
@@ -354,24 +265,19 @@ export default function SpeechStage({ pipelineId, onContinue }: SpeechStageProps
         body: requestPayload,
       });
 
-      if (error) {
-        // Clean up proxy file on error
-        await supabase.from('files').delete().eq('id', tempFile.id);
-        setSpeechFileId(null);
-        throw error;
-      }
-      if (!data?.success) {
-        // Clean up proxy file on error
-        await supabase.from('files').delete().eq('id', tempFile.id);
-        setSpeechFileId(null);
-        throw new Error(data?.error || 'Generation failed');
-      }
+      if (error) throw error;
+      if (!data?.success) throw new Error(data?.error || 'Generation failed');
 
       toast.success('Speech generation started!');
     } catch (error) {
       console.error('Generation error:', error);
       toast.error('Failed to start generation');
-      setIsGenerating(false);
+      setLocalGenerating(false);
+      // Reset pipeline status on error
+      await supabase
+        .from('pipelines')
+        .update({ status: 'draft' })
+        .eq('id', pipelineId);
     }
   };
 
