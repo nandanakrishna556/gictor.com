@@ -109,9 +109,9 @@ export function useActors() {
   const createActorMutation = useMutation({
     mutationFn: async (input: CreateActorInput) => {
       if (!user) throw new Error('Not authenticated');
-      if (!profile || profile.credits < 1) {
+      if (!profile || profile.credits < 0.5) {
         toast.error('Insufficient credits', { 
-          description: 'You need at least 1 credit to create an actor.',
+          description: 'You need at least 0.5 credits to create an actor.',
           action: {
             label: 'Buy Credits',
             onClick: () => window.location.href = '/billing',
@@ -139,7 +139,7 @@ export function useActors() {
           custom_audio_url: input.custom_audio_url || null,
           status: 'processing',
           progress: 0,
-          credits_cost: 1,
+          credits_cost: 0.5,
           generation_started_at: new Date().toISOString(),
           estimated_duration_seconds: estimatedDuration,
         })
@@ -178,7 +178,7 @@ export function useActors() {
               other_instructions: input.other_instructions,
               custom_image_url: input.custom_image_url,
               custom_audio_url: input.custom_audio_url,
-              credits_cost: 1,
+              credits_cost: 0.5,
               supabase_url: import.meta.env.VITE_SUPABASE_URL,
             },
           }),
