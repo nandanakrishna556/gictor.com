@@ -77,7 +77,8 @@ function calculateServerSideCost(type: string, payload: Record<string, unknown>)
       return CREDIT_COSTS.script;
     
     case 'pipeline_voice':
-      const charCount = (payload.char_count as number) || (payload.script_text as string)?.length || 0;
+    case 'pipeline_speech':
+      const charCount = (payload.char_count as number) || (payload.script_text as string)?.length || (payload.script as string)?.length || 0;
       return Math.ceil(charCount / 1000) * CREDIT_COSTS.voice_per_1000_chars;
     
     case 'pipeline_final_video':
@@ -136,7 +137,8 @@ const PipelinePayloadSchema = z.object({
     'pipeline_first_frame', 
     'pipeline_first_frame_b_roll', 
     'pipeline_script', 
-    'pipeline_voice', 
+    'pipeline_voice',
+    'pipeline_speech',
     'pipeline_final_video'
   ]),
   payload: z.object({
@@ -158,6 +160,8 @@ const PipelinePayloadSchema = z.object({
       speed: z.number().min(0.5).max(2).optional(),
     }).optional(),
     char_count: z.number().optional(),
+    script: z.string().max(10000).optional(),
+    actor_voice_url: z.string().url().optional(),
     first_frame_url: z.string().url().optional(),
     audio_url: z.string().url().optional(),
     audio_duration_seconds: z.number().positive().max(300).optional(),
