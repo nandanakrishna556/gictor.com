@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { Upload, Play, Pause, Download, X, Search, User, Mic, Loader2 } from 'lucide-react';
+import { Upload, Play, Pause, Download, X, Search, User, Mic, Loader2, Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { usePipeline } from '@/hooks/usePipeline';
 import { useActors } from '@/hooks/useActors';
@@ -14,6 +14,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { InputModeToggle, InputMode } from '@/components/ui/input-mode-toggle';
+import { AudioPlayer } from '@/components/ui/AudioPlayer';
 
 interface SpeechStageProps {
   pipelineId: string;
@@ -36,6 +37,7 @@ export default function SpeechStage({ pipelineId, onContinue }: SpeechStageProps
   const [script, setScript] = useState('');
   const [selectedActorId, setSelectedActorId] = useState<string | null>(null);
   const [actorSearchOpen, setActorSearchOpen] = useState(false);
+  const [playingAudioId, setPlayingAudioId] = useState<string | null>(null);
   
   // Upload state
   const [uploadedUrl, setUploadedUrl] = useState('');
@@ -70,6 +72,9 @@ export default function SpeechStage({ pipelineId, onContinue }: SpeechStageProps
         setUploadedUrl(input.uploaded_url || '');
       } else {
         setMode('generate');
+        if (input.voice_id) {
+          setSelectedActorId(input.voice_id);
+        }
       }
     }
     // Load script from script_output if available
@@ -298,71 +303,145 @@ export default function SpeechStage({ pipelineId, onContinue }: SpeechStageProps
         <>
           {/* Script Input */}
           <div className="space-y-2">
-            <Label>Script</Label>
+            <div className="flex items-center justify-between">
+              <Label>Script (Required)</Label>
+              <span className={cn(
+                "text-xs",
+                characterCount > MAX_CHARACTERS ? "text-destructive" : "text-muted-foreground"
+              )}>
+                {characterCount.toLocaleString()} / {MAX_CHARACTERS.toLocaleString()}
+              </span>
+            </div>
             <Textarea
               value={script}
               onChange={(e) => setScript(e.target.value.slice(0, MAX_CHARACTERS))}
               placeholder="Enter or paste the script to convert to speech..."
-              className="min-h-[120px] resize-none"
+              className="min-h-[150px] resize-none"
             />
-            <p className="text-xs text-muted-foreground">
-              {characterCount.toLocaleString()} / {MAX_CHARACTERS.toLocaleString()} characters
-            </p>
+            {characterCount < MIN_CHARACTERS && characterCount > 0 && (
+              <p className="text-xs text-muted-foreground">
+                Minimum {MIN_CHARACTERS} characters required
+              </p>
+            )}
           </div>
 
-          {/* Actor Selector */}
+          {/* Actor Voice Selector */}
           <div className="space-y-2">
-            <Label>Voice Actor</Label>
+            <Label>Actor Voice (Required)</Label>
             <Popover open={actorSearchOpen} onOpenChange={setActorSearchOpen}>
               <PopoverTrigger asChild>
                 <Button
                   variant="outline"
                   role="combobox"
                   aria-expanded={actorSearchOpen}
-                  className="w-full justify-between"
+                  className="w-full justify-between h-auto py-3"
                 >
                   {selectedActor ? (
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-3">
                       {selectedActor.profile_image_url ? (
                         <img
                           src={selectedActor.profile_image_url}
                           alt={selectedActor.name}
-                          className="h-6 w-6 rounded-full object-cover"
+                          className="h-8 w-8 rounded-full object-cover"
                         />
                       ) : (
-                        <User className="h-6 w-6 text-muted-foreground" />
+                        <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center">
+                          <User className="h-4 w-4 text-muted-foreground" />
+                        </div>
                       )}
-                      <span>{selectedActor.name}</span>
+                      <div className="text-left">
+                        <p className="font-medium">{selectedActor.name}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {[selectedActor.gender, selectedActor.age && `${selectedActor.age}y`, selectedActor.language].filter(Boolean).join(' • ')}
+                        </p>
+                      </div>
                     </div>
                   ) : (
-                    <span className="text-muted-foreground">Select an actor...</span>
+                    <span className="text-muted-foreground">Select an actor voice...</span>
                   )}
                   <Search className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                 </Button>
               </PopoverTrigger>
-              <PopoverContent className="w-full p-0" align="start">
+              <PopoverContent className="w-[400px] p-0" align="start">
                 <Command>
                   <CommandInput placeholder="Search actors..." />
                   <CommandList>
-                    <CommandEmpty>No actors found.</CommandEmpty>
+                    <CommandEmpty>
+                      {availableActors.length === 0 ? (
+                        <div className="py-6 text-center text-sm">
+                          <p className="text-muted-foreground">No actors with voice available.</p>
+                          <p className="text-xs text-muted-foreground mt-1">
+                            Create an actor first in the Actors page.
+                          </p>
+                        </div>
+                      ) : (
+                        "No actor found."
+                      )}
+                    </CommandEmpty>
                     <CommandGroup>
                       {availableActors.map((actor) => (
                         <CommandItem
                           key={actor.id}
                           value={actor.name}
                           onSelect={() => handleActorSelect(actor.id)}
+                          className="cursor-pointer py-3"
                         >
-                          <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-3 w-full">
                             {actor.profile_image_url ? (
                               <img
                                 src={actor.profile_image_url}
                                 alt={actor.name}
-                                className="h-6 w-6 rounded-full object-cover"
+                                className="h-10 w-10 rounded-full object-cover"
                               />
                             ) : (
-                              <User className="h-6 w-6 text-muted-foreground" />
+                              <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center">
+                                <User className="h-5 w-5 text-muted-foreground" />
+                              </div>
                             )}
-                            <span>{actor.name}</span>
+                            <div className="flex-1">
+                              <p className="font-medium">{actor.name}</p>
+                              <p className="text-xs text-muted-foreground">
+                                {[actor.gender, actor.age && `${actor.age}y`, actor.language].filter(Boolean).join(' • ')}
+                              </p>
+                            </div>
+                            {actor.voice_url && (
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  const audio = document.getElementById(`preview-audio-${actor.id}`) as HTMLAudioElement;
+                                  if (audio) {
+                                    if (audio.paused) {
+                                      // Stop all other preview audios
+                                      document.querySelectorAll('audio[id^="preview-audio-"]').forEach((a) => {
+                                        (a as HTMLAudioElement).pause();
+                                        (a as HTMLAudioElement).currentTime = 0;
+                                      });
+                                      setPlayingAudioId(actor.id);
+                                      audio.play();
+                                      audio.onended = () => setPlayingAudioId(null);
+                                    } else {
+                                      audio.pause();
+                                      audio.currentTime = 0;
+                                      setPlayingAudioId(null);
+                                    }
+                                  }
+                                }}
+                                className="h-8 w-8 rounded-full bg-primary/10 hover:bg-primary/20 flex items-center justify-center shrink-0 transition-colors"
+                              >
+                                {playingAudioId === actor.id ? (
+                                  <Pause className="h-4 w-4 text-primary" />
+                                ) : (
+                                  <Play className="h-4 w-4 text-primary" />
+                                )}
+                              </button>
+                            )}
+                            {selectedActorId === actor.id && (
+                              <Check className="h-4 w-4 text-primary" />
+                            )}
+                            {actor.voice_url && (
+                              <audio id={`preview-audio-${actor.id}`} src={actor.voice_url} preload="none" className="hidden" />
+                            )}
                           </div>
                         </CommandItem>
                       ))}
@@ -371,6 +450,35 @@ export default function SpeechStage({ pipelineId, onContinue }: SpeechStageProps
                 </Command>
               </PopoverContent>
             </Popover>
+          </div>
+
+          {/* Selected Actor Voice Preview */}
+          {selectedActor && selectedActor.voice_url && (
+            <div className="rounded-xl border border-border bg-card p-4 space-y-3">
+              <div className="flex items-center gap-3">
+                {selectedActor.profile_image_url ? (
+                  <img
+                    src={selectedActor.profile_image_url}
+                    alt={selectedActor.name}
+                    className="h-10 w-10 rounded-full object-cover"
+                  />
+                ) : (
+                  <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center">
+                    <User className="h-5 w-5 text-muted-foreground" />
+                  </div>
+                )}
+                <div>
+                  <p className="font-medium text-sm">{selectedActor.name}</p>
+                  <p className="text-xs text-muted-foreground">Voice Preview</p>
+                </div>
+              </div>
+              <AudioPlayer src={selectedActor.voice_url} />
+            </div>
+          )}
+
+          {/* Credit cost info */}
+          <div className="text-xs text-muted-foreground">
+            {CREDIT_COST_PER_1000_CHARS} credits per 1,000 characters
           </div>
         </>
       ) : (
@@ -410,7 +518,7 @@ export default function SpeechStage({ pipelineId, onContinue }: SpeechStageProps
               >
                 <X className="h-4 w-4" />
               </button>
-              <audio src={uploadedUrl} controls className="w-full" />
+              <AudioPlayer src={uploadedUrl} />
             </div>
           )}
         </div>
@@ -440,25 +548,23 @@ export default function SpeechStage({ pipelineId, onContinue }: SpeechStageProps
 
   const outputContent = outputAudio ? (
     <div className="flex flex-col items-center justify-center h-full gap-6 px-4">
-      {/* Play Button */}
-      <div className="w-24 h-24 rounded-full bg-primary/10 flex items-center justify-center">
-        <Button
-          size="lg"
-          variant="ghost"
-          className="w-16 h-16 rounded-full"
-          onClick={togglePlayback}
-        >
-          {isPlaying ? (
-            <Pause className="h-8 w-8" />
-          ) : (
-            <Play className="h-8 w-8 ml-1" />
-          )}
-        </Button>
+      {/* Audio Generated Banner */}
+      <div className="w-full rounded-xl border border-border bg-card p-6">
+        <div className="flex items-center gap-4 mb-4">
+          <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
+            <Check className="h-6 w-6 text-primary" />
+          </div>
+          <div>
+            <p className="font-medium">Audio Generated</p>
+            <p className="text-sm text-muted-foreground">{characterCount.toLocaleString()} characters</p>
+          </div>
+        </div>
+        <AudioPlayer src={outputAudio.url} />
       </div>
       
       <div className="text-center">
         <p className="text-lg font-medium">
-          {formatDuration(currentTime)} / {formatDuration(outputAudio.duration_seconds)}
+          {formatDuration(outputAudio.duration_seconds)}
         </p>
         <p className="text-sm text-muted-foreground">Duration</p>
       </div>
