@@ -230,6 +230,13 @@ export default function FirstFrameStage({ pipelineId, onContinue }: FirstFrameSt
         throw new Error('Failed to create internal file');
       }
 
+      // Map resolution to edge function expected format
+      const resolutionMap: Record<Resolution, '480p' | '720p' | '1080p'> = {
+        '1K': '720p',
+        '2K': '1080p', 
+        '4K': '1080p', // 4K maps to 1080p for the API, cost is handled by frame_resolution
+      };
+
       // Use standard 'frame' type - n8n processes it, update-file-status syncs back to pipeline
       const { data, error } = await supabase.functions.invoke('trigger-generation', {
         body: {
@@ -241,12 +248,11 @@ export default function FirstFrameStage({ pipelineId, onContinue }: FirstFrameSt
             image_type: subStyle,
             aspect_ratio: aspectRatio,
             reference_images: referenceImages,
-            content_type: style,
-            style: subStyle,
+            style, // 'talking_head' | 'broll' | 'motion_graphics'
             substyle: style !== 'motion_graphics' ? subStyle : null,
             camera_perspective: style === 'broll' ? cameraPerspective : null,
-            frame_resolution: resolution,
-            resolution,
+            frame_resolution: resolution, // Keep original for cost calculation
+            resolution: resolutionMap[resolution], // Map to valid API values
             actor_id: (style === 'talking_head' || style === 'broll') ? selectedActorId : null,
             actor_360_url: (style === 'talking_head' || style === 'broll') ? selectedActor?.profile_360_url : null,
             supabase_url: import.meta.env.VITE_SUPABASE_URL,
