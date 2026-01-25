@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { SingleImageUpload } from '@/components/ui/single-image-upload';
 import { InputModeToggle, InputMode } from '@/components/ui/input-mode-toggle';
 import ActorSelectorPopover from '@/components/modals/ActorSelectorPopover';
@@ -12,7 +11,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import StageLayout from './StageLayout';
 import { useProfile } from '@/hooks/useProfile';
-import { useQueryClient, useQuery } from '@tanstack/react-query';
+import { useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/contexts/AuthContext';
 import { Actor } from '@/hooks/useActors';
 import { uploadToR2 } from '@/lib/cloudflare-upload';
@@ -50,37 +49,16 @@ export default function FirstFrameStage({ pipelineId, onContinue }: FirstFrameSt
   // Upload state for reference images
   const [uploadingIndex, setUploadingIndex] = useState<number | null>(null);
   
-  // Generation state
+  // Generation state - watch pipeline status directly (n8n updates pipeline via update-pipeline-status)
   const [localGenerating, setLocalGenerating] = useState(false);
-  const isLocalGeneratingRef = useRef(false);
   const generationInitiatedRef = useRef(false);
-
-  // Fetch linked file for realtime updates
-  const { data: linkedFile } = useQuery({
-    queryKey: ['pipeline-frame-file', pipelineId],
-    queryFn: async () => {
-      const { data } = await supabase
-        .from('files')
-        .select('*')
-        .eq('generation_params->>pipeline_id', pipelineId)
-        .eq('file_type', 'frame')
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .maybeSingle();
-      return data;
-    },
-    enabled: !!pipelineId,
-    refetchInterval: (query) => {
-      const file = query.state.data;
-      return (localGenerating || file?.generation_status === 'processing') ? 2000 : false;
-    },
-  });
+  const prevFirstFrameOutputRef = useRef<string | null>(null);
 
   // Dynamic credit cost based on resolution
   const creditCost = resolution === '4K' ? 0.15 : 0.1;
 
-  // Derive from pipeline and linked file
-  const isServerProcessing = linkedFile?.generation_status === 'processing';
+  // Derive from pipeline status
+  const isServerProcessing = pipeline?.status === 'processing';
   const isGenerating = localGenerating || (isServerProcessing && generationInitiatedRef.current);
   const hasOutput = !!pipeline?.first_frame_output?.url;
   const outputUrl = pipeline?.first_frame_output?.url;
@@ -106,36 +84,22 @@ export default function FirstFrameStage({ pipelineId, onContinue }: FirstFrameSt
     }
   }, [pipeline?.first_frame_input]);
 
-  // Watch linked file for completion and sync to pipeline
+  // Watch pipeline for completion - n8n calls update-pipeline-status which updates first_frame_output
   useEffect(() => {
-    if (!linkedFile || !generationInitiatedRef.current) return;
+    if (!pipeline || !generationInitiatedRef.current) return;
     
-    if (linkedFile.generation_status === 'completed' && linkedFile.download_url) {
-      // Sync to pipeline
-      updateFirstFrame({
-        output: {
-          url: linkedFile.download_url,
-          generated_at: new Date().toISOString(),
-        },
-        complete: true,
-      });
-      
-      // Clean up the temporary file
-      supabase.from('files').delete().eq('id', linkedFile.id).then(() => {
-        queryClient.invalidateQueries({ queryKey: ['pipeline-frame-file', pipelineId] });
-      });
-      
+    const currentOutput = pipeline.first_frame_output?.url;
+    
+    // Detect when new output arrives
+    if (currentOutput && currentOutput !== prevFirstFrameOutputRef.current) {
       setLocalGenerating(false);
       generationInitiatedRef.current = false;
       toast.success('First frame generated!');
-      queryClient.invalidateQueries({ queryKey: ['pipeline', pipelineId] });
       queryClient.invalidateQueries({ queryKey: ['profile'] });
-    } else if (linkedFile.generation_status === 'failed') {
-      setLocalGenerating(false);
-      generationInitiatedRef.current = false;
-      toast.error(linkedFile.error_message || 'First frame generation failed');
     }
-  }, [linkedFile, pipelineId, queryClient, updateFirstFrame]);
+    
+    prevFirstFrameOutputRef.current = currentOutput || null;
+  }, [pipeline?.first_frame_output?.url, queryClient]);
 
   // Save input changes
   const saveInput = async () => {
@@ -239,64 +203,29 @@ export default function FirstFrameStage({ pipelineId, onContinue }: FirstFrameSt
     }
 
     // Immediate feedback
-    isLocalGeneratingRef.current = true;
     generationInitiatedRef.current = true;
     setLocalGenerating(true);
 
     try {
       await saveInput();
 
-      // Create a temporary file record (same as standalone FrameModal)
-      const { data: newFile, error: createError } = await supabase
-        .from('files')
-        .insert({
-          name: 'Pipeline Frame',
-          file_type: 'frame',
-          project_id: pipeline?.project_id,
-          status: 'draft',
-          generation_status: 'processing',
-          generation_started_at: new Date().toISOString(),
-          estimated_duration_seconds: 60,
-          generation_params: { 
-            pipeline_id: pipelineId,
-            is_internal: true,
-            frame_type: 'first',
-            style,
-            substyle: style !== 'motion_graphics' ? subStyle : null,
-            aspect_ratio: aspectRatio,
-            actor_id: (style === 'talking_head' || style === 'broll') ? selectedActorId : null,
-            reference_images: referenceImages,
-            prompt,
-            camera_perspective: style === 'broll' ? cameraPerspective : null,
-            resolution,
-          }
-        })
-        .select()
-        .single();
-
-      if (createError || !newFile) {
-        throw new Error('Failed to create file record');
-      }
-
-      // Use 'frame' type like standalone FrameModal
+      // Use pipeline type - n8n routes to update-pipeline-status instead of update-file-status
       const { data, error } = await supabase.functions.invoke('trigger-generation', {
         body: {
-          type: 'frame',
+          type: 'pipeline_first_frame',
           payload: {
-            file_id: newFile.id,
+            pipeline_id: pipelineId,
             user_id: user?.id,
-            project_id: pipeline?.project_id,
-            frame_type: 'first',
+            prompt,
+            image_type: subStyle, // UGC/Studio maps to image_type
+            aspect_ratio: aspectRatio,
+            reference_images: referenceImages,
             style,
             substyle: style !== 'motion_graphics' ? subStyle : null,
-            aspect_ratio: aspectRatio,
             camera_perspective: style === 'broll' ? cameraPerspective : null,
             frame_resolution: resolution,
             actor_id: (style === 'talking_head' || style === 'broll') ? selectedActorId : null,
             actor_360_url: (style === 'talking_head' || style === 'broll') ? selectedActor?.profile_360_url : null,
-            reference_images: referenceImages,
-            prompt,
-            credits_cost: creditCost,
             supabase_url: import.meta.env.VITE_SUPABASE_URL,
           },
         },
@@ -307,12 +236,10 @@ export default function FirstFrameStage({ pipelineId, onContinue }: FirstFrameSt
       }
 
       toast.success('First frame generation started!');
-      queryClient.invalidateQueries({ queryKey: ['pipeline-frame-file', pipelineId] });
     } catch (error) {
       console.error('Generation error:', error);
       toast.error(error instanceof Error ? error.message : 'Failed to start generation');
       setLocalGenerating(false);
-      isLocalGeneratingRef.current = false;
       generationInitiatedRef.current = false;
     }
   };

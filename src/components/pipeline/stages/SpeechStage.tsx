@@ -15,7 +15,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { InputModeToggle, InputMode } from '@/components/ui/input-mode-toggle';
 import { AudioPlayer } from '@/components/ui/AudioPlayer';
-import { useQueryClient, useQuery } from '@tanstack/react-query';
+import { useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/contexts/AuthContext';
 
 
@@ -51,70 +51,31 @@ export default function SpeechStage({ pipelineId, onContinue }: SpeechStageProps
   const [isDragging, setIsDragging] = useState(false);
   
   
-  // Generation state
+  // Generation state - watch pipeline status directly
   const [localGenerating, setLocalGenerating] = useState(false);
   const generationInitiatedRef = useRef(false);
+  const prevVoiceOutputRef = useRef<string | null>(null);
 
-  // Fetch linked file for realtime updates
-  const { data: linkedFile } = useQuery({
-    queryKey: ['pipeline-speech-file', pipelineId],
-    queryFn: async () => {
-      const { data } = await supabase
-        .from('files')
-        .select('*')
-        .eq('generation_params->>pipeline_id', pipelineId)
-        .eq('file_type', 'speech')
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .maybeSingle();
-      return data;
-    },
-    enabled: !!pipelineId,
-    refetchInterval: (query) => {
-      const file = query.state.data;
-      return (localGenerating || file?.generation_status === 'processing') ? 2000 : false;
-    },
-  });
-
-  // Derive generating state from linked file
-  const isServerProcessing = linkedFile?.generation_status === 'processing';
+  // Derive generating state from pipeline
+  const isServerProcessing = pipeline?.status === 'processing';
   const isGenerating = localGenerating || (isServerProcessing && generationInitiatedRef.current);
 
-  // Watch linked file for completion and sync to pipeline
+  // Watch pipeline for completion - n8n calls update-pipeline-status which updates voice_output
   useEffect(() => {
-    if (!linkedFile || !generationInitiatedRef.current) return;
+    if (!pipeline || !generationInitiatedRef.current) return;
     
-    if (linkedFile.generation_status === 'completed' && linkedFile.download_url) {
-      // Get duration from file
-      const metadata = linkedFile.metadata as any;
-      const duration = metadata?.duration_seconds || 0;
-      
-      // Sync to pipeline
-      updateVoice({
-        output: { 
-          url: linkedFile.download_url, 
-          duration_seconds: duration, 
-          generated_at: new Date().toISOString() 
-        },
-        complete: true,
-      });
-      
-      // Clean up the temporary file
-      supabase.from('files').delete().eq('id', linkedFile.id).then(() => {
-        queryClient.invalidateQueries({ queryKey: ['pipeline-speech-file', pipelineId] });
-      });
-      
+    const currentOutput = pipeline.voice_output?.url;
+    
+    // Detect when new output arrives
+    if (currentOutput && currentOutput !== prevVoiceOutputRef.current) {
       setLocalGenerating(false);
       generationInitiatedRef.current = false;
       toast.success('Speech generated successfully!');
-      queryClient.invalidateQueries({ queryKey: ['pipeline', pipelineId] });
       queryClient.invalidateQueries({ queryKey: ['profile'] });
-    } else if (linkedFile.generation_status === 'failed') {
-      setLocalGenerating(false);
-      generationInitiatedRef.current = false;
-      toast.error(linkedFile.error_message || 'Speech generation failed');
     }
-  }, [linkedFile, pipelineId, queryClient, updateVoice]);
+    
+    prevVoiceOutputRef.current = currentOutput || null;
+  }, [pipeline?.voice_output?.url, queryClient]);
 
   // Get available actors
   const availableActors = actors?.filter(
@@ -288,43 +249,16 @@ export default function SpeechStage({ pipelineId, onContinue }: SpeechStageProps
         },
       });
 
-      // Create a temporary file record (same as standalone SpeechModal)
-      const { data: newFile, error: createError } = await supabase
-        .from('files')
-        .insert({
-          name: 'Pipeline Speech',
-          file_type: 'speech',
-          project_id: pipeline?.project_id,
-          status: 'draft',
-          generation_status: 'processing',
-          generation_started_at: new Date().toISOString(),
-          estimated_duration_seconds: Math.max(10, Math.ceil((script.length / 20) * 5)),
-          generation_params: { 
-            pipeline_id: pipelineId,
-            is_internal: true,
-            script,
-            actor_id: selectedActorId,
-            actor_voice_url: selectedActor.voice_url,
-          }
-        })
-        .select()
-        .single();
-
-      if (createError || !newFile) {
-        throw new Error('Failed to create file record');
-      }
-
-      // Use 'speech' type like standalone SpeechModal
+      // Use pipeline_speech type - n8n routes to update-pipeline-status
       const { data, error } = await supabase.functions.invoke('trigger-generation', {
         body: {
-          type: 'speech',
+          type: 'pipeline_speech',
           payload: {
-            file_id: newFile.id,
+            pipeline_id: pipelineId,
             user_id: sessionData.session.user.id,
-            project_id: pipeline?.project_id,
             script: script,
             actor_voice_url: selectedActor.voice_url,
-            credits_cost: creditCost,
+            char_count: characterCount,
             supabase_url: import.meta.env.VITE_SUPABASE_URL,
           },
         },
@@ -334,7 +268,6 @@ export default function SpeechStage({ pipelineId, onContinue }: SpeechStageProps
       if (!data?.success) throw new Error(data?.error || 'Generation failed');
 
       toast.success('Speech generation started!');
-      queryClient.invalidateQueries({ queryKey: ['pipeline-speech-file', pipelineId] });
     } catch (error) {
       console.error('Generation error:', error);
       toast.error('Failed to start generation');
