@@ -231,14 +231,17 @@ export default function LipSyncStage({ pipelineId, onComplete }: LipSyncStagePro
 
       // Prepare payload for edge function
       const requestPayload = {
-        type: 'pipeline_lip_sync',
+        type: 'lip_sync',
         payload: {
+          file_id: pipelineId,
           pipeline_id: pipelineId,
           user_id: sessionData.session.user.id,
+          project_id: pipeline?.project_id || null,
           image_url: effectiveImageUrl,
           audio_url: effectiveAudioUrl,
           audio_duration: effectiveAudioDuration,
           credits_cost: creditCost,
+          supabase_url: import.meta.env.VITE_SUPABASE_URL,
         },
       };
 

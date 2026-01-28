@@ -233,14 +233,16 @@ export default function SpeechStage({ pipelineId, onContinue }: SpeechStageProps
       // Call edge function
       const { data, error } = await supabase.functions.invoke('trigger-generation', {
         body: {
-          type: 'pipeline_voice',
+          type: 'speech',
           payload: {
+            file_id: pipelineId,
             pipeline_id: pipelineId,
             user_id: sessionData.session.user.id,
-            script_text: script,
-            voice_id: selectedActorId,
-            voice_url: selectedActor.voice_url,
-            char_count: characterCount,
+            project_id: pipeline?.project_id || null,
+            script: script,
+            actor_voice_url: selectedActor.voice_url,
+            credits_cost: creditCost,
+            supabase_url: import.meta.env.VITE_SUPABASE_URL,
           },
         },
       });
