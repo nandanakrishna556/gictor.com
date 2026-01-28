@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { FileTypeIcon, FileType, getFileTypeLabel } from '@/components/ui/file-type-icon';
-import { StatusBadge, StatusType } from '@/components/ui/status-badge';
+import { StatusBadge } from '@/components/ui/status-badge';
 import { GeneratingOverlay } from '@/components/ui/GeneratingOverlay';
 
 export type PipelineStatus = 'processing' | 'completed' | 'failed';
@@ -22,6 +22,8 @@ interface PipelineCardProps {
   status: PipelineStatus;
   previewUrl?: string | null;
   thumbnailUrl?: string | null; // For showing preview while processing
+  firstFrameUrl?: string | null; // First frame output URL
+  lastFrameUrl?: string | null; // Last frame output URL
   errorMessage?: string | null;
   tags?: string[];
   progress?: number;

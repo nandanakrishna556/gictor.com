@@ -74,6 +74,12 @@ export interface FinalVideoOutput {
   generated_at: string;
 }
 
+export interface LastFrameOutput {
+  url: string;
+  generated_at: string;
+  generation_id?: string;
+}
+
 export interface Pipeline {
   id: string;
   project_id: string;
@@ -89,9 +95,12 @@ export interface Pipeline {
   first_frame_complete: boolean;
   script_complete: boolean;
   voice_complete: boolean;
+  last_frame_complete?: boolean;
   
   first_frame_input: FirstFrameInput;
   first_frame_output: FirstFrameOutput | null;
+  
+  last_frame_output?: LastFrameOutput | null;
   
   script_input: ScriptInput;
   script_output: ScriptOutput | null;
@@ -103,6 +112,11 @@ export interface Pipeline {
   final_video_output: FinalVideoOutput | null;
   
   output_file_id: string | null;
+  
+  // Progress tracking
+  progress?: number;
+  generation_started_at?: string | null;
+  estimated_duration_seconds?: number | null;
   
   created_at: string;
   updated_at: string;

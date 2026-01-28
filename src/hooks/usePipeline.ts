@@ -5,6 +5,7 @@ import type {
   Pipeline, 
   FirstFrameInput, 
   FirstFrameOutput,
+  LastFrameOutput,
   ScriptInput,
   ScriptOutput,
   VoiceInput,
@@ -20,6 +21,7 @@ function parsePipeline(data: any): Pipeline {
     ...data,
     first_frame_input: (data.first_frame_input || {}) as FirstFrameInput,
     first_frame_output: data.first_frame_output as FirstFrameOutput | null,
+    last_frame_output: data.last_frame_output as LastFrameOutput | null,
     script_input: (data.script_input || {}) as ScriptInput,
     script_output: data.script_output as ScriptOutput | null,
     voice_input: (data.voice_input || {}) as VoiceInput,
@@ -29,6 +31,10 @@ function parsePipeline(data: any): Pipeline {
     tags: data.tags || [],
     display_status: data.display_status || null,
     pipeline_type: data.pipeline_type || 'talking_head',
+    progress: data.progress ?? 0,
+    generation_started_at: data.generation_started_at || null,
+    estimated_duration_seconds: data.estimated_duration_seconds || null,
+    last_frame_complete: data.last_frame_complete || false,
   } as Pipeline;
 }
 
