@@ -19,6 +19,7 @@ interface FirstFrameStageProps {
   onContinue: () => void;
 }
 
+type FrameStyle = 'talking_head' | 'broll';
 type SubStyle = 'ugc' | 'studio';
 type AspectRatio = '9:16' | '16:9' | '1:1';
 type Resolution = '1K' | '2K' | '4K';
@@ -35,6 +36,7 @@ export default function FirstFrameStage({ pipelineId, onContinue }: FirstFrameSt
   const [isSavingUpload, setIsSavingUpload] = useState(false);
 
   // Generation inputs
+  const [frameStyle, setFrameStyle] = useState<FrameStyle>('talking_head');
   const [subStyle, setSubStyle] = useState<SubStyle>('ugc');
   const [aspectRatio, setAspectRatio] = useState<AspectRatio>('9:16');
   const [resolution, setResolution] = useState<Resolution>('2K');
@@ -66,6 +68,7 @@ export default function FirstFrameStage({ pipelineId, onContinue }: FirstFrameSt
 
     const input = pipeline.first_frame_input;
     if (input) {
+      if (input.style) setFrameStyle(input.style as FrameStyle);
       if (input.substyle) setSubStyle(input.substyle as SubStyle);
       if (input.aspect_ratio) setAspectRatio(input.aspect_ratio as AspectRatio);
       if (input.resolution) setResolution(input.resolution as Resolution);
@@ -90,7 +93,7 @@ export default function FirstFrameStage({ pipelineId, onContinue }: FirstFrameSt
       await updateFirstFrame({
         input: {
           mode: inputMode,
-          style: 'talking_head',
+          style: frameStyle,
           substyle: subStyle,
           aspect_ratio: aspectRatio,
           resolution,
@@ -101,7 +104,7 @@ export default function FirstFrameStage({ pipelineId, onContinue }: FirstFrameSt
         } as any,
       });
     }, 1500);
-  }, [pipeline, inputMode, subStyle, aspectRatio, resolution, selectedActorId, referenceImages, prompt, uploadedImageUrl, updateFirstFrame]);
+  }, [pipeline, inputMode, frameStyle, subStyle, aspectRatio, resolution, selectedActorId, referenceImages, prompt, uploadedImageUrl, updateFirstFrame]);
 
   useEffect(() => {
     if (initialLoadDoneRef.current) {
@@ -112,7 +115,7 @@ export default function FirstFrameStage({ pipelineId, onContinue }: FirstFrameSt
         clearTimeout(autoSaveTimeoutRef.current);
       }
     };
-  }, [subStyle, aspectRatio, resolution, selectedActorId, referenceImages, prompt, inputMode, uploadedImageUrl, saveInputs]);
+  }, [frameStyle, subStyle, aspectRatio, resolution, selectedActorId, referenceImages, prompt, inputMode, uploadedImageUrl, saveInputs]);
 
   // Handle actor selection
   const handleActorSelect = (actorId: string | null) => {
@@ -251,73 +254,135 @@ export default function FirstFrameStage({ pipelineId, onContinue }: FirstFrameSt
 
   return (
     <div className="flex-1 flex min-h-0 overflow-hidden">
-      {/* Input Section */}
-      <div className="w-1/2 overflow-y-auto p-6 space-y-5 border-r border-border">
-        <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">Input</h3>
+      {/* Input Section - Scrollable */}
+      <div className="w-1/2 flex flex-col min-h-0 border-r border-border">
+        <div className="flex-1 overflow-y-auto p-6 space-y-5">
+          <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">Input</h3>
 
-        {/* Generate/Upload Toggle */}
-        <InputModeToggle mode={inputMode} onModeChange={setInputMode} uploadLabel="Upload" />
+          {/* Generate/Upload Toggle */}
+          <InputModeToggle mode={inputMode} onModeChange={setInputMode} uploadLabel="Upload" />
 
-        {inputMode === 'upload' ? (
-          /* Upload Mode UI */
-          <div className="space-y-4">
-            <SingleImageUpload
-              value={uploadedImageUrl || undefined}
-              onChange={(url) => setUploadedImageUrl(url || null)}
-              aspectRatio="video"
-              placeholder="Drag & drop your image or"
-              showGenerateLink={false}
-            />
+          {inputMode === 'upload' ? (
+            /* Upload Mode UI */
+            <div className="space-y-4">
+              <SingleImageUpload
+                value={uploadedImageUrl || undefined}
+                onChange={(url) => setUploadedImageUrl(url || null)}
+                aspectRatio="video"
+                placeholder="Drag & drop your image or"
+                showGenerateLink={false}
+              />
 
-            {uploadedImageUrl && (
-              <Button onClick={handleSaveUpload} disabled={isSavingUpload} className="w-full">
-                {isSavingUpload ? (
-                  <>
-                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                    Saving...
-                  </>
-                ) : (
-                  <>
-                    Save Image <span className="text-emerald-400 ml-1">• Free</span>
-                  </>
-                )}
-              </Button>
-            )}
-          </div>
-        ) : (
-          /* Generate Mode UI */
-          <>
-            {/* Style Selection - Talking Head only with substyle toggle */}
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Style</label>
-              <div className="flex items-center justify-between p-3 rounded-lg border border-primary bg-primary/5">
-                <div className="flex items-center gap-3">
-                  <div className="h-4 w-4 rounded-full border-2 border-primary flex items-center justify-center">
-                    <div className="h-2 w-2 rounded-full bg-primary" />
-                  </div>
-                  <span className="text-sm font-medium">Talking Head</span>
-                </div>
-                <div className="flex gap-1">
-                  <Button
-                    variant={subStyle === 'ugc' ? 'default' : 'outline'}
-                    size="sm"
-                    className="h-7 text-xs px-3"
-                    onClick={() => setSubStyle('ugc')}
-                  >
-                    UGC
-                  </Button>
-                  <Button
-                    variant={subStyle === 'studio' ? 'default' : 'outline'}
-                    size="sm"
-                    className="h-7 text-xs px-3"
-                    onClick={() => setSubStyle('studio')}
-                  >
-                    Studio
-                  </Button>
-                </div>
-              </div>
-              <p className="text-xs text-muted-foreground">Person looking directly at camera</p>
+              {uploadedImageUrl && (
+                <Button onClick={handleSaveUpload} disabled={isSavingUpload} className="w-full">
+                  {isSavingUpload ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                      Saving...
+                    </>
+                  ) : (
+                    <>
+                      Save Image <span className="text-emerald-400 ml-1">• Free</span>
+                    </>
+                  )}
+                </Button>
+              )}
             </div>
+          ) : (
+            /* Generate Mode UI */
+            <>
+              {/* Style Selection */}
+              <div className="space-y-3">
+                <label className="text-sm font-medium">Style</label>
+                
+                {/* Talking Head Option */}
+                <div 
+                  onClick={() => setFrameStyle('talking_head')}
+                  className={cn(
+                    "flex items-center justify-between p-3 rounded-lg border cursor-pointer transition-colors",
+                    frameStyle === 'talking_head' 
+                      ? "border-primary bg-primary/5" 
+                      : "border-border hover:border-primary/50"
+                  )}
+                >
+                  <div className="flex items-center gap-3">
+                    <div className={cn(
+                      "h-4 w-4 rounded-full border-2 flex items-center justify-center",
+                      frameStyle === 'talking_head' ? "border-primary" : "border-muted-foreground"
+                    )}>
+                      {frameStyle === 'talking_head' && <div className="h-2 w-2 rounded-full bg-primary" />}
+                    </div>
+                    <span className="text-sm font-medium">Talking Head</span>
+                  </div>
+                  {frameStyle === 'talking_head' && (
+                    <div className="flex gap-1">
+                      <Button
+                        variant={subStyle === 'ugc' ? 'default' : 'outline'}
+                        size="sm"
+                        className="h-7 text-xs px-3"
+                        onClick={(e) => { e.stopPropagation(); setSubStyle('ugc'); }}
+                      >
+                        UGC
+                      </Button>
+                      <Button
+                        variant={subStyle === 'studio' ? 'default' : 'outline'}
+                        size="sm"
+                        className="h-7 text-xs px-3"
+                        onClick={(e) => { e.stopPropagation(); setSubStyle('studio'); }}
+                      >
+                        Studio
+                      </Button>
+                    </div>
+                  )}
+                </div>
+                {frameStyle === 'talking_head' && (
+                  <p className="text-xs text-muted-foreground">Person looking directly at camera</p>
+                )}
+
+                {/* B-Roll Option */}
+                <div 
+                  onClick={() => setFrameStyle('broll')}
+                  className={cn(
+                    "flex items-center justify-between p-3 rounded-lg border cursor-pointer transition-colors",
+                    frameStyle === 'broll' 
+                      ? "border-primary bg-primary/5" 
+                      : "border-border hover:border-primary/50"
+                  )}
+                >
+                  <div className="flex items-center gap-3">
+                    <div className={cn(
+                      "h-4 w-4 rounded-full border-2 flex items-center justify-center",
+                      frameStyle === 'broll' ? "border-primary" : "border-muted-foreground"
+                    )}>
+                      {frameStyle === 'broll' && <div className="h-2 w-2 rounded-full bg-primary" />}
+                    </div>
+                    <span className="text-sm font-medium">B-Roll</span>
+                  </div>
+                  {frameStyle === 'broll' && (
+                    <div className="flex gap-1">
+                      <Button
+                        variant={subStyle === 'ugc' ? 'default' : 'outline'}
+                        size="sm"
+                        className="h-7 text-xs px-3"
+                        onClick={(e) => { e.stopPropagation(); setSubStyle('ugc'); }}
+                      >
+                        UGC
+                      </Button>
+                      <Button
+                        variant={subStyle === 'studio' ? 'default' : 'outline'}
+                        size="sm"
+                        className="h-7 text-xs px-3"
+                        onClick={(e) => { e.stopPropagation(); setSubStyle('studio'); }}
+                      >
+                        Studio
+                      </Button>
+                    </div>
+                  )}
+                </div>
+                {frameStyle === 'broll' && (
+                  <p className="text-xs text-muted-foreground">Supplementary footage without direct camera focus</p>
+                )}
+              </div>
 
             {/* Actor Selector */}
             <div className="space-y-2">
@@ -418,40 +483,44 @@ export default function FirstFrameStage({ pipelineId, onContinue }: FirstFrameSt
               </div>
             </div>
 
-            {/* Prompt */}
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Prompt</label>
-              <Textarea
-                value={prompt}
-                onChange={(e) => setPrompt(e.target.value)}
-                placeholder="Describe the person, their expression, clothing, and setting (looking at camera)..."
-                rows={3}
-                className="resize-none"
-              />
-              {hasOutput && !showGenerating && (
-                <p className="text-xs text-muted-foreground">Describe what you'd like to change</p>
-              )}
-            </div>
-
-            {/* Generate Section */}
-            <div className="pt-4 border-t space-y-3">
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-muted-foreground">Cost:</span>
-                <span className="font-medium">{creditCost} credits</span>
-              </div>
-              <Button onClick={handleGenerate} disabled={!canGenerate} className="w-full">
-                {showGenerating ? (
-                  <>
-                    <Loader2 className="h-4 w-4 animate-spin mr-2" strokeWidth={1.5} />
-                    Generating...
-                  </>
-                ) : (
-                  `Generate • ${creditCost} credits`
+              {/* Prompt */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Prompt</label>
+                <Textarea
+                  value={prompt}
+                  onChange={(e) => setPrompt(e.target.value)}
+                  placeholder={frameStyle === 'talking_head' 
+                    ? "Describe the person, their expression, clothing, and setting (looking at camera)..."
+                    : "Describe the scene, environment, and visual elements..."
+                  }
+                  rows={3}
+                  className="resize-none"
+                />
+                {hasOutput && !showGenerating && (
+                  <p className="text-xs text-muted-foreground">Describe what you'd like to change</p>
                 )}
-              </Button>
-            </div>
-          </>
-        )}
+              </div>
+
+              {/* Generate Section */}
+              <div className="pt-4 border-t space-y-3">
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-muted-foreground">Cost:</span>
+                  <span className="font-medium">{creditCost} credits</span>
+                </div>
+                <Button onClick={handleGenerate} disabled={!canGenerate} className="w-full">
+                  {showGenerating ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin mr-2" strokeWidth={1.5} />
+                      Generating...
+                    </>
+                  ) : (
+                    `Generate • ${creditCost} credits`
+                  )}
+                </Button>
+              </div>
+            </>
+          )}
+        </div>
       </div>
 
       {/* Output Section */}
