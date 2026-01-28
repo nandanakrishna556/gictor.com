@@ -290,16 +290,21 @@ export type Database = {
           created_at: string | null
           current_stage: string
           display_status: string | null
+          estimated_duration_seconds: number | null
           final_video_input: Json | null
           final_video_output: Json | null
           first_frame_complete: boolean | null
           first_frame_input: Json | null
           first_frame_output: Json | null
           folder_id: string | null
+          generation_started_at: string | null
           id: string
+          last_frame_complete: boolean | null
+          last_frame_output: Json | null
           name: string
           output_file_id: string | null
           pipeline_type: string
+          progress: number | null
           project_id: string
           script_complete: boolean | null
           script_input: Json | null
@@ -316,16 +321,21 @@ export type Database = {
           created_at?: string | null
           current_stage?: string
           display_status?: string | null
+          estimated_duration_seconds?: number | null
           final_video_input?: Json | null
           final_video_output?: Json | null
           first_frame_complete?: boolean | null
           first_frame_input?: Json | null
           first_frame_output?: Json | null
           folder_id?: string | null
+          generation_started_at?: string | null
           id?: string
+          last_frame_complete?: boolean | null
+          last_frame_output?: Json | null
           name?: string
           output_file_id?: string | null
           pipeline_type?: string
+          progress?: number | null
           project_id: string
           script_complete?: boolean | null
           script_input?: Json | null
@@ -342,16 +352,21 @@ export type Database = {
           created_at?: string | null
           current_stage?: string
           display_status?: string | null
+          estimated_duration_seconds?: number | null
           final_video_input?: Json | null
           final_video_output?: Json | null
           first_frame_complete?: boolean | null
           first_frame_input?: Json | null
           first_frame_output?: Json | null
           folder_id?: string | null
+          generation_started_at?: string | null
           id?: string
+          last_frame_complete?: boolean | null
+          last_frame_output?: Json | null
           name?: string
           output_file_id?: string | null
           pipeline_type?: string
+          progress?: number | null
           project_id?: string
           script_complete?: boolean | null
           script_input?: Json | null

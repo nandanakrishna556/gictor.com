@@ -7,6 +7,9 @@ const corsHeaders = {
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
 }
 
+// Shared secret between n8n and this edge function
+const VALID_API_KEY = 'gictor-n8n-secret-2024'
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders })
@@ -14,9 +17,8 @@ serve(async (req) => {
 
   try {
     const apiKey = req.headers.get('x-api-key')
-    const expectedKey = Deno.env.get('N8N_API_KEY')
     
-    if (!expectedKey || apiKey !== expectedKey) {
+    if (apiKey !== VALID_API_KEY) {
       console.error('Unauthorized: Invalid API key')
       return new Response(
         JSON.stringify({ success: false, error: 'Unauthorized' }),
@@ -25,9 +27,9 @@ serve(async (req) => {
     }
 
     const body = await req.json()
-    const { pipeline_id, status, stage, output_url, output_data, duration_seconds } = body
+    const { pipeline_id, status, stage, output_url, output_data, duration_seconds, progress } = body
 
-    console.log('Update Pipeline Status:', { pipeline_id, status, stage, output_url })
+    console.log('Update Pipeline Status:', { pipeline_id, status, stage, output_url, progress })
 
     if (!pipeline_id) {
       return new Response(
@@ -42,8 +44,13 @@ serve(async (req) => {
 
     const updateData: Record<string, any> = { updated_at: new Date().toISOString() }
 
+    // Add progress if provided
+    if (typeof progress === 'number') {
+      updateData.progress = progress
+    }
+
     // Handle different stages
-    if (stage === 'first_frame' || stage === 'frame') {
+    if (stage === 'first_frame' || stage === 'frame' || stage === 'first') {
       if (output_url) {
         updateData.first_frame_output = { 
           url: output_url, 
@@ -54,8 +61,23 @@ serve(async (req) => {
       if (status === 'completed') {
         updateData.first_frame_complete = true
         updateData.status = 'draft'
+        updateData.progress = 100
       }
     } 
+    else if (stage === 'last_frame' || stage === 'last') {
+      if (output_url) {
+        updateData.last_frame_output = { 
+          url: output_url, 
+          generated_at: new Date().toISOString(), 
+          ...(output_data || {}) 
+        }
+      }
+      if (status === 'completed') {
+        updateData.last_frame_complete = true
+        updateData.status = 'draft'
+        updateData.progress = 100
+      }
+    }
     else if (stage === 'speech' || stage === 'voice') {
       if (output_url) {
         updateData.voice_output = { 
@@ -68,6 +90,7 @@ serve(async (req) => {
       if (status === 'completed') {
         updateData.voice_complete = true
         updateData.status = 'draft'
+        updateData.progress = 100
       }
     }
     else if (stage === 'lip_sync' || stage === 'final_video' || stage === 'animate') {
@@ -81,11 +104,18 @@ serve(async (req) => {
       }
       if (status === 'completed') {
         updateData.status = 'completed'
+        updateData.progress = 100
       }
+    }
+
+    // Handle processing status
+    if (status === 'processing') {
+      updateData.status = 'processing'
     }
 
     if (status === 'failed') {
       updateData.status = 'failed'
+      updateData.progress = 0
     }
 
     const { data: pipeline, error: updateError } = await supabase
