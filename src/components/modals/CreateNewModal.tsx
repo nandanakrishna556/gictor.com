@@ -170,6 +170,8 @@ export default function CreateNewModal({
       });
 
       // Create file card for the workflow (same as elements)
+      // Set source_type in metadata to distinguish talking_head from lip_sync
+      const sourceType = workflow.id === 'talking_head' ? 'talking_head' : workflow.id === 'b_roll' ? 'clips' : 'motion_graphics';
       const { error: fileError } = await supabase
         .from('files')
         .insert({
@@ -178,6 +180,7 @@ export default function CreateNewModal({
           name: 'Untitled',
           file_type: fileType,
           status: initialStatus || 'draft',
+          metadata: { source_type: sourceType },
           generation_params: { pipeline_id: newPipeline.id, pipeline_type: pipelineType },
         });
 
