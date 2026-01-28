@@ -1,5 +1,5 @@
 import React from 'react';
-import { FileText, Image as ImageIcon, Video, Film, Folder, Mic, Sparkles, LucideIcon } from 'lucide-react';
+import { FileText, Image as ImageIcon, Folder, Mic, Sparkles, LucideIcon, Contact, AudioLines, Clapperboard, PlayCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export type FileType = 'first_frame' | 'lip_sync' | 'talking_head' | 'script' | 'clips' | 'b_roll' | 'folder' | 'speech' | 'audio' | 'voice' | 'veo3' | 'animate' | 'frame' | 'motion_graphics';
@@ -22,30 +22,30 @@ const FILE_TYPE_CONFIG: Record<FileType, { icon: LucideIcon; label: string; colo
     color: 'text-cyan-500',
   },
   lip_sync: {
-    icon: Video,
+    icon: AudioLines,
     label: 'Lip Sync',
     color: 'text-primary',
   },
   // Legacy: talking_head maps to lip_sync display
   talking_head: {
-    icon: Video,
-    label: 'Lip Sync',
+    icon: Contact,
+    label: 'Talking Head',
     color: 'text-primary',
   },
   clips: {
-    icon: Film,
+    icon: Clapperboard,
     label: 'Clips',
     color: 'text-primary',
   },
   // Legacy: veo3 now maps to b_roll display
   veo3: {
-    icon: Film,
+    icon: Clapperboard,
     label: 'B-Roll',
     color: 'text-primary',
   },
   b_roll: {
-    icon: Film,
-    label: 'Clips',
+    icon: Clapperboard,
+    label: 'B-Roll',
     color: 'text-primary',
   },
   script: {
@@ -69,7 +69,7 @@ const FILE_TYPE_CONFIG: Record<FileType, { icon: LucideIcon; label: string; colo
     color: 'text-violet-500',
   },
   animate: {
-    icon: Film,
+    icon: PlayCircle,
     label: 'Animate',
     color: 'text-blue-500',
   },
