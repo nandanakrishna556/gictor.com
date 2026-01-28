@@ -16,7 +16,6 @@ import { toast } from 'sonner';
 import { useQueryClient } from '@tanstack/react-query';
 
 import FirstFrameStage from './stages/FirstFrameStage';
-import ScriptStage from './stages/ScriptStage';
 import SpeechStage from './stages/SpeechStage';
 import LipSyncStage from './stages/LipSyncStage';
 
@@ -39,7 +38,6 @@ interface PipelineModalProps {
 
 const STAGES: { key: PipelineStage; label: string }[] = [
   { key: 'first_frame', label: 'First Frame' },
-  { key: 'script', label: 'Script' },
   { key: 'speech', label: 'Speech' },
   { key: 'lip_sync', label: 'Lip Sync' },
 ];
@@ -428,12 +426,6 @@ export default function PipelineModal({
             <>
               {activeStage === 'first_frame' && (
                 <FirstFrameStage
-                  pipelineId={pipelineId}
-                  onContinue={() => setActiveStage('script')}
-                />
-              )}
-              {activeStage === 'script' && (
-                <ScriptStage
                   pipelineId={pipelineId}
                   onContinue={() => setActiveStage('speech')}
                 />

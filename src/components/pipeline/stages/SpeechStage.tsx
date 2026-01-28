@@ -1,19 +1,19 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Label } from '@/components/ui/label';
+import { usePipeline } from '@/hooks/usePipeline';
+import { useProfile } from '@/hooks/useProfile';
+import { useActors } from '@/hooks/useActors';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { Upload, Play, Pause, Download, X, Search, User, Mic, Loader2 } from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { usePipeline } from '@/hooks/usePipeline';
-import { useActors } from '@/hooks/useActors';
-import { useProfile } from '@/hooks/useProfile';
-import { toast } from 'sonner';
-import StageLayout from './StageLayout';
-import { uploadToR2 } from '@/lib/cloudflare-upload';
-import { supabase } from '@/integrations/supabase/client';
+import { InputModeToggle, InputMode } from '@/components/ui/input-mode-toggle';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
-import { InputModeToggle, InputMode } from '@/components/ui/input-mode-toggle';
+import { AudioPlayer } from '@/components/ui/AudioPlayer';
+import { Loader2, Download, Search, User, Play, Pause, Check, Mic } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
+import { useQueryClient } from '@tanstack/react-query';
+import { uploadToR2 } from '@/lib/cloudflare-upload';
 
 interface SpeechStageProps {
   pipelineId: string;
@@ -25,228 +25,185 @@ const MIN_CHARACTERS = 10;
 const MAX_CHARACTERS = 10000;
 
 export default function SpeechStage({ pipelineId, onContinue }: SpeechStageProps) {
-  const { pipeline, updateVoice, isUpdating } = usePipeline(pipelineId);
-  const { actors } = useActors();
+  const queryClient = useQueryClient();
   const { profile } = useProfile();
-  
+  const { actors } = useActors();
+  const { pipeline, updateVoice, updatePipeline } = usePipeline(pipelineId);
+
   // Input mode
-  const [mode, setMode] = useState<InputMode>('generate');
-  
-  // Input state - matches SpeechModal
+  const [inputMode, setInputMode] = useState<InputMode>('generate');
+
+  // Input state
   const [script, setScript] = useState('');
   const [selectedActorId, setSelectedActorId] = useState<string | null>(null);
   const [actorSearchOpen, setActorSearchOpen] = useState(false);
-  
-  // Playback state for actor preview
-  const [playingActorId, setPlayingActorId] = useState<string | null>(null);
-  
+  const [playingAudioId, setPlayingAudioId] = useState<string | null>(null);
+
   // Upload state
-  const [uploadedUrl, setUploadedUrl] = useState('');
-  const [isUploading, setIsUploading] = useState(false);
-  const [isDragging, setIsDragging] = useState(false);
-  
-  // Playback state for output
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [currentTime, setCurrentTime] = useState(0);
-  const audioRef = useRef<HTMLAudioElement | null>(null);
-  
+  const [uploadedAudioUrl, setUploadedAudioUrl] = useState<string | null>(null);
+  const [isUploadingAudio, setIsUploadingAudio] = useState(false);
+  const [isSavingUpload, setIsSavingUpload] = useState(false);
+
   // Generation state
   const [isGenerating, setIsGenerating] = useState(false);
-
-  // Prevent overwriting during typing
-  const initialLoadDone = useRef(false);
+  const initialLoadDoneRef = useRef(false);
   const generationInitiatedRef = useRef(false);
 
   // Get available actors with voice
   const availableActors = actors?.filter(
     (actor) => actor.status === 'completed' && actor.voice_url
   ) || [];
-  
+
   const selectedActor = availableActors.find((a) => a.id === selectedActorId);
-  
+
   // Calculate credit cost
   const characterCount = script.length;
   const creditCost = Math.max(CREDIT_COST_PER_1000_CHARS, Math.ceil(characterCount / 1000) * CREDIT_COST_PER_1000_CHARS);
 
-  // Load existing data
+  // Derived state
+  const hasOutput = pipeline?.voice_complete && pipeline?.voice_output?.url;
+  const outputUrl = pipeline?.voice_output?.url;
+  const isServerProcessing = pipeline?.status === 'processing';
+
+  // Load saved state from pipeline
   useEffect(() => {
-    if (pipeline && !initialLoadDone.current) {
-      initialLoadDone.current = true;
-      
-      if (pipeline.voice_input) {
-        const input = pipeline.voice_input;
-        if (input.mode === 'upload') {
-          setMode('upload');
-          setUploadedUrl(input.uploaded_url || '');
-        } else {
-          setMode('generate');
-          if (input.voice_id) setSelectedActorId(input.voice_id);
-        }
-      }
-      
-      // Load script from script_output if available
-      if (pipeline.script_output?.text) {
-        setScript(pipeline.script_output.text);
-      }
+    if (!pipeline || initialLoadDoneRef.current) return;
+    initialLoadDoneRef.current = true;
+
+    const input = pipeline.voice_input;
+    if (input) {
+      if (input.mode) setInputMode(input.mode as InputMode);
+      if (input.voice_id) setSelectedActorId(input.voice_id as string);
+      if (input.uploaded_url) setUploadedAudioUrl(input.uploaded_url as string);
+    }
+
+    // Load script from voice_input if available (stored alongside voice settings)
+    const voiceInput = pipeline.voice_input as any;
+    if (voiceInput?.script) {
+      setScript(voiceInput.script as string);
     }
   }, [pipeline]);
 
-  const toggleActorPlayback = (actorId: string) => {
-    if (playingActorId === actorId) {
-      setPlayingActorId(null);
-    } else {
-      setPlayingActorId(actorId);
-    }
-  };
+  // Auto-save inputs (debounced)
+  const autoSaveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const saveInputs = useCallback(() => {
+    if (!pipeline || !initialLoadDoneRef.current) return;
 
-  const toggleOutputPlayback = () => {
-    const outputUrl = pipeline?.voice_output?.url;
-    if (!outputUrl) return;
-
-    if (!audioRef.current) {
-      audioRef.current = new Audio(outputUrl);
-      audioRef.current.onended = () => {
-        setIsPlaying(false);
-        setCurrentTime(0);
-      };
-      audioRef.current.ontimeupdate = () => {
-        setCurrentTime(audioRef.current?.currentTime || 0);
-      };
+    if (autoSaveTimeoutRef.current) {
+      clearTimeout(autoSaveTimeoutRef.current);
     }
 
-    if (isPlaying) {
-      audioRef.current.pause();
-      setIsPlaying(false);
-    } else {
-      audioRef.current.play();
-      setIsPlaying(true);
-    }
-  };
-
-  const processFile = async (file: File) => {
-    if (!file.type.startsWith('audio/')) {
-      toast.error('Please upload an audio file');
-      return;
-    }
-
-    setIsUploading(true);
-    try {
-      const url = await uploadToR2(file, { 
-        folder: 'pipeline-speech',
-        allowedTypes: [
-          'audio/mpeg', 
-          'audio/mp3', 
-          'audio/wav', 
-          'audio/wave',
-          'audio/x-wav',
-          'audio/m4a', 
-          'audio/x-m4a', 
-          'audio/mp4',
-          'audio/ogg',
-          'audio/webm',
-          'audio/aac',
-        ],
-        maxSize: 50 * 1024 * 1024,
-      });
-      setUploadedUrl(url);
-      
-      const duration = await getAudioDuration(url);
-      
+    autoSaveTimeoutRef.current = setTimeout(async () => {
       await updateVoice({
-        input: { mode: 'upload', uploaded_url: url },
-        output: { url, duration_seconds: duration, generated_at: new Date().toISOString() },
-        complete: true,
+        input: {
+          mode: inputMode,
+          voice_id: selectedActorId,
+          script,
+          uploaded_url: uploadedAudioUrl,
+        } as any,
       });
-      
-      toast.success('Audio uploaded successfully!');
-    } catch (error) {
-      console.error('Upload error:', error);
-      toast.error(error instanceof Error ? error.message : 'Failed to upload audio');
-    } finally {
-      setIsUploading(false);
+    }, 1500);
+  }, [pipeline, inputMode, selectedActorId, script, uploadedAudioUrl, updateVoice]);
+
+  useEffect(() => {
+    if (initialLoadDoneRef.current) {
+      saveInputs();
     }
-  };
+    return () => {
+      if (autoSaveTimeoutRef.current) {
+        clearTimeout(autoSaveTimeoutRef.current);
+      }
+    };
+  }, [inputMode, selectedActorId, script, uploadedAudioUrl, saveInputs]);
 
-  const getAudioDuration = (audioUrl: string): Promise<number> => {
-    return new Promise((resolve, reject) => {
-      const audio = new Audio(audioUrl);
-      audio.onloadedmetadata = () => resolve(audio.duration);
-      audio.onerror = () => reject(new Error('Failed to load audio'));
-    });
-  };
-
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    await processFile(file);
-  };
-
-  const handleDragOver = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsDragging(true);
-  }, []);
-
-  const handleDragLeave = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsDragging(false);
-  }, []);
-
-  const handleDrop = useCallback(async (e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsDragging(false);
-
-    const files = e.dataTransfer.files;
-    if (files.length > 0) {
-      await processFile(files[0]);
-    }
-  }, []);
-
-  const handleRemoveUploadedAudio = async () => {
-    setUploadedUrl('');
-    await updateVoice({ output: null, complete: false });
-    toast.success('Audio removed');
-  };
-
+  // Handle actor selection
   const handleActorSelect = (actorId: string) => {
     setSelectedActorId(actorId);
     setActorSearchOpen(false);
   };
 
+  // Handle script change
   const handleScriptChange = (value: string) => {
     if (value.length <= MAX_CHARACTERS) {
       setScript(value);
     }
   };
 
-  const handleGenerate = async () => {
-    if (mode === 'upload') {
-      if (!uploadedUrl) {
-        toast.error('Please upload an audio file first');
-        return;
-      }
+  // Handle audio upload
+  const handleAudioUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const validTypes = ['audio/mpeg', 'audio/mp3', 'audio/wav', 'audio/m4a', 'audio/x-m4a'];
+    if (!validTypes.includes(file.type) && !file.name.match(/\.(mp3|wav|m4a)$/i)) {
+      toast.error('Please upload MP3, WAV, or M4A audio');
+      return;
+    }
+    if (file.size > 50 * 1024 * 1024) {
+      toast.error('Audio must be less than 50MB');
       return;
     }
 
-    // Generate mode
+    setIsUploadingAudio(true);
+    try {
+      const url = await uploadToR2(file, {
+        folder: 'speech-audio',
+        allowedTypes: [...validTypes, 'audio/mp4'],
+        maxSize: 50 * 1024 * 1024,
+      });
+      setUploadedAudioUrl(url);
+      toast.success('Audio uploaded');
+    } catch {
+      toast.error('Failed to upload audio');
+    } finally {
+      setIsUploadingAudio(false);
+    }
+  };
+
+  // Handle save uploaded audio
+  const handleSaveUpload = async () => {
+    if (!uploadedAudioUrl) return;
+
+    setIsSavingUpload(true);
+    try {
+      await updateVoice({
+        input: {
+          mode: 'upload',
+          uploaded_url: uploadedAudioUrl,
+        } as any,
+        output: { url: uploadedAudioUrl, duration_seconds: 0, generated_at: new Date().toISOString() },
+        complete: true,
+      });
+
+      toast.success('Audio saved!');
+      queryClient.invalidateQueries({ queryKey: ['pipeline', pipelineId] });
+    } catch {
+      toast.error('Failed to save audio');
+    } finally {
+      setIsSavingUpload(false);
+    }
+  };
+
+  // Handle generate
+  const handleGenerate = async () => {
+    if (!profile) return;
+
     if (script.length < MIN_CHARACTERS) {
       toast.error(`Script must be at least ${MIN_CHARACTERS} characters`);
       return;
     }
-    
+
     if (!selectedActorId || !selectedActor?.voice_url) {
       toast.error('Please select an actor with a voice');
       return;
     }
 
-    if ((profile?.credits ?? 0) < creditCost) {
-      toast.error('Insufficient credits', { 
-        description: `You need ${creditCost.toFixed(2)} credits but have ${profile?.credits ?? 0}.`,
+    if ((profile.credits ?? 0) < creditCost) {
+      toast.error('Insufficient credits', {
+        description: `You need ${creditCost.toFixed(2)} credits but have ${profile.credits ?? 0}.`,
         action: {
           label: 'Buy Credits',
-          onClick: () => window.location.href = '/billing',
+          onClick: () => (window.location.href = '/billing'),
         },
       });
       return;
@@ -261,305 +218,365 @@ export default function SpeechStage({ pipelineId, onContinue }: SpeechStageProps
         throw new Error('Session expired. Please log in again.');
       }
 
-      // Store input data
+      // Update pipeline status to processing
+      await updatePipeline({ status: 'processing' });
+
+      // Save input data
       await updateVoice({
         input: {
           mode: 'generate',
           voice_id: selectedActorId,
-        },
+          script,
+        } as any,
       });
 
-      // Prepare payload for edge function
-      const requestPayload = {
-        type: 'pipeline_speech',
-        payload: {
-          pipeline_id: pipelineId,
-          user_id: sessionData.session.user.id,
-          script,
-          actor_voice_url: selectedActor.voice_url,
-          credits_cost: creditCost,
-        },
-      };
-
+      // Call edge function
       const { data, error } = await supabase.functions.invoke('trigger-generation', {
-        body: requestPayload,
+        body: {
+          type: 'pipeline_voice',
+          payload: {
+            pipeline_id: pipelineId,
+            user_id: sessionData.session.user.id,
+            script_text: script,
+            voice_id: selectedActorId,
+            voice_url: selectedActor.voice_url,
+            char_count: characterCount,
+          },
+        },
       });
 
       if (error) throw error;
       if (!data?.success) throw new Error(data?.error || 'Generation failed');
 
       toast.success('Speech generation started!');
+      queryClient.invalidateQueries({ queryKey: ['profile'] });
     } catch (error) {
       console.error('Generation error:', error);
       toast.error('Failed to start generation');
+      await updatePipeline({ status: 'draft' });
     } finally {
       setIsGenerating(false);
       generationInitiatedRef.current = false;
     }
   };
 
-  const handleContinue = () => {
-    if (pipeline?.voice_output?.url) {
-      updateVoice({ complete: true });
-      onContinue();
-    }
-  };
-
-  const hasOutput = !!pipeline?.voice_output?.url;
-  const outputAudio = pipeline?.voice_output;
-  const canGenerate = mode === 'upload' ? !!uploadedUrl : (script.length >= MIN_CHARACTERS && !!selectedActorId);
-
-  const formatDuration = (seconds: number) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = Math.floor(seconds % 60);
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
-  };
-
-  const inputContent = (
-    <div className="space-y-6">
-      <InputModeToggle
-        mode={mode}
-        onModeChange={setMode}
-        uploadLabel="Upload"
-      />
-
-      {mode === 'generate' ? (
-        <>
-          {/* Script Input */}
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <Label>Script (Required)</Label>
-              <span className={cn(
-                "text-xs",
-                characterCount > MAX_CHARACTERS ? "text-destructive" : "text-muted-foreground"
-              )}>
-                {characterCount.toLocaleString()} / {MAX_CHARACTERS.toLocaleString()}
-              </span>
-            </div>
-            <Textarea
-              value={script}
-              onChange={(e) => handleScriptChange(e.target.value)}
-              placeholder="Enter the text you want to convert to speech..."
-              className="min-h-[200px] resize-none rounded-xl"
-            />
-            {characterCount < MIN_CHARACTERS && characterCount > 0 && (
-              <p className="text-xs text-muted-foreground">
-                Minimum {MIN_CHARACTERS} characters required
-              </p>
-            )}
-          </div>
-
-          {/* Actor Voice Selector */}
-          <div className="space-y-2">
-            <Label>Actor Voice (Required)</Label>
-            <Popover open={actorSearchOpen} onOpenChange={setActorSearchOpen}>
-              <PopoverTrigger asChild>
-                <Button
-                  variant="outline"
-                  role="combobox"
-                  aria-expanded={actorSearchOpen}
-                  className="w-full justify-between h-12 rounded-xl"
-                >
-                  {selectedActor ? (
-                    <div className="flex items-center gap-3">
-                      {selectedActor.profile_image_url || selectedActor.profile_360_url ? (
-                        <img
-                          src={selectedActor.profile_360_url || selectedActor.profile_image_url || ''}
-                          alt={selectedActor.name}
-                          className="h-8 w-8 rounded-full object-cover"
-                        />
-                      ) : (
-                        <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center">
-                          <User className="h-4 w-4 text-muted-foreground" />
-                        </div>
-                      )}
-                      <span>{selectedActor.name}</span>
-                    </div>
-                  ) : (
-                    <span className="text-muted-foreground">Select an actor voice...</span>
-                  )}
-                  <Search className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-full p-0" align="start">
-                <Command>
-                  <CommandInput placeholder="Search actors..." />
-                  <CommandList>
-                    <CommandEmpty>No actors with voice found.</CommandEmpty>
-                    <CommandGroup>
-                      {availableActors.map((actor) => (
-                        <CommandItem
-                          key={actor.id}
-                          value={actor.name}
-                          onSelect={() => handleActorSelect(actor.id)}
-                          className="flex items-center justify-between py-3"
-                        >
-                          <div className="flex items-center gap-3">
-                            {actor.profile_image_url || actor.profile_360_url ? (
-                              <img
-                                src={actor.profile_360_url || actor.profile_image_url || ''}
-                                alt={actor.name}
-                                className="h-8 w-8 rounded-full object-cover"
-                              />
-                            ) : (
-                              <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center">
-                                <User className="h-4 w-4 text-muted-foreground" />
-                              </div>
-                            )}
-                            <span>{actor.name}</span>
-                          </div>
-                          {actor.voice_url && (
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-8 w-8"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                toggleActorPlayback(actor.id);
-                              }}
-                            >
-                              {playingActorId === actor.id ? (
-                                <Pause className="h-4 w-4" />
-                              ) : (
-                                <Play className="h-4 w-4" />
-                              )}
-                            </Button>
-                          )}
-                        </CommandItem>
-                      ))}
-                    </CommandGroup>
-                  </CommandList>
-                </Command>
-              </PopoverContent>
-            </Popover>
-          </div>
-        </>
-      ) : (
-        /* Upload Mode */
-        <div className="space-y-4">
-          <Label>Upload voice audio</Label>
-          {uploadedUrl ? (
-            <div className="relative group">
-              <button
-                type="button"
-                onClick={handleRemoveUploadedAudio}
-                className="absolute -top-2 -left-2 z-10 rounded-full bg-foreground/80 p-1.5 text-background backdrop-blur transition-all duration-200 hover:bg-foreground opacity-0 group-hover:opacity-100"
-              >
-                <X className="h-4 w-4" />
-              </button>
-              <audio src={uploadedUrl} controls className="w-full" />
-            </div>
-          ) : (
-            <label 
-              className={cn(
-                "flex flex-col items-center justify-center rounded-xl border-2 border-dashed p-8 cursor-pointer transition-colors",
-                isDragging 
-                  ? "border-primary bg-primary/10" 
-                  : "hover:border-primary/50 hover:bg-secondary/50"
-              )}
-              onDragOver={handleDragOver}
-              onDragLeave={handleDragLeave}
-              onDrop={handleDrop}
-            >
-              <input
-                type="file"
-                accept="audio/*"
-                onChange={handleFileUpload}
-                className="hidden"
-                disabled={isUploading}
-              />
-              {isUploading ? (
-                <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-              ) : (
-                <>
-                  <Upload className={cn("h-8 w-8 mb-2", isDragging ? "text-primary" : "text-muted-foreground")} />
-                  <p className="text-sm text-muted-foreground">
-                    {isDragging ? 'Drop your audio file here' : 'Drag & drop or click to browse'}
-                  </p>
-                  <p className="text-xs text-muted-foreground mt-1">MP3, WAV, M4A • Max 50MB</p>
-                </>
-              )}
-            </label>
-          )}
-        </div>
-      )}
-    </div>
-  );
-
-  const handleDownloadAudio = async () => {
-    const audioUrl = outputAudio?.url;
-    if (!audioUrl) return;
-    try {
-      const response = await fetch(audioUrl);
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `speech-${Date.now()}.mp3`;
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
-      toast.success('Audio downloaded');
-    } catch (error) {
-      toast.error('Failed to download audio');
-    }
-  };
-
-  const outputContent = outputAudio ? (
-    <div className="flex flex-col items-center justify-center h-full gap-6 px-4">
-      {/* Play Button */}
-      <div className="w-24 h-24 rounded-full bg-primary/10 flex items-center justify-center">
-        <Button
-          size="lg"
-          variant="ghost"
-          className="w-16 h-16 rounded-full"
-          onClick={toggleOutputPlayback}
-        >
-          {isPlaying ? (
-            <Pause className="h-8 w-8" />
-          ) : (
-            <Play className="h-8 w-8 ml-1" />
-          )}
-        </Button>
-      </div>
-      
-      <div className="text-center">
-        <p className="text-lg font-medium">
-          {formatDuration(currentTime)} / {formatDuration(outputAudio.duration_seconds)}
-        </p>
-        <p className="text-sm text-muted-foreground">Duration</p>
-      </div>
-    </div>
-  ) : null;
-
-  const outputActions = (
-    <div className="flex items-center gap-2">
-      <Button variant="ghost" size="sm" onClick={handleDownloadAudio}>
-        <Download className="h-4 w-4 mr-2" />
-        Download
-      </Button>
-    </div>
-  );
+  const canGenerate = script.length >= MIN_CHARACTERS && !!selectedActorId && !isGenerating && !isServerProcessing;
+  const showGenerating = isGenerating || (isServerProcessing && generationInitiatedRef.current);
 
   return (
-    <StageLayout
-      inputContent={inputContent}
-      outputContent={outputContent}
-      hasOutput={hasOutput}
-      onGenerate={handleGenerate}
-      onRemix={handleGenerate}
-      onContinue={handleContinue}
-      isGenerating={isGenerating || isUploading || isUpdating}
-      canContinue={hasOutput}
-      generateLabel={mode === 'upload' ? 'Use Uploaded Audio' : 'Generate Speech'}
-      creditsCost={mode === 'upload' ? 'Free' : `${creditCost.toFixed(2)} credits`}
-      generateDisabled={!canGenerate}
-      isAIGenerated={mode === 'generate'}
-      outputActions={hasOutput ? outputActions : undefined}
-      emptyStateIcon={<Mic className="h-10 w-10 text-muted-foreground/50" strokeWidth={1.5} />}
-      emptyStateTitle="Generated speech will appear here"
-      emptyStateSubtitle="Enter script and select an actor"
-    />
+    <div className="flex-1 flex min-h-0 overflow-hidden">
+      {/* Input Section */}
+      <div className="w-1/2 overflow-y-auto p-6 space-y-6 border-r border-border">
+        <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">Input</h3>
+
+        {/* Generate/Upload Toggle */}
+        <InputModeToggle mode={inputMode} onModeChange={setInputMode} uploadLabel="Upload" />
+
+        {inputMode === 'upload' ? (
+          /* Upload Mode UI */
+          <div className="space-y-4">
+            <label className="text-sm font-medium">Upload Audio</label>
+            {uploadedAudioUrl ? (
+              <div className="space-y-3">
+                <AudioPlayer src={uploadedAudioUrl} />
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setUploadedAudioUrl(null)}
+                  className="w-full"
+                >
+                  Remove Audio
+                </Button>
+              </div>
+            ) : (
+              <label className="flex flex-col items-center justify-center h-40 rounded-xl border-2 border-dashed border-border hover:border-primary cursor-pointer transition-colors">
+                <input
+                  type="file"
+                  accept="audio/mpeg,audio/mp3,audio/wav,audio/m4a,audio/x-m4a,.mp3,.wav,.m4a"
+                  className="hidden"
+                  onChange={handleAudioUpload}
+                  disabled={isUploadingAudio}
+                />
+                {isUploadingAudio ? (
+                  <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" strokeWidth={1.5} />
+                ) : (
+                  <>
+                    <Mic className="h-8 w-8 text-muted-foreground mb-2" strokeWidth={1.5} />
+                    <span className="text-sm text-muted-foreground">Upload your audio</span>
+                    <span className="text-xs text-muted-foreground/70">MP3, WAV, M4A up to 50MB</span>
+                  </>
+                )}
+              </label>
+            )}
+
+            {uploadedAudioUrl && (
+              <Button onClick={handleSaveUpload} disabled={isSavingUpload} className="w-full">
+                {isSavingUpload ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                    Saving...
+                  </>
+                ) : (
+                  <>
+                    Save Audio <span className="text-emerald-400 ml-1">• Free</span>
+                  </>
+                )}
+              </Button>
+            )}
+          </div>
+        ) : (
+          /* Generate Mode UI */
+          <>
+            {/* Script Input */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <label className="text-sm font-medium">Script (Required)</label>
+                <span
+                  className={cn(
+                    'text-xs',
+                    characterCount > MAX_CHARACTERS ? 'text-destructive' : 'text-muted-foreground'
+                  )}
+                >
+                  {characterCount.toLocaleString()} / {MAX_CHARACTERS.toLocaleString()}
+                </span>
+              </div>
+              <Textarea
+                value={script}
+                onChange={(e) => handleScriptChange(e.target.value)}
+                placeholder="Enter the text you want to convert to speech..."
+                className="min-h-[200px] resize-none"
+              />
+              {characterCount < MIN_CHARACTERS && characterCount > 0 && (
+                <p className="text-xs text-muted-foreground">Minimum {MIN_CHARACTERS} characters required</p>
+              )}
+            </div>
+
+            {/* Actor Voice Selector */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Actor Voice (Required)</label>
+              <Popover open={actorSearchOpen} onOpenChange={setActorSearchOpen}>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    role="combobox"
+                    aria-expanded={actorSearchOpen}
+                    className="w-full justify-between h-auto py-3"
+                  >
+                    {selectedActor ? (
+                      <div className="flex items-center gap-3">
+                        {selectedActor.profile_image_url ? (
+                          <img
+                            src={selectedActor.profile_image_url}
+                            alt={selectedActor.name}
+                            className="h-8 w-8 rounded-full object-cover"
+                          />
+                        ) : (
+                          <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center">
+                            <User className="h-4 w-4 text-muted-foreground" />
+                          </div>
+                        )}
+                        <div className="text-left">
+                          <p className="font-medium">{selectedActor.name}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {[selectedActor.gender, selectedActor.age && `${selectedActor.age}y`]
+                              .filter(Boolean)
+                              .join(' • ')}
+                          </p>
+                        </div>
+                      </div>
+                    ) : (
+                      <span className="text-muted-foreground">Select an actor voice...</span>
+                    )}
+                    <Search className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-[400px] p-0" align="start">
+                  <Command>
+                    <CommandInput placeholder="Search actors..." />
+                    <CommandList>
+                      <CommandEmpty>
+                        {availableActors.length === 0 ? (
+                          <div className="py-6 text-center text-sm">
+                            <p className="text-muted-foreground">No actors with voice available.</p>
+                            <p className="text-xs text-muted-foreground mt-1">
+                              Create an actor first in the Actors page.
+                            </p>
+                          </div>
+                        ) : (
+                          'No actor found.'
+                        )}
+                      </CommandEmpty>
+                      <CommandGroup>
+                        {availableActors.map((actor) => (
+                          <CommandItem
+                            key={actor.id}
+                            value={actor.name}
+                            onSelect={() => handleActorSelect(actor.id)}
+                            className="cursor-pointer py-3"
+                          >
+                            <div className="flex items-center gap-3 w-full">
+                              {actor.profile_image_url ? (
+                                <img
+                                  src={actor.profile_image_url}
+                                  alt={actor.name}
+                                  className="h-10 w-10 rounded-full object-cover"
+                                />
+                              ) : (
+                                <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center">
+                                  <User className="h-5 w-5 text-muted-foreground" />
+                                </div>
+                              )}
+                              <div className="flex-1">
+                                <p className="font-medium">{actor.name}</p>
+                                <p className="text-xs text-muted-foreground">
+                                  {[actor.gender, actor.age && `${actor.age}y`, actor.language]
+                                    .filter(Boolean)
+                                    .join(' • ')}
+                                </p>
+                              </div>
+                              {actor.voice_url && (
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    const audio = document.getElementById(
+                                      `preview-audio-${actor.id}`
+                                    ) as HTMLAudioElement;
+                                    if (audio) {
+                                      if (audio.paused) {
+                                        document
+                                          .querySelectorAll('audio[id^="preview-audio-"]')
+                                          .forEach((a) => {
+                                            (a as HTMLAudioElement).pause();
+                                            (a as HTMLAudioElement).currentTime = 0;
+                                          });
+                                        setPlayingAudioId(actor.id);
+                                        audio.play();
+                                        audio.onended = () => setPlayingAudioId(null);
+                                      } else {
+                                        audio.pause();
+                                        audio.currentTime = 0;
+                                        setPlayingAudioId(null);
+                                      }
+                                    }
+                                  }}
+                                  className="h-8 w-8 rounded-full bg-primary/10 hover:bg-primary/20 flex items-center justify-center shrink-0 transition-colors"
+                                >
+                                  {playingAudioId === actor.id ? (
+                                    <Pause className="h-4 w-4 text-primary" />
+                                  ) : (
+                                    <Play className="h-4 w-4 text-primary" />
+                                  )}
+                                </button>
+                              )}
+                              {selectedActorId === actor.id && <Check className="ml-auto h-4 w-4" />}
+                              {actor.voice_url && (
+                                <audio
+                                  id={`preview-audio-${actor.id}`}
+                                  src={actor.voice_url}
+                                  preload="none"
+                                  className="hidden"
+                                />
+                              )}
+                            </div>
+                          </CommandItem>
+                        ))}
+                      </CommandGroup>
+                    </CommandList>
+                  </Command>
+                </PopoverContent>
+              </Popover>
+            </div>
+
+            {/* Selected Actor Voice Preview */}
+            {selectedActor && selectedActor.voice_url && (
+              <div className="rounded-xl border border-border bg-card p-4 space-y-3">
+                <div className="flex items-center gap-3">
+                  {selectedActor.profile_image_url ? (
+                    <img
+                      src={selectedActor.profile_image_url}
+                      alt={selectedActor.name}
+                      className="h-10 w-10 rounded-full object-cover"
+                    />
+                  ) : (
+                    <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center">
+                      <User className="h-5 w-5 text-muted-foreground" />
+                    </div>
+                  )}
+                  <div>
+                    <p className="font-medium text-sm">{selectedActor.name}</p>
+                    <p className="text-xs text-muted-foreground">Voice Preview</p>
+                  </div>
+                </div>
+                <AudioPlayer src={selectedActor.voice_url} />
+              </div>
+            )}
+
+            {/* Generate Button */}
+            <div className="pt-4 border-t space-y-3">
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-muted-foreground">Estimated cost:</span>
+                <span className="font-medium">{creditCost.toFixed(2)} credits</span>
+              </div>
+              <p className="text-xs text-muted-foreground">{CREDIT_COST_PER_1000_CHARS} credits per 1,000 characters</p>
+              <Button onClick={handleGenerate} disabled={!canGenerate} className="w-full">
+                {showGenerating ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin mr-2" strokeWidth={1.5} />
+                    Generating...
+                  </>
+                ) : (
+                  <>Generate • {creditCost.toFixed(2)} credits</>
+                )}
+              </Button>
+            </div>
+          </>
+        )}
+      </div>
+
+      {/* Output Section */}
+      <div className="w-1/2 overflow-y-auto p-6 space-y-6 bg-muted/10">
+        <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">Output</h3>
+
+        {showGenerating || isServerProcessing ? (
+          <div className="space-y-4">
+            <div className="aspect-video rounded-xl bg-secondary/50 flex items-center justify-center">
+              <div className="text-center space-y-3">
+                <Loader2 className="h-10 w-10 animate-spin text-primary mx-auto" strokeWidth={1.5} />
+                <p className="text-sm text-muted-foreground">Generating speech audio...</p>
+              </div>
+            </div>
+          </div>
+        ) : hasOutput && outputUrl ? (
+          <div className="space-y-4 animate-fade-in">
+            <div className="rounded-xl border border-border bg-card p-6">
+              <div className="flex items-center gap-4 mb-4">
+                <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
+                  <Check className="h-6 w-6 text-primary" />
+                </div>
+                <div>
+                  <p className="font-medium">Audio Generated</p>
+                  <p className="text-sm text-muted-foreground">{characterCount.toLocaleString()} characters</p>
+                </div>
+              </div>
+              <audio src={outputUrl} controls className="w-full" />
+            </div>
+            <Button variant="secondary" className="w-full" asChild>
+              <a href={outputUrl} download="speech.mp3">
+                <Download className="h-4 w-4 mr-2" strokeWidth={1.5} />
+                Download Audio
+              </a>
+            </Button>
+            <Button onClick={onContinue} className="w-full">
+              Continue to Lip Sync
+            </Button>
+          </div>
+        ) : (
+          <div className="aspect-video rounded-xl bg-secondary/30 border-2 border-dashed border-border flex items-center justify-center">
+            <p className="text-muted-foreground text-sm">No output yet</p>
+          </div>
+        )}
+      </div>
+    </div>
   );
 }
