@@ -8,9 +8,14 @@ export interface FirstFrameInput {
   mode: 'generate' | 'upload';
   // Generate mode
   prompt?: string;
-  image_type?: 'ugc' | 'studio';
+  style?: 'talking_head' | 'broll' | 'motion_graphics';
+  substyle?: 'ugc' | 'studio';
+  image_type?: 'ugc' | 'studio'; // Legacy alias for substyle
   aspect_ratio?: '1:1' | '9:16' | '16:9';
   reference_images?: string[];
+  actor_id?: string;
+  resolution?: '1K' | '2K' | '4K';
+  camera_perspective?: '1st_person' | '3rd_person';
   // Upload mode
   uploaded_url?: string;
 }
