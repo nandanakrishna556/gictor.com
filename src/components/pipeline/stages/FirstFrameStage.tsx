@@ -19,7 +19,7 @@ interface FirstFrameStageProps {
   onContinue: () => void;
 }
 
-type FrameStyle = 'talking_head' | 'broll';
+type FrameStyle = 'talking_head' | 'broll' | 'motion_graphics';
 type SubStyle = 'ugc' | 'studio';
 type AspectRatio = '9:16' | '16:9' | '1:1';
 type Resolution = '1K' | '2K' | '4K';
@@ -292,96 +292,117 @@ export default function FirstFrameStage({ pipelineId, onContinue }: FirstFrameSt
             /* Generate Mode UI */
             <>
               {/* Style Selection */}
-              <div className="space-y-3">
+              <div className="space-y-2">
                 <label className="text-sm font-medium">Style</label>
-                
-                {/* Talking Head Option */}
-                <div 
-                  onClick={() => setFrameStyle('talking_head')}
-                  className={cn(
-                    "flex items-center justify-between p-3 rounded-lg border cursor-pointer transition-colors",
-                    frameStyle === 'talking_head' 
-                      ? "border-primary bg-primary/5" 
-                      : "border-border hover:border-primary/50"
-                  )}
-                >
-                  <div className="flex items-center gap-3">
-                    <div className={cn(
-                      "h-4 w-4 rounded-full border-2 flex items-center justify-center",
-                      frameStyle === 'talking_head' ? "border-primary" : "border-muted-foreground"
-                    )}>
-                      {frameStyle === 'talking_head' && <div className="h-2 w-2 rounded-full bg-primary" />}
+                <div className="space-y-2">
+                  {/* Talking Head Option */}
+                  <div 
+                    onClick={() => setFrameStyle('talking_head')}
+                    className={cn(
+                      "flex items-center justify-between p-3 rounded-lg border cursor-pointer transition-all",
+                      frameStyle === 'talking_head' 
+                        ? "border-primary bg-primary/5" 
+                        : "border-border hover:border-primary/50"
+                    )}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className={cn(
+                        "h-4 w-4 rounded-full border-2 flex items-center justify-center",
+                        frameStyle === 'talking_head' ? "border-primary" : "border-muted-foreground"
+                      )}>
+                        {frameStyle === 'talking_head' && <div className="h-2 w-2 rounded-full bg-primary" />}
+                      </div>
+                      <span className="text-sm font-medium">Talking Head</span>
                     </div>
-                    <span className="text-sm font-medium">Talking Head</span>
+                    {frameStyle === 'talking_head' && (
+                      <div className="flex gap-1">
+                        <Button
+                          variant={subStyle === 'ugc' ? 'default' : 'outline'}
+                          size="sm"
+                          className="h-7 text-xs px-3"
+                          onClick={(e) => { e.stopPropagation(); setSubStyle('ugc'); }}
+                        >
+                          UGC
+                        </Button>
+                        <Button
+                          variant={subStyle === 'studio' ? 'default' : 'outline'}
+                          size="sm"
+                          className="h-7 text-xs px-3"
+                          onClick={(e) => { e.stopPropagation(); setSubStyle('studio'); }}
+                        >
+                          Studio
+                        </Button>
+                      </div>
+                    )}
                   </div>
-                  {frameStyle === 'talking_head' && (
-                    <div className="flex gap-1">
-                      <Button
-                        variant={subStyle === 'ugc' ? 'default' : 'outline'}
-                        size="sm"
-                        className="h-7 text-xs px-3"
-                        onClick={(e) => { e.stopPropagation(); setSubStyle('ugc'); }}
-                      >
-                        UGC
-                      </Button>
-                      <Button
-                        variant={subStyle === 'studio' ? 'default' : 'outline'}
-                        size="sm"
-                        className="h-7 text-xs px-3"
-                        onClick={(e) => { e.stopPropagation(); setSubStyle('studio'); }}
-                      >
-                        Studio
-                      </Button>
-                    </div>
-                  )}
-                </div>
-                {frameStyle === 'talking_head' && (
-                  <p className="text-xs text-muted-foreground">Person looking directly at camera</p>
-                )}
 
-                {/* B-Roll Option */}
-                <div 
-                  onClick={() => setFrameStyle('broll')}
-                  className={cn(
-                    "flex items-center justify-between p-3 rounded-lg border cursor-pointer transition-colors",
-                    frameStyle === 'broll' 
-                      ? "border-primary bg-primary/5" 
-                      : "border-border hover:border-primary/50"
-                  )}
-                >
-                  <div className="flex items-center gap-3">
-                    <div className={cn(
-                      "h-4 w-4 rounded-full border-2 flex items-center justify-center",
-                      frameStyle === 'broll' ? "border-primary" : "border-muted-foreground"
-                    )}>
-                      {frameStyle === 'broll' && <div className="h-2 w-2 rounded-full bg-primary" />}
+                  {/* B-Roll Option */}
+                  <div 
+                    onClick={() => setFrameStyle('broll')}
+                    className={cn(
+                      "flex items-center justify-between p-3 rounded-lg border cursor-pointer transition-all",
+                      frameStyle === 'broll' 
+                        ? "border-primary bg-primary/5" 
+                        : "border-border hover:border-primary/50"
+                    )}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className={cn(
+                        "h-4 w-4 rounded-full border-2 flex items-center justify-center",
+                        frameStyle === 'broll' ? "border-primary" : "border-muted-foreground"
+                      )}>
+                        {frameStyle === 'broll' && <div className="h-2 w-2 rounded-full bg-primary" />}
+                      </div>
+                      <span className="text-sm font-medium">B-Roll</span>
                     </div>
-                    <span className="text-sm font-medium">B-Roll</span>
+                    {frameStyle === 'broll' && (
+                      <div className="flex gap-1">
+                        <Button
+                          variant={subStyle === 'ugc' ? 'default' : 'outline'}
+                          size="sm"
+                          className="h-7 text-xs px-3"
+                          onClick={(e) => { e.stopPropagation(); setSubStyle('ugc'); }}
+                        >
+                          UGC
+                        </Button>
+                        <Button
+                          variant={subStyle === 'studio' ? 'default' : 'outline'}
+                          size="sm"
+                          className="h-7 text-xs px-3"
+                          onClick={(e) => { e.stopPropagation(); setSubStyle('studio'); }}
+                        >
+                          Studio
+                        </Button>
+                      </div>
+                    )}
                   </div>
-                  {frameStyle === 'broll' && (
-                    <div className="flex gap-1">
-                      <Button
-                        variant={subStyle === 'ugc' ? 'default' : 'outline'}
-                        size="sm"
-                        className="h-7 text-xs px-3"
-                        onClick={(e) => { e.stopPropagation(); setSubStyle('ugc'); }}
-                      >
-                        UGC
-                      </Button>
-                      <Button
-                        variant={subStyle === 'studio' ? 'default' : 'outline'}
-                        size="sm"
-                        className="h-7 text-xs px-3"
-                        onClick={(e) => { e.stopPropagation(); setSubStyle('studio'); }}
-                      >
-                        Studio
-                      </Button>
+
+                  {/* Motion Graphics Option */}
+                  <div 
+                    onClick={() => setFrameStyle('motion_graphics')}
+                    className={cn(
+                      "flex items-center justify-between p-3 rounded-lg border cursor-pointer transition-all",
+                      frameStyle === 'motion_graphics' 
+                        ? "border-primary bg-primary/5" 
+                        : "border-border hover:border-primary/50"
+                    )}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className={cn(
+                        "h-4 w-4 rounded-full border-2 flex items-center justify-center",
+                        frameStyle === 'motion_graphics' ? "border-primary" : "border-muted-foreground"
+                      )}>
+                        {frameStyle === 'motion_graphics' && <div className="h-2 w-2 rounded-full bg-primary" />}
+                      </div>
+                      <span className="text-sm font-medium">Motion Graphics</span>
                     </div>
-                  )}
+                  </div>
                 </div>
-                {frameStyle === 'broll' && (
-                  <p className="text-xs text-muted-foreground">Supplementary footage without direct camera focus</p>
-                )}
+                <p className="text-xs text-muted-foreground mt-2">
+                  {frameStyle === 'talking_head' && "Person looking directly at camera"}
+                  {frameStyle === 'broll' && "Person captured mid-action, natural movement"}
+                  {frameStyle === 'motion_graphics' && "Background only - colors, gradients, patterns"}
+                </p>
               </div>
 
             {/* Actor Selector */}
