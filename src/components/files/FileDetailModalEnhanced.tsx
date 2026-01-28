@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Download, Loader2, RefreshCw, AlertCircle, Copy, Image, Video, FileText, Link2 } from 'lucide-react';
+import { X, Download, Loader2, RefreshCw, AlertCircle, Copy, Image, FileText, Link2, ScanFace, Contact } from 'lucide-react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -28,8 +28,8 @@ interface FileDetailModalEnhancedProps {
 
 const fileTypeIcons: Record<string, React.ComponentType<{ className?: string }>> = {
   first_frame: Image,
-  lip_sync: Video,
-  talking_head: Video, // backward compatibility
+  lip_sync: ScanFace,
+  talking_head: Contact, // backward compatibility
   speech: FileText,
   script: FileText,
 };

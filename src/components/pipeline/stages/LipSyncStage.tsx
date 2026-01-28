@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
-import { Upload, Download, X, Loader2, Video, AlertCircle, Mic } from 'lucide-react';
+import { Upload, Download, X, Loader2, AlertCircle, Mic, ScanFace } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { usePipeline } from '@/hooks/usePipeline';
 import { useProfile } from '@/hooks/useProfile';
@@ -551,7 +551,7 @@ export default function LipSyncStage({ pipelineId, onComplete }: LipSyncStagePro
       generateDisabled={!canGenerate}
       isAIGenerated={mode === 'generate'}
       outputActions={hasOutput ? outputActions : undefined}
-      emptyStateIcon={<Video className="h-10 w-10 text-muted-foreground/50" strokeWidth={1.5} />}
+      emptyStateIcon={<ScanFace className="h-10 w-10 text-muted-foreground/50" strokeWidth={1.5} />}
       emptyStateTitle="Generated video will appear here"
       emptyStateSubtitle="Provide first frame and speech audio"
     />
