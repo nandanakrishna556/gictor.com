@@ -249,8 +249,9 @@ export default function BRollLastFrameStage({ pipelineId, onComplete }: BRollLas
       // Call edge function for frame generation
       const { data, error } = await supabase.functions.invoke('trigger-generation', {
         body: {
-          type: 'pipeline_first_frame_b_roll',
+          type: 'frame',
           payload: {
+            file_id: pipelineId,
             pipeline_id: pipelineId,
             prompt,
             frame_type: 'last',
@@ -264,6 +265,7 @@ export default function BRollLastFrameStage({ pipelineId, onComplete }: BRollLas
             reference_images: referenceImages,
             pipeline_type: 'clips',
             credits_cost: creditCost,
+            supabase_url: import.meta.env.VITE_SUPABASE_URL,
           },
         },
       });

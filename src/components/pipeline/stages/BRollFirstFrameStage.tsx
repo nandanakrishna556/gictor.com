@@ -240,8 +240,9 @@ export default function BRollFirstFrameStage({ pipelineId, onComplete }: BRollFi
       // Call edge function for frame generation
       const { data, error } = await supabase.functions.invoke('trigger-generation', {
         body: {
-          type: 'pipeline_first_frame_b_roll',
+          type: 'frame',
           payload: {
+            file_id: pipelineId,
             pipeline_id: pipelineId,
             prompt,
             frame_type: 'first',
@@ -255,6 +256,7 @@ export default function BRollFirstFrameStage({ pipelineId, onComplete }: BRollFi
             reference_images: referenceImages,
             pipeline_type: 'clips',
             credits_cost: creditCost,
+            supabase_url: import.meta.env.VITE_SUPABASE_URL,
           },
         },
       });

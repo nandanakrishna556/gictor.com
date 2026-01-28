@@ -212,8 +212,9 @@ export default function MoGraphFirstFrameStage({ pipelineId, onComplete, onConti
 
       const { data, error } = await supabase.functions.invoke('trigger-generation', {
         body: {
-          type: 'pipeline_first_frame_b_roll',
+          type: 'frame',
           payload: {
+            file_id: pipelineId,
             pipeline_id: pipelineId,
             prompt,
             frame_type: 'first',
@@ -223,6 +224,7 @@ export default function MoGraphFirstFrameStage({ pipelineId, onComplete, onConti
             reference_images: referenceImages,
             pipeline_type: 'motion_graphics',
             credits_cost: creditCost,
+            supabase_url: import.meta.env.VITE_SUPABASE_URL,
           },
         },
       });
