@@ -268,8 +268,9 @@ export default function SpeechStage({ pipelineId, onContinue }: SpeechStageProps
   return (
     <div className="flex-1 flex min-h-0 overflow-hidden">
       {/* Input Section */}
-      <div className="w-1/2 overflow-y-auto p-6 space-y-6 border-r border-border">
-        <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">Input</h3>
+      <div className="w-1/2 flex flex-col min-h-0 border-r border-border">
+        <div className="flex-1 overflow-y-auto p-6 space-y-6">
+          <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">Input</h3>
 
         {/* Generate/Upload Toggle */}
         <InputModeToggle mode={inputMode} onModeChange={setInputMode} uploadLabel="Upload" />
@@ -534,10 +535,12 @@ export default function SpeechStage({ pipelineId, onContinue }: SpeechStageProps
             </div>
           </>
         )}
+        </div>
       </div>
 
       {/* Output Section */}
-      <div className="w-1/2 overflow-y-auto p-6 space-y-6 bg-muted/10">
+      <div className="w-1/2 flex flex-col min-h-0 bg-muted/10">
+        <div className="flex-1 overflow-y-auto p-6 space-y-6">
         <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">Output</h3>
 
         {showGenerating || isServerProcessing ? (
@@ -578,6 +581,7 @@ export default function SpeechStage({ pipelineId, onContinue }: SpeechStageProps
             <p className="text-muted-foreground text-sm">No output yet</p>
           </div>
         )}
+        </div>
       </div>
     </div>
   );
