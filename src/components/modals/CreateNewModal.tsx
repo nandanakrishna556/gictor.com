@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react';
-import { FolderPlus, X, Loader2, Mic, Image, FileText, Sparkles, RefreshCw, Contact, ScanFace, Clapperboard, PlayCircle } from 'lucide-react';
+import { FolderPlus, X, Loader2, Mic, Image, FileText, Sparkles, RefreshCw, CircleUser, Wand2, Clapperboard, PlayCircle } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
 import { v4 as uuidv4 } from 'uuid';
 import {
@@ -45,7 +45,7 @@ type ElementType = 'folder' | 'lip_sync' | 'speech' | 'frame' | 'script' | 'swap
 const workflows = [
   {
     id: 'talking_head' as WorkflowType,
-    icon: Contact,
+    icon: CircleUser,
     title: 'Talking Head',
     description: 'Create talking head video',
   },
@@ -92,7 +92,7 @@ const elements = [
   },
   {
     id: 'lip_sync' as ElementType,
-    icon: ScanFace,
+    icon: Wand2,
     title: 'Lip Sync',
     description: 'Sync audio to face',
   },

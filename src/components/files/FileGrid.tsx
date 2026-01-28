@@ -7,19 +7,10 @@ import {
   Trash2,
   Plus,
   Tag,
-  ChevronDown,
-  ChevronUp,
-  Check,
   X,
-  Search,
-  Paperclip,
   Pencil,
   Image,
-  Video,
   FileText,
-  Film,
-  MousePointer2,
-  FolderInput,
   Mic,
   Copy,
 } from 'lucide-react';
@@ -1213,13 +1204,19 @@ function FileCard({
         ) : file.file_type === 'animate' ? (
           <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 to-indigo-500/10 flex items-center justify-center">
             <div className="h-16 w-16 rounded-full bg-blue-500/20 flex items-center justify-center">
-              <Film className="h-8 w-8 text-blue-500" strokeWidth={1.5} />
+              <FileTypeIcon fileType="animate" size="lg" className="h-8 w-8 text-blue-500" />
             </div>
           </div>
-        ) : file.file_type === 'lip_sync' || file.file_type === 'talking_head' ? (
+        ) : file.file_type === 'lip_sync' ? (
           <div className="absolute inset-0 bg-gradient-to-br from-orange-500/10 to-amber-500/10 flex items-center justify-center">
             <div className="h-16 w-16 rounded-full bg-orange-500/20 flex items-center justify-center">
-              <Video className="h-8 w-8 text-orange-500" strokeWidth={1.5} />
+              <FileTypeIcon fileType="lip_sync" size="lg" className="h-8 w-8 text-orange-500" />
+            </div>
+          </div>
+        ) : file.file_type === 'talking_head' ? (
+          <div className="absolute inset-0 bg-gradient-to-br from-orange-500/10 to-amber-500/10 flex items-center justify-center">
+            <div className="h-16 w-16 rounded-full bg-orange-500/20 flex items-center justify-center">
+              <FileTypeIcon fileType="talking_head" size="lg" className="h-8 w-8 text-orange-500" />
             </div>
           </div>
         ) : file.file_type === 'speech' ? (
@@ -1243,7 +1240,7 @@ function FileCard({
         ) : file.file_type === 'b_roll' || file.file_type === 'clips' ? (
           <div className="absolute inset-0 bg-gradient-to-br from-rose-500/10 to-pink-500/10 flex items-center justify-center">
             <div className="h-16 w-16 rounded-full bg-rose-500/20 flex items-center justify-center">
-              <Film className="h-8 w-8 text-rose-500" strokeWidth={1.5} />
+              <FileTypeIcon fileType="b_roll" size="lg" className="h-8 w-8 text-rose-500" />
             </div>
           </div>
         ) : (
@@ -1613,13 +1610,19 @@ function KanbanCard({
         ) : file?.file_type === 'animate' ? (
           <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 to-indigo-500/10 flex items-center justify-center">
             <div className="h-16 w-16 rounded-full bg-blue-500/20 flex items-center justify-center">
-              <Film className="h-8 w-8 text-blue-500" strokeWidth={1.5} />
+              <FileTypeIcon fileType="animate" size="lg" className="h-8 w-8 text-blue-500" />
             </div>
           </div>
-        ) : file?.file_type === 'lip_sync' || file?.file_type === 'talking_head' ? (
+        ) : file?.file_type === 'lip_sync' ? (
           <div className="absolute inset-0 bg-gradient-to-br from-orange-500/10 to-amber-500/10 flex items-center justify-center">
             <div className="h-16 w-16 rounded-full bg-orange-500/20 flex items-center justify-center">
-              <Video className="h-8 w-8 text-orange-500" strokeWidth={1.5} />
+              <FileTypeIcon fileType="lip_sync" size="lg" className="h-8 w-8 text-orange-500" />
+            </div>
+          </div>
+        ) : file?.file_type === 'talking_head' ? (
+          <div className="absolute inset-0 bg-gradient-to-br from-orange-500/10 to-amber-500/10 flex items-center justify-center">
+            <div className="h-16 w-16 rounded-full bg-orange-500/20 flex items-center justify-center">
+              <FileTypeIcon fileType="talking_head" size="lg" className="h-8 w-8 text-orange-500" />
             </div>
           </div>
         ) : file?.file_type === 'speech' ? (
@@ -1643,7 +1646,7 @@ function KanbanCard({
         ) : file?.file_type === 'b_roll' || file?.file_type === 'clips' ? (
           <div className="absolute inset-0 bg-gradient-to-br from-rose-500/10 to-pink-500/10 flex items-center justify-center">
             <div className="h-16 w-16 rounded-full bg-rose-500/20 flex items-center justify-center">
-              <Film className="h-8 w-8 text-rose-500" strokeWidth={1.5} />
+              <FileTypeIcon fileType="b_roll" size="lg" className="h-8 w-8 text-rose-500" />
             </div>
           </div>
         ) : (
