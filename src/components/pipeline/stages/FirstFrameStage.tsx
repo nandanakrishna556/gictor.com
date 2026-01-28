@@ -22,6 +22,7 @@ interface FirstFrameStageProps {
 type FrameStyle = 'talking_head' | 'broll' | 'motion_graphics';
 type SubStyle = 'ugc' | 'studio';
 type AspectRatio = '9:16' | '16:9' | '1:1';
+type CameraPerspective = '1st_person' | '3rd_person';
 type Resolution = '1K' | '2K' | '4K';
 
 export default function FirstFrameStage({ pipelineId, onContinue }: FirstFrameStageProps) {
@@ -39,6 +40,7 @@ export default function FirstFrameStage({ pipelineId, onContinue }: FirstFrameSt
   const [frameStyle, setFrameStyle] = useState<FrameStyle>('talking_head');
   const [subStyle, setSubStyle] = useState<SubStyle>('ugc');
   const [aspectRatio, setAspectRatio] = useState<AspectRatio>('9:16');
+  const [cameraPerspective, setCameraPerspective] = useState<CameraPerspective>('3rd_person');
   const [resolution, setResolution] = useState<Resolution>('2K');
   const [selectedActorId, setSelectedActorId] = useState<string | null>(null);
   const [referenceImages, setReferenceImages] = useState<string[]>([]);
@@ -71,6 +73,7 @@ export default function FirstFrameStage({ pipelineId, onContinue }: FirstFrameSt
       if (input.style) setFrameStyle(input.style as FrameStyle);
       if (input.substyle) setSubStyle(input.substyle as SubStyle);
       if (input.aspect_ratio) setAspectRatio(input.aspect_ratio as AspectRatio);
+      if (input.camera_perspective) setCameraPerspective(input.camera_perspective as CameraPerspective);
       if (input.resolution) setResolution(input.resolution as Resolution);
       if (input.actor_id) setSelectedActorId(input.actor_id as string);
       if (input.reference_images) setReferenceImages(input.reference_images as string[]);
@@ -94,17 +97,18 @@ export default function FirstFrameStage({ pipelineId, onContinue }: FirstFrameSt
         input: {
           mode: inputMode,
           style: frameStyle,
-          substyle: subStyle,
+          substyle: frameStyle !== 'motion_graphics' ? subStyle : null,
           aspect_ratio: aspectRatio,
+          camera_perspective: frameStyle === 'broll' ? cameraPerspective : null,
           resolution,
-          actor_id: selectedActorId,
+          actor_id: (frameStyle === 'talking_head' || frameStyle === 'broll') ? selectedActorId : null,
           reference_images: referenceImages,
           prompt,
           uploaded_url: uploadedImageUrl,
         } as any,
       });
     }, 1500);
-  }, [pipeline, inputMode, frameStyle, subStyle, aspectRatio, resolution, selectedActorId, referenceImages, prompt, uploadedImageUrl, updateFirstFrame]);
+  }, [pipeline, inputMode, frameStyle, subStyle, aspectRatio, cameraPerspective, resolution, selectedActorId, referenceImages, prompt, uploadedImageUrl, updateFirstFrame]);
 
   useEffect(() => {
     if (initialLoadDoneRef.current) {
@@ -115,7 +119,7 @@ export default function FirstFrameStage({ pipelineId, onContinue }: FirstFrameSt
         clearTimeout(autoSaveTimeoutRef.current);
       }
     };
-  }, [frameStyle, subStyle, aspectRatio, resolution, selectedActorId, referenceImages, prompt, inputMode, uploadedImageUrl, saveInputs]);
+  }, [frameStyle, subStyle, aspectRatio, cameraPerspective, resolution, selectedActorId, referenceImages, prompt, inputMode, uploadedImageUrl, saveInputs]);
 
   // Handle actor selection
   const handleActorSelect = (actorId: string | null) => {
@@ -405,11 +409,44 @@ export default function FirstFrameStage({ pipelineId, onContinue }: FirstFrameSt
                 </p>
               </div>
 
-            {/* Actor Selector */}
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Select Actor</label>
-              <ActorSelectorPopover selectedActorId={selectedActorId} onSelect={handleActorSelect} />
-            </div>
+              {/* Camera Perspective - Only show for B-Roll */}
+              {frameStyle === 'broll' && (
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Camera Perspective</label>
+                  <div className="flex gap-2">
+                    <Button
+                      variant={cameraPerspective === '1st_person' ? 'default' : 'outline'}
+                      size="sm"
+                      className="flex-1"
+                      onClick={() => setCameraPerspective('1st_person')}
+                    >
+                      1st Person
+                    </Button>
+                    <Button
+                      variant={cameraPerspective === '3rd_person' ? 'default' : 'outline'}
+                      size="sm"
+                      className="flex-1"
+                      onClick={() => setCameraPerspective('3rd_person')}
+                    >
+                      3rd Person
+                    </Button>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    {cameraPerspective === '1st_person' 
+                      ? "POV shot - camera is the subject's eyes"
+                      : "Observer view - camera captures the subject from outside"
+                    }
+                  </p>
+                </div>
+              )}
+
+              {/* Actor Selector - Only for Talking Head and B-Roll */}
+              {(frameStyle === 'talking_head' || frameStyle === 'broll') && (
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Select Actor</label>
+                  <ActorSelectorPopover selectedActorId={selectedActorId} onSelect={handleActorSelect} />
+                </div>
+              )}
 
             {/* Aspect Ratio & Resolution */}
             <div className="space-y-2">
@@ -510,9 +547,12 @@ export default function FirstFrameStage({ pipelineId, onContinue }: FirstFrameSt
                 <Textarea
                   value={prompt}
                   onChange={(e) => setPrompt(e.target.value)}
-                  placeholder={frameStyle === 'talking_head' 
-                    ? "Describe the person, their expression, clothing, and setting (looking at camera)..."
-                    : "Describe the scene, environment, and visual elements..."
+                  placeholder={
+                    frameStyle === 'talking_head' 
+                      ? "Describe the person, their expression, clothing, and setting (looking at camera)..."
+                      : frameStyle === 'broll'
+                        ? "Describe the scene, environment, and visual elements..."
+                        : "Describe the background: colors, gradients, patterns, abstract shapes..."
                   }
                   rows={3}
                   className="resize-none"
