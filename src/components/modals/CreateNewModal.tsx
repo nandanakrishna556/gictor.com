@@ -48,14 +48,12 @@ const workflows = [
     icon: Video,
     title: 'Talking Head',
     description: 'Create talking head video',
-    comingSoon: true,
   },
   {
     id: 'b_roll' as WorkflowType,
     icon: Film,
     title: 'B-Roll',
     description: 'Generate video clips',
-    comingSoon: true,
   },
   {
     id: 'motion_graphics' as WorkflowType,
@@ -160,7 +158,6 @@ export default function CreateNewModal({
       // b_roll workflow uses clips pipeline type
       // motion_graphics workflow uses motion_graphics pipeline type
       const pipelineType = workflow.id === 'talking_head' ? 'lip_sync' : workflow.id === 'motion_graphics' ? 'motion_graphics' : 'clips';
-      const fileType = workflow.id === 'talking_head' ? 'lip_sync' : workflow.id === 'motion_graphics' ? 'motion_graphics' : 'clips';
 
       const newPipeline = await createPipeline({
         projectId,
@@ -171,20 +168,7 @@ export default function CreateNewModal({
         pipelineType: pipelineType as 'lip_sync' | 'talking_head' | 'clips' | 'motion_graphics',
       });
 
-      const { error: fileError } = await supabase
-        .from('files')
-        .insert({
-          project_id: projectId,
-          folder_id: folderId || null,
-          name: 'Untitled',
-          file_type: fileType,
-          status: initialStatus || 'draft',
-          generation_params: { pipeline_id: newPipeline.id, pipeline_type: pipelineType },
-        });
-
-      if (fileError) {
-        console.error('Failed to create file entry:', fileError);
-      }
+      // Don't create file cards for workflows - outputs stay within the pipeline modal only
 
       setCreatedPipelineId(newPipeline.id);
       onOpenChange(false);
@@ -199,7 +183,7 @@ export default function CreateNewModal({
         setTalkingHeadWorkflowOpen(true);
       }
 
-      queryClient.invalidateQueries({ queryKey: ['files', projectId] });
+      queryClient.invalidateQueries({ queryKey: ['pipelines', projectId] });
     } catch (error) {
       console.error('Failed to create workflow:', error);
       toast.error('Failed to create workflow');
@@ -327,7 +311,7 @@ export default function CreateNewModal({
           </DialogHeader>
 
           <div className="flex-1 overflow-y-auto p-6 space-y-6">
-            {/* Workflows Section - Temporarily hidden, uncomment to re-enable
+            {/* Workflows Section */}
             <div>
               <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-4">
                 Workflows
@@ -369,7 +353,6 @@ export default function CreateNewModal({
             </div>
 
             <div className="border-t border-border" />
-            */}
 
             {/* Elements Section */}
             <div>
