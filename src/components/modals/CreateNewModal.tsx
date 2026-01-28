@@ -237,6 +237,7 @@ export default function CreateNewModal({
             name: element.id === 'frame' ? 'Untitled Frame' : element.id === 'script' ? 'Untitled Script' : 'Untitled',
             file_type: element.id,
             status: initialStatus || 'draft',
+            metadata: { source_type: element.id },
             generation_params: element.id === 'frame' ? {
               frame_type: 'first',
               style: 'talking_head',

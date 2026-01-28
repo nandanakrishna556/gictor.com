@@ -239,18 +239,26 @@ async function handlePipelineUpdate(
           .single();
 
         if (pipeline) {
+          // Determine file_type: use 'lip_sync' for talking_head pipelines (unified type)
+          const fileType = pipeline.pipeline_type === 'talking_head' ? 'lip_sync' : (pipeline.pipeline_type || 'lip_sync');
+          
           const { data: file } = await supabase
             .from('files')
             .insert({
               project_id: pipeline.project_id,
               folder_id: pipeline.folder_id,
               name: pipeline.name,
-              file_type: pipeline.pipeline_type || 'talking_head',
+              file_type: fileType,
               status: 'completed',
               tags: pipeline.tags,
               preview_url: output.url,
               download_url: output.url,
-              metadata: { pipeline_id, duration: output.duration_seconds },
+              // Store source_type in metadata to distinguish talking_head from lip_sync
+              metadata: { 
+                pipeline_id, 
+                duration: output.duration_seconds,
+                source_type: pipeline.pipeline_type || 'talking_head',
+              },
               progress: 100,
             })
             .select()

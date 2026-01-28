@@ -123,6 +123,24 @@ const defaultStatusOptions = [
   { value: 'rejected', label: 'Rejected', color: 'bg-red-500' },
 ];
 
+// Helper to get effective icon type from file metadata
+// This checks metadata.source_type to distinguish talking_head from lip_sync
+const getEffectiveIconType = (file: File): FileType => {
+  const metadata = file.metadata as { source_type?: string } | null;
+  const sourceType = metadata?.source_type;
+  
+  // If source_type is set, use it for icon rendering
+  if (sourceType === 'talking_head') {
+    return 'talking_head';
+  }
+  if (sourceType === 'lip_sync') {
+    return 'lip_sync';
+  }
+  
+  // Fallback to file_type
+  return file.file_type as FileType;
+};
+
 // Combined item type for unified handling
 type GridItem = (File & { itemType: 'file' }) | (FolderType & { itemType: 'folder' });
 
@@ -1186,7 +1204,7 @@ function FileCard({
           />
         ) : (
           <div className="flex items-center gap-2 min-w-0">
-            <FileTypeIcon fileType={file.file_type as FileType} className="flex-shrink-0" />
+            <FileTypeIcon fileType={getEffectiveIconType(file)} className="flex-shrink-0" />
             <h3 className="truncate text-sm sm:text-base font-medium text-card-foreground">{file.name}</h3>
           </div>
         )}
@@ -1194,62 +1212,98 @@ function FileCard({
 
       {/* Preview Area - Static icons for all file types */}
       <div className="relative flex flex-1 items-center justify-center bg-secondary overflow-hidden">
-        {isProcessing ? (
-          <GeneratingOverlay
-            status={file.generation_status || 'processing'}
-            generationStartedAt={file.generation_started_at}
-            estimatedDurationSeconds={file.estimated_duration_seconds}
-            label={getFileGeneratingLabel(file.file_type)}
-          />
-        ) : file.file_type === 'animate' ? (
-          <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 to-indigo-500/10 flex items-center justify-center">
-            <div className="h-16 w-16 rounded-full bg-blue-500/20 flex items-center justify-center">
-              <FileTypeIcon fileType="animate" size="lg" className="h-8 w-8 text-blue-500" />
+        {(() => {
+          const iconType = getEffectiveIconType(file);
+          
+          if (isProcessing) {
+            return (
+              <GeneratingOverlay
+                status={file.generation_status || 'processing'}
+                generationStartedAt={file.generation_started_at}
+                estimatedDurationSeconds={file.estimated_duration_seconds}
+                label={getFileGeneratingLabel(file.file_type)}
+              />
+            );
+          }
+          
+          if (iconType === 'animate') {
+            return (
+              <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 to-indigo-500/10 flex items-center justify-center">
+                <div className="h-16 w-16 rounded-full bg-blue-500/20 flex items-center justify-center">
+                  <FileTypeIcon fileType="animate" size="lg" className="h-8 w-8 text-blue-500" />
+                </div>
+              </div>
+            );
+          }
+          
+          if (iconType === 'talking_head') {
+            return (
+              <div className="absolute inset-0 bg-gradient-to-br from-teal-500/10 to-cyan-500/10 flex items-center justify-center">
+                <div className="h-16 w-16 rounded-full bg-teal-500/20 flex items-center justify-center">
+                  <FileTypeIcon fileType="talking_head" size="lg" className="h-8 w-8 text-teal-500" />
+                </div>
+              </div>
+            );
+          }
+          
+          if (iconType === 'lip_sync') {
+            return (
+              <div className="absolute inset-0 bg-gradient-to-br from-orange-500/10 to-amber-500/10 flex items-center justify-center">
+                <div className="h-16 w-16 rounded-full bg-orange-500/20 flex items-center justify-center">
+                  <FileTypeIcon fileType="lip_sync" size="lg" className="h-8 w-8 text-orange-500" />
+                </div>
+              </div>
+            );
+          }
+          
+          if (file.file_type === 'speech') {
+            return (
+              <div className="absolute inset-0 bg-gradient-to-br from-purple-500/10 to-violet-500/10 flex items-center justify-center">
+                <div className="h-16 w-16 rounded-full bg-purple-500/20 flex items-center justify-center">
+                  <Mic className="h-8 w-8 text-purple-500" strokeWidth={1.5} />
+                </div>
+              </div>
+            );
+          }
+          
+          if (file.file_type === 'first_frame' || file.file_type === 'frame') {
+            return (
+              <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/10 to-blue-500/10 flex items-center justify-center">
+                <div className="h-16 w-16 rounded-full bg-cyan-500/20 flex items-center justify-center">
+                  <Image className="h-8 w-8 text-cyan-500" strokeWidth={1.5} />
+                </div>
+              </div>
+            );
+          }
+          
+          if (file.file_type === 'script') {
+            return (
+              <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/10 to-teal-500/10 flex items-center justify-center">
+                <div className="h-16 w-16 rounded-full bg-emerald-500/20 flex items-center justify-center">
+                  <FileText className="h-8 w-8 text-emerald-500" strokeWidth={1.5} />
+                </div>
+              </div>
+            );
+          }
+          
+          if (file.file_type === 'b_roll' || file.file_type === 'clips') {
+            return (
+              <div className="absolute inset-0 bg-gradient-to-br from-rose-500/10 to-pink-500/10 flex items-center justify-center">
+                <div className="h-16 w-16 rounded-full bg-rose-500/20 flex items-center justify-center">
+                  <FileTypeIcon fileType="b_roll" size="lg" className="h-8 w-8 text-rose-500" />
+                </div>
+              </div>
+            );
+          }
+          
+          return (
+            <div className="absolute inset-0 bg-gradient-to-br from-slate-500/10 to-gray-500/10 flex items-center justify-center">
+              <div className="h-16 w-16 rounded-full bg-slate-500/20 flex items-center justify-center">
+                <FileTypeIcon fileType={file.file_type as FileType} size="lg" className="h-8 w-8 text-slate-500" />
+              </div>
             </div>
-          </div>
-        ) : file.file_type === 'lip_sync' ? (
-          <div className="absolute inset-0 bg-gradient-to-br from-orange-500/10 to-amber-500/10 flex items-center justify-center">
-            <div className="h-16 w-16 rounded-full bg-orange-500/20 flex items-center justify-center">
-              <FileTypeIcon fileType="lip_sync" size="lg" className="h-8 w-8 text-orange-500" />
-            </div>
-          </div>
-        ) : file.file_type === 'talking_head' ? (
-          <div className="absolute inset-0 bg-gradient-to-br from-orange-500/10 to-amber-500/10 flex items-center justify-center">
-            <div className="h-16 w-16 rounded-full bg-orange-500/20 flex items-center justify-center">
-              <FileTypeIcon fileType="talking_head" size="lg" className="h-8 w-8 text-orange-500" />
-            </div>
-          </div>
-        ) : file.file_type === 'speech' ? (
-          <div className="absolute inset-0 bg-gradient-to-br from-purple-500/10 to-violet-500/10 flex items-center justify-center">
-            <div className="h-16 w-16 rounded-full bg-purple-500/20 flex items-center justify-center">
-              <Mic className="h-8 w-8 text-purple-500" strokeWidth={1.5} />
-            </div>
-          </div>
-        ) : file.file_type === 'first_frame' || file.file_type === 'frame' ? (
-          <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/10 to-blue-500/10 flex items-center justify-center">
-            <div className="h-16 w-16 rounded-full bg-cyan-500/20 flex items-center justify-center">
-              <Image className="h-8 w-8 text-cyan-500" strokeWidth={1.5} />
-            </div>
-          </div>
-        ) : file.file_type === 'script' ? (
-          <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/10 to-teal-500/10 flex items-center justify-center">
-            <div className="h-16 w-16 rounded-full bg-emerald-500/20 flex items-center justify-center">
-              <FileText className="h-8 w-8 text-emerald-500" strokeWidth={1.5} />
-            </div>
-          </div>
-        ) : file.file_type === 'b_roll' || file.file_type === 'clips' ? (
-          <div className="absolute inset-0 bg-gradient-to-br from-rose-500/10 to-pink-500/10 flex items-center justify-center">
-            <div className="h-16 w-16 rounded-full bg-rose-500/20 flex items-center justify-center">
-              <FileTypeIcon fileType="b_roll" size="lg" className="h-8 w-8 text-rose-500" />
-            </div>
-          </div>
-        ) : (
-          <div className="absolute inset-0 bg-gradient-to-br from-slate-500/10 to-gray-500/10 flex items-center justify-center">
-            <div className="h-16 w-16 rounded-full bg-slate-500/20 flex items-center justify-center">
-              <FileTypeIcon fileType={file.file_type as FileType} size="lg" className="h-8 w-8 text-slate-500" />
-            </div>
-          </div>
-        )}
+          );
+        })()}
       </div>
 
       {/* Info - Status and Tags */}
@@ -1566,7 +1620,7 @@ function KanbanCard({
                 />
               </svg>
             ) : (
-              <FileTypeIcon fileType={(file?.file_type || 'script') as FileType} className="flex-shrink-0" />
+              <FileTypeIcon fileType={file ? getEffectiveIconType(file) : 'script'} className="flex-shrink-0" />
             )}
             <h3 className="truncate text-sm font-medium text-card-foreground">{item.name}</h3>
           </div>
@@ -1600,62 +1654,98 @@ function KanbanCard({
               />
             </svg>
           </div>
-        ) : isProcessing ? (
-          <GeneratingOverlay
-            status={file?.generation_status || 'processing'}
-            generationStartedAt={file?.generation_started_at || null}
-            estimatedDurationSeconds={file?.estimated_duration_seconds || null}
-            label={getFileGeneratingLabel(file?.file_type || 'script')}
-          />
-        ) : file?.file_type === 'animate' ? (
-          <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 to-indigo-500/10 flex items-center justify-center">
-            <div className="h-16 w-16 rounded-full bg-blue-500/20 flex items-center justify-center">
-              <FileTypeIcon fileType="animate" size="lg" className="h-8 w-8 text-blue-500" />
+        ) : (() => {
+          const iconType = file ? getEffectiveIconType(file) : 'script';
+          
+          if (isProcessing) {
+            return (
+              <GeneratingOverlay
+                status={file?.generation_status || 'processing'}
+                generationStartedAt={file?.generation_started_at || null}
+                estimatedDurationSeconds={file?.estimated_duration_seconds || null}
+                label={getFileGeneratingLabel(file?.file_type || 'script')}
+              />
+            );
+          }
+          
+          if (iconType === 'animate') {
+            return (
+              <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 to-indigo-500/10 flex items-center justify-center">
+                <div className="h-16 w-16 rounded-full bg-blue-500/20 flex items-center justify-center">
+                  <FileTypeIcon fileType="animate" size="lg" className="h-8 w-8 text-blue-500" />
+                </div>
+              </div>
+            );
+          }
+          
+          if (iconType === 'talking_head') {
+            return (
+              <div className="absolute inset-0 bg-gradient-to-br from-teal-500/10 to-cyan-500/10 flex items-center justify-center">
+                <div className="h-16 w-16 rounded-full bg-teal-500/20 flex items-center justify-center">
+                  <FileTypeIcon fileType="talking_head" size="lg" className="h-8 w-8 text-teal-500" />
+                </div>
+              </div>
+            );
+          }
+          
+          if (iconType === 'lip_sync') {
+            return (
+              <div className="absolute inset-0 bg-gradient-to-br from-orange-500/10 to-amber-500/10 flex items-center justify-center">
+                <div className="h-16 w-16 rounded-full bg-orange-500/20 flex items-center justify-center">
+                  <FileTypeIcon fileType="lip_sync" size="lg" className="h-8 w-8 text-orange-500" />
+                </div>
+              </div>
+            );
+          }
+          
+          if (file?.file_type === 'speech') {
+            return (
+              <div className="absolute inset-0 bg-gradient-to-br from-purple-500/10 to-violet-500/10 flex items-center justify-center">
+                <div className="h-16 w-16 rounded-full bg-purple-500/20 flex items-center justify-center">
+                  <Mic className="h-8 w-8 text-purple-500" strokeWidth={1.5} />
+                </div>
+              </div>
+            );
+          }
+          
+          if (file?.file_type === 'first_frame' || file?.file_type === 'frame') {
+            return (
+              <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/10 to-blue-500/10 flex items-center justify-center">
+                <div className="h-16 w-16 rounded-full bg-cyan-500/20 flex items-center justify-center">
+                  <Image className="h-8 w-8 text-cyan-500" strokeWidth={1.5} />
+                </div>
+              </div>
+            );
+          }
+          
+          if (file?.file_type === 'script') {
+            return (
+              <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/10 to-teal-500/10 flex items-center justify-center">
+                <div className="h-16 w-16 rounded-full bg-emerald-500/20 flex items-center justify-center">
+                  <FileText className="h-8 w-8 text-emerald-500" strokeWidth={1.5} />
+                </div>
+              </div>
+            );
+          }
+          
+          if (file?.file_type === 'b_roll' || file?.file_type === 'clips') {
+            return (
+              <div className="absolute inset-0 bg-gradient-to-br from-rose-500/10 to-pink-500/10 flex items-center justify-center">
+                <div className="h-16 w-16 rounded-full bg-rose-500/20 flex items-center justify-center">
+                  <FileTypeIcon fileType="b_roll" size="lg" className="h-8 w-8 text-rose-500" />
+                </div>
+              </div>
+            );
+          }
+          
+          return (
+            <div className="absolute inset-0 bg-gradient-to-br from-slate-500/10 to-gray-500/10 flex items-center justify-center">
+              <div className="h-16 w-16 rounded-full bg-slate-500/20 flex items-center justify-center">
+                <FileTypeIcon fileType={(file?.file_type || 'script') as FileType} size="lg" className="h-8 w-8 text-slate-500" />
+              </div>
             </div>
-          </div>
-        ) : file?.file_type === 'lip_sync' ? (
-          <div className="absolute inset-0 bg-gradient-to-br from-orange-500/10 to-amber-500/10 flex items-center justify-center">
-            <div className="h-16 w-16 rounded-full bg-orange-500/20 flex items-center justify-center">
-              <FileTypeIcon fileType="lip_sync" size="lg" className="h-8 w-8 text-orange-500" />
-            </div>
-          </div>
-        ) : file?.file_type === 'talking_head' ? (
-          <div className="absolute inset-0 bg-gradient-to-br from-orange-500/10 to-amber-500/10 flex items-center justify-center">
-            <div className="h-16 w-16 rounded-full bg-orange-500/20 flex items-center justify-center">
-              <FileTypeIcon fileType="talking_head" size="lg" className="h-8 w-8 text-orange-500" />
-            </div>
-          </div>
-        ) : file?.file_type === 'speech' ? (
-          <div className="absolute inset-0 bg-gradient-to-br from-purple-500/10 to-violet-500/10 flex items-center justify-center">
-            <div className="h-16 w-16 rounded-full bg-purple-500/20 flex items-center justify-center">
-              <Mic className="h-8 w-8 text-purple-500" strokeWidth={1.5} />
-            </div>
-          </div>
-        ) : file?.file_type === 'first_frame' || file?.file_type === 'frame' ? (
-          <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/10 to-blue-500/10 flex items-center justify-center">
-            <div className="h-16 w-16 rounded-full bg-cyan-500/20 flex items-center justify-center">
-              <Image className="h-8 w-8 text-cyan-500" strokeWidth={1.5} />
-            </div>
-          </div>
-        ) : file?.file_type === 'script' ? (
-          <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/10 to-teal-500/10 flex items-center justify-center">
-            <div className="h-16 w-16 rounded-full bg-emerald-500/20 flex items-center justify-center">
-              <FileText className="h-8 w-8 text-emerald-500" strokeWidth={1.5} />
-            </div>
-          </div>
-        ) : file?.file_type === 'b_roll' || file?.file_type === 'clips' ? (
-          <div className="absolute inset-0 bg-gradient-to-br from-rose-500/10 to-pink-500/10 flex items-center justify-center">
-            <div className="h-16 w-16 rounded-full bg-rose-500/20 flex items-center justify-center">
-              <FileTypeIcon fileType="b_roll" size="lg" className="h-8 w-8 text-rose-500" />
-            </div>
-          </div>
-        ) : (
-          <div className="absolute inset-0 bg-gradient-to-br from-slate-500/10 to-gray-500/10 flex items-center justify-center">
-            <div className="h-16 w-16 rounded-full bg-slate-500/20 flex items-center justify-center">
-              <FileTypeIcon fileType={(file?.file_type || 'script') as FileType} size="lg" className="h-8 w-8 text-slate-500" />
-            </div>
-          </div>
-        )}
+          );
+        })()}
       </div>
 
       {/* Info Section - Tags only (status is implicit via kanban column) */}
