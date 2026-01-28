@@ -74,22 +74,16 @@ const elements = [
     description: 'Organize your content',
   },
   {
-    id: 'lip_sync' as ElementType,
-    icon: Video,
-    title: 'Lip Sync',
-    description: 'Sync audio to face',
+    id: 'script' as ElementType,
+    icon: FileText,
+    title: 'Script',
+    description: 'Generate script',
   },
   {
     id: 'speech' as ElementType,
     icon: Mic,
     title: 'Speech',
     description: 'Generate voice audio',
-  },
-  {
-    id: 'animate' as ElementType,
-    icon: Film,
-    title: 'Animate',
-    description: 'Animate images to video',
   },
   {
     id: 'frame' as ElementType,
@@ -99,10 +93,16 @@ const elements = [
     iconColor: 'text-cyan-500',
   },
   {
-    id: 'script' as ElementType,
-    icon: FileText,
-    title: 'Script',
-    description: 'Generate script',
+    id: 'lip_sync' as ElementType,
+    icon: Video,
+    title: 'Lip Sync',
+    description: 'Sync audio to face',
+  },
+  {
+    id: 'animate' as ElementType,
+    icon: Film,
+    title: 'Animate',
+    description: 'Animate images to video',
   },
   {
     id: 'swap' as ElementType,
