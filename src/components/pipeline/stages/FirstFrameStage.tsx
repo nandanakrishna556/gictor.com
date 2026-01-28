@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { usePipeline } from '@/hooks/usePipeline';
 import { useProfile } from '@/hooks/useProfile';
 import { useAuth } from '@/contexts/AuthContext';
-import { generateFirstFrame } from '@/lib/pipeline-service';
+import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -227,19 +227,40 @@ export default function FirstFrameStage({ pipelineId, onContinue }: FirstFrameSt
     setIsGenerating(true);
 
     try {
+      // Get fresh session
+      const { data: sessionData, error: sessionError } = await supabase.auth.refreshSession();
+      if (sessionError || !sessionData.session) {
+        throw new Error('Session expired. Please log in again.');
+      }
+
       // Update pipeline status to processing
       await updatePipeline({ status: 'processing' });
 
-      const result = await generateFirstFrame(pipelineId, {
-        prompt,
-        image_type: subStyle,
-        aspect_ratio: aspectRatio,
-        reference_images: referenceImages,
+      // Call edge function with 'frame' type
+      const { data, error } = await supabase.functions.invoke('trigger-generation', {
+        body: {
+          type: 'frame',
+          payload: {
+            file_id: pipelineId,
+            pipeline_id: pipelineId,
+            user_id: sessionData.session.user.id,
+            project_id: pipeline?.project_id || null,
+            frame_type: 'first',
+            style: frameStyle,
+            substyle: frameStyle !== 'motion_graphics' ? subStyle : null,
+            prompt: prompt,
+            aspect_ratio: aspectRatio,
+            frame_resolution: resolution,
+            reference_images: referenceImages,
+            actor_id: (frameStyle === 'talking_head' || frameStyle === 'broll') ? selectedActorId : null,
+            credits_cost: creditCost,
+            supabase_url: import.meta.env.VITE_SUPABASE_URL,
+          },
+        },
       });
 
-      if (!result.success) {
-        throw new Error(result.error || 'Generation failed');
-      }
+      if (error) throw error;
+      if (!data?.success) throw new Error(data?.error || 'Generation failed');
 
       toast.success('Generation started!');
       queryClient.invalidateQueries({ queryKey: ['profile'] });

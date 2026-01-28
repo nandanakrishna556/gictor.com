@@ -17,3 +17,6 @@ verify_jwt = false
 
 [functions.update-animate-status]
 verify_jwt = false
+
+[functions.update-pipeline-status]
+verify_jwt = false
