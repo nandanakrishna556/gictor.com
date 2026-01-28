@@ -128,7 +128,7 @@ export default function PipelineModal({
     setCurrentFolderId(folderId);
   }, [folderId]);
 
-  // Auto-save functionality - saves to pipelines table only (no file cards for workflows)
+  // Auto-save functionality - syncs to both pipelines table and linked file card
   const triggerAutoSave = useCallback(() => {
     if (!pipelineId || !hasUnsavedChanges) return;
     
@@ -152,10 +152,25 @@ export default function PipelineModal({
           .update({ display_status: displayStatus })
           .eq('id', pipelineId);
         
+        // Sync the linked file's name and status (for file card in grid/kanban)
+        const { data: linkedFile } = await supabase
+          .from('files')
+          .select('id')
+          .eq('generation_params->>pipeline_id', pipelineId)
+          .maybeSingle();
+        
+        if (linkedFile) {
+          await supabase
+            .from('files')
+            .update({ name, status: displayStatus })
+            .eq('id', linkedFile.id);
+        }
+        
         setHasUnsavedChanges(false);
         setSaveStatus('saved');
         setTimeout(() => setSaveStatus('idle'), 2000);
         
+        queryClient.invalidateQueries({ queryKey: ['files', currentProjectId] });
         queryClient.invalidateQueries({ queryKey: ['pipelines', currentProjectId] });
       } catch (error) {
         setSaveStatus('idle');
@@ -286,13 +301,28 @@ export default function PipelineModal({
         .update({ display_status: displayStatus })
         .eq('id', pipelineId);
       
+      // Sync the linked file's name and status
+      const { data: linkedFile } = await supabase
+        .from('files')
+        .select('id')
+        .eq('generation_params->>pipeline_id', pipelineId)
+        .maybeSingle();
+      
+      if (linkedFile) {
+        await supabase
+          .from('files')
+          .update({ name, status: displayStatus })
+          .eq('id', linkedFile.id);
+      }
+      
       setHasUnsavedChanges(false);
       setSaveStatus('saved');
       
       // Reset to idle after 2 seconds
       setTimeout(() => setSaveStatus('idle'), 2000);
       
-      // Invalidate queries to refresh pipelines
+      // Invalidate queries to refresh the grid/kanban
+      queryClient.invalidateQueries({ queryKey: ['files', currentProjectId] });
       queryClient.invalidateQueries({ queryKey: ['pipelines', currentProjectId] });
       
       onSuccess?.();

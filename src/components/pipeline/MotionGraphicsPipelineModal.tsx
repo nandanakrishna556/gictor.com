@@ -152,7 +152,7 @@ export default function MotionGraphicsPipelineModal({
           .from('files')
           .select('id')
           .eq('generation_params->>pipeline_id', pipelineId)
-          .single();
+          .maybeSingle();
         
         if (linkedFile) {
           await supabase
@@ -296,7 +296,7 @@ export default function MotionGraphicsPipelineModal({
         .from('files')
         .select('id')
         .eq('generation_params->>pipeline_id', pipelineId)
-        .single();
+        .maybeSingle();
       
       if (linkedFile) {
         await supabase
