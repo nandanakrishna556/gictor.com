@@ -128,7 +128,7 @@ export default function PipelineModal({
     setCurrentFolderId(folderId);
   }, [folderId]);
 
-  // Auto-save functionality
+  // Auto-save functionality - saves to pipelines table only (no file cards for workflows)
   const triggerAutoSave = useCallback(() => {
     if (!pipelineId || !hasUnsavedChanges) return;
     
@@ -139,28 +139,14 @@ export default function PipelineModal({
     autoSaveTimeoutRef.current = setTimeout(async () => {
       try {
         setSaveStatus('saving');
-        // Note: We don't update pipeline.status here - that's for processing state
-        // We only update name and tags on the pipeline
+        
+        // Update pipeline with name, tags, and display_status
         await updatePipeline({ 
           name, 
           tags: selectedTags 
         });
         
-        // Sync the linked file's name and displayStatus (for Kanban column)
-        const { data: linkedFile } = await supabase
-          .from('files')
-          .select('id')
-          .eq('generation_params->>pipeline_id', pipelineId)
-          .single();
-        
-        if (linkedFile) {
-          await supabase
-            .from('files')
-            .update({ name, status: displayStatus })
-            .eq('id', linkedFile.id);
-        }
-        
-        // Also update pipeline's display_status
+        // Update pipeline's display_status for Kanban column
         await supabase
           .from('pipelines')
           .update({ display_status: displayStatus })
@@ -170,7 +156,6 @@ export default function PipelineModal({
         setSaveStatus('saved');
         setTimeout(() => setSaveStatus('idle'), 2000);
         
-        queryClient.invalidateQueries({ queryKey: ['files', currentProjectId] });
         queryClient.invalidateQueries({ queryKey: ['pipelines', currentProjectId] });
       } catch (error) {
         setSaveStatus('idle');
@@ -289,7 +274,7 @@ export default function PipelineModal({
     try {
       setSaveStatus('saving');
       
-      // Update the pipeline with name and tags (not status - that's processing state)
+      // Update the pipeline with name and tags
       await updatePipeline({ 
         name, 
         tags: selectedTags 
@@ -301,29 +286,13 @@ export default function PipelineModal({
         .update({ display_status: displayStatus })
         .eq('id', pipelineId);
       
-      // Also update the linked file's name and status to keep them in sync
-      // Find the file linked to this pipeline and update it
-      const { data: linkedFile } = await supabase
-        .from('files')
-        .select('id')
-        .eq('generation_params->>pipeline_id', pipelineId)
-        .single();
-      
-      if (linkedFile) {
-        await supabase
-          .from('files')
-          .update({ name, status: displayStatus })
-          .eq('id', linkedFile.id);
-      }
-      
       setHasUnsavedChanges(false);
       setSaveStatus('saved');
       
       // Reset to idle after 2 seconds
       setTimeout(() => setSaveStatus('idle'), 2000);
       
-      // Invalidate queries to refresh the grid/kanban
-      queryClient.invalidateQueries({ queryKey: ['files', currentProjectId] });
+      // Invalidate queries to refresh pipelines
       queryClient.invalidateQueries({ queryKey: ['pipelines', currentProjectId] });
       
       onSuccess?.();
