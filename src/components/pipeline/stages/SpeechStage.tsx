@@ -32,17 +32,20 @@ export default function SpeechStage({ pipelineId, onContinue }: SpeechStageProps
   // Input mode
   const [mode, setMode] = useState<InputMode>('generate');
   
-  // Input state
+  // Input state - matches SpeechModal
   const [script, setScript] = useState('');
   const [selectedActorId, setSelectedActorId] = useState<string | null>(null);
   const [actorSearchOpen, setActorSearchOpen] = useState(false);
+  
+  // Playback state for actor preview
+  const [playingActorId, setPlayingActorId] = useState<string | null>(null);
   
   // Upload state
   const [uploadedUrl, setUploadedUrl] = useState('');
   const [isUploading, setIsUploading] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   
-  // Playback state
+  // Playback state for output
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -50,7 +53,11 @@ export default function SpeechStage({ pipelineId, onContinue }: SpeechStageProps
   // Generation state
   const [isGenerating, setIsGenerating] = useState(false);
 
-  // Get available actors
+  // Prevent overwriting during typing
+  const initialLoadDone = useRef(false);
+  const generationInitiatedRef = useRef(false);
+
+  // Get available actors with voice
   const availableActors = actors?.filter(
     (actor) => actor.status === 'completed' && actor.voice_url
   ) || [];
@@ -63,22 +70,36 @@ export default function SpeechStage({ pipelineId, onContinue }: SpeechStageProps
 
   // Load existing data
   useEffect(() => {
-    if (pipeline?.voice_input) {
-      const input = pipeline.voice_input;
-      if (input.mode === 'upload') {
-        setMode('upload');
-        setUploadedUrl(input.uploaded_url || '');
-      } else {
-        setMode('generate');
+    if (pipeline && !initialLoadDone.current) {
+      initialLoadDone.current = true;
+      
+      if (pipeline.voice_input) {
+        const input = pipeline.voice_input;
+        if (input.mode === 'upload') {
+          setMode('upload');
+          setUploadedUrl(input.uploaded_url || '');
+        } else {
+          setMode('generate');
+          if (input.voice_id) setSelectedActorId(input.voice_id);
+        }
+      }
+      
+      // Load script from script_output if available
+      if (pipeline.script_output?.text) {
+        setScript(pipeline.script_output.text);
       }
     }
-    // Load script from script_output if available
-    if (pipeline?.script_output?.text) {
-      setScript(pipeline.script_output.text);
-    }
-  }, [pipeline?.voice_input, pipeline?.script_output]);
+  }, [pipeline]);
 
-  const togglePlayback = () => {
+  const toggleActorPlayback = (actorId: string) => {
+    if (playingActorId === actorId) {
+      setPlayingActorId(null);
+    } else {
+      setPlayingActorId(actorId);
+    }
+  };
+
+  const toggleOutputPlayback = () => {
     const outputUrl = pipeline?.voice_output?.url;
     if (!outputUrl) return;
 
@@ -194,6 +215,12 @@ export default function SpeechStage({ pipelineId, onContinue }: SpeechStageProps
     setActorSearchOpen(false);
   };
 
+  const handleScriptChange = (value: string) => {
+    if (value.length <= MAX_CHARACTERS) {
+      setScript(value);
+    }
+  };
+
   const handleGenerate = async () => {
     if (mode === 'upload') {
       if (!uploadedUrl) {
@@ -225,6 +252,7 @@ export default function SpeechStage({ pipelineId, onContinue }: SpeechStageProps
       return;
     }
 
+    generationInitiatedRef.current = true;
     setIsGenerating(true);
 
     try {
@@ -266,6 +294,7 @@ export default function SpeechStage({ pipelineId, onContinue }: SpeechStageProps
       toast.error('Failed to start generation');
     } finally {
       setIsGenerating(false);
+      generationInitiatedRef.current = false;
     }
   };
 
@@ -298,44 +327,56 @@ export default function SpeechStage({ pipelineId, onContinue }: SpeechStageProps
         <>
           {/* Script Input */}
           <div className="space-y-2">
-            <Label>Script</Label>
+            <div className="flex items-center justify-between">
+              <Label>Script (Required)</Label>
+              <span className={cn(
+                "text-xs",
+                characterCount > MAX_CHARACTERS ? "text-destructive" : "text-muted-foreground"
+              )}>
+                {characterCount.toLocaleString()} / {MAX_CHARACTERS.toLocaleString()}
+              </span>
+            </div>
             <Textarea
               value={script}
-              onChange={(e) => setScript(e.target.value.slice(0, MAX_CHARACTERS))}
-              placeholder="Enter or paste the script to convert to speech..."
-              className="min-h-[120px] resize-none"
+              onChange={(e) => handleScriptChange(e.target.value)}
+              placeholder="Enter the text you want to convert to speech..."
+              className="min-h-[200px] resize-none rounded-xl"
             />
-            <p className="text-xs text-muted-foreground">
-              {characterCount.toLocaleString()} / {MAX_CHARACTERS.toLocaleString()} characters
-            </p>
+            {characterCount < MIN_CHARACTERS && characterCount > 0 && (
+              <p className="text-xs text-muted-foreground">
+                Minimum {MIN_CHARACTERS} characters required
+              </p>
+            )}
           </div>
 
-          {/* Actor Selector */}
+          {/* Actor Voice Selector */}
           <div className="space-y-2">
-            <Label>Voice Actor</Label>
+            <Label>Actor Voice (Required)</Label>
             <Popover open={actorSearchOpen} onOpenChange={setActorSearchOpen}>
               <PopoverTrigger asChild>
                 <Button
                   variant="outline"
                   role="combobox"
                   aria-expanded={actorSearchOpen}
-                  className="w-full justify-between"
+                  className="w-full justify-between h-12 rounded-xl"
                 >
                   {selectedActor ? (
-                    <div className="flex items-center gap-2">
-                      {selectedActor.profile_image_url ? (
+                    <div className="flex items-center gap-3">
+                      {selectedActor.profile_image_url || selectedActor.profile_360_url ? (
                         <img
-                          src={selectedActor.profile_image_url}
+                          src={selectedActor.profile_360_url || selectedActor.profile_image_url || ''}
                           alt={selectedActor.name}
-                          className="h-6 w-6 rounded-full object-cover"
+                          className="h-8 w-8 rounded-full object-cover"
                         />
                       ) : (
-                        <User className="h-6 w-6 text-muted-foreground" />
+                        <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center">
+                          <User className="h-4 w-4 text-muted-foreground" />
+                        </div>
                       )}
                       <span>{selectedActor.name}</span>
                     </div>
                   ) : (
-                    <span className="text-muted-foreground">Select an actor...</span>
+                    <span className="text-muted-foreground">Select an actor voice...</span>
                   )}
                   <Search className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                 </Button>
@@ -344,26 +385,46 @@ export default function SpeechStage({ pipelineId, onContinue }: SpeechStageProps
                 <Command>
                   <CommandInput placeholder="Search actors..." />
                   <CommandList>
-                    <CommandEmpty>No actors found.</CommandEmpty>
+                    <CommandEmpty>No actors with voice found.</CommandEmpty>
                     <CommandGroup>
                       {availableActors.map((actor) => (
                         <CommandItem
                           key={actor.id}
                           value={actor.name}
                           onSelect={() => handleActorSelect(actor.id)}
+                          className="flex items-center justify-between py-3"
                         >
-                          <div className="flex items-center gap-2">
-                            {actor.profile_image_url ? (
+                          <div className="flex items-center gap-3">
+                            {actor.profile_image_url || actor.profile_360_url ? (
                               <img
-                                src={actor.profile_image_url}
+                                src={actor.profile_360_url || actor.profile_image_url || ''}
                                 alt={actor.name}
-                                className="h-6 w-6 rounded-full object-cover"
+                                className="h-8 w-8 rounded-full object-cover"
                               />
                             ) : (
-                              <User className="h-6 w-6 text-muted-foreground" />
+                              <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center">
+                                <User className="h-4 w-4 text-muted-foreground" />
+                              </div>
                             )}
                             <span>{actor.name}</span>
                           </div>
+                          {actor.voice_url && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                toggleActorPlayback(actor.id);
+                              }}
+                            >
+                              {playingActorId === actor.id ? (
+                                <Pause className="h-4 w-4" />
+                              ) : (
+                                <Play className="h-4 w-4" />
+                              )}
+                            </Button>
+                          )}
                         </CommandItem>
                       ))}
                     </CommandGroup>
@@ -377,31 +438,7 @@ export default function SpeechStage({ pipelineId, onContinue }: SpeechStageProps
         /* Upload Mode */
         <div className="space-y-4">
           <Label>Upload voice audio</Label>
-          <label 
-            className={cn(
-              "flex flex-col items-center justify-center rounded-xl border-2 border-dashed p-8 cursor-pointer transition-colors",
-              isDragging 
-                ? "border-primary bg-primary/10" 
-                : "hover:border-primary/50 hover:bg-secondary/50"
-            )}
-            onDragOver={handleDragOver}
-            onDragLeave={handleDragLeave}
-            onDrop={handleDrop}
-          >
-            <input
-              type="file"
-              accept="audio/*"
-              onChange={handleFileUpload}
-              className="hidden"
-              disabled={isUploading}
-            />
-            <Upload className={cn("h-8 w-8 mb-2", isDragging ? "text-primary" : "text-muted-foreground")} />
-            <p className="text-sm text-muted-foreground">
-              {isUploading ? 'Uploading...' : isDragging ? 'Drop your audio file here' : 'Drag & drop or click to browse'}
-            </p>
-            <p className="text-xs text-muted-foreground mt-1">MP3, WAV, M4A • Max 50MB</p>
-          </label>
-          {uploadedUrl && (
+          {uploadedUrl ? (
             <div className="relative group">
               <button
                 type="button"
@@ -412,6 +449,37 @@ export default function SpeechStage({ pipelineId, onContinue }: SpeechStageProps
               </button>
               <audio src={uploadedUrl} controls className="w-full" />
             </div>
+          ) : (
+            <label 
+              className={cn(
+                "flex flex-col items-center justify-center rounded-xl border-2 border-dashed p-8 cursor-pointer transition-colors",
+                isDragging 
+                  ? "border-primary bg-primary/10" 
+                  : "hover:border-primary/50 hover:bg-secondary/50"
+              )}
+              onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}
+              onDrop={handleDrop}
+            >
+              <input
+                type="file"
+                accept="audio/*"
+                onChange={handleFileUpload}
+                className="hidden"
+                disabled={isUploading}
+              />
+              {isUploading ? (
+                <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+              ) : (
+                <>
+                  <Upload className={cn("h-8 w-8 mb-2", isDragging ? "text-primary" : "text-muted-foreground")} />
+                  <p className="text-sm text-muted-foreground">
+                    {isDragging ? 'Drop your audio file here' : 'Drag & drop or click to browse'}
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-1">MP3, WAV, M4A • Max 50MB</p>
+                </>
+              )}
+            </label>
           )}
         </div>
       )}
@@ -446,7 +514,7 @@ export default function SpeechStage({ pipelineId, onContinue }: SpeechStageProps
           size="lg"
           variant="ghost"
           className="w-16 h-16 rounded-full"
-          onClick={togglePlayback}
+          onClick={toggleOutputPlayback}
         >
           {isPlaying ? (
             <Pause className="h-8 w-8" />

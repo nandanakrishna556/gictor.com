@@ -1,7 +1,7 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
-import { Upload, Play, Pause, Download, X, Loader2, Video, AlertCircle } from 'lucide-react';
+import { Upload, Download, X, Loader2, Video, AlertCircle, Mic } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { usePipeline } from '@/hooks/usePipeline';
 import { useProfile } from '@/hooks/useProfile';
@@ -10,8 +10,6 @@ import StageLayout from './StageLayout';
 import { uploadToR2, validateFile } from '@/lib/cloudflare-upload';
 import { supabase } from '@/integrations/supabase/client';
 import { SingleImageUpload } from '@/components/ui/single-image-upload';
-import { VideoPlayer } from '@/components/ui/video-player';
-import { AudioPlayer } from '@/components/ui/audio-player';
 import { InputModeToggle, InputMode } from '@/components/ui/input-mode-toggle';
 import { useQueryClient } from '@tanstack/react-query';
 
@@ -19,7 +17,6 @@ interface LipSyncStageProps {
   pipelineId: string;
   onComplete: () => void;
 }
-
 
 const MAX_AUDIO_SECONDS = 600; // 10 minutes
 const CREDIT_COST_PER_SECOND = 0.15;
@@ -33,24 +30,34 @@ export default function LipSyncStage({ pipelineId, onComplete }: LipSyncStagePro
   // Input mode
   const [mode, setMode] = useState<InputMode>('generate');
   
-  // Input state - use first frame from pipeline
+  // Input state - use first frame and audio from pipeline
   const [imageUrl, setImageUrl] = useState<string | undefined>();
   const [audioUrl, setAudioUrl] = useState<string | undefined>();
   const [audioDuration, setAudioDuration] = useState<number>(0);
-  const [audioError, setAudioError] = useState<string | null>(null);
-  const [isUploadingAudio, setIsUploadingAudio] = useState(false);
+  const [audioError] = useState<string | null>(null);
   
-  // Upload mode state
+  // Upload mode state (for first frame override)
+  const [overrideImageUrl, setOverrideImageUrl] = useState<string | undefined>();
+  const [overrideAudioUrl, setOverrideAudioUrl] = useState<string | undefined>();
+  const [overrideAudioDuration, setOverrideAudioDuration] = useState<number>(0);
+  const [isUploadingAudio, setIsUploadingAudio] = useState(false);
+  const [isDraggingAudio, setIsDraggingAudio] = useState(false);
+  
+  // Upload video state
   const [uploadedVideoUrl, setUploadedVideoUrl] = useState<string | null>(null);
   const [isUploadingVideo, setIsUploadingVideo] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   
   // Generation state
   const [isGenerating, setIsGenerating] = useState(false);
-  const [generationProgress, setGenerationProgress] = useState(0);
+
+  // Get the actual image and audio to use (override or from pipeline)
+  const effectiveImageUrl = overrideImageUrl || imageUrl;
+  const effectiveAudioUrl = overrideAudioUrl || audioUrl;
+  const effectiveAudioDuration = overrideAudioUrl ? overrideAudioDuration : audioDuration;
 
   // Calculate credit cost
-  const creditCost = Math.max(MIN_CREDIT_COST, Math.ceil(audioDuration * CREDIT_COST_PER_SECOND * 100) / 100);
+  const creditCost = Math.max(MIN_CREDIT_COST, Math.ceil(effectiveAudioDuration * CREDIT_COST_PER_SECOND * 100) / 100);
 
   // Load existing data from pipeline
   useEffect(() => {
@@ -76,15 +83,94 @@ export default function LipSyncStage({ pipelineId, onComplete }: LipSyncStagePro
     if (isGenerating && pipeline) {
       if (pipeline.status === 'completed' && pipeline.final_video_output?.url) {
         setIsGenerating(false);
-        setGenerationProgress(100);
         toast.success('Lip sync video generated!');
       } else if (pipeline.status === 'failed') {
         setIsGenerating(false);
-        setGenerationProgress(0);
         toast.error('Generation failed');
       }
     }
   }, [pipeline, isGenerating]);
+
+  // Audio upload handlers
+  const processAudioFile = async (file: File) => {
+    const audioAllowedTypes = [
+      'audio/mpeg', 'audio/mp3', 'audio/wav', 'audio/wave', 'audio/x-wav',
+      'audio/m4a', 'audio/x-m4a', 'audio/mp4', 'audio/aac', 'audio/ogg', 'audio/webm'
+    ];
+    
+    const validation = validateFile(file, {
+      allowedTypes: audioAllowedTypes,
+      maxSize: 50 * 1024 * 1024
+    });
+    
+    if (!validation.valid) {
+      toast.error(validation.error || 'Invalid file');
+      return;
+    }
+    
+    setIsUploadingAudio(true);
+    
+    try {
+      const duration = await getAudioDuration(file);
+      
+      if (duration > MAX_AUDIO_SECONDS) {
+        toast.error(`Audio must be less than ${MAX_AUDIO_SECONDS / 60} minutes`);
+        setIsUploadingAudio(false);
+        return;
+      }
+      
+      const url = await uploadToR2(file, {
+        folder: 'lip-sync-audio',
+        allowedTypes: audioAllowedTypes,
+        maxSize: 50 * 1024 * 1024
+      });
+      
+      setOverrideAudioUrl(url);
+      setOverrideAudioDuration(duration);
+      toast.success('Audio uploaded');
+    } catch (error) {
+      toast.error('Failed to upload audio');
+    } finally {
+      setIsUploadingAudio(false);
+    }
+  };
+
+  const getAudioDuration = (file: File): Promise<number> => {
+    return new Promise((resolve, reject) => {
+      const audio = new Audio();
+      audio.onloadedmetadata = () => resolve(audio.duration);
+      audio.onerror = () => reject(new Error('Failed to load audio'));
+      audio.src = URL.createObjectURL(file);
+    });
+  };
+
+  const handleAudioDragOver = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDraggingAudio(true);
+  }, []);
+
+  const handleAudioDragLeave = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDraggingAudio(false);
+  }, []);
+
+  const handleAudioDrop = useCallback(async (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDraggingAudio(false);
+
+    const files = e.dataTransfer.files;
+    if (files.length > 0) {
+      await processAudioFile(files[0]);
+    }
+  }, []);
+
+  const handleRemoveOverrideAudio = () => {
+    setOverrideAudioUrl(undefined);
+    setOverrideAudioDuration(0);
+  };
 
   const handleGenerate = async () => {
     if (mode === 'upload') {
@@ -106,7 +192,7 @@ export default function LipSyncStage({ pipelineId, onComplete }: LipSyncStagePro
     }
 
     // Generate mode
-    if (!imageUrl || !audioUrl) {
+    if (!effectiveImageUrl || !effectiveAudioUrl) {
       toast.error('First frame and speech audio are required');
       return;
     }
@@ -123,7 +209,6 @@ export default function LipSyncStage({ pipelineId, onComplete }: LipSyncStagePro
     }
 
     setIsGenerating(true);
-    setGenerationProgress(0);
 
     try {
       const { data: sessionData, error: sessionError } = await supabase.auth.refreshSession();
@@ -131,18 +216,15 @@ export default function LipSyncStage({ pipelineId, onComplete }: LipSyncStagePro
         throw new Error('Session expired. Please log in again.');
       }
 
-      // Calculate estimated duration
-      const estimatedDuration = Math.max(120, Math.ceil((audioDuration / 8) * 240));
-
       // Update pipeline status
       await supabase
         .from('pipelines')
         .update({
           status: 'processing',
           final_video_input: {
-            first_frame_url: imageUrl,
-            audio_url: audioUrl,
-            audio_duration: audioDuration,
+            first_frame_url: effectiveImageUrl,
+            audio_url: effectiveAudioUrl,
+            audio_duration: effectiveAudioDuration,
           },
         })
         .eq('id', pipelineId);
@@ -153,9 +235,9 @@ export default function LipSyncStage({ pipelineId, onComplete }: LipSyncStagePro
         payload: {
           pipeline_id: pipelineId,
           user_id: sessionData.session.user.id,
-          image_url: imageUrl,
-          audio_url: audioUrl,
-          audio_duration: audioDuration,
+          image_url: effectiveImageUrl,
+          audio_url: effectiveAudioUrl,
+          audio_duration: effectiveAudioDuration,
           credits_cost: creditCost,
         },
       };
@@ -238,7 +320,13 @@ export default function LipSyncStage({ pipelineId, onComplete }: LipSyncStagePro
 
   const hasOutput = !!pipeline?.final_video_output?.url || !!uploadedVideoUrl;
   const outputVideo = pipeline?.final_video_output;
-  const canGenerate = mode === 'upload' ? !!uploadedVideoUrl : (!!imageUrl && !!audioUrl && audioDuration > 0);
+  const canGenerate = mode === 'upload' ? !!uploadedVideoUrl : (!!effectiveImageUrl && !!effectiveAudioUrl && effectiveAudioDuration > 0);
+
+  const formatDuration = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = Math.floor(seconds % 60);
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
 
   const handleDownloadVideo = async () => {
     const videoUrl = outputVideo?.url;
@@ -270,38 +358,99 @@ export default function LipSyncStage({ pipelineId, onComplete }: LipSyncStagePro
 
       {mode === 'generate' ? (
         <>
-          {/* First Frame Preview */}
+          {/* First Frame Preview/Override */}
           <div className="space-y-2">
-            <Label>First Frame</Label>
-            {imageUrl ? (
-              <div className="aspect-square rounded-xl overflow-hidden bg-secondary/30">
-                <img 
-                  src={imageUrl} 
-                  alt="First frame" 
-                  className="w-full h-full object-cover"
-                />
+            <div className="flex items-center justify-between">
+              <Label>First Frame</Label>
+              {overrideImageUrl && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-6 text-xs"
+                  onClick={() => setOverrideImageUrl(undefined)}
+                >
+                  Reset
+                </Button>
+              )}
+            </div>
+            {effectiveImageUrl ? (
+              <div className="relative">
+                <div className="aspect-square rounded-xl overflow-hidden bg-secondary/30">
+                  <img 
+                    src={effectiveImageUrl} 
+                    alt="First frame" 
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+                {!overrideImageUrl && (
+                  <p className="text-xs text-muted-foreground mt-2">From First Frame stage • Drop new image to override</p>
+                )}
               </div>
             ) : (
-              <div className="aspect-square rounded-xl bg-secondary/30 border-2 border-dashed border-border flex items-center justify-center">
-                <p className="text-sm text-muted-foreground">Complete First Frame stage first</p>
-              </div>
+              <SingleImageUpload
+                value={overrideImageUrl}
+                onChange={setOverrideImageUrl}
+              />
             )}
           </div>
 
-          {/* Audio Preview */}
+          {/* Audio Preview/Override */}
           <div className="space-y-2">
-            <Label>Speech Audio</Label>
-            {audioUrl ? (
+            <div className="flex items-center justify-between">
+              <Label>Speech Audio</Label>
+              {overrideAudioUrl && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-6 text-xs"
+                  onClick={handleRemoveOverrideAudio}
+                >
+                  Reset
+                </Button>
+              )}
+            </div>
+            {effectiveAudioUrl ? (
               <div className="space-y-2">
-                <audio src={audioUrl} controls className="w-full" />
+                <audio src={effectiveAudioUrl} controls className="w-full" />
                 <p className="text-xs text-muted-foreground">
-                  Duration: {Math.floor(audioDuration / 60)}:{Math.floor(audioDuration % 60).toString().padStart(2, '0')}
+                  Duration: {formatDuration(effectiveAudioDuration)}
+                  {!overrideAudioUrl && ' • From Speech stage'}
                 </p>
               </div>
             ) : (
-              <div className="p-4 rounded-xl bg-secondary/30 border-2 border-dashed border-border flex items-center justify-center">
-                <p className="text-sm text-muted-foreground">Complete Speech stage first</p>
-              </div>
+              <label 
+                className={cn(
+                  "flex flex-col items-center justify-center rounded-xl border-2 border-dashed p-6 cursor-pointer transition-colors",
+                  isDraggingAudio 
+                    ? "border-primary bg-primary/10" 
+                    : "hover:border-primary/50 hover:bg-secondary/50"
+                )}
+                onDragOver={handleAudioDragOver}
+                onDragLeave={handleAudioDragLeave}
+                onDrop={handleAudioDrop}
+              >
+                <input
+                  type="file"
+                  accept="audio/*"
+                  className="hidden"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) processAudioFile(file);
+                  }}
+                  disabled={isUploadingAudio}
+                />
+                {isUploadingAudio ? (
+                  <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                ) : (
+                  <>
+                    <Mic className={cn("h-6 w-6 mb-2", isDraggingAudio ? "text-primary" : "text-muted-foreground")} />
+                    <p className="text-sm text-muted-foreground">
+                      {isDraggingAudio ? 'Drop audio here' : 'Upload audio or complete Speech stage'}
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-1">MP3, WAV, M4A • Max 50MB</p>
+                  </>
+                )}
+              </label>
             )}
             {audioError && (
               <div className="flex items-center gap-2 text-destructive text-sm">
@@ -315,31 +464,7 @@ export default function LipSyncStage({ pipelineId, onComplete }: LipSyncStagePro
         /* Upload Mode */
         <div className="space-y-4">
           <Label>Upload lip sync video</Label>
-          <label 
-            className={cn(
-              "flex flex-col items-center justify-center rounded-xl border-2 border-dashed p-8 cursor-pointer transition-colors",
-              isDragging 
-                ? "border-primary bg-primary/10" 
-                : "hover:border-primary/50 hover:bg-secondary/50"
-            )}
-            onDragOver={handleDragOver}
-            onDragLeave={handleDragLeave}
-            onDrop={handleDrop}
-          >
-            <input
-              type="file"
-              accept="video/*"
-              onChange={handleFileUpload}
-              className="hidden"
-              disabled={isUploadingVideo}
-            />
-            <Upload className={cn("h-8 w-8 mb-2", isDragging ? "text-primary" : "text-muted-foreground")} />
-            <p className="text-sm text-muted-foreground">
-              {isUploadingVideo ? 'Uploading...' : isDragging ? 'Drop your video file here' : 'Drag & drop or click to browse'}
-            </p>
-            <p className="text-xs text-muted-foreground mt-1">MP4, MOV, WebM • Max 500MB</p>
-          </label>
-          {uploadedVideoUrl && (
+          {uploadedVideoUrl ? (
             <div className="relative group">
               <button
                 type="button"
@@ -350,6 +475,37 @@ export default function LipSyncStage({ pipelineId, onComplete }: LipSyncStagePro
               </button>
               <video src={uploadedVideoUrl} controls className="w-full rounded-xl" />
             </div>
+          ) : (
+            <label 
+              className={cn(
+                "flex flex-col items-center justify-center rounded-xl border-2 border-dashed p-8 cursor-pointer transition-colors",
+                isDragging 
+                  ? "border-primary bg-primary/10" 
+                  : "hover:border-primary/50 hover:bg-secondary/50"
+              )}
+              onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}
+              onDrop={handleDrop}
+            >
+              <input
+                type="file"
+                accept="video/*"
+                onChange={handleFileUpload}
+                className="hidden"
+                disabled={isUploadingVideo}
+              />
+              {isUploadingVideo ? (
+                <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+              ) : (
+                <>
+                  <Upload className={cn("h-8 w-8 mb-2", isDragging ? "text-primary" : "text-muted-foreground")} />
+                  <p className="text-sm text-muted-foreground">
+                    {isDragging ? 'Drop your video file here' : 'Drag & drop or click to browse'}
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-1">MP4, MOV, WebM • Max 500MB</p>
+                </>
+              )}
+            </label>
           )}
         </div>
       )}
