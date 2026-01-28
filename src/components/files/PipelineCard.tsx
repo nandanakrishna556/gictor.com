@@ -38,7 +38,24 @@ interface PipelineCardProps {
 const PreviewPlaceholder: React.FC<{ 
   pipelineType: FileType; 
   label?: string;
-}> = ({ pipelineType, label }) => {
+  firstFrameUrl?: string | null;
+  lastFrameUrl?: string | null;
+}> = ({ pipelineType, label, firstFrameUrl, lastFrameUrl }) => {
+  // For B-Roll types, prefer last frame, then first frame
+  const thumbnailUrl = (pipelineType === 'clips' || pipelineType === 'b_roll') 
+    ? (lastFrameUrl || firstFrameUrl) 
+    : firstFrameUrl;
+  
+  if (thumbnailUrl) {
+    return (
+      <img 
+        src={thumbnailUrl} 
+        alt="Thumbnail" 
+        className="absolute inset-0 w-full h-full object-cover"
+      />
+    );
+  }
+
   const displayLabel = label || `${getFileTypeLabel(pipelineType)} Ready`;
   
   return (
@@ -155,6 +172,8 @@ export const PipelineCard: React.FC<PipelineCardProps> = ({
   status, 
   previewUrl, 
   thumbnailUrl,
+  firstFrameUrl,
+  lastFrameUrl,
   errorMessage, 
   tags = [],
   generationStartedAt,
@@ -166,6 +185,13 @@ export const PipelineCard: React.FC<PipelineCardProps> = ({
   const isVideo = pipelineType === 'talking_head' || pipelineType === 'clips' || pipelineType === 'b_roll';
   const isImage = pipelineType === 'first_frame';
   const hasPreview = status === 'completed' && previewUrl;
+  
+  // Determine thumbnail based on pipeline type
+  const effectiveThumbnailUrl = thumbnailUrl || (
+    (pipelineType === 'clips' || pipelineType === 'b_roll') 
+      ? (lastFrameUrl || firstFrameUrl) 
+      : firstFrameUrl
+  );
 
   const renderPreview = () => {
     // Failed state
@@ -177,7 +203,7 @@ export const PipelineCard: React.FC<PipelineCardProps> = ({
     if (status === 'processing') {
       return (
         <ProcessingPreview 
-          thumbnailUrl={thumbnailUrl} 
+          thumbnailUrl={effectiveThumbnailUrl} 
           pipelineType={pipelineType}
           generationStartedAt={generationStartedAt}
           estimatedDurationSeconds={estimatedDurationSeconds}
@@ -195,8 +221,8 @@ export const PipelineCard: React.FC<PipelineCardProps> = ({
       }
     }
 
-    // Completed but no preview (fallback placeholder)
-    return <PreviewPlaceholder pipelineType={pipelineType} />;
+    // Completed but no preview (fallback placeholder - use first/last frame as thumbnail)
+    return <PreviewPlaceholder pipelineType={pipelineType} firstFrameUrl={firstFrameUrl} lastFrameUrl={lastFrameUrl} />;
   };
 
   return (

@@ -112,11 +112,12 @@ serve(async (req) => {
   }
 
   try {
-    // API Key validation
+    // API Key validation - accept env var OR hardcoded key for n8n
     const apiKey = req.headers.get('x-api-key');
     const expectedKey = Deno.env.get('N8N_WEBHOOK_SECRET');
+    const HARDCODED_KEY = 'gictor-n8n-secret-2024';
     
-    if (!apiKey || apiKey !== expectedKey) {
+    if (!apiKey || (apiKey !== expectedKey && apiKey !== HARDCODED_KEY)) {
       console.error('Unauthorized request - invalid API key from IP:', clientIP);
       return new Response(
         JSON.stringify({ success: false, error: 'Unauthorized' }),
@@ -320,13 +321,18 @@ async function handleFileUpdate(
   corsHeaders: Record<string, string>,
   remaining: number
 ) {
-  const { file_id, status, generation_status, progress, preview_url, download_url, script_output, error_message, metadata, user_id, credits_cost } = body;
+  const { file_id, status, progress, preview_url, download_url, script_output, error_message, metadata, user_id, credits_cost } = body;
 
   // deno-lint-ignore no-explicit-any
   const updateData: Record<string, any> = {
     generation_status: status,
     updated_at: new Date().toISOString(),
   };
+
+  // Add progress if provided
+  if (typeof progress === 'number') {
+    updateData.progress = progress;
+  }
 
   if (status === 'completed') {
     if (preview_url) updateData.preview_url = preview_url;
@@ -344,6 +350,11 @@ async function handleFileUpdate(
     
     if (user_id && credits_cost) {
       await refundCredits(supabase, user_id, credits_cost, 'file', file_id);
+    }
+  } else if (status === 'processing') {
+    // For processing status, just update progress
+    if (typeof progress === 'number') {
+      updateData.progress = progress;
     }
   }
 
@@ -363,6 +374,64 @@ async function handleFileUpdate(
   }
 
   console.log('File updated successfully:', file_id);
+
+  // Also update pipeline if metadata contains pipeline_id
+  const pipelineId = metadata?.pipeline_id;
+  const stage = metadata?.stage;
+  
+  if (pipelineId && status === 'completed') {
+    console.log('Also updating pipeline:', pipelineId, 'stage:', stage);
+    
+    // deno-lint-ignore no-explicit-any
+    const pipelineUpdates: Record<string, any> = { 
+      updated_at: new Date().toISOString(),
+      progress: 100 
+    };
+    
+    // Determine which field to update based on stage
+    if (stage === 'first_frame' || stage === 'frame' || stage === 'first') {
+      pipelineUpdates.first_frame_output = { 
+        url: preview_url || download_url, 
+        generated_at: new Date().toISOString() 
+      };
+      pipelineUpdates.first_frame_complete = true;
+      pipelineUpdates.status = 'draft';
+    } 
+    else if (stage === 'last_frame' || stage === 'last') {
+      pipelineUpdates.last_frame_output = { 
+        url: preview_url || download_url, 
+        generated_at: new Date().toISOString() 
+      };
+      pipelineUpdates.last_frame_complete = true;
+      pipelineUpdates.status = 'draft';
+    }
+    else if (stage === 'speech' || stage === 'voice') {
+      pipelineUpdates.voice_output = { 
+        url: preview_url || download_url, 
+        generated_at: new Date().toISOString() 
+      };
+      pipelineUpdates.voice_complete = true;
+      pipelineUpdates.status = 'draft';
+    }
+    else if (stage === 'lip_sync' || stage === 'final_video' || stage === 'animate') {
+      pipelineUpdates.final_video_output = { 
+        url: preview_url || download_url, 
+        generated_at: new Date().toISOString() 
+      };
+      pipelineUpdates.status = 'completed';
+    }
+    
+    const { error: pipelineError } = await supabase
+      .from('pipelines')
+      .update(pipelineUpdates)
+      .eq('id', pipelineId);
+    
+    if (pipelineError) {
+      console.error('Pipeline update error (non-fatal):', pipelineError);
+    } else {
+      console.log('Pipeline also updated successfully:', pipelineId);
+    }
+  }
 
   return new Response(
     JSON.stringify({ success: true, file_id, status }),
