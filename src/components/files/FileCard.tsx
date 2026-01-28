@@ -1,5 +1,5 @@
 import React from 'react';
-import { Play, AlertCircle, MoreHorizontal, Trash2, Pencil, FileText, Mic, Video } from 'lucide-react';
+import { Play, AlertCircle, MoreHorizontal, Trash2, Pencil, FileText, Mic } from 'lucide-react';
 import { 
   DropdownMenu, 
   DropdownMenuContent, 
@@ -143,7 +143,7 @@ export const FileCard: React.FC<FileCardProps> = ({
 
         {status === 'completed' && !hasVideoThumbnail && isVideoType && (
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-muted">
-            <Video className="h-12 w-12 text-muted-foreground/50" strokeWidth={1.5} />
+            <FileTypeIcon fileType={fileType} size="lg" className="h-12 w-12 opacity-50" />
             <span className="text-sm text-muted-foreground">Video Ready</span>
           </div>
         )}
