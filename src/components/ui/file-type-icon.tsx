@@ -1,5 +1,5 @@
 import React from 'react';
-import { FileText, Image as ImageIcon, Folder, Mic, Sparkles, LucideIcon, CircleUser, Wand2, Clapperboard, PlayCircle } from 'lucide-react';
+import { FileText, Image as ImageIcon, Folder, Mic, Sparkles, LucideIcon, Podcast, Clapperboard, PlayCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export type FileType = 'first_frame' | 'lip_sync' | 'talking_head' | 'script' | 'clips' | 'b_roll' | 'folder' | 'speech' | 'audio' | 'voice' | 'veo3' | 'animate' | 'frame' | 'motion_graphics';
@@ -22,13 +22,13 @@ const FILE_TYPE_CONFIG: Record<FileType, { icon: LucideIcon; label: string; colo
     color: 'text-cyan-500',
   },
   lip_sync: {
-    icon: Wand2,
+    icon: Sparkles,
     label: 'Lip Sync',
     color: 'text-primary',
   },
   // Legacy: talking_head maps to lip_sync display
   talking_head: {
-    icon: CircleUser,
+    icon: Podcast,
     label: 'Talking Head',
     color: 'text-primary',
   },
