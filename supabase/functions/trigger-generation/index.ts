@@ -193,6 +193,7 @@ const FilePayloadSchema = z.object({
   type: z.enum(['first_frame', 'lip_sync', 'talking_head', 'script', 'speech', 'audio', 'b_roll', 'animate', 'frame', 'humanize']),
   payload: z.object({
     file_id: z.string().uuid(),
+    pipeline_id: z.string().uuid().optional(),
     project_id: z.string().uuid().optional(),
     user_id: z.string().uuid().optional(),
     folder_id: z.string().uuid().nullable().optional(),
