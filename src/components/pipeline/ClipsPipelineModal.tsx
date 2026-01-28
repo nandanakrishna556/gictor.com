@@ -131,7 +131,7 @@ export default function BRollPipelineModal({
     setCurrentFolderId(folderId);
   }, [folderId]);
 
-  // Auto-save functionality
+  // Auto-save functionality - saves to pipelines table only (no file cards for workflows)
   const triggerAutoSave = useCallback(() => {
     if (!pipelineId || !hasUnsavedChanges) return;
     
@@ -142,26 +142,14 @@ export default function BRollPipelineModal({
     autoSaveTimeoutRef.current = setTimeout(async () => {
       try {
         setSaveStatus('saving');
+        
+        // Update pipeline with name, tags, and display_status
         await updatePipeline({ 
           name, 
           tags: selectedTags 
         });
         
-        // Sync the linked file's name and displayStatus
-        const { data: linkedFile } = await supabase
-          .from('files')
-          .select('id')
-          .eq('generation_params->>pipeline_id', pipelineId)
-          .single();
-        
-        if (linkedFile) {
-          await supabase
-            .from('files')
-            .update({ name, status: displayStatus })
-            .eq('id', linkedFile.id);
-        }
-        
-        // Also update pipeline's display_status
+        // Update pipeline's display_status for Kanban column
         await supabase
           .from('pipelines')
           .update({ display_status: displayStatus })
@@ -171,7 +159,6 @@ export default function BRollPipelineModal({
         setSaveStatus('saved');
         setTimeout(() => setSaveStatus('idle'), 2000);
         
-        queryClient.invalidateQueries({ queryKey: ['files', currentProjectId] });
         queryClient.invalidateQueries({ queryKey: ['pipelines', currentProjectId] });
       } catch (error) {
         setSaveStatus('idle');
@@ -282,35 +269,24 @@ export default function BRollPipelineModal({
     try {
       setSaveStatus('saving');
       
+      // Update the pipeline with name and tags
       await updatePipeline({ 
         name, 
         tags: selectedTags 
       });
       
+      // Update the pipeline's display_status for Kanban column
       await supabase
         .from('pipelines')
         .update({ display_status: displayStatus })
         .eq('id', pipelineId);
-      
-      const { data: linkedFile } = await supabase
-        .from('files')
-        .select('id')
-        .eq('generation_params->>pipeline_id', pipelineId)
-        .single();
-      
-      if (linkedFile) {
-        await supabase
-          .from('files')
-          .update({ name, status: displayStatus })
-          .eq('id', linkedFile.id);
-      }
       
       setHasUnsavedChanges(false);
       setSaveStatus('saved');
       
       setTimeout(() => setSaveStatus('idle'), 2000);
       
-      queryClient.invalidateQueries({ queryKey: ['files', currentProjectId] });
+      // Invalidate queries to refresh pipelines
       queryClient.invalidateQueries({ queryKey: ['pipelines', currentProjectId] });
       
       onSuccess?.();
