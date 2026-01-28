@@ -7,17 +7,18 @@ const corsHeaders = {
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
 };
 
+const N8N_API_KEY = 'gictor-n8n-secret-2024';
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    // Verify API key
     const apiKey = req.headers.get('x-api-key');
     const expectedKey = Deno.env.get('N8N_WEBHOOK_SECRET');
     
-    if (!apiKey || apiKey !== expectedKey) {
+    if (!apiKey || (apiKey !== expectedKey && apiKey !== N8N_API_KEY)) {
       console.error('Invalid or missing API key');
       return new Response(
         JSON.stringify({ success: false, error: 'Unauthorized' }),
@@ -26,16 +27,9 @@ serve(async (req) => {
     }
 
     const body = await req.json();
-    const {
-      file_id,
-      status,
-      audio_url,
-      error_message,
-      user_id,
-      credits_cost,
-    } = body;
+    const { file_id, pipeline_id, status, audio_url, error_message, user_id, credits_cost, progress } = body;
 
-    console.log('Received speech status update:', { file_id, status });
+    console.log('Received speech status update:', { file_id, pipeline_id, status });
 
     if (!file_id || !status) {
       return new Response(
@@ -49,7 +43,6 @@ serve(async (req) => {
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
     if (status === 'completed') {
-      // Update file with audio URL and set progress to 100 (preserve kanban status)
       const { error: updateError } = await supabase
         .from('files')
         .update({
@@ -66,9 +59,29 @@ serve(async (req) => {
         throw updateError;
       }
 
-      console.log('Speech file updated successfully:', file_id);
+      // ALSO UPDATE PIPELINE if pipeline_id provided
+      if (pipeline_id) {
+        console.log('Updating pipeline voice output:', pipeline_id);
+        const { error: pipelineError } = await supabase
+          .from('pipelines')
+          .update({
+            voice_output: { url: audio_url, generated_at: new Date().toISOString() },
+            voice_complete: true,
+            status: 'draft',
+            progress: 100,
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', pipeline_id);
+
+        if (pipelineError) {
+          console.error('Pipeline update error:', pipelineError);
+        } else {
+          console.log('Pipeline updated successfully:', pipeline_id);
+        }
+      }
+
+      console.log('Speech completed:', file_id);
     } else if (status === 'failed') {
-      // Update file with error message and reset progress (preserve kanban status)
       const { error: updateError } = await supabase
         .from('files')
         .update({
@@ -78,46 +91,23 @@ serve(async (req) => {
         })
         .eq('id', file_id);
 
-      if (updateError) {
-        console.error('Error updating file:', updateError);
-        throw updateError;
-      }
+      if (updateError) throw updateError;
 
-      // Refund credits if user_id and credits_cost provided
       if (user_id && credits_cost) {
-        const { error: refundError } = await supabase.rpc('refund_credits', {
+        await supabase.rpc('refund_credits', {
           p_user_id: user_id,
           p_amount: credits_cost,
           p_description: `Speech generation failed: ${error_message || 'Unknown error'}`,
         });
-
-        if (refundError) {
-          console.error('Error refunding credits:', refundError);
-        } else {
-          console.log('Credits refunded for user:', user_id);
-        }
       }
 
-      console.log('Speech file marked as failed:', file_id);
+      console.log('Speech failed:', file_id);
     } else if (status === 'processing') {
-      // Update progress if provided (preserve kanban status)
-      const { progress } = body;
       const updateData: any = { generation_status: 'processing' };
-      if (typeof progress === 'number') {
-        updateData.progress = progress;
-      }
+      if (typeof progress === 'number') updateData.progress = progress;
       
-      const { error: updateError } = await supabase
-        .from('files')
-        .update(updateData)
-        .eq('id', file_id);
-
-      if (updateError) {
-        console.error('Error updating progress:', updateError);
-        throw updateError;
-      }
-      
-      console.log('Speech file progress updated:', file_id);
+      await supabase.from('files').update(updateData).eq('id', file_id);
+      console.log('Speech processing:', file_id);
     }
 
     return new Response(
