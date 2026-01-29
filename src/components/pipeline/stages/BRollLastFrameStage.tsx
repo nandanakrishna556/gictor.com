@@ -257,6 +257,12 @@ export default function BRollLastFrameStage({ pipelineId, onComplete }: BRollLas
       // Save input first
       await saveInput();
 
+      // Get fresh session
+      const { data: sessionData, error: sessionError } = await supabase.auth.refreshSession();
+      if (sessionError || !sessionData.session) {
+        throw new Error('Session expired. Please log in again.');
+      }
+
       // Set processing status and current stage
       await updatePipeline({ status: 'processing', current_stage: 'last_frame' });
 
@@ -267,7 +273,7 @@ export default function BRollLastFrameStage({ pipelineId, onComplete }: BRollLas
           payload: {
             file_id: pipelineId,
             pipeline_id: pipelineId,
-            user_id: user?.id,
+            user_id: sessionData.session.user.id,
             prompt,
             frame_type: 'last',
             style,
