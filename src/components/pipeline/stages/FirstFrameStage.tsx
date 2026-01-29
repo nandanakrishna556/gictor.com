@@ -13,6 +13,7 @@ import { Loader2, Download, Image as ImageIcon, X, Plus } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { useQueryClient } from '@tanstack/react-query';
+import { Actor } from '@/hooks/useActors';
 
 interface FirstFrameStageProps {
   pipelineId: string;
@@ -43,6 +44,7 @@ export default function FirstFrameStage({ pipelineId, onContinue }: FirstFrameSt
   const [cameraPerspective, setCameraPerspective] = useState<CameraPerspective>('3rd_person');
   const [resolution, setResolution] = useState<Resolution>('2K');
   const [selectedActorId, setSelectedActorId] = useState<string | null>(null);
+  const [selectedActor, setSelectedActor] = useState<Actor | null>(null);
   const [referenceImages, setReferenceImages] = useState<string[]>([]);
   const [prompt, setPrompt] = useState('');
 
@@ -122,8 +124,9 @@ export default function FirstFrameStage({ pipelineId, onContinue }: FirstFrameSt
   }, [frameStyle, subStyle, aspectRatio, cameraPerspective, resolution, selectedActorId, referenceImages, prompt, inputMode, uploadedImageUrl, saveInputs]);
 
   // Handle actor selection
-  const handleActorSelect = (actorId: string | null) => {
+  const handleActorSelect = (actorId: string | null, actor?: Actor) => {
     setSelectedActorId(actorId);
+    setSelectedActor(actor || null);
   };
 
   // Handle reference image upload
@@ -253,6 +256,7 @@ export default function FirstFrameStage({ pipelineId, onContinue }: FirstFrameSt
             frame_resolution: resolution,
             reference_images: referenceImages,
             actor_id: (frameStyle === 'talking_head' || frameStyle === 'broll') ? selectedActorId : null,
+            actor_360_url: (frameStyle === 'talking_head' || frameStyle === 'broll') ? selectedActor?.profile_360_url : null,
             credits_cost: creditCost,
             supabase_url: import.meta.env.VITE_SUPABASE_URL,
           },

@@ -263,6 +263,7 @@ export default function BRollFirstFrameStage({ pipelineId, onComplete }: BRollFi
             frame_resolution: resolution,
             reference_images: referenceImages,
             actor_id: (style === 'talking_head' || style === 'broll') ? selectedActorId : null,
+            actor_360_url: (style === 'talking_head' || style === 'broll') ? selectedActor?.profile_360_url : null,
             credits_cost: creditCost,
             supabase_url: import.meta.env.VITE_SUPABASE_URL,
           },
