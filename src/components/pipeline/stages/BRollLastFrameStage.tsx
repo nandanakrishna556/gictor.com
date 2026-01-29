@@ -301,6 +301,8 @@ export default function BRollLastFrameStage({ pipelineId, onComplete }: BRollLas
       toast.error(error instanceof Error ? error.message : 'Failed to start generation');
       setLocalGenerating(false);
       isLocalGeneratingRef.current = false;
+      generationInitiatedRef.current = false;
+      await updatePipeline({ status: 'draft' });
     }
   };
 

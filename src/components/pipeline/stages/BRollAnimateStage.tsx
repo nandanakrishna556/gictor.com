@@ -216,11 +216,15 @@ export default function BRollAnimateStage({ pipelineId, onComplete }: BRollAnima
         } as any,
       });
 
-      // Update pipeline status
-      await updateFinalVideo({
-        input: { resolution: '720p' },
-        status: 'processing',
-      });
+      // Update pipeline status and current stage for proper tracking
+      await supabase
+        .from('pipelines')
+        .update({ 
+          status: 'processing', 
+          current_stage: 'final_video',
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', pipelineId);
 
       // Call edge function for animate generation
       const { data, error } = await supabase.functions.invoke('trigger-generation', {
