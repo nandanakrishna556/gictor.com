@@ -78,6 +78,22 @@ export default function LipSyncStage({ pipelineId, onComplete }: LipSyncStagePro
     }
   }, [pipeline]);
 
+  // Auto-detect audio duration from audio element
+  useEffect(() => {
+    if (effectiveAudioUrl && audioDuration === 0 && !overrideAudioUrl) {
+      const audio = new Audio(effectiveAudioUrl);
+      audio.addEventListener('loadedmetadata', () => {
+        if (audio.duration && audio.duration > 0) {
+          setAudioDuration(audio.duration);
+        }
+      });
+      audio.addEventListener('error', () => {
+        // Set default duration to allow generation
+        setAudioDuration(2);
+      });
+    }
+  }, [effectiveAudioUrl, audioDuration, overrideAudioUrl]);
+
   // Poll for completion
   useEffect(() => {
     if (isGenerating && pipeline) {
@@ -324,7 +340,8 @@ export default function LipSyncStage({ pipelineId, onComplete }: LipSyncStagePro
 
   const hasOutput = !!pipeline?.final_video_output?.url || !!uploadedVideoUrl;
   const outputVideo = pipeline?.final_video_output;
-  const canGenerate = mode === 'upload' ? !!uploadedVideoUrl : (!!effectiveImageUrl && !!effectiveAudioUrl && effectiveAudioDuration > 0);
+  // Remove duration requirement - will auto-detect or allow generation without
+  const canGenerate = mode === 'upload' ? !!uploadedVideoUrl : (!!effectiveImageUrl && !!effectiveAudioUrl);
 
   const formatDuration = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
@@ -378,7 +395,7 @@ export default function LipSyncStage({ pipelineId, onComplete }: LipSyncStagePro
               )}
             </div>
             {effectiveImageUrl ? (
-              <div className="relative">
+              <div className="relative group">
                 <div className="aspect-square rounded-xl overflow-hidden bg-secondary/30">
                   <img 
                     src={effectiveImageUrl} 
@@ -386,6 +403,15 @@ export default function LipSyncStage({ pipelineId, onComplete }: LipSyncStagePro
                     className="w-full h-full object-cover"
                   />
                 </div>
+                <button
+                  onClick={() => {
+                    setOverrideImageUrl(undefined);
+                    setImageUrl(undefined);
+                  }}
+                  className="absolute top-2 right-2 p-1.5 rounded-full bg-black/50 hover:bg-black/70 opacity-0 group-hover:opacity-100 transition-opacity"
+                >
+                  <X className="h-4 w-4 text-white" />
+                </button>
                 {!overrideImageUrl && (
                   <p className="text-xs text-muted-foreground mt-2">From First Frame stage • Drop new image to override</p>
                 )}
@@ -415,7 +441,20 @@ export default function LipSyncStage({ pipelineId, onComplete }: LipSyncStagePro
             </div>
             {effectiveAudioUrl ? (
               <div className="space-y-2">
-                <audio src={effectiveAudioUrl} controls className="w-full" />
+                <div className="flex items-center gap-2">
+                  <audio src={effectiveAudioUrl} controls className="flex-1" />
+                  <button
+                    onClick={() => {
+                      setOverrideAudioUrl(undefined);
+                      setAudioUrl(undefined);
+                      setAudioDuration(0);
+                      setOverrideAudioDuration(0);
+                    }}
+                    className="p-1.5 rounded-full bg-secondary hover:bg-secondary/80 transition-colors flex-shrink-0"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
                 <p className="text-xs text-muted-foreground">
                   Duration: {formatDuration(effectiveAudioDuration)}
                   {!overrideAudioUrl && ' • From Speech stage'}
