@@ -196,6 +196,12 @@ export default function BRollAnimateStage({ pipelineId, onComplete }: BRollAnima
     setLocalGenerating(true);
 
     try {
+      // Get fresh session - REQUIRED
+      const { data: sessionData, error: sessionError } = await supabase.auth.refreshSession();
+      if (sessionError || !sessionData.session) {
+        throw new Error('Session expired. Please log in again.');
+      }
+
       // Save input first
       await updateVoice({
         input: {
@@ -223,6 +229,8 @@ export default function BRollAnimateStage({ pipelineId, onComplete }: BRollAnima
           payload: {
             pipeline_id: pipelineId,
             file_id: pipelineId,
+            user_id: sessionData.session.user.id,
+            project_id: pipeline?.project_id || null,
             first_frame_url: effectiveFirstFrame,
             last_frame_url: effectiveLastFrame || null,
             prompt: prompt || null,
@@ -231,8 +239,8 @@ export default function BRollAnimateStage({ pipelineId, onComplete }: BRollAnima
             animation_type: animationType,
             aspect_ratio: aspectRatio,
             audio_enabled: audioEnabled,
-            pipeline_type: 'clips',
             credits_cost: creditCost,
+            supabase_url: import.meta.env.VITE_SUPABASE_URL,
           },
         },
       });
