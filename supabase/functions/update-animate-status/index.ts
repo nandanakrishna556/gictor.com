@@ -7,6 +7,8 @@ const corsHeaders = {
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
 };
 
+const N8N_API_KEY = 'gictor-n8n-secret-2024';
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -15,9 +17,9 @@ serve(async (req) => {
   try {
     const apiKey = req.headers.get('x-api-key');
     const expectedKey = Deno.env.get('N8N_WEBHOOK_SECRET');
-    const N8N_API_KEY = 'gictor-n8n-secret-2024';
     
     if (!apiKey || (apiKey !== expectedKey && apiKey !== N8N_API_KEY)) {
+      console.error('Invalid API key');
       return new Response(
         JSON.stringify({ success: false, error: 'Unauthorized' }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -25,9 +27,12 @@ serve(async (req) => {
     }
 
     const body = await req.json();
-    const { file_id, status, video_url, progress, error_message, user_id, credits_cost } = body;
+    const { file_id, status, video_url, progress, error_message, user_id, credits_cost, metadata } = body;
+    
+    // Get pipeline_id from metadata or use file_id as fallback
+    const pipeline_id = metadata?.pipeline_id || body.pipeline_id || file_id;
 
-    console.log('Animate status update:', { file_id, status, video_url });
+    console.log('Animate status update:', { file_id, pipeline_id, status, video_url });
 
     if (!file_id || !status) {
       return new Response(
@@ -54,8 +59,8 @@ serve(async (req) => {
         })
         .eq('id', file_id);
 
-      // ALSO update pipelines table - THIS IS THE FIX
-      await supabase
+      // CRITICAL: Update pipelines table so frontend shows output
+      const { error: pipelineError } = await supabase
         .from('pipelines')
         .update({
           final_video_output: { url: video_url, generated_at: new Date().toISOString() },
@@ -63,9 +68,13 @@ serve(async (req) => {
           progress: 100,
           updated_at: new Date().toISOString(),
         })
-        .eq('id', file_id);
+        .eq('id', pipeline_id);
 
-      console.log('Animate completed, pipeline updated:', file_id);
+      if (pipelineError) {
+        console.error('Pipeline update error:', pipelineError);
+      } else {
+        console.log('Pipeline updated with video:', pipeline_id);
+      }
     } else if (status === 'failed') {
       await supabase
         .from('files')
@@ -76,16 +85,17 @@ serve(async (req) => {
         })
         .eq('id', file_id);
 
+      // Update pipeline status
       await supabase
         .from('pipelines')
         .update({ status: 'failed', updated_at: new Date().toISOString() })
-        .eq('id', file_id);
+        .eq('id', pipeline_id);
 
       if (user_id && credits_cost) {
         await supabase.rpc('refund_credits', {
           p_user_id: user_id,
           p_amount: credits_cost,
-          p_description: `Animation failed: ${error_message || 'Unknown error'}`,
+          p_description: `Animation failed: ${error_message || 'Unknown'}`,
         });
       }
     } else if (status === 'processing') {
@@ -93,10 +103,12 @@ serve(async (req) => {
       if (typeof progress === 'number') updateData.progress = progress;
       
       await supabase.from('files').update(updateData).eq('id', file_id);
+      
+      // Update pipeline progress
       await supabase
         .from('pipelines')
         .update({ progress: progress || 50, status: 'processing', updated_at: new Date().toISOString() })
-        .eq('id', file_id);
+        .eq('id', pipeline_id);
     }
 
     return new Response(

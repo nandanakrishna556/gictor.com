@@ -27,7 +27,7 @@ serve(async (req) => {
     }
 
     const body = await req.json();
-    const { file_id, pipeline_id, status, audio_url, error_message, user_id, credits_cost, progress } = body;
+    const { file_id, pipeline_id, status, audio_url, audio_duration, error_message, user_id, credits_cost, progress } = body;
 
     console.log('Received speech status update:', { file_id, pipeline_id, status });
 
@@ -65,7 +65,11 @@ serve(async (req) => {
         const { error: pipelineError } = await supabase
           .from('pipelines')
           .update({
-            voice_output: { url: audio_url, generated_at: new Date().toISOString() },
+            voice_output: { 
+              url: audio_url, 
+              duration_seconds: audio_duration || 0,
+              generated_at: new Date().toISOString() 
+            },
             voice_complete: true,
             status: 'draft',
             progress: 100,
