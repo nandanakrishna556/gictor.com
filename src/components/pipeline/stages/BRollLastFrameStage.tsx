@@ -33,7 +33,7 @@ const CREDIT_COST = 0.25;
 
 // Last frame uses script_input/script_output since we need separate storage from first_frame
 export default function BRollLastFrameStage({ pipelineId, onComplete }: BRollLastFrameStageProps) {
-  const { pipeline, updateScript, isUpdating } = usePipeline(pipelineId);
+  const { pipeline, updateScript, updatePipeline, isUpdating } = usePipeline(pipelineId);
   const { profile } = useProfile();
   const { user } = useAuth();
   const queryClient = useQueryClient();
@@ -67,7 +67,7 @@ export default function BRollLastFrameStage({ pipelineId, onComplete }: BRollLas
   // Derive output URL from script_output (repurposed for last frame)
   const lastFrameData = pipeline?.script_output as any;
   const outputUrl = lastFrameData?.last_frame_url;
-  const isServerProcessing = pipeline?.status === 'processing' && pipeline?.current_stage === 'script';
+  const isServerProcessing = pipeline?.status === 'processing' && pipeline?.current_stage === 'last_frame';
   // Only show generating state if: (1) user clicked generate (localGenerating), OR (2) server is processing AND we initiated it
   const isGenerating = localGenerating || (isServerProcessing && generationInitiatedRef.current);
   const hasOutput = !!outputUrl;
@@ -130,6 +130,17 @@ export default function BRollLastFrameStage({ pipelineId, onComplete }: BRollLas
     
     prevStatusRef.current = currentStatus;
   }, [pipeline, pipelineId, queryClient]);
+
+  // Auto-add first frame output as reference image if available
+  useEffect(() => {
+    const firstFrameUrl = pipeline?.first_frame_output?.url;
+    if (firstFrameUrl && !referenceImages.includes(firstFrameUrl)) {
+      setReferenceImages(prev => {
+        if (prev.includes(firstFrameUrl)) return prev;
+        return [firstFrameUrl, ...prev].slice(0, 3); // Keep max 3
+      });
+    }
+  }, [pipeline?.first_frame_output?.url]);
 
   // Save input changes (using script fields)
   const saveInput = async () => {
@@ -246,6 +257,9 @@ export default function BRollLastFrameStage({ pipelineId, onComplete }: BRollLas
       // Save input first
       await saveInput();
 
+      // Set processing status and current stage
+      await updatePipeline({ status: 'processing', current_stage: 'last_frame' });
+
       // Call edge function for frame generation
       const { data, error } = await supabase.functions.invoke('trigger-generation', {
         body: {
@@ -253,6 +267,7 @@ export default function BRollLastFrameStage({ pipelineId, onComplete }: BRollLas
           payload: {
             file_id: pipelineId,
             pipeline_id: pipelineId,
+            user_id: user?.id,
             prompt,
             frame_type: 'last',
             style,

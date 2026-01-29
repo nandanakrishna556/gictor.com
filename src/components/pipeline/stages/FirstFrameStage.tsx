@@ -61,7 +61,7 @@ export default function FirstFrameStage({ pipelineId, onContinue }: FirstFrameSt
   // Derived state
   const hasOutput = pipeline?.first_frame_complete && pipeline?.first_frame_output?.url;
   const outputUrl = pipeline?.first_frame_output?.url;
-  const isServerProcessing = pipeline?.status === 'processing';
+  const isServerProcessing = pipeline?.status === 'processing' && pipeline?.current_stage === 'first_frame';
 
   // Load saved state from pipeline
   useEffect(() => {
@@ -234,7 +234,7 @@ export default function FirstFrameStage({ pipelineId, onContinue }: FirstFrameSt
       }
 
       // Update pipeline status to processing
-      await updatePipeline({ status: 'processing' });
+      await updatePipeline({ status: 'processing', current_stage: 'first_frame' });
 
       // Call edge function with 'frame' type
       const { data, error } = await supabase.functions.invoke('trigger-generation', {

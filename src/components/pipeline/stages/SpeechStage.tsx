@@ -63,7 +63,7 @@ export default function SpeechStage({ pipelineId, onContinue }: SpeechStageProps
   // Derived state
   const hasOutput = pipeline?.voice_complete && pipeline?.voice_output?.url;
   const outputUrl = pipeline?.voice_output?.url;
-  const isServerProcessing = pipeline?.status === 'processing';
+  const isServerProcessing = pipeline?.status === 'processing' && (pipeline?.current_stage === 'voice' || pipeline?.current_stage === 'speech');
 
   // Load saved state from pipeline
   useEffect(() => {
@@ -219,7 +219,7 @@ export default function SpeechStage({ pipelineId, onContinue }: SpeechStageProps
       }
 
       // Update pipeline status to processing
-      await updatePipeline({ status: 'processing' });
+      await updatePipeline({ status: 'processing', current_stage: 'voice' });
 
       // Save input data
       await updateVoice({

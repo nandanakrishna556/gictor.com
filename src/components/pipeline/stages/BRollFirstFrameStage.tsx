@@ -32,7 +32,7 @@ type Resolution = '1K' | '2K' | '4K';
 const CREDIT_COST = 0.25;
 
 export default function BRollFirstFrameStage({ pipelineId, onComplete }: BRollFirstFrameStageProps) {
-  const { pipeline, updateFirstFrame, isUpdating } = usePipeline(pipelineId);
+  const { pipeline, updateFirstFrame, updatePipeline, isUpdating } = usePipeline(pipelineId);
   const { profile } = useProfile();
   const { user } = useAuth();
   const queryClient = useQueryClient();
@@ -237,6 +237,9 @@ export default function BRollFirstFrameStage({ pipelineId, onComplete }: BRollFi
       // Save input first
       await saveInput();
 
+      // Set processing status and current stage
+      await updatePipeline({ status: 'processing', current_stage: 'first_frame' });
+
       // Call edge function for frame generation
       const { data, error } = await supabase.functions.invoke('trigger-generation', {
         body: {
@@ -244,6 +247,7 @@ export default function BRollFirstFrameStage({ pipelineId, onComplete }: BRollFi
           payload: {
             file_id: pipelineId,
             pipeline_id: pipelineId,
+            user_id: user?.id,
             prompt,
             frame_type: 'first',
             style,

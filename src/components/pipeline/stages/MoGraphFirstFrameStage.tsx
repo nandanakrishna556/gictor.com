@@ -28,7 +28,7 @@ type Resolution = '1K' | '2K' | '4K';
 const CREDIT_COST = 0.25;
 
 export default function MoGraphFirstFrameStage({ pipelineId, onComplete, onContinue }: MoGraphFirstFrameStageProps) {
-  const { pipeline, updateFirstFrame, isUpdating } = usePipeline(pipelineId);
+  const { pipeline, updateFirstFrame, updatePipeline, isUpdating } = usePipeline(pipelineId);
   const { profile } = useProfile();
   const { user } = useAuth();
   const queryClient = useQueryClient();
@@ -210,12 +210,16 @@ export default function MoGraphFirstFrameStage({ pipelineId, onComplete, onConti
     try {
       await saveInput();
 
+      // Set processing status and current stage
+      await updatePipeline({ status: 'processing', current_stage: 'first_frame' });
+
       const { data, error } = await supabase.functions.invoke('trigger-generation', {
         body: {
           type: 'frame',
           payload: {
             file_id: pipelineId,
             pipeline_id: pipelineId,
+            user_id: user?.id,
             prompt,
             frame_type: 'first',
             style: 'motion_graphics',
