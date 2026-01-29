@@ -221,7 +221,7 @@ const FilePayloadSchema = z.object({
     actor_voice_url: z.string().url().optional(),
     supabase_url: z.string().url().optional(),
     first_frame_url: z.string().url().optional(),
-    last_frame_url: z.string().url().optional(),
+    last_frame_url: z.string().url().nullable().optional(),
     animation_type: z.enum(['broll', 'motion_graphics']).optional(),
     frame_type: z.enum(['first', 'last']).optional(),
     style: z.enum(['talking_head', 'broll', 'motion_graphics']).optional(),
