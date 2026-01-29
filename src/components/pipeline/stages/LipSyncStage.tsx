@@ -221,6 +221,7 @@ export default function LipSyncStage({ pipelineId, onComplete }: LipSyncStagePro
         .from('pipelines')
         .update({
           status: 'processing',
+          current_stage: 'lip_sync',
           final_video_input: {
             first_frame_url: effectiveImageUrl,
             audio_url: effectiveAudioUrl,

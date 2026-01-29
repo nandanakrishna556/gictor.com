@@ -1,4 +1,4 @@
-export type PipelineStage = 'first_frame' | 'script' | 'voice' | 'speech' | 'lip_sync' | 'final_video';
+export type PipelineStage = 'first_frame' | 'last_frame' | 'script' | 'voice' | 'speech' | 'lip_sync' | 'final_video';
 
 export type PipelineType = 'lip_sync' | 'talking_head' | 'clips' | 'motion_graphics';
 
