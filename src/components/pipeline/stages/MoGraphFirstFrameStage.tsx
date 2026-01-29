@@ -210,6 +210,12 @@ export default function MoGraphFirstFrameStage({ pipelineId, onComplete, onConti
     try {
       await saveInput();
 
+      // Get fresh session
+      const { data: sessionData, error: sessionError } = await supabase.auth.refreshSession();
+      if (sessionError || !sessionData.session) {
+        throw new Error('Session expired. Please log in again.');
+      }
+
       // Set processing status and current stage
       await updatePipeline({ status: 'processing', current_stage: 'first_frame' });
 
@@ -219,7 +225,7 @@ export default function MoGraphFirstFrameStage({ pipelineId, onComplete, onConti
           payload: {
             file_id: pipelineId,
             pipeline_id: pipelineId,
-            user_id: user?.id,
+            user_id: sessionData.session.user.id,
             prompt,
             frame_type: 'first',
             style: 'motion_graphics',
