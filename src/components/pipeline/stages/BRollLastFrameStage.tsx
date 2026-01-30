@@ -224,15 +224,14 @@ export default function BRollLastFrameStage({ pipelineId, onComplete }: BRollLas
   };
 
   const handleGenerate = async () => {
-    if (inputMode === 'upload') {
-      if (!uploadedUrl) {
-        toast.error('Please upload an image first');
-        return;
-      }
+    // Handle upload mode - just save the uploaded image
+    if (inputMode === 'upload' && uploadedUrl) {
       await updateScript({
         output: {
-          last_frame_url: uploadedUrl,
-          text: '',
+          url: uploadedUrl,
+          frame_type: 'last',
+          type: 'last_frame',
+          generated: false,
           char_count: 0,
           estimated_duration: 0,
           generated_at: new Date().toISOString(),
@@ -268,24 +267,16 @@ export default function BRollLastFrameStage({ pipelineId, onComplete }: BRollLas
       // Save input first
       await saveInput();
 
-      // CRITICAL: Get fresh session for valid auth token
+      // Get fresh session - CRITICAL
       const { data: sessionData, error: sessionError } = await supabase.auth.refreshSession();
       if (sessionError || !sessionData.session) {
-        throw new Error('Session expired. Please refresh the page and try again.');
+        throw new Error('Session expired. Please log in again.');
       }
 
-      // Filter reference images - schema requires valid URLs only
-      const validReferenceImages = referenceImages.filter(img => isValidHttpUrl(img));
-
-      // Validate actor_360_url before sending
-      const validActor360Url = isValidHttpUrl(selectedActor?.profile_360_url) 
-        ? selectedActor?.profile_360_url 
-        : undefined;
-
-      // Set processing status and current stage
+      // Update pipeline status to processing
       await updatePipeline({ status: 'processing', current_stage: 'last_frame' });
 
-      // Call edge function for frame generation
+      // Call edge function with 'frame' type - EXACT same structure as FirstFrameStage
       const { data, error } = await supabase.functions.invoke('trigger-generation', {
         body: {
           type: 'frame',
@@ -293,45 +284,33 @@ export default function BRollLastFrameStage({ pipelineId, onComplete }: BRollLas
             file_id: pipelineId,
             pipeline_id: pipelineId,
             user_id: sessionData.session.user.id,
-            project_id: pipeline?.project_id || undefined,
-            prompt: prompt.trim(),
+            project_id: pipeline?.project_id || null,
             frame_type: 'last',
-            style,
-            substyle: style !== 'motion_graphics' ? subStyle : undefined,
+            style: style,
+            substyle: style !== 'motion_graphics' ? subStyle : null,
+            prompt: prompt,
             aspect_ratio: aspectRatio,
             frame_resolution: resolution,
-            reference_images: validReferenceImages.length > 0 ? validReferenceImages : undefined,
-            actor_id: (style === 'talking_head' || style === 'broll') && selectedActorId ? selectedActorId : undefined,
-            actor_360_url: validActor360Url,
+            reference_images: referenceImages.filter(url => url && url.startsWith('http')),
+            actor_id: (style === 'talking_head' || style === 'broll') ? selectedActorId : null,
+            credits_cost: creditCost,
             supabase_url: import.meta.env.VITE_SUPABASE_URL,
           },
         },
       });
 
-      if (error) {
-        console.error('Supabase function error:', error);
-        throw new Error(error.message || 'Failed to call generation service');
-      }
-      
-      if (!data?.success) {
-        console.error('Generation failed:', data);
-        throw new Error(data?.error || 'Generation failed');
-      }
+      if (error) throw error;
+      if (!data?.success) throw new Error(data?.error || 'Generation failed');
 
       toast.success('Last frame generation started!');
       queryClient.invalidateQueries({ queryKey: ['profile'] });
     } catch (error) {
       console.error('Generation error:', error);
       toast.error(error instanceof Error ? error.message : 'Failed to start generation');
+      await updatePipeline({ status: 'draft' });
+    } finally {
       setLocalGenerating(false);
       isLocalGeneratingRef.current = false;
-      generationInitiatedRef.current = false;
-      // Reset pipeline status on error
-      try {
-        await updatePipeline({ status: 'draft' });
-      } catch (e) {
-        console.error('Failed to reset status:', e);
-      }
     }
   };
 
