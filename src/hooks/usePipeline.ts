@@ -42,7 +42,7 @@ export function usePipeline(pipelineId: string | null) {
   const { user } = useAuth();
   const queryClient = useQueryClient();
 
-  // Fetch pipeline
+  // Fetch pipeline with polling when processing
   const { data: pipeline, isLoading } = useQuery({
     queryKey: ['pipeline', pipelineId],
     queryFn: async () => {
@@ -56,6 +56,11 @@ export function usePipeline(pipelineId: string | null) {
       return parsePipeline(data);
     },
     enabled: !!pipelineId,
+    // Poll every 2 seconds when pipeline is processing
+    refetchInterval: (query) => {
+      const pipelineData = query.state.data;
+      return pipelineData?.status === 'processing' ? 2000 : false;
+    },
   });
 
   // Create pipeline

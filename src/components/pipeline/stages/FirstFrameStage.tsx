@@ -56,6 +56,8 @@ export default function FirstFrameStage({ pipelineId, onContinue }: FirstFrameSt
   const [isGenerating, setIsGenerating] = useState(false);
   const initialLoadDoneRef = useRef(false);
   const generationInitiatedRef = useRef(false);
+  const prevStatusRef = useRef<string | null>(null);
+  const toastShownRef = useRef<string | null>(null);
 
   // Dynamic credit cost based on resolution
   const creditCost = resolution === '4K' ? 0.15 : 0.1;
@@ -70,6 +72,12 @@ export default function FirstFrameStage({ pipelineId, onContinue }: FirstFrameSt
     if (!pipeline || initialLoadDoneRef.current) return;
     initialLoadDoneRef.current = true;
 
+    // Initialize prev status
+    prevStatusRef.current = pipeline.status;
+    if (hasOutput) {
+      toastShownRef.current = pipelineId;
+    }
+
     const input = pipeline.first_frame_input;
     if (input) {
       if (input.style) setFrameStyle(input.style as FrameStyle);
@@ -83,7 +91,28 @@ export default function FirstFrameStage({ pipelineId, onContinue }: FirstFrameSt
       if (input.mode) setInputMode(input.mode as InputMode);
       if (input.uploaded_url) setUploadedImageUrl(input.uploaded_url as string);
     }
-  }, [pipeline]);
+  }, [pipeline, hasOutput, pipelineId]);
+
+  // Handle status transitions - detect completion
+  useEffect(() => {
+    if (!pipeline) return;
+    
+    const currentStatus = pipeline.status;
+    const prevStatus = prevStatusRef.current;
+    
+    // Completed transition - clear generating state
+    if (generationInitiatedRef.current && prevStatus === 'processing' && currentStatus !== 'processing') {
+      if (pipeline.first_frame_output?.url && toastShownRef.current !== pipelineId) {
+        toastShownRef.current = pipelineId;
+        toast.success('First frame generated!');
+        queryClient.invalidateQueries({ queryKey: ['pipeline', pipelineId] });
+      }
+      setIsGenerating(false);
+      generationInitiatedRef.current = false;
+    }
+    
+    prevStatusRef.current = currentStatus;
+  }, [pipeline, pipelineId, queryClient]);
 
   // Auto-save inputs (debounced)
   const autoSaveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -268,11 +297,12 @@ export default function FirstFrameStage({ pipelineId, onContinue }: FirstFrameSt
 
       toast.success('Generation started!');
       queryClient.invalidateQueries({ queryKey: ['profile'] });
+      // DON'T reset isGenerating here - let the polling detect completion
     } catch (error) {
       console.error('Generation error:', error);
       toast.error('Failed to start generation');
       await updatePipeline({ status: 'draft' });
-    } finally {
+      // Only reset on error
       setIsGenerating(false);
       generationInitiatedRef.current = false;
     }
