@@ -64,11 +64,21 @@ export default function SpeechStage({ pipelineId, onContinue }: SpeechStageProps
   const hasOutput = pipeline?.voice_complete && pipeline?.voice_output?.url;
   const outputUrl = pipeline?.voice_output?.url;
   const isServerProcessing = pipeline?.status === 'processing' && (pipeline?.current_stage === 'voice' || pipeline?.current_stage === 'speech');
+  
+  // Refs for tracking status transitions
+  const prevStatusRef = useRef<string | null>(null);
+  const toastShownRef = useRef<string | null>(null);
 
   // Load saved state from pipeline
   useEffect(() => {
     if (!pipeline || initialLoadDoneRef.current) return;
     initialLoadDoneRef.current = true;
+
+    // Initialize prev status
+    prevStatusRef.current = pipeline.status;
+    if (hasOutput) {
+      toastShownRef.current = pipelineId;
+    }
 
     const input = pipeline.voice_input;
     if (input) {
@@ -82,7 +92,28 @@ export default function SpeechStage({ pipelineId, onContinue }: SpeechStageProps
     if (voiceInput?.script) {
       setScript(voiceInput.script as string);
     }
-  }, [pipeline]);
+  }, [pipeline, hasOutput, pipelineId]);
+
+  // Handle status transitions - detect completion
+  useEffect(() => {
+    if (!pipeline) return;
+    
+    const currentStatus = pipeline.status;
+    const prevStatus = prevStatusRef.current;
+    
+    // Completed transition - clear generating state
+    if (generationInitiatedRef.current && prevStatus === 'processing' && currentStatus !== 'processing') {
+      if (pipeline.voice_output?.url && toastShownRef.current !== pipelineId) {
+        toastShownRef.current = pipelineId;
+        toast.success('Speech generated!');
+        queryClient.invalidateQueries({ queryKey: ['pipeline', pipelineId] });
+      }
+      setIsGenerating(false);
+      generationInitiatedRef.current = false;
+    }
+    
+    prevStatusRef.current = currentStatus;
+  }, [pipeline, pipelineId, queryClient]);
 
   // Auto-save inputs (debounced)
   const autoSaveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -252,11 +283,12 @@ export default function SpeechStage({ pipelineId, onContinue }: SpeechStageProps
 
       toast.success('Speech generation started!');
       queryClient.invalidateQueries({ queryKey: ['profile'] });
+      // DON'T reset isGenerating here - let the polling detect completion
     } catch (error) {
       console.error('Generation error:', error);
       toast.error('Failed to start generation');
       await updatePipeline({ status: 'draft' });
-    } finally {
+      // Only reset on error
       setIsGenerating(false);
       generationInitiatedRef.current = false;
     }

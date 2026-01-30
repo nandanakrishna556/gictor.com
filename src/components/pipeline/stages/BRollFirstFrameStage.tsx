@@ -300,6 +300,7 @@ export default function BRollFirstFrameStage({ pipelineId, onComplete }: BRollFi
 
       toast.success('First frame generation started!');
       queryClient.invalidateQueries({ queryKey: ['profile'] });
+      // DON'T reset localGenerating here - let the polling detect completion
     } catch (error) {
       console.error('Generation error:', error);
       toast.error(error instanceof Error ? error.message : 'Failed to start generation');
