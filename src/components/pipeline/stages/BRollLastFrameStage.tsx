@@ -75,9 +75,8 @@ export default function BRollLastFrameStage({ pipelineId, onComplete }: BRollLas
   // Dynamic credit cost based on resolution
   const creditCost = resolution === '4K' ? 0.15 : 0.1;
 
-  // Derive output URL from script_output (repurposed for last frame)
-  const lastFrameData = pipeline?.script_output as any;
-  const outputUrl = lastFrameData?.last_frame_url;
+  // Derive output URL from last_frame_output (set by update-file-status edge function)
+  const outputUrl = pipeline?.last_frame_output?.url;
   const isServerProcessing = pipeline?.status === 'processing' && pipeline?.current_stage === 'last_frame';
   // Only show generating state if: (1) user clicked generate (localGenerating), OR (2) server is processing AND we initiated it
   const isGenerating = localGenerating || (isServerProcessing && generationInitiatedRef.current);
