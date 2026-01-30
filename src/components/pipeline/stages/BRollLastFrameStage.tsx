@@ -29,6 +29,17 @@ type AspectRatio = '9:16' | '16:9' | '1:1';
 type CameraPerspective = '1st_person' | '3rd_person';
 type Resolution = '1K' | '2K' | '4K';
 
+// Helper to check if a string is a valid URL
+const isValidHttpUrl = (str: string | null | undefined): boolean => {
+  if (!str) return false;
+  try {
+    const url = new URL(str);
+    return url.protocol === 'http:' || url.protocol === 'https:';
+  } catch {
+    return false;
+  }
+};
+
 const CREDIT_COST = 0.25;
 
 // Last frame uses script_input/script_output since we need separate storage from first_frame
@@ -257,11 +268,19 @@ export default function BRollLastFrameStage({ pipelineId, onComplete }: BRollLas
       // Save input first
       await saveInput();
 
-      // Get fresh session
+      // CRITICAL: Get fresh session for valid auth token
       const { data: sessionData, error: sessionError } = await supabase.auth.refreshSession();
       if (sessionError || !sessionData.session) {
-        throw new Error('Session expired. Please log in again.');
+        throw new Error('Session expired. Please refresh the page and try again.');
       }
+
+      // Filter reference images - schema requires valid URLs only
+      const validReferenceImages = referenceImages.filter(img => isValidHttpUrl(img));
+
+      // Validate actor_360_url before sending
+      const validActor360Url = isValidHttpUrl(selectedActor?.profile_360_url) 
+        ? selectedActor?.profile_360_url 
+        : undefined;
 
       // Set processing status and current stage
       await updatePipeline({ status: 'processing', current_stage: 'last_frame' });
@@ -274,24 +293,29 @@ export default function BRollLastFrameStage({ pipelineId, onComplete }: BRollLas
             file_id: pipelineId,
             pipeline_id: pipelineId,
             user_id: sessionData.session.user.id,
-            project_id: pipeline?.project_id || null,
+            project_id: pipeline?.project_id || undefined,
+            prompt: prompt.trim(),
             frame_type: 'last',
             style,
-            substyle: style !== 'motion_graphics' ? subStyle : null,
-            prompt: prompt,
+            substyle: style !== 'motion_graphics' ? subStyle : undefined,
             aspect_ratio: aspectRatio,
             frame_resolution: resolution,
-            reference_images: referenceImages,
-            actor_id: (style === 'talking_head' || style === 'broll') ? selectedActorId : null,
-            actor_360_url: (style === 'talking_head' || style === 'broll') ? selectedActor?.profile_360_url : null,
-            credits_cost: creditCost,
+            reference_images: validReferenceImages.length > 0 ? validReferenceImages : undefined,
+            actor_id: (style === 'talking_head' || style === 'broll') && selectedActorId ? selectedActorId : undefined,
+            actor_360_url: validActor360Url,
             supabase_url: import.meta.env.VITE_SUPABASE_URL,
           },
         },
       });
 
-      if (error || !data?.success) {
-        throw new Error(error?.message || data?.error || 'Generation failed');
+      if (error) {
+        console.error('Supabase function error:', error);
+        throw new Error(error.message || 'Failed to call generation service');
+      }
+      
+      if (!data?.success) {
+        console.error('Generation failed:', data);
+        throw new Error(data?.error || 'Generation failed');
       }
 
       toast.success('Last frame generation started!');
@@ -302,7 +326,12 @@ export default function BRollLastFrameStage({ pipelineId, onComplete }: BRollLas
       setLocalGenerating(false);
       isLocalGeneratingRef.current = false;
       generationInitiatedRef.current = false;
-      await updatePipeline({ status: 'draft' });
+      // Reset pipeline status on error
+      try {
+        await updatePipeline({ status: 'draft' });
+      } catch (e) {
+        console.error('Failed to reset status:', e);
+      }
     }
   };
 
