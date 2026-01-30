@@ -10,7 +10,7 @@ import {
 } from '@/components/ui/dialog';
 import PipelineModal from '@/components/pipeline/PipelineModal';
 import ClipsPipelineModal from '@/components/pipeline/ClipsPipelineModal';
-import MotionGraphicsPipelineModal from '@/components/pipeline/MotionGraphicsPipelineModal';
+
 import LipSyncModal from '@/components/modals/LipSyncModal';
 import SpeechModal from '@/components/modals/SpeechModal';
 import AnimateModal from '@/components/modals/AnimateModal';
@@ -123,7 +123,7 @@ export default function CreateNewModal({
   const queryClient = useQueryClient();
   const [talkingHeadWorkflowOpen, setTalkingHeadWorkflowOpen] = useState(false);
   const [bRollWorkflowOpen, setBRollWorkflowOpen] = useState(false);
-  const [motionGraphicsWorkflowOpen, setMotionGraphicsWorkflowOpen] = useState(false);
+  
   const [lipSyncModalOpen, setLipSyncModalOpen] = useState(false);
   const [speechModalOpen, setSpeechModalOpen] = useState(false);
   const [animateModalOpen, setAnimateModalOpen] = useState(false);
@@ -195,8 +195,6 @@ export default function CreateNewModal({
 
       if (workflow.id === 'b_roll') {
         setBRollWorkflowOpen(true);
-      } else if (workflow.id === 'motion_graphics') {
-        setMotionGraphicsWorkflowOpen(true);
       } else {
         setTalkingHeadWorkflowOpen(true);
       }
@@ -296,7 +294,7 @@ export default function CreateNewModal({
   const handleModalClose = () => {
     setTalkingHeadWorkflowOpen(false);
     setBRollWorkflowOpen(false);
-    setMotionGraphicsWorkflowOpen(false);
+    
     setLipSyncModalOpen(false);
     setSpeechModalOpen(false);
     setAnimateModalOpen(false);
@@ -443,19 +441,6 @@ export default function CreateNewModal({
         />
       )}
 
-      {/* Motion Graphics Workflow Modal */}
-      {createdPipelineId && motionGraphicsWorkflowOpen && (
-        <MotionGraphicsPipelineModal
-          open={motionGraphicsWorkflowOpen}
-          onClose={handleModalClose}
-          pipelineId={createdPipelineId}
-          projectId={projectId}
-          folderId={folderId}
-          initialStatus={initialStatusRef.current}
-          onSuccess={handleSuccess}
-          statusOptions={statusOptions}
-        />
-      )}
 
       {/* Lip Sync Modal */}
       {createdFileId && lipSyncModalOpen && (
