@@ -44,10 +44,9 @@ export default function SpeechStage({ pipelineId, onContinue }: SpeechStageProps
   const [isUploadingAudio, setIsUploadingAudio] = useState(false);
   const [isSavingUpload, setIsSavingUpload] = useState(false);
 
-  // Generation state
-  const [isGenerating, setIsGenerating] = useState(false);
+  // Generation state - local only for instant feedback before server confirms
+  const [localGenerating, setLocalGenerating] = useState(false);
   const initialLoadDoneRef = useRef(false);
-  const generationInitiatedRef = useRef(false);
 
   // Get available actors with voice
   const availableActors = actors?.filter(
@@ -60,10 +59,11 @@ export default function SpeechStage({ pipelineId, onContinue }: SpeechStageProps
   const characterCount = script.length;
   const creditCost = Math.max(CREDIT_COST_PER_1000_CHARS, Math.ceil(characterCount / 1000) * CREDIT_COST_PER_1000_CHARS);
 
-  // Derived state
+  // Derived state - server is the source of truth for generating state
+  const isServerProcessing = pipeline?.status === 'processing' && (pipeline?.current_stage === 'voice' || pipeline?.current_stage === 'speech');
+  const isGenerating = localGenerating || isServerProcessing; // Show generating if local OR server says so
   const hasOutput = pipeline?.voice_complete && pipeline?.voice_output?.url;
   const outputUrl = pipeline?.voice_output?.url;
-  const isServerProcessing = pipeline?.status === 'processing' && (pipeline?.current_stage === 'voice' || pipeline?.current_stage === 'speech');
   
   // Refs for tracking status transitions
   const prevStatusRef = useRef<string | null>(null);
@@ -94,22 +94,26 @@ export default function SpeechStage({ pipelineId, onContinue }: SpeechStageProps
     }
   }, [pipeline, hasOutput, pipelineId]);
 
-  // Handle status transitions - detect completion
+  // Handle status transitions - detect completion and show toasts
   useEffect(() => {
     if (!pipeline) return;
     
     const currentStatus = pipeline.status;
     const prevStatus = prevStatusRef.current;
     
-    // Completed transition - clear generating state
-    if (generationInitiatedRef.current && prevStatus === 'processing' && currentStatus !== 'processing') {
+    // Server confirmed processing - clear local generating state
+    if (currentStatus === 'processing' && (pipeline.current_stage === 'voice' || pipeline.current_stage === 'speech')) {
+      setLocalGenerating(false);
+    }
+    
+    // Completed transition - show success toast
+    if (prevStatus === 'processing' && currentStatus !== 'processing') {
       if (pipeline.voice_output?.url && toastShownRef.current !== pipelineId) {
         toastShownRef.current = pipelineId;
         toast.success('Speech generated!');
         queryClient.invalidateQueries({ queryKey: ['pipeline', pipelineId] });
       }
-      setIsGenerating(false);
-      generationInitiatedRef.current = false;
+      setLocalGenerating(false);
     }
     
     prevStatusRef.current = currentStatus;
@@ -240,8 +244,7 @@ export default function SpeechStage({ pipelineId, onContinue }: SpeechStageProps
       return;
     }
 
-    generationInitiatedRef.current = true;
-    setIsGenerating(true);
+    setLocalGenerating(true);
 
     try {
       const { data: sessionData, error: sessionError } = await supabase.auth.refreshSession();
@@ -288,14 +291,11 @@ export default function SpeechStage({ pipelineId, onContinue }: SpeechStageProps
       console.error('Generation error:', error);
       toast.error('Failed to start generation');
       await updatePipeline({ status: 'draft' });
-      // Only reset on error
-      setIsGenerating(false);
-      generationInitiatedRef.current = false;
+      setLocalGenerating(false);
     }
   };
 
-  const canGenerate = script.length >= MIN_CHARACTERS && !!selectedActorId && !isGenerating && !isServerProcessing;
-  const showGenerating = isGenerating || (isServerProcessing && generationInitiatedRef.current);
+  const canGenerate = script.length >= MIN_CHARACTERS && !!selectedActorId && !isGenerating;
 
   return (
     <div className="h-full flex min-h-0 overflow-hidden">
@@ -555,7 +555,7 @@ export default function SpeechStage({ pipelineId, onContinue }: SpeechStageProps
               </div>
               <p className="text-xs text-muted-foreground">{CREDIT_COST_PER_1000_CHARS} credits per 1,000 characters</p>
               <Button onClick={handleGenerate} disabled={!canGenerate} className="w-full">
-                {showGenerating ? (
+                {isGenerating ? (
                   <>
                     <Loader2 className="h-4 w-4 animate-spin mr-2" strokeWidth={1.5} />
                     Generating...
@@ -575,7 +575,7 @@ export default function SpeechStage({ pipelineId, onContinue }: SpeechStageProps
         <div className="flex-1 overflow-y-auto p-6 space-y-6">
         <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">Output</h3>
 
-        {showGenerating || isServerProcessing ? (
+        {isGenerating ? (
           <div className="space-y-4">
             <div className="aspect-video rounded-xl bg-secondary/50 flex items-center justify-center">
               <div className="text-center space-y-3">
