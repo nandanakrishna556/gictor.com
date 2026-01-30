@@ -276,7 +276,8 @@ export default function BRollLastFrameStage({ pipelineId, onComplete }: BRollLas
       // Update pipeline status to processing
       await updatePipeline({ status: 'processing', current_stage: 'last_frame' });
 
-      // Call edge function with 'frame' type - EXACT same structure as FirstFrameStage
+      // Call edge function with 'frame' type
+      // IMPORTANT: metadata.stage tells update-file-status which pipeline field to update
       const { data, error } = await supabase.functions.invoke('trigger-generation', {
         body: {
           type: 'frame',
@@ -293,8 +294,12 @@ export default function BRollLastFrameStage({ pipelineId, onComplete }: BRollLas
             frame_resolution: resolution,
             reference_images: referenceImages.filter(url => url && url.startsWith('http')),
             actor_id: (style === 'talking_head' || style === 'broll') ? selectedActorId : null,
-            credits_cost: creditCost,
             supabase_url: import.meta.env.VITE_SUPABASE_URL,
+            // Metadata for n8n to pass back in callback - tells update-file-status which field to update
+            metadata: {
+              pipeline_id: pipelineId,
+              stage: 'last_frame',
+            },
           },
         },
       });
