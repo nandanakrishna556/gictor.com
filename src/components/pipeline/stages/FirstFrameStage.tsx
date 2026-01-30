@@ -52,20 +52,20 @@ export default function FirstFrameStage({ pipelineId, onContinue }: FirstFrameSt
   const [uploadingIndex, setUploadingIndex] = useState<number | null>(null);
   const [draggingIndex, setDraggingIndex] = useState<number | null>(null);
 
-  // Generation state
-  const [isGenerating, setIsGenerating] = useState(false);
+  // Generation state - local only for instant feedback before server confirms
+  const [localGenerating, setLocalGenerating] = useState(false);
   const initialLoadDoneRef = useRef(false);
-  const generationInitiatedRef = useRef(false);
   const prevStatusRef = useRef<string | null>(null);
   const toastShownRef = useRef<string | null>(null);
 
   // Dynamic credit cost based on resolution
   const creditCost = resolution === '4K' ? 0.15 : 0.1;
 
-  // Derived state
+  // Derived state - server is the source of truth for generating state
+  const isServerProcessing = pipeline?.status === 'processing' && pipeline?.current_stage === 'first_frame';
+  const isGenerating = localGenerating || isServerProcessing; // Show generating if local OR server says so
   const hasOutput = pipeline?.first_frame_complete && pipeline?.first_frame_output?.url;
   const outputUrl = pipeline?.first_frame_output?.url;
-  const isServerProcessing = pipeline?.status === 'processing' && pipeline?.current_stage === 'first_frame';
 
   // Load saved state from pipeline
   useEffect(() => {
@@ -93,22 +93,26 @@ export default function FirstFrameStage({ pipelineId, onContinue }: FirstFrameSt
     }
   }, [pipeline, hasOutput, pipelineId]);
 
-  // Handle status transitions - detect completion
+  // Handle status transitions - detect completion and show toasts
   useEffect(() => {
     if (!pipeline) return;
     
     const currentStatus = pipeline.status;
     const prevStatus = prevStatusRef.current;
     
-    // Completed transition - clear generating state
-    if (generationInitiatedRef.current && prevStatus === 'processing' && currentStatus !== 'processing') {
+    // Server confirmed processing - clear local generating state
+    if (currentStatus === 'processing' && pipeline.current_stage === 'first_frame') {
+      setLocalGenerating(false);
+    }
+    
+    // Completed transition - show success toast
+    if (prevStatus === 'processing' && currentStatus !== 'processing') {
       if (pipeline.first_frame_output?.url && toastShownRef.current !== pipelineId) {
         toastShownRef.current = pipelineId;
         toast.success('First frame generated!');
         queryClient.invalidateQueries({ queryKey: ['pipeline', pipelineId] });
       }
-      setIsGenerating(false);
-      generationInitiatedRef.current = false;
+      setLocalGenerating(false);
     }
     
     prevStatusRef.current = currentStatus;
@@ -255,8 +259,7 @@ export default function FirstFrameStage({ pipelineId, onContinue }: FirstFrameSt
       return;
     }
 
-    generationInitiatedRef.current = true;
-    setIsGenerating(true);
+    setLocalGenerating(true);
 
     try {
       // Get fresh session
@@ -302,14 +305,11 @@ export default function FirstFrameStage({ pipelineId, onContinue }: FirstFrameSt
       console.error('Generation error:', error);
       toast.error('Failed to start generation');
       await updatePipeline({ status: 'draft' });
-      // Only reset on error
-      setIsGenerating(false);
-      generationInitiatedRef.current = false;
+      setLocalGenerating(false);
     }
   };
 
-  const canGenerate = !isGenerating && !isServerProcessing && profile && (profile.credits ?? 0) >= creditCost;
-  const showGenerating = isGenerating || (isServerProcessing && generationInitiatedRef.current);
+  const canGenerate = !isGenerating && profile && (profile.credits ?? 0) >= creditCost;
 
   return (
     <div className="h-full flex overflow-hidden">
@@ -612,7 +612,7 @@ export default function FirstFrameStage({ pipelineId, onContinue }: FirstFrameSt
                   rows={3}
                   className="resize-none"
                 />
-                {hasOutput && !showGenerating && (
+                {hasOutput && !isGenerating && (
                   <p className="text-xs text-muted-foreground">Describe what you'd like to change</p>
                 )}
               </div>
@@ -624,7 +624,7 @@ export default function FirstFrameStage({ pipelineId, onContinue }: FirstFrameSt
                   <span className="font-medium">{creditCost} credits</span>
                 </div>
                 <Button onClick={handleGenerate} disabled={!canGenerate} className="w-full">
-                  {showGenerating ? (
+                  {isGenerating ? (
                     <>
                       <Loader2 className="h-4 w-4 animate-spin mr-2" strokeWidth={1.5} />
                       Generating...
@@ -643,7 +643,7 @@ export default function FirstFrameStage({ pipelineId, onContinue }: FirstFrameSt
       <div className="w-1/2 overflow-y-auto p-6 space-y-6 bg-muted/10">
         <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">Output</h3>
 
-        {showGenerating || isServerProcessing ? (
+        {isGenerating ? (
           <div className="space-y-4">
             <div className="aspect-square rounded-xl bg-secondary/50 flex items-center justify-center">
               <div className="text-center space-y-4">

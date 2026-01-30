@@ -48,8 +48,8 @@ export default function LipSyncStage({ pipelineId, onComplete }: LipSyncStagePro
   const [isUploadingVideo, setIsUploadingVideo] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   
-  // Generation state
-  const [isGenerating, setIsGenerating] = useState(false);
+  // Generation state - local only for instant feedback before server confirms
+  const [localGenerating, setLocalGenerating] = useState(false);
 
   // Get the actual image and audio to use (override or from pipeline)
   const effectiveImageUrl = overrideImageUrl || imageUrl;
@@ -58,6 +58,10 @@ export default function LipSyncStage({ pipelineId, onComplete }: LipSyncStagePro
 
   // Calculate credit cost
   const creditCost = Math.max(MIN_CREDIT_COST, Math.ceil(effectiveAudioDuration * CREDIT_COST_PER_SECOND * 100) / 100);
+  
+  // Derive generating state from server - server is source of truth
+  const isServerProcessing = pipeline?.status === 'processing' && pipeline?.current_stage === 'lip_sync';
+  const isGenerating = localGenerating || isServerProcessing;
 
   // Load existing data from pipeline
   useEffect(() => {
@@ -70,10 +74,6 @@ export default function LipSyncStage({ pipelineId, onComplete }: LipSyncStagePro
       if (pipeline.voice_output?.url) {
         setAudioUrl(pipeline.voice_output.url);
         setAudioDuration(pipeline.voice_output.duration_seconds || 0);
-      }
-      // Check generation status
-      if (pipeline.status === 'processing') {
-        setIsGenerating(true);
       }
     }
   }, [pipeline]);
@@ -94,18 +94,25 @@ export default function LipSyncStage({ pipelineId, onComplete }: LipSyncStagePro
     }
   }, [effectiveAudioUrl, audioDuration, overrideAudioUrl]);
 
-  // Poll for completion
+  // Handle completion toasts
   useEffect(() => {
-    if (isGenerating && pipeline) {
+    if (pipeline) {
       if (pipeline.status === 'completed' && pipeline.final_video_output?.url) {
-        setIsGenerating(false);
-        toast.success('Lip sync video generated!');
+        if (localGenerating) {
+          setLocalGenerating(false);
+          toast.success('Lip sync video generated!');
+        }
       } else if (pipeline.status === 'failed') {
-        setIsGenerating(false);
-        toast.error('Generation failed');
+        if (localGenerating) {
+          setLocalGenerating(false);
+          toast.error('Generation failed');
+        }
+      } else if (pipeline.status === 'processing' && pipeline.current_stage === 'lip_sync') {
+        // Server confirmed processing - clear local state
+        setLocalGenerating(false);
       }
     }
-  }, [pipeline, isGenerating]);
+  }, [pipeline, localGenerating]);
 
   // Audio upload handlers
   const processAudioFile = async (file: File) => {
@@ -224,7 +231,7 @@ export default function LipSyncStage({ pipelineId, onComplete }: LipSyncStagePro
       return;
     }
 
-    setIsGenerating(true);
+    setLocalGenerating(true);
 
     try {
       const { data: sessionData, error: sessionError } = await supabase.auth.refreshSession();
@@ -273,7 +280,7 @@ export default function LipSyncStage({ pipelineId, onComplete }: LipSyncStagePro
       queryClient.invalidateQueries({ queryKey: ['profile'] });
     } catch (error) {
       console.error('Generation error:', error);
-      setIsGenerating(false);
+      setLocalGenerating(false);
       toast.error('Failed to start generation');
     }
   };

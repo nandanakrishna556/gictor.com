@@ -65,21 +65,19 @@ export default function BRollLastFrameStage({ pipelineId, onComplete }: BRollLas
   // Upload state for reference images
   const [uploadingIndex, setUploadingIndex] = useState<number | null>(null);
   
-  // Generation state
+  // Generation state - local only for instant feedback before server confirms
   const [localGenerating, setLocalGenerating] = useState(false);
   const isLocalGeneratingRef = useRef(false);
   const prevStatusRef = useRef<string | null>(null);
   const toastShownRef = useRef<string | null>(null);
-  const generationInitiatedRef = useRef(false); // Track if user initiated generation
 
   // Dynamic credit cost based on resolution
   const creditCost = resolution === '4K' ? 0.15 : 0.1;
 
-  // Derive output URL from last_frame_output (set by update-file-status edge function)
+  // Derive output URL from last_frame_output - server is source of truth for generating state
   const outputUrl = pipeline?.last_frame_output?.url;
   const isServerProcessing = pipeline?.status === 'processing' && pipeline?.current_stage === 'last_frame';
-  // Only show generating state if: (1) user clicked generate (localGenerating), OR (2) server is processing AND we initiated it
-  const isGenerating = localGenerating || (isServerProcessing && generationInitiatedRef.current);
+  const isGenerating = localGenerating || isServerProcessing; // Show generating if local OR server says so
   const hasOutput = !!outputUrl;
 
   // Track if initial load is done to prevent overwriting user input
@@ -113,7 +111,7 @@ export default function BRollLastFrameStage({ pipelineId, onComplete }: BRollLas
     }
   }, [pipeline?.script_input, pipeline?.status, hasOutput, pipelineId]);
 
-  // Handle status transitions
+  // Handle status transitions - show toasts on completion
   useEffect(() => {
     if (!pipeline) return;
     
@@ -121,21 +119,19 @@ export default function BRollLastFrameStage({ pipelineId, onComplete }: BRollLas
     const prevStatus = prevStatusRef.current;
     
     // Server confirmed processing - clear local generating state
-    if (generationInitiatedRef.current && currentStatus === 'processing') {
+    if (currentStatus === 'processing' && pipeline.current_stage === 'last_frame') {
       isLocalGeneratingRef.current = false;
       setLocalGenerating(false);
     }
     
-    // Completed transition - only react if we initiated generation
-    const lastFrameOutput = pipeline.script_output as any;
-    if (generationInitiatedRef.current && prevStatus === 'processing' && currentStatus !== 'processing' && lastFrameOutput?.last_frame_url) {
+    // Completed transition - show success toast
+    if (prevStatus === 'processing' && currentStatus !== 'processing' && pipeline.last_frame_output?.url) {
       if (toastShownRef.current !== pipelineId + '_last') {
         toastShownRef.current = pipelineId + '_last';
         toast.success('Last frame generated!');
         queryClient.invalidateQueries({ queryKey: ['pipeline', pipelineId] });
       }
       setLocalGenerating(false);
-      generationInitiatedRef.current = false; // Reset after completion
     }
     
     prevStatusRef.current = currentStatus;
@@ -257,9 +253,8 @@ export default function BRollLastFrameStage({ pipelineId, onComplete }: BRollLas
       return;
     }
 
-    // Immediate feedback - mark that user initiated generation
+    // Immediate feedback
     isLocalGeneratingRef.current = true;
-    generationInitiatedRef.current = true;
     setLocalGenerating(true);
 
     try {
