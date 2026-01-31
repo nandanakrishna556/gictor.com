@@ -66,10 +66,13 @@ export default function FirstFrameStage({ pipelineId, onContinue }: FirstFrameSt
   const pipelineStatus = pipeline?.status;
   const pipelineStage = pipeline?.current_stage;
   const isServerProcessingThisStage = pipelineStatus === 'processing' && pipelineStage === 'first_frame';
-  const hasOutput = pipeline?.first_frame_complete && pipeline?.first_frame_output?.url;
+  
+  // Check for output - prioritize URL existence over completion flag
+  const outputUrl = pipeline?.first_frame_output?.url;
+  const hasOutput = !!outputUrl;
+  
   // Force generating to false if we already have output
   const isGenerating = hasOutput ? false : (localGenerating || isServerProcessingThisStage);
-  const outputUrl = pipeline?.first_frame_output?.url;
 
   // Load saved state from pipeline
   useEffect(() => {

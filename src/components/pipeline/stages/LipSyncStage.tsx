@@ -64,8 +64,11 @@ export default function LipSyncStage({ pipelineId, onComplete }: LipSyncStagePro
   const pipelineStatus = pipeline?.status;
   const pipelineStage = pipeline?.current_stage;
   const isServerProcessingThisStage = pipelineStatus === 'processing' && pipelineStage === 'lip_sync';
-  // Force generating to false if we already have output
+  
+  // Check for output - prioritize URL existence
   const hasOutputForGenerating = !!pipeline?.final_video_output?.url;
+  
+  // Force generating to false if we already have output
   const isGenerating = hasOutputForGenerating ? false : (localGenerating || isServerProcessingThisStage);
 
   // Load existing data from pipeline
