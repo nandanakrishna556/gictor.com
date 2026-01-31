@@ -267,6 +267,14 @@ export default function BRollLastFrameStage({ pipelineId, onComplete }: BRollLas
         throw new Error('Session expired. Please log in again.');
       }
 
+      // Filter reference images - schema requires valid URLs only
+      const validReferenceImages = referenceImages.filter(img => isValidHttpUrl(img));
+
+      // Validate actor_360_url before sending (for face reference in n8n)
+      const validActor360Url = isValidHttpUrl(selectedActor?.profile_360_url) 
+        ? selectedActor?.profile_360_url 
+        : undefined;
+
       // Update pipeline status to processing
       await updatePipeline({ status: 'processing', current_stage: 'last_frame' });
 
@@ -279,15 +287,16 @@ export default function BRollLastFrameStage({ pipelineId, onComplete }: BRollLas
             file_id: pipelineId,
             pipeline_id: pipelineId,
             user_id: sessionData.session.user.id,
-            project_id: pipeline?.project_id || null,
+            project_id: pipeline?.project_id || undefined,
             frame_type: 'last',
-            style: style,
-            substyle: style !== 'motion_graphics' ? subStyle : null,
-            prompt: prompt,
+            style,
+            substyle: style !== 'motion_graphics' ? subStyle : undefined,
+            prompt: prompt.trim(),
             aspect_ratio: aspectRatio,
             frame_resolution: resolution,
-            reference_images: referenceImages.filter(url => url && url.startsWith('http')),
-            actor_id: (style === 'talking_head' || style === 'broll') ? selectedActorId : null,
+            reference_images: validReferenceImages.length > 0 ? validReferenceImages : undefined,
+            actor_id: (style === 'talking_head' || style === 'broll') && selectedActorId ? selectedActorId : undefined,
+            actor_360_url: validActor360Url,
             supabase_url: import.meta.env.VITE_SUPABASE_URL,
             // Metadata for n8n to pass back in callback - tells update-file-status which field to update
             metadata: {
