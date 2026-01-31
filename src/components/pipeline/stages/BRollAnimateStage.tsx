@@ -58,7 +58,8 @@ export default function BRollAnimateStage({ pipelineId, onComplete }: BRollAnima
 
   // Get frames from pipeline (from previous stages)
   const originalFirstFrame = pipeline?.first_frame_output?.url;
-  const originalLastFrame = (pipeline?.script_output as any)?.last_frame_url;
+  // Last frame is stored in last_frame_output by BRollLastFrameStage
+  const originalLastFrame = pipeline?.last_frame_output?.url;
   
   // Use custom if available, otherwise use original
   const effectiveFirstFrame = firstFrameUrl || originalFirstFrame;
