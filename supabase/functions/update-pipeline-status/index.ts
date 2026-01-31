@@ -7,6 +7,9 @@ const corsHeaders = {
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
 }
 
+// Shared secret between n8n and this edge function
+const VALID_API_KEY = 'gictor-n8n-secret-2024'
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders })
@@ -14,9 +17,8 @@ serve(async (req) => {
 
   try {
     const apiKey = req.headers.get('x-api-key')
-    const expectedKey = Deno.env.get('N8N_WEBHOOK_SECRET')
     
-    if (!apiKey || apiKey !== expectedKey) {
+    if (apiKey !== VALID_API_KEY) {
       console.error('Unauthorized: Invalid API key')
       return new Response(
         JSON.stringify({ success: false, error: 'Unauthorized' }),
