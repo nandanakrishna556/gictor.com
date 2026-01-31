@@ -138,6 +138,15 @@ export default function BRollAnimateStage({ pipelineId, onComplete }: BRollAnima
     const currentStage = pipeline.current_stage;
     const prevStatus = prevStatusRef.current;
     
+    // Clear local generating if server is processing a DIFFERENT stage
+    // This ensures Animate doesn't show generating when First Frame is processing
+    if (currentStatus === 'processing' && currentStage !== 'final_video') {
+      if (localGenerating) {
+        setLocalGenerating(false);
+        isLocalGeneratingRef.current = false;
+      }
+    }
+    
     // If server confirms THIS stage is processing, we can clear the local flag
     // since isProcessing will now be true
     if (currentStatus === 'processing' && currentStage === 'final_video') {
@@ -162,7 +171,7 @@ export default function BRollAnimateStage({ pipelineId, onComplete }: BRollAnima
     }
     
     prevStatusRef.current = currentStatus;
-  }, [pipeline, pipelineId, queryClient]);
+  }, [pipeline, pipelineId, queryClient, localGenerating]);
 
   // Handle file upload
   const handleFileUpload = async (uploadedFile: File, isFirstFrame: boolean) => {
