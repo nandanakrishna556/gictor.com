@@ -104,8 +104,14 @@ export default function BRollAnimateStage({ pipelineId, onComplete }: BRollAnima
       if (hasOutput) {
         toastShownRef.current = pipelineId;
       }
+      // If we're already processing THIS stage on mount, ensure we show generating
+      // This handles the case when user navigates away and back during generation
+      if (pipeline.status === 'processing' && pipeline.current_stage === 'final_video') {
+        setLocalGenerating(true);
+        isLocalGeneratingRef.current = true;
+      }
     }
-  }, [pipeline?.voice_input, pipeline?.status, hasOutput, pipelineId]);
+  }, [pipeline?.voice_input, pipeline?.status, hasOutput, pipelineId, pipeline?.current_stage]);
 
   // Auto-populate frames from previous stages when they become available
   useEffect(() => {
@@ -126,9 +132,12 @@ export default function BRollAnimateStage({ pipelineId, onComplete }: BRollAnima
     if (!pipeline) return;
     
     const currentStatus = pipeline.status;
+    const currentStage = pipeline.current_stage;
     const prevStatus = prevStatusRef.current;
     
-    if (isLocalGeneratingRef.current && currentStatus === 'processing') {
+    // If server confirms THIS stage is processing, we can clear the local flag
+    // since isProcessing will now be true
+    if (currentStatus === 'processing' && currentStage === 'final_video') {
       isLocalGeneratingRef.current = false;
       setLocalGenerating(false);
     }

@@ -105,24 +105,41 @@ export default function BRollFirstFrameStage({ pipelineId, onComplete }: BRollFi
       if (hasOutput) {
         toastShownRef.current = pipelineId;
       }
+      // If we're already processing THIS stage on mount, ensure we show generating
+      // This handles the case when user navigates away and back during generation
+      if (pipeline.status === 'processing' && pipeline.current_stage === 'first_frame') {
+        setLocalGenerating(true);
+        isLocalGeneratingRef.current = true;
+      }
     }
-  }, [pipeline?.first_frame_input, pipeline?.status, hasOutput, pipelineId]);
+  }, [pipeline?.first_frame_input, pipeline?.status, hasOutput, pipelineId, pipeline?.current_stage]);
 
   // Handle status transitions - show toasts on completion
   useEffect(() => {
     if (!pipeline) return;
     
     const currentStatus = pipeline.status;
+    const currentStage = pipeline.current_stage;
     const prevStatus = prevStatusRef.current;
     
-    // Server confirmed processing - clear local generating state
-    if (currentStatus === 'processing' && pipeline.current_stage === 'first_frame') {
+    // Clear local generating if server is processing a DIFFERENT stage
+    // This ensures First Frame doesn't show generating when Animate is processing
+    if (currentStatus === 'processing' && currentStage !== 'first_frame') {
+      if (localGenerating) {
+        setLocalGenerating(false);
+        isLocalGeneratingRef.current = false;
+      }
+    }
+    
+    // Server confirmed processing for THIS stage - clear local generating state
+    if (currentStatus === 'processing' && currentStage === 'first_frame') {
       isLocalGeneratingRef.current = false;
       setLocalGenerating(false);
     }
     
-    // Completed transition - show success toast
+    // Completed transition - show success toast (only for first frame completion)
     if (prevStatus === 'processing' && currentStatus !== 'processing' && pipeline.first_frame_output?.url) {
+      // Only show toast if WE were the ones generating (prevStage was first_frame)
       if (toastShownRef.current !== pipelineId) {
         toastShownRef.current = pipelineId;
         toast.success('First frame generated!');
@@ -132,7 +149,7 @@ export default function BRollFirstFrameStage({ pipelineId, onComplete }: BRollFi
     }
     
     prevStatusRef.current = currentStatus;
-  }, [pipeline, pipelineId, queryClient]);
+  }, [pipeline, pipelineId, queryClient, localGenerating]);
 
   // Save input changes
   const saveInput = async () => {
