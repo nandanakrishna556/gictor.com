@@ -75,9 +75,12 @@ export default function BRollFirstFrameStage({ pipelineId, onComplete }: BRollFi
 
   // Derive from pipeline - server is source of truth for generating state
   const isServerProcessing = pipeline?.status === 'processing' && pipeline?.current_stage === 'first_frame';
-  const isGenerating = localGenerating || isServerProcessing; // Show generating if local OR server says so
   const hasOutput = !!pipeline?.first_frame_output?.url;
   const outputUrl = pipeline?.first_frame_output?.url;
+  
+  // CRITICAL: If we have output, we are NOT generating - output takes precedence
+  // This prevents the generating state from persisting after completion
+  const isGenerating = hasOutput ? false : (localGenerating || isServerProcessing);
 
   // Track if initial load is done to prevent overwriting user input
   const initialLoadDone = useRef(false);

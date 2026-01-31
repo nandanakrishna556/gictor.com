@@ -71,7 +71,10 @@ export default function BRollAnimateStage({ pipelineId, onComplete }: BRollAnima
   
   // Check if processing
   const isProcessing = pipeline?.status === 'processing' && pipeline?.current_stage === 'final_video';
-  const isGenerating = localGenerating || isProcessing;
+  
+  // CRITICAL: If we have output, we are NOT generating - output takes precedence
+  // This prevents the generating state from persisting after completion
+  const isGenerating = hasOutput ? false : (localGenerating || isProcessing);
   
   // Credit cost
   const creditCost = Math.ceil(duration * CREDIT_COST_PER_SECOND * 100) / 100;
