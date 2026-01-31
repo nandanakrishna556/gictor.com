@@ -195,16 +195,9 @@ export default function BRollPipelineModal({
   }, [hasUnsavedChanges, name, displayStatus, selectedTags, triggerAutoSave]);
 
   const handleStageClick = (stage: BRollStage) => {
+    // Only update the UI tab - don't update current_stage in DB
+    // current_stage should only be set by the generation process to track what's actually processing
     setActiveStage(stage);
-    // Map B-Roll stage back to pipeline stage
-    let pipelineStage: string;
-    switch (stage) {
-      case 'first_frame': pipelineStage = 'first_frame'; break;
-      case 'last_frame': pipelineStage = 'script'; break;
-      case 'animate': pipelineStage = 'final_video'; break;
-      default: pipelineStage = 'first_frame';
-    }
-    updatePipeline({ current_stage: pipelineStage as any });
   };
 
   const isStageComplete = (stage: BRollStage): boolean => {
