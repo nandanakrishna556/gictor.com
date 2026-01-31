@@ -74,13 +74,18 @@ export default function BRollFirstFrameStage({ pipelineId, onComplete }: BRollFi
   const creditCost = resolution === '4K' ? 0.15 : 0.1;
 
   // Derive from pipeline - server is source of truth for generating state
-  const isServerProcessing = pipeline?.status === 'processing' && pipeline?.current_stage === 'first_frame';
+  // Check if THIS stage is processing (not any other stage)
+  const pipelineStatus = pipeline?.status;
+  const pipelineStage = pipeline?.current_stage;
+  const isServerProcessingThisStage = pipelineStatus === 'processing' && pipelineStage === 'first_frame';
+  
   const hasOutput = !!pipeline?.first_frame_output?.url;
   const outputUrl = pipeline?.first_frame_output?.url;
   
   // CRITICAL: If we have output, we are NOT generating - output takes precedence
-  // This prevents the generating state from persisting after completion
-  const isGenerating = hasOutput ? false : (localGenerating || isServerProcessing);
+  // Only show generating if: localGenerating (optimistic) OR server confirms THIS stage is processing
+  // Never show generating if another stage is processing
+  const isGenerating = hasOutput ? false : (localGenerating || isServerProcessingThisStage);
 
   // Track if initial load is done to prevent overwriting user input
   const initialLoadDone = useRef(false);
@@ -117,15 +122,24 @@ export default function BRollFirstFrameStage({ pipelineId, onComplete }: BRollFi
     if (!pipeline) return;
     
     const currentStatus = pipeline.status;
+    const currentStage = pipeline.current_stage;
     const prevStatus = prevStatusRef.current;
     
-    // Always clear localGenerating when server confirms processing (isServerProcessing takes over)
-    if (currentStatus === 'processing' && localGenerating) {
-      setLocalGenerating(false);
-      isLocalGeneratingRef.current = false;
+    // Clear localGenerating when server confirms THIS stage is processing
+    // OR when server is processing a DIFFERENT stage (we shouldn't be generating)
+    if (currentStatus === 'processing') {
+      if (currentStage === 'first_frame' && localGenerating) {
+        // Server confirmed - let isServerProcessingThisStage take over
+        setLocalGenerating(false);
+        isLocalGeneratingRef.current = false;
+      } else if (currentStage !== 'first_frame' && localGenerating) {
+        // Another stage is processing - definitely not us
+        setLocalGenerating(false);
+        isLocalGeneratingRef.current = false;
+      }
     }
     
-    // Completed transition - show success toast
+    // Completed transition - show success toast only when we get output
     if (prevStatus === 'processing' && currentStatus !== 'processing' && pipeline.first_frame_output?.url) {
       if (toastShownRef.current !== pipelineId) {
         toastShownRef.current = pipelineId;
@@ -133,6 +147,7 @@ export default function BRollFirstFrameStage({ pipelineId, onComplete }: BRollFi
         queryClient.invalidateQueries({ queryKey: ['pipeline', pipelineId] });
       }
       setLocalGenerating(false);
+      isLocalGeneratingRef.current = false;
     }
     
     prevStatusRef.current = currentStatus;

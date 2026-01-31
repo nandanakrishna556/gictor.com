@@ -69,12 +69,15 @@ export default function BRollAnimateStage({ pipelineId, onComplete }: BRollAnima
   const outputVideo = pipeline?.final_video_output;
   const hasOutput = !!outputVideo?.url;
   
-  // Check if processing
-  const isProcessing = pipeline?.status === 'processing' && pipeline?.current_stage === 'final_video';
+  // Check if THIS SPECIFIC stage is processing (not any other stage)
+  const pipelineStatus = pipeline?.status;
+  const pipelineStage = pipeline?.current_stage;
+  const isServerProcessingThisStage = pipelineStatus === 'processing' && pipelineStage === 'final_video';
   
   // CRITICAL: If we have output, we are NOT generating - output takes precedence
-  // This prevents the generating state from persisting after completion
-  const isGenerating = hasOutput ? false : (localGenerating || isProcessing);
+  // Only show generating if: localGenerating (optimistic) OR server confirms THIS stage is processing
+  // NEVER show generating if pipeline is processing a DIFFERENT stage (e.g., first_frame)
+  const isGenerating = hasOutput ? false : (localGenerating || isServerProcessingThisStage);
   
   // Credit cost
   const creditCost = Math.ceil(duration * CREDIT_COST_PER_SECOND * 100) / 100;
@@ -133,10 +136,15 @@ export default function BRollAnimateStage({ pipelineId, onComplete }: BRollAnima
     const currentStage = pipeline.current_stage;
     const prevStatus = prevStatusRef.current;
     
-    // Always clear localGenerating when server confirms processing (isProcessing takes over)
-    // or when a different stage is processing (we shouldn't show generating)
+    // Clear localGenerating when server confirms THIS stage is processing
+    // OR when server is processing a DIFFERENT stage (we definitely shouldn't show generating)
     if (currentStatus === 'processing') {
-      if (localGenerating) {
+      if (currentStage === 'final_video' && localGenerating) {
+        // Server confirmed - let isServerProcessingThisStage take over
+        setLocalGenerating(false);
+        isLocalGeneratingRef.current = false;
+      } else if (currentStage !== 'final_video' && localGenerating) {
+        // Another stage is processing - definitely not us
         setLocalGenerating(false);
         isLocalGeneratingRef.current = false;
       }
@@ -150,12 +158,14 @@ export default function BRollAnimateStage({ pipelineId, onComplete }: BRollAnima
         queryClient.invalidateQueries({ queryKey: ['pipeline', pipelineId] });
       }
       setLocalGenerating(false);
+      isLocalGeneratingRef.current = false;
     }
     
     // Failed
     if (prevStatus === 'processing' && currentStatus === 'failed') {
       toast.error('Generation failed');
       setLocalGenerating(false);
+      isLocalGeneratingRef.current = false;
     }
     
     prevStatusRef.current = currentStatus;
