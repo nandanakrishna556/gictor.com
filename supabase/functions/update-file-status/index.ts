@@ -228,43 +228,90 @@ async function handleFileUpdate(supabase: any, body: FileUpdateInput, corsHeader
   console.log('File updated:', file_id);
 
   // ========== ALSO UPDATE PIPELINE ==========
-  const pipelineId = metadata?.pipeline_id as string | undefined;
+  // Pipeline ID can come from metadata OR from file_id if it's actually a pipeline ID
+  // (some workflows use the pipeline_id as file_id for simplicity)
+  const pipelineIdFromMetadata = metadata?.pipeline_id as string | undefined;
   const stage = metadata?.stage as string | undefined;
+  // Also check common alternative field names from n8n
+  const frameType = metadata?.frame_type as string | undefined;
   
-  if (pipelineId && status === 'completed') {
-    console.log('Also updating pipeline:', pipelineId, 'stage:', stage);
-    
+  // Use pipeline_id from metadata, or fall back to file_id if it looks like a pipeline was targeted
+  const pipelineId = pipelineIdFromMetadata || file_id;
+  // Determine stage from metadata.stage or metadata.frame_type
+  const effectiveStage = stage || (frameType === 'first' ? 'first_frame' : frameType === 'last' ? 'last_frame' : undefined);
+  
+  console.log('Pipeline sync check:', { pipelineId, effectiveStage, status, hasPreviewUrl: !!preview_url, hasDownloadUrl: !!download_url });
+  
+  if (pipelineId) {
     // deno-lint-ignore no-explicit-any
     const pipelineUpdates: Record<string, any> = { 
       updated_at: new Date().toISOString(),
-      progress: 100 
     };
     
-    if (stage === 'first_frame' || stage === 'frame' || stage === 'first') {
-      pipelineUpdates.first_frame_output = { url: preview_url || download_url, generated_at: new Date().toISOString() };
-      pipelineUpdates.first_frame_complete = true;
-      pipelineUpdates.status = 'draft';
-    } 
-    else if (stage === 'last_frame' || stage === 'last') {
-      pipelineUpdates.last_frame_output = { url: preview_url || download_url, generated_at: new Date().toISOString() };
-      pipelineUpdates.last_frame_complete = true;
-      pipelineUpdates.status = 'draft';
-    }
-    else if (stage === 'speech' || stage === 'voice') {
-      pipelineUpdates.voice_output = { url: preview_url || download_url || audio_url, generated_at: new Date().toISOString() };
-      pipelineUpdates.voice_complete = true;
-      pipelineUpdates.status = 'draft';
-    }
-    else if (stage === 'lip_sync' || stage === 'final_video' || stage === 'animate') {
-      pipelineUpdates.final_video_output = { url: preview_url || download_url, generated_at: new Date().toISOString() };
-      pipelineUpdates.status = 'completed';
+    // Handle progress updates for processing status
+    if (status === 'processing' && typeof progress === 'number') {
+      pipelineUpdates.progress = progress;
     }
     
-    const { error: pipelineError } = await supabase.from('pipelines').update(pipelineUpdates).eq('id', pipelineId);
-    if (pipelineError) {
-      console.error('Pipeline update error:', pipelineError);
-    } else {
-      console.log('Pipeline updated:', pipelineId);
+    // Handle completion - update the appropriate output field
+    if (status === 'completed') {
+      pipelineUpdates.progress = 100;
+      
+      const outputUrl = preview_url || download_url;
+      
+      if (effectiveStage === 'first_frame' || effectiveStage === 'frame' || effectiveStage === 'first') {
+        pipelineUpdates.first_frame_output = { url: outputUrl, generated_at: new Date().toISOString() };
+        pipelineUpdates.first_frame_complete = true;
+        pipelineUpdates.status = 'draft';
+        console.log('Updating first_frame_output:', outputUrl);
+      } 
+      else if (effectiveStage === 'last_frame' || effectiveStage === 'last') {
+        pipelineUpdates.last_frame_output = { url: outputUrl, generated_at: new Date().toISOString() };
+        pipelineUpdates.last_frame_complete = true;
+        pipelineUpdates.status = 'draft';
+        console.log('Updating last_frame_output:', outputUrl);
+      }
+      else if (effectiveStage === 'speech' || effectiveStage === 'voice') {
+        pipelineUpdates.voice_output = { url: outputUrl || audio_url, generated_at: new Date().toISOString() };
+        pipelineUpdates.voice_complete = true;
+        pipelineUpdates.status = 'draft';
+      }
+      else if (effectiveStage === 'lip_sync' || effectiveStage === 'final_video' || effectiveStage === 'animate') {
+        pipelineUpdates.final_video_output = { url: outputUrl, generated_at: new Date().toISOString() };
+        pipelineUpdates.status = 'completed';
+      }
+      // If no stage specified but we have output, try to update first_frame by default for frame generations
+      else if (outputUrl) {
+        // Check if this file_id is actually a pipeline by querying
+        const { data: existingPipeline } = await supabase
+          .from('pipelines')
+          .select('id, first_frame_complete')
+          .eq('id', pipelineId)
+          .single();
+        
+        if (existingPipeline && !existingPipeline.first_frame_complete) {
+          pipelineUpdates.first_frame_output = { url: outputUrl, generated_at: new Date().toISOString() };
+          pipelineUpdates.first_frame_complete = true;
+          pipelineUpdates.status = 'draft';
+          console.log('Auto-detected first_frame update for pipeline:', pipelineId);
+        }
+      }
+    }
+    
+    // Handle failure
+    if (status === 'failed') {
+      pipelineUpdates.status = 'failed';
+      pipelineUpdates.progress = 0;
+    }
+    
+    // Only update if we have meaningful changes
+    if (Object.keys(pipelineUpdates).length > 1) {
+      const { error: pipelineError } = await supabase.from('pipelines').update(pipelineUpdates).eq('id', pipelineId);
+      if (pipelineError) {
+        console.error('Pipeline update error:', pipelineError);
+      } else {
+        console.log('Pipeline updated:', pipelineId, pipelineUpdates);
+      }
     }
   }
 
