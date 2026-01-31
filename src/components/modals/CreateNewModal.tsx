@@ -55,13 +55,6 @@ const workflows = [
     title: 'B-Roll',
     description: 'Generate video clips',
   },
-  {
-    id: 'motion_graphics' as WorkflowType,
-    icon: Sparkles,
-    title: 'Motion Graphics',
-    description: 'Generate motion graphics',
-    comingSoon: true,
-  },
 ];
 
 const elements = [
