@@ -64,10 +64,13 @@ export default function SpeechStage({ pipelineId, onContinue }: SpeechStageProps
   const pipelineStatus = pipeline?.status;
   const pipelineStage = pipeline?.current_stage;
   const isServerProcessingThisStage = pipelineStatus === 'processing' && (pipelineStage === 'voice' || pipelineStage === 'speech');
-  const hasOutput = pipeline?.voice_complete && pipeline?.voice_output?.url;
+  
+  // Check for output - prioritize URL existence over completion flag
+  const outputUrl = pipeline?.voice_output?.url;
+  const hasOutput = !!outputUrl;
+  
   // Force generating to false if we already have output
   const isGenerating = hasOutput ? false : (localGenerating || isServerProcessingThisStage);
-  const outputUrl = pipeline?.voice_output?.url;
   
   // Refs for tracking status transitions
   const prevStatusRef = useRef<string | null>(null);
