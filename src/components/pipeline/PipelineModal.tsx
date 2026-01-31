@@ -191,9 +191,9 @@ export default function PipelineModal({
 
 
   const handleStageClick = (stage: PipelineStage) => {
-    // All stages are freely accessible
+    // Only update the UI tab - don't update current_stage in DB
+    // This prevents stage isolation issues where clicking a tab triggers "Generating" state
     setActiveStage(stage);
-    updatePipeline({ current_stage: stage });
   };
 
   const isStageComplete = (stage: PipelineStage): boolean => {

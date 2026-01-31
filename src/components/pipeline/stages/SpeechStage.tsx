@@ -60,9 +60,13 @@ export default function SpeechStage({ pipelineId, onContinue }: SpeechStageProps
   const creditCost = Math.max(CREDIT_COST_PER_1000_CHARS, Math.ceil(characterCount / 1000) * CREDIT_COST_PER_1000_CHARS);
 
   // Derived state - server is the source of truth for generating state
-  const isServerProcessing = pipeline?.status === 'processing' && (pipeline?.current_stage === 'voice' || pipeline?.current_stage === 'speech');
-  const isGenerating = localGenerating || isServerProcessing; // Show generating if local OR server says so
+  // Only show generating if server is processing THIS specific stage
+  const pipelineStatus = pipeline?.status;
+  const pipelineStage = pipeline?.current_stage;
+  const isServerProcessingThisStage = pipelineStatus === 'processing' && (pipelineStage === 'voice' || pipelineStage === 'speech');
   const hasOutput = pipeline?.voice_complete && pipeline?.voice_output?.url;
+  // Force generating to false if we already have output
+  const isGenerating = hasOutput ? false : (localGenerating || isServerProcessingThisStage);
   const outputUrl = pipeline?.voice_output?.url;
   
   // Refs for tracking status transitions

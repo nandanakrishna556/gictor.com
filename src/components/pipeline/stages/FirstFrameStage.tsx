@@ -62,9 +62,13 @@ export default function FirstFrameStage({ pipelineId, onContinue }: FirstFrameSt
   const creditCost = resolution === '4K' ? 0.15 : 0.1;
 
   // Derived state - server is the source of truth for generating state
-  const isServerProcessing = pipeline?.status === 'processing' && pipeline?.current_stage === 'first_frame';
-  const isGenerating = localGenerating || isServerProcessing; // Show generating if local OR server says so
+  // Only show generating if server is processing THIS specific stage
+  const pipelineStatus = pipeline?.status;
+  const pipelineStage = pipeline?.current_stage;
+  const isServerProcessingThisStage = pipelineStatus === 'processing' && pipelineStage === 'first_frame';
   const hasOutput = pipeline?.first_frame_complete && pipeline?.first_frame_output?.url;
+  // Force generating to false if we already have output
+  const isGenerating = hasOutput ? false : (localGenerating || isServerProcessingThisStage);
   const outputUrl = pipeline?.first_frame_output?.url;
 
   // Load saved state from pipeline
