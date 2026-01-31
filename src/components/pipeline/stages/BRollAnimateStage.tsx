@@ -101,20 +101,15 @@ export default function BRollAnimateStage({ pipelineId, onComplete }: BRollAnima
       }
     }
     
-    // Initialize prev status
+    // Initialize prev status for toast tracking only
+    // DO NOT set localGenerating here - isProcessing handles active generation detection
     if (prevStatusRef.current === null && pipeline) {
       prevStatusRef.current = pipeline.status;
       if (hasOutput) {
         toastShownRef.current = pipelineId;
       }
-      // If we're already processing THIS stage on mount, ensure we show generating
-      // This handles the case when user navigates away and back during generation
-      if (pipeline.status === 'processing' && pipeline.current_stage === 'final_video') {
-        setLocalGenerating(true);
-        isLocalGeneratingRef.current = true;
-      }
     }
-  }, [pipeline?.voice_input, pipeline?.status, hasOutput, pipelineId, pipeline?.current_stage]);
+  }, [pipeline?.voice_input, pipeline?.status, hasOutput, pipelineId]);
 
   // Auto-populate frames from previous stages when they become available
   useEffect(() => {
@@ -130,7 +125,7 @@ export default function BRollAnimateStage({ pipelineId, onComplete }: BRollAnima
     }
   }, [originalLastFrame]);
 
-  // Handle status transitions
+  // Handle status transitions - clear localGenerating and show toasts
   useEffect(() => {
     if (!pipeline) return;
     
@@ -138,23 +133,16 @@ export default function BRollAnimateStage({ pipelineId, onComplete }: BRollAnima
     const currentStage = pipeline.current_stage;
     const prevStatus = prevStatusRef.current;
     
-    // Clear local generating if server is processing a DIFFERENT stage
-    // This ensures Animate doesn't show generating when First Frame is processing
-    if (currentStatus === 'processing' && currentStage !== 'final_video') {
+    // Always clear localGenerating when server confirms processing (isProcessing takes over)
+    // or when a different stage is processing (we shouldn't show generating)
+    if (currentStatus === 'processing') {
       if (localGenerating) {
         setLocalGenerating(false);
         isLocalGeneratingRef.current = false;
       }
     }
     
-    // If server confirms THIS stage is processing, we can clear the local flag
-    // since isProcessing will now be true
-    if (currentStatus === 'processing' && currentStage === 'final_video') {
-      isLocalGeneratingRef.current = false;
-      setLocalGenerating(false);
-    }
-    
-    // Completed transition
+    // Completed transition - show success toast
     if (prevStatus === 'processing' && currentStatus === 'completed' && pipeline.final_video_output?.url) {
       if (toastShownRef.current !== pipelineId + '_animate') {
         toastShownRef.current = pipelineId + '_animate';
