@@ -60,8 +60,13 @@ export default function LipSyncStage({ pipelineId, onComplete }: LipSyncStagePro
   const creditCost = Math.max(MIN_CREDIT_COST, Math.ceil(effectiveAudioDuration * CREDIT_COST_PER_SECOND * 100) / 100);
   
   // Derive generating state from server - server is source of truth
-  const isServerProcessing = pipeline?.status === 'processing' && pipeline?.current_stage === 'lip_sync';
-  const isGenerating = localGenerating || isServerProcessing;
+  // Only show generating if server is processing THIS specific stage
+  const pipelineStatus = pipeline?.status;
+  const pipelineStage = pipeline?.current_stage;
+  const isServerProcessingThisStage = pipelineStatus === 'processing' && pipelineStage === 'lip_sync';
+  // Force generating to false if we already have output
+  const hasOutputForGenerating = !!pipeline?.final_video_output?.url;
+  const isGenerating = hasOutputForGenerating ? false : (localGenerating || isServerProcessingThisStage);
 
   // Load existing data from pipeline
   useEffect(() => {
