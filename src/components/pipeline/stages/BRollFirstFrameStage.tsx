@@ -15,7 +15,7 @@ import StageLayout from './StageLayout';
 import { useProfile } from '@/hooks/useProfile';
 import { useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/contexts/AuthContext';
-import { Actor } from '@/hooks/useActors';
+import { Actor, useActors } from '@/hooks/useActors';
 import { uploadToR2 } from '@/lib/cloudflare-upload';
 
 interface BRollFirstFrameStageProps {
@@ -46,6 +46,7 @@ export default function BRollFirstFrameStage({ pipelineId, onComplete }: BRollFi
   const { pipeline, updateFirstFrame, updatePipeline, isUpdating } = usePipeline(pipelineId);
   const { profile } = useProfile();
   const { user } = useAuth();
+  const { actors } = useActors();
   const queryClient = useQueryClient();
   
   // Input state - matching FrameModal structure with B-Roll defaults
@@ -116,6 +117,18 @@ export default function BRollFirstFrameStage({ pipelineId, onComplete }: BRollFi
       }
     }
   }, [pipeline?.first_frame_input, pipeline?.status, hasOutput, pipelineId]);
+
+  // Sync selectedActor when selectedActorId changes or actors list is loaded
+  useEffect(() => {
+    if (selectedActorId && actors && actors.length > 0) {
+      const actor = actors.find(a => a.id === selectedActorId);
+      if (actor) {
+        setSelectedActor(actor);
+      }
+    } else if (!selectedActorId) {
+      setSelectedActor(null);
+    }
+  }, [selectedActorId, actors]);
 
   // Handle status transitions - clear localGenerating and show toasts
   useEffect(() => {
