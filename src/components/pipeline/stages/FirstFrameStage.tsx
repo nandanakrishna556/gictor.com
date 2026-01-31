@@ -13,7 +13,7 @@ import { Loader2, Download, Image as ImageIcon, X, Plus } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { useQueryClient } from '@tanstack/react-query';
-import { Actor } from '@/hooks/useActors';
+import { Actor, useActors } from '@/hooks/useActors';
 
 interface FirstFrameStageProps {
   pipelineId: string;
@@ -30,6 +30,7 @@ export default function FirstFrameStage({ pipelineId, onContinue }: FirstFrameSt
   const queryClient = useQueryClient();
   const { user } = useAuth();
   const { profile } = useProfile();
+  const { actors } = useActors();
   const { pipeline, updateFirstFrame, updatePipeline } = usePipeline(pipelineId);
 
   // Input mode
@@ -99,6 +100,16 @@ export default function FirstFrameStage({ pipelineId, onContinue }: FirstFrameSt
       if (input.uploaded_url) setUploadedImageUrl(input.uploaded_url as string);
     }
   }, [pipeline, hasOutput, pipelineId]);
+
+  // Sync selectedActor object when we have an ID but no actor object (e.g., restored from DB)
+  useEffect(() => {
+    if (selectedActorId && !selectedActor && actors?.length) {
+      const actor = actors.find(a => a.id === selectedActorId);
+      if (actor) {
+        setSelectedActor(actor);
+      }
+    }
+  }, [selectedActorId, selectedActor, actors]);
 
   // Handle status transitions - clear localGenerating and show toasts
   useEffect(() => {

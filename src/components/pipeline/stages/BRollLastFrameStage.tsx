@@ -15,7 +15,7 @@ import StageLayout from './StageLayout';
 import { useProfile } from '@/hooks/useProfile';
 import { useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/contexts/AuthContext';
-import { Actor } from '@/hooks/useActors';
+import { Actor, useActors } from '@/hooks/useActors';
 import { uploadToR2 } from '@/lib/cloudflare-upload';
 
 interface BRollLastFrameStageProps {
@@ -47,6 +47,7 @@ export default function BRollLastFrameStage({ pipelineId, onComplete }: BRollLas
   const { pipeline, updateScript, updatePipeline, isUpdating } = usePipeline(pipelineId);
   const { profile } = useProfile();
   const { user } = useAuth();
+  const { actors } = useActors();
   const queryClient = useQueryClient();
   
   // Input state - matching FrameModal structure with B-Roll defaults
@@ -136,6 +137,16 @@ export default function BRollLastFrameStage({ pipelineId, onComplete }: BRollLas
     
     prevStatusRef.current = currentStatus;
   }, [pipeline, pipelineId, queryClient]);
+
+  // Sync selectedActor object when we have an ID but no actor object (e.g., restored from DB)
+  useEffect(() => {
+    if (selectedActorId && !selectedActor && actors?.length) {
+      const actor = actors.find(a => a.id === selectedActorId);
+      if (actor) {
+        setSelectedActor(actor);
+      }
+    }
+  }, [selectedActorId, selectedActor, actors]);
 
   // Auto-add first frame output as reference image if available
   useEffect(() => {
