@@ -100,21 +100,29 @@ export default function FirstFrameStage({ pipelineId, onContinue }: FirstFrameSt
     }
   }, [pipeline, hasOutput, pipelineId]);
 
-  // Handle status transitions - detect completion and show toasts
+  // Handle status transitions - clear localGenerating and show toasts
   useEffect(() => {
     if (!pipeline) return;
     
     const currentStatus = pipeline.status;
+    const currentStage = pipeline.current_stage;
     const prevStatus = prevStatusRef.current;
     
-    // Server confirmed processing - clear local generating state
-    if (currentStatus === 'processing' && pipeline.current_stage === 'first_frame') {
-      setLocalGenerating(false);
+    // Clear localGenerating when server confirms THIS stage is processing
+    // OR when server is processing a DIFFERENT stage (we shouldn't be generating)
+    if (currentStatus === 'processing') {
+      if (currentStage === 'first_frame' && localGenerating) {
+        // Server confirmed - let isServerProcessingThisStage take over
+        setLocalGenerating(false);
+      } else if (currentStage !== 'first_frame' && localGenerating) {
+        // Another stage is processing - definitely not us
+        setLocalGenerating(false);
+      }
     }
     
-    // Completed transition - show success toast
-    if (prevStatus === 'processing' && currentStatus !== 'processing') {
-      if (pipeline.first_frame_output?.url && toastShownRef.current !== pipelineId) {
+    // Completed transition - show success toast only when we get output
+    if (prevStatus === 'processing' && currentStatus !== 'processing' && pipeline.first_frame_output?.url) {
+      if (toastShownRef.current !== pipelineId) {
         toastShownRef.current = pipelineId;
         toast.success('First frame generated!');
         queryClient.invalidateQueries({ queryKey: ['pipeline', pipelineId] });
@@ -123,7 +131,7 @@ export default function FirstFrameStage({ pipelineId, onContinue }: FirstFrameSt
     }
     
     prevStatusRef.current = currentStatus;
-  }, [pipeline, pipelineId, queryClient]);
+  }, [pipeline, pipelineId, queryClient, localGenerating]);
 
   // Auto-save inputs (debounced)
   const autoSaveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
