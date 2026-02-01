@@ -304,6 +304,7 @@ export default function BRollLastFrameStage({ pipelineId, onComplete }: BRollLas
             substyle: style !== 'motion_graphics' ? subStyle : undefined,
             prompt: prompt.trim(),
             aspect_ratio: aspectRatio,
+            camera_perspective: style === 'broll' ? cameraPerspective : undefined,
             frame_resolution: resolution,
             reference_images: validReferenceImages.length > 0 ? validReferenceImages : undefined,
             actor_id: (style === 'talking_head' || style === 'broll') && selectedActorId ? selectedActorId : undefined,
