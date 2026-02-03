@@ -13,7 +13,7 @@ export function HeroSection() {
     document.head.appendChild(playerScript);
 
     const embedScript = document.createElement("script");
-    embedScript.src = "https://fast.wistia.com/embed/381oihz74j.js";
+    embedScript.src = "https://fast.wistia.com/embed/v3ecln3xzv.js";
     embedScript.async = true;
     embedScript.type = "module";
     document.head.appendChild(embedScript);
@@ -51,7 +51,7 @@ export function HeroSection() {
         <div
           className="max-w-4xl mx-auto mb-12 rounded-2xl overflow-hidden border border-border shadow-elevated"
           dangerouslySetInnerHTML={{
-            __html: `<wistia-player media-id="381oihz74j" aspect="1.7777777777777777"></wistia-player>`,
+            __html: `<style>wistia-player[media-id='v3ecln3xzv']:not(:defined) { background: center / contain no-repeat url('https://fast.wistia.com/embed/medias/v3ecln3xzv/swatch'); display: block; filter: blur(5px); padding-top:56.25%; }</style><wistia-player media-id="v3ecln3xzv" aspect="1.7777777777777777"></wistia-player>`,
           }}
         />
 
