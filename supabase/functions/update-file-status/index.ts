@@ -76,9 +76,6 @@ const FileUpdateSchema = z.object({
 type PipelineUpdateInput = z.infer<typeof PipelineUpdateSchema>;
 type FileUpdateInput = z.infer<typeof FileUpdateSchema>;
 
-// IMPORTANT: This key must match what n8n sends
-const N8N_API_KEY = 'gictor-n8n-secret-2024';
-
 serve(async (req) => {
   const corsHeaders = getCorsHeaders(req);
   if (req.method === 'OPTIONS') {
@@ -100,8 +97,15 @@ serve(async (req) => {
     const apiKey = req.headers.get('x-api-key');
     const expectedKey = Deno.env.get('N8N_WEBHOOK_SECRET');
     
-    // Accept BOTH env var OR hardcoded key for n8n
-    if (!apiKey || (apiKey !== expectedKey && apiKey !== N8N_API_KEY)) {
+    if (!expectedKey) {
+      console.error('N8N_WEBHOOK_SECRET not configured');
+      return new Response(
+        JSON.stringify({ success: false, error: 'Server configuration error' }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+    
+    if (!apiKey || apiKey !== expectedKey) {
       console.error('Unauthorized - invalid API key');
       return new Response(
         JSON.stringify({ success: false, error: 'Unauthorized' }),
