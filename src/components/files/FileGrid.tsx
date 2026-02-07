@@ -46,6 +46,8 @@ import type { Tag as TagType } from '@/hooks/useTags';
 import ConfirmDeleteDialog from '@/components/modals/ConfirmDeleteDialog';
 import MoveToFolderDialog from '@/components/modals/MoveToFolderDialog';
 import { FileTypeIcon, FileType } from '@/components/ui/file-type-icon';
+import { useProjectPipelineThumbnails } from '@/hooks/useProjectPipelineThumbnails';
+import { getFileThumbnailUrl } from '@/lib/file-thumbnails';
 
 interface FileGridProps {
   files: File[];
@@ -179,6 +181,7 @@ export default function FileGrid({
   onSelectModeChange,
 }: FileGridProps) {
   const navigate = useNavigate();
+  const { data: pipelineThumbnails } = useProjectPipelineThumbnails(projectId);
   const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
   const bulkMode = selectMode;
   const [renamingItemId, setRenamingItemId] = useState<string | null>(null);
@@ -458,6 +461,7 @@ export default function FileGrid({
                                   item={item}
                                   tags={tags}
                                   projectId={projectId}
+                                  pipelineThumbnails={pipelineThumbnails}
                                   isDragging={snapshot.isDragging}
                                   isSelected={selectedItems.has(item.id)}
                                   bulkMode={bulkMode}
@@ -630,6 +634,7 @@ export default function FileGrid({
                           file={item}
                           stages={stages}
                           tags={tags}
+                          pipelineThumbnails={pipelineThumbnails}
                           isSelected={selectedItems.has(item.id)}
                           bulkMode={bulkMode}
                           isRenaming={renamingItemId === item.id}
@@ -1083,6 +1088,7 @@ function FileCard({
   file,
   stages,
   tags,
+  pipelineThumbnails,
   isSelected,
   bulkMode,
   isRenaming,
@@ -1103,6 +1109,7 @@ function FileCard({
   file: File;
   stages: PipelineStage[];
   tags: TagType[];
+  pipelineThumbnails?: Map<string, { firstFrameUrl?: string; lastFrameUrl?: string }>;
   isSelected: boolean;
   bulkMode: boolean;
   isRenaming: boolean;
@@ -1128,9 +1135,8 @@ function FileCard({
   const currentStage = stages.find((s) => s.id === effectiveStatus) || stages[0];
   const fileTags = file.tags || [];
   
-  // Video thumbnail support
-  const isVideoType = ['lip_sync', 'talking_head', 'clips', 'b_roll', 'veo3'].includes(file.file_type || '');
-  const hasVideoThumbnail = isVideoType && (file.preview_url || file.download_url);
+  // Compute thumbnail URL
+  const thumbnailUrl = getFileThumbnailUrl(file, pipelineThumbnails);
 
   const toggleTag = (tagId: string) => {
     if (fileTags.includes(tagId)) {
@@ -1210,7 +1216,7 @@ function FileCard({
         )}
       </div>
 
-      {/* Preview Area - Static icons for all file types */}
+      {/* Preview Area */}
       <div className="relative flex flex-1 items-center justify-center bg-secondary overflow-hidden">
         {(() => {
           const iconType = getEffectiveIconType(file);
@@ -1225,7 +1231,44 @@ function FileCard({
               />
             );
           }
+
+          // Show thumbnail image if available for applicable types
+          if (thumbnailUrl) {
+            return (
+              <img
+                src={thumbnailUrl}
+                alt={file.name}
+                className="absolute inset-0 w-full h-full object-cover opacity-0"
+                onLoad={(e) => {
+                  e.currentTarget.classList.remove('opacity-0');
+                  e.currentTarget.classList.add('animate-image-fade-in');
+                }}
+              />
+            );
+          }
           
+          // Flat icon fallbacks
+          if (file.file_type === 'speech') {
+            return (
+              <div className="absolute inset-0 bg-gradient-to-br from-purple-500/10 to-violet-500/10 flex items-center justify-center">
+                <div className="h-16 w-16 rounded-full bg-purple-500/20 flex items-center justify-center">
+                  <Mic className="h-8 w-8 text-purple-500" strokeWidth={1.5} />
+                </div>
+              </div>
+            );
+          }
+          
+          if (file.file_type === 'script') {
+            return (
+              <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/10 to-teal-500/10 flex items-center justify-center">
+                <div className="h-16 w-16 rounded-full bg-emerald-500/20 flex items-center justify-center">
+                  <FileText className="h-8 w-8 text-emerald-500" strokeWidth={1.5} />
+                </div>
+              </div>
+            );
+          }
+          
+          // Generic icon fallbacks for types without thumbnail data yet
           if (iconType === 'animate') {
             return (
               <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 to-indigo-500/10 flex items-center justify-center">
@@ -1255,17 +1298,7 @@ function FileCard({
               </div>
             );
           }
-          
-          if (file.file_type === 'speech') {
-            return (
-              <div className="absolute inset-0 bg-gradient-to-br from-purple-500/10 to-violet-500/10 flex items-center justify-center">
-                <div className="h-16 w-16 rounded-full bg-purple-500/20 flex items-center justify-center">
-                  <Mic className="h-8 w-8 text-purple-500" strokeWidth={1.5} />
-                </div>
-              </div>
-            );
-          }
-          
+
           if (file.file_type === 'first_frame' || file.file_type === 'frame') {
             return (
               <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/10 to-blue-500/10 flex items-center justify-center">
@@ -1275,17 +1308,7 @@ function FileCard({
               </div>
             );
           }
-          
-          if (file.file_type === 'script') {
-            return (
-              <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/10 to-teal-500/10 flex items-center justify-center">
-                <div className="h-16 w-16 rounded-full bg-emerald-500/20 flex items-center justify-center">
-                  <FileText className="h-8 w-8 text-emerald-500" strokeWidth={1.5} />
-                </div>
-              </div>
-            );
-          }
-          
+
           if (file.file_type === 'b_roll' || file.file_type === 'clips') {
             return (
               <div className="absolute inset-0 bg-gradient-to-br from-rose-500/10 to-pink-500/10 flex items-center justify-center">
@@ -1490,6 +1513,7 @@ function KanbanCard({
   item,
   tags,
   projectId,
+  pipelineThumbnails,
   isDragging,
   isSelected,
   bulkMode,
@@ -1508,6 +1532,7 @@ function KanbanCard({
   item: GridItem;
   tags: TagType[];
   projectId: string;
+  pipelineThumbnails?: Map<string, { firstFrameUrl?: string; lastFrameUrl?: string }>;
   isDragging: boolean;
   isSelected: boolean;
   bulkMode: boolean;
@@ -1530,8 +1555,7 @@ function KanbanCard({
   const isFile = item.itemType === 'file';
   const file = isFile ? (item as File) : null;
   const isProcessing = file?.generation_status === 'processing';
-  const isVideoType = ['lip_sync', 'talking_head', 'clips', 'b_roll', 'veo3'].includes(file?.file_type || '');
-  const hasVideoThumbnail = isVideoType && (file?.preview_url || file?.download_url);
+  const thumbnailUrl = file ? getFileThumbnailUrl(file, pipelineThumbnails) : null;
 
   const toggleTag = (tagId: string) => {
     if (itemTags.includes(tagId)) {
@@ -1627,7 +1651,7 @@ function KanbanCard({
         )}
       </div>
 
-      {/* Preview Area - Static icons for all file types */}
+      {/* Preview Area */}
       <div className="relative aspect-[4/3] w-full bg-secondary overflow-hidden">
         {isFolder ? (
           <div className="flex h-full items-center justify-center">
@@ -1667,7 +1691,44 @@ function KanbanCard({
               />
             );
           }
+
+          // Show thumbnail image if available for applicable types
+          if (thumbnailUrl) {
+            return (
+              <img
+                src={thumbnailUrl}
+                alt={item.name}
+                className="absolute inset-0 w-full h-full object-cover opacity-0"
+                onLoad={(e) => {
+                  e.currentTarget.classList.remove('opacity-0');
+                  e.currentTarget.classList.add('animate-image-fade-in');
+                }}
+              />
+            );
+          }
           
+          // Flat icon fallbacks
+          if (file?.file_type === 'speech') {
+            return (
+              <div className="absolute inset-0 bg-gradient-to-br from-purple-500/10 to-violet-500/10 flex items-center justify-center">
+                <div className="h-16 w-16 rounded-full bg-purple-500/20 flex items-center justify-center">
+                  <Mic className="h-8 w-8 text-purple-500" strokeWidth={1.5} />
+                </div>
+              </div>
+            );
+          }
+          
+          if (file?.file_type === 'script') {
+            return (
+              <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/10 to-teal-500/10 flex items-center justify-center">
+                <div className="h-16 w-16 rounded-full bg-emerald-500/20 flex items-center justify-center">
+                  <FileText className="h-8 w-8 text-emerald-500" strokeWidth={1.5} />
+                </div>
+              </div>
+            );
+          }
+
+          // Generic icon fallbacks
           if (iconType === 'animate') {
             return (
               <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 to-indigo-500/10 flex items-center justify-center">
@@ -1698,31 +1759,11 @@ function KanbanCard({
             );
           }
           
-          if (file?.file_type === 'speech') {
-            return (
-              <div className="absolute inset-0 bg-gradient-to-br from-purple-500/10 to-violet-500/10 flex items-center justify-center">
-                <div className="h-16 w-16 rounded-full bg-purple-500/20 flex items-center justify-center">
-                  <Mic className="h-8 w-8 text-purple-500" strokeWidth={1.5} />
-                </div>
-              </div>
-            );
-          }
-          
           if (file?.file_type === 'first_frame' || file?.file_type === 'frame') {
             return (
               <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/10 to-blue-500/10 flex items-center justify-center">
                 <div className="h-16 w-16 rounded-full bg-cyan-500/20 flex items-center justify-center">
                   <Image className="h-8 w-8 text-cyan-500" strokeWidth={1.5} />
-                </div>
-              </div>
-            );
-          }
-          
-          if (file?.file_type === 'script') {
-            return (
-              <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/10 to-teal-500/10 flex items-center justify-center">
-                <div className="h-16 w-16 rounded-full bg-emerald-500/20 flex items-center justify-center">
-                  <FileText className="h-8 w-8 text-emerald-500" strokeWidth={1.5} />
                 </div>
               </div>
             );
