@@ -1238,7 +1238,7 @@ function FileCard({
               <img
                 src={thumbnailUrl}
                 alt={file.name}
-                className="absolute inset-0 w-full h-full object-cover opacity-0"
+                className="absolute inset-0 w-full h-full object-contain opacity-0"
                 onLoad={(e) => {
                   e.currentTarget.classList.remove('opacity-0');
                   e.currentTarget.classList.add('animate-image-fade-in');
@@ -1698,7 +1698,7 @@ function KanbanCard({
               <img
                 src={thumbnailUrl}
                 alt={item.name}
-                className="absolute inset-0 w-full h-full object-cover opacity-0"
+                className="absolute inset-0 w-full h-full object-contain opacity-0"
                 onLoad={(e) => {
                   e.currentTarget.classList.remove('opacity-0');
                   e.currentTarget.classList.add('animate-image-fade-in');
