@@ -1217,7 +1217,7 @@ function FileCard({
       </div>
 
       {/* Preview Area */}
-      <div className="relative flex flex-1 items-center justify-center bg-secondary overflow-hidden">
+      <div className="relative flex flex-1 items-center justify-center bg-muted/60 overflow-hidden">
         {(() => {
           const iconType = getEffectiveIconType(file);
           
@@ -1652,7 +1652,7 @@ function KanbanCard({
       </div>
 
       {/* Preview Area */}
-      <div className="relative aspect-[4/3] w-full bg-secondary overflow-hidden">
+      <div className="relative aspect-[4/3] w-full bg-muted/60 overflow-hidden">
         {isFolder ? (
           <div className="flex h-full items-center justify-center">
             <svg
