@@ -71,7 +71,7 @@ export function usePipeline(pipelineId: string | null) {
       name?: string;
       status?: string;
       displayStatus?: string;
-      pipelineType?: 'lip_sync' | 'talking_head' | 'clips' | 'motion_graphics';
+      pipelineType?: 'lip_sync' | 'talking_head' | 'clips';
     }) => {
       if (!user) throw new Error('Not authenticated');
       

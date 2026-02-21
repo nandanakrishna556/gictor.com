@@ -371,9 +371,6 @@ export default function ProjectDetail() {
         // Fallback to file detail modal if no pipeline_id
         setSelectedFile(file);
       }
-    } else if (file.file_type === 'motion_graphics') {
-      // Motion graphics - fallback to file detail modal
-      setSelectedFile(file);
     } else {
       setSelectedFile(file);
     }

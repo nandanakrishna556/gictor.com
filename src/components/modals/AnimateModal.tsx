@@ -85,7 +85,7 @@ export default function AnimateModal({
   const [lastFrameUrl, setLastFrameUrl] = useState('');
   const [prompt, setPrompt] = useState('');
   const [aspectRatio, setAspectRatio] = useState<'16:9' | '9:16'>('9:16');
-  const [animationType, setAnimationType] = useState<'broll' | 'motion_graphics'>('broll');
+  const [animationType, setAnimationType] = useState<'broll'>('broll');
   const [duration, setDuration] = useState(8);
   const [audioEnabled, setAudioEnabled] = useState(false);
   const [cameraFixed, setCameraFixed] = useState(false);
@@ -134,8 +134,7 @@ export default function AnimateModal({
   const creditCost = Math.ceil(duration * CREDIT_COST_PER_SECOND * 100) / 100;
   
   // Validation
-  const isMotionGraphics = animationType === 'motion_graphics';
-  const hasRequiredInputs = firstFrameUrl && (!isMotionGraphics || lastFrameUrl);
+  const hasRequiredInputs = !!firstFrameUrl;
   const canGenerate = hasRequiredInputs && !isGenerating && profile && (profile.credits ?? 0) >= creditCost;
   const hasOutput = file?.generation_status === 'completed' && file?.download_url;
   
@@ -153,7 +152,7 @@ export default function AnimateModal({
       if (params?.last_frame_url) setLastFrameUrl(params.last_frame_url as string);
       if (params?.prompt) setPrompt(params.prompt as string);
       if (params?.aspect_ratio) setAspectRatio(params.aspect_ratio as '16:9' | '9:16');
-      if (params?.animation_type) setAnimationType(params.animation_type as 'broll' | 'motion_graphics');
+      if (params?.animation_type) setAnimationType(params.animation_type as 'broll');
       if (params?.duration) setDuration(params.duration as number);
       if (typeof params?.audio_enabled === 'boolean') setAudioEnabled(params.audio_enabled);
       if (typeof params?.camera_fixed === 'boolean') setCameraFixed(params.camera_fixed);
@@ -713,19 +712,11 @@ export default function AnimateModal({
               {/* Animation Type */}
               <div className="space-y-2">
                 <Label>Animation Type</Label>
-                <Select value={animationType} onValueChange={(v: 'broll' | 'motion_graphics') => setAnimationType(v)}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="broll">B-Roll (Natural footage)</SelectItem>
-                    <SelectItem value="motion_graphics">Motion Graphics (Transitions)</SelectItem>
-                  </SelectContent>
-                </Select>
+                <div className="p-3 rounded-lg border border-primary bg-primary/5">
+                  <span className="text-sm font-medium">B-Roll (Natural footage)</span>
+                </div>
                 <p className="text-xs text-muted-foreground">
-                  {animationType === 'broll' 
-                    ? 'Creates natural, realistic B-roll footage from your image'
-                    : 'Creates smooth motion graphics transitions between two frames'}
+                  Creates natural, realistic B-roll footage from your image
                 </p>
               </div>
               
@@ -865,7 +856,7 @@ export default function AnimateModal({
               
               {/* Last Frame Upload */}
               <div className="space-y-2">
-                <Label>Last Frame {isMotionGraphics ? <span className="text-destructive">*</span> : '(Optional)'}</Label>
+                <Label>Last Frame (Optional)</Label>
                 {lastFrameUrl ? (
                   <div className="relative rounded-xl overflow-hidden border border-border">
                     <img src={lastFrameUrl} alt="Last frame" className="w-full h-40 object-cover" />
@@ -940,11 +931,6 @@ export default function AnimateModal({
                     <>Generate Animation • {creditCost.toFixed(2)} credits</>
                   )}
                 </Button>
-                {isMotionGraphics && !lastFrameUrl && (
-                  <p className="text-xs text-amber-500 text-center">
-                    Motion graphics requires both first and last frames
-                  </p>
-                )}
               </div>
               </>
               )}

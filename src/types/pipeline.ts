@@ -1,6 +1,6 @@
 export type PipelineStage = 'first_frame' | 'last_frame' | 'script' | 'voice' | 'speech' | 'lip_sync' | 'final_video';
 
-export type PipelineType = 'lip_sync' | 'talking_head' | 'clips' | 'motion_graphics';
+export type PipelineType = 'lip_sync' | 'talking_head' | 'clips';
 
 export type StageMode = 'generate' | 'upload' | 'paste';
 
@@ -8,7 +8,7 @@ export interface FirstFrameInput {
   mode: 'generate' | 'upload';
   // Generate mode
   prompt?: string;
-  style?: 'talking_head' | 'broll' | 'motion_graphics';
+  style?: 'talking_head' | 'broll';
   substyle?: 'ugc' | 'studio';
   image_type?: 'ugc' | 'studio'; // Legacy alias for substyle
   aspect_ratio?: '1:1' | '9:16' | '16:9';

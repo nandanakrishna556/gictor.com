@@ -39,7 +39,7 @@ interface CreateNewModalProps {
   statusOptions?: StatusOption[];
 }
 
-type WorkflowType = 'talking_head' | 'b_roll' | 'motion_graphics';
+type WorkflowType = 'talking_head' | 'b_roll';
 type ElementType = 'folder' | 'lip_sync' | 'speech' | 'frame' | 'script' | 'swap' | 'animate';
 
 const workflows = [
@@ -149,9 +149,8 @@ export default function CreateNewModal({
     try {
       // talking_head workflow uses lip_sync pipeline type
       // b_roll workflow uses clips pipeline type
-      // motion_graphics workflow uses motion_graphics pipeline type
-      const pipelineType = workflow.id === 'talking_head' ? 'lip_sync' : workflow.id === 'motion_graphics' ? 'motion_graphics' : 'clips';
-      const fileType = workflow.id === 'talking_head' ? 'lip_sync' : workflow.id === 'motion_graphics' ? 'motion_graphics' : 'clips';
+      const pipelineType = workflow.id === 'talking_head' ? 'lip_sync' : 'clips';
+      const fileType = workflow.id === 'talking_head' ? 'lip_sync' : 'clips';
 
       const newPipeline = await createPipeline({
         projectId,
@@ -159,12 +158,12 @@ export default function CreateNewModal({
         name: 'Untitled',
         status: 'draft',
         displayStatus: initialStatus,
-        pipelineType: pipelineType as 'lip_sync' | 'talking_head' | 'clips' | 'motion_graphics',
+        pipelineType: pipelineType as 'lip_sync' | 'talking_head' | 'clips',
       });
 
       // Create file card for the workflow (same as elements)
       // Set source_type in metadata to distinguish talking_head from lip_sync
-      const sourceType = workflow.id === 'talking_head' ? 'talking_head' : workflow.id === 'b_roll' ? 'clips' : 'motion_graphics';
+      const sourceType = workflow.id === 'talking_head' ? 'talking_head' : 'clips';
       const { error: fileError } = await supabase
         .from('files')
         .insert({
