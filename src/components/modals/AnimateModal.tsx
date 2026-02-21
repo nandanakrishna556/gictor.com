@@ -712,7 +712,7 @@ export default function AnimateModal({
               
               {/* First Frame Upload */}
               <div className="space-y-2">
-                <Label>First Frame *</Label>
+                <Label>First Frame</Label>
                 {firstFrameUrl ? (
                   <div className="relative rounded-xl overflow-hidden border border-border">
                     <img src={firstFrameUrl} alt="First frame" className="w-full h-40 object-cover" />
@@ -750,7 +750,7 @@ export default function AnimateModal({
               
               {/* Last Frame Upload */}
               <div className="space-y-2">
-                <Label>Last Frame (Optional)</Label>
+                <Label>Last Frame</Label>
                 {lastFrameUrl ? (
                   <div className="relative rounded-xl overflow-hidden border border-border">
                     <img src={lastFrameUrl} alt="Last frame" className="w-full h-40 object-cover" />
@@ -788,16 +788,14 @@ export default function AnimateModal({
               
               {/* Prompt */}
               <div className="space-y-2">
-                <Label>Prompt (Optional)</Label>
+                <Label>Prompt</Label>
                 <Textarea
                   value={prompt}
                   onChange={(e) => {
                     setPrompt(e.target.value);
                     setHasUnsavedChanges(true);
                   }}
-                  placeholder={animationType === 'broll' 
-                    ? "Describe the motion you want (e.g., 'gentle camera pan across the scene')"
-                    : "Describe the transition you want (e.g., 'smooth zoom transition')"}
+                  placeholder="Describe the motion you want (e.g., 'gentle camera pan across the scene')"
                   rows={3}
                 />
                 <p className="text-xs text-muted-foreground">

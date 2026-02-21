@@ -2,10 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Switch } from '@/components/ui/switch';
 import { Film, Loader2, Download, Upload, X } from 'lucide-react';
-import { cn } from '@/lib/utils';
 import { usePipeline } from '@/hooks/usePipeline';
 import { useProfile } from '@/hooks/useProfile';
 import { useAuth } from '@/contexts/AuthContext';
@@ -397,112 +394,9 @@ export default function BRollAnimateStage({ pipelineId, onComplete }: BRollAnima
           ) : (
             /* Generate Mode UI */
             <>
-              {/* Animation Type */}
-              <div className="space-y-2">
-                <Label>Animation Type</Label>
-                <Select value={animationType} onValueChange={(v: 'broll' | 'motion_graphics') => setAnimationType(v)}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="broll">B-Roll (Natural footage)</SelectItem>
-                    <SelectItem value="motion_graphics">Motion Graphics (Transitions)</SelectItem>
-                  </SelectContent>
-                </Select>
-                <p className="text-xs text-muted-foreground">
-                  {animationType === 'broll' 
-                    ? 'Creates natural, realistic B-roll footage from your image'
-                    : 'Creates smooth motion graphics transitions between two frames'}
-                </p>
-              </div>
-              
-              {/* Aspect Ratio */}
-              <div className="space-y-2">
-                <Label>Aspect Ratio</Label>
-                <div className="flex gap-2">
-                  <Button
-                    type="button"
-                    variant={aspectRatio === '9:16' ? 'default' : 'outline'}
-                    size="sm"
-                    onClick={() => setAspectRatio('9:16')}
-                  >
-                    9:16 Portrait
-                  </Button>
-                  <Button
-                    type="button"
-                    variant={aspectRatio === '16:9' ? 'default' : 'outline'}
-                    size="sm"
-                    onClick={() => setAspectRatio('16:9')}
-                  >
-                    16:9 Landscape
-                  </Button>
-                </div>
-              </div>
-              
-              {/* Duration Slider */}
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <Label>Duration</Label>
-                  <span className="text-sm font-medium">{duration}s</span>
-                </div>
-                <input
-                  type="range"
-                  min={4}
-                  max={12}
-                  step={1}
-                  value={duration}
-                  onChange={(e) => setDuration(Number(e.target.value))}
-                  className="w-full h-2 bg-secondary rounded-lg appearance-none cursor-pointer accent-primary"
-                />
-                <div className="flex justify-between text-xs text-muted-foreground">
-                  <span>4s</span>
-                  <span>12s</span>
-                </div>
-              </div>
-
-              {/* Audio Toggle */}
-              <div className="flex items-center justify-between">
-                <div className="space-y-0.5">
-                  <Label>Audio</Label>
-                  <p className="text-xs text-muted-foreground">Generate accompanying audio</p>
-                </div>
-                <Switch
-                  checked={audioEnabled}
-                  onCheckedChange={setAudioEnabled}
-                />
-              </div>
-
-              {/* Camera Toggle */}
-              <div className="space-y-2">
-                <div className="space-y-0.5">
-                  <Label>Camera</Label>
-                  <p className="text-xs text-muted-foreground">
-                    {cameraFixed ? 'Static (fixed position)' : 'Dynamic (moves naturally)'}
-                  </p>
-                </div>
-                <div className="flex gap-2">
-                  <Button
-                    type="button"
-                    variant={!cameraFixed ? 'default' : 'outline'}
-                    size="sm"
-                    onClick={() => setCameraFixed(false)}
-                  >
-                    Dynamic
-                  </Button>
-                  <Button
-                    type="button"
-                    variant={cameraFixed ? 'default' : 'outline'}
-                    size="sm"
-                    onClick={() => setCameraFixed(true)}
-                  >
-                    Static
-                  </Button>
-                </div>
-              </div>
-              
               {/* First Frame Upload */}
               <div className="space-y-2">
-                <Label>First Frame *</Label>
+                <Label>First Frame</Label>
                 {effectiveFirstFrame ? (
                   <div className="relative rounded-xl overflow-hidden border border-border">
                     <img src={effectiveFirstFrame} alt="First frame" className="w-full h-40 object-cover" />
@@ -540,7 +434,7 @@ export default function BRollAnimateStage({ pipelineId, onComplete }: BRollAnima
               
               {/* Last Frame Upload */}
               <div className="space-y-2">
-                <Label>Last Frame {isMotionGraphics ? <span className="text-destructive">*</span> : '(Optional)'}</Label>
+                <Label>Last Frame</Label>
                 {effectiveLastFrame ? (
                   <div className="relative rounded-xl overflow-hidden border border-border">
                     <img src={effectiveLastFrame} alt="Last frame" className="w-full h-40 object-cover" />
@@ -578,13 +472,11 @@ export default function BRollAnimateStage({ pipelineId, onComplete }: BRollAnima
               
               {/* Prompt */}
               <div className="space-y-2">
-                <Label>Prompt (Optional)</Label>
+                <Label>Prompt</Label>
                 <Textarea
                   value={prompt}
                   onChange={(e) => setPrompt(e.target.value)}
-                  placeholder={animationType === 'broll' 
-                    ? "Describe the motion you want (e.g., 'gentle camera pan across the scene')"
-                    : "Describe the transition you want (e.g., 'smooth zoom transition')"}
+                  placeholder="Describe the motion you want (e.g., 'gentle camera pan across the scene')"
                   rows={3}
                 />
                 <p className="text-xs text-muted-foreground">
@@ -612,11 +504,6 @@ export default function BRollAnimateStage({ pipelineId, onComplete }: BRollAnima
                 <>Generate Animation • {creditCost.toFixed(2)} credits</>
               )}
             </Button>
-            {isMotionGraphics && !effectiveLastFrame && (
-              <p className="text-xs text-amber-500 text-center mt-2">
-                Motion graphics requires both first and last frames
-              </p>
-            )}
           </div>
         )}
       </div>
