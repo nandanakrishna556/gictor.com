@@ -599,7 +599,8 @@ export default function AnimateModal({
           {/* Content */}
           <div className="flex flex-1 overflow-hidden">
             {/* Input Section */}
-            <div className="w-1/2 overflow-y-auto p-6 space-y-6 border-r">
+            <div className="w-1/2 flex flex-col overflow-hidden border-r">
+              <div className="flex-1 overflow-y-auto p-6 space-y-6">
               <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">Input</h3>
               
               {/* Generate/Upload Toggle */}
@@ -684,8 +685,8 @@ export default function AnimateModal({
                           
                           queryClient.invalidateQueries({ queryKey: ['file', fileId] });
                           queryClient.invalidateQueries({ queryKey: ['files', currentProjectId] });
-                          toast.success('Video saved!');
                           onSuccess?.();
+                          toast.success('Video saved!');
                         } catch (error) {
                           toast.error('Failed to save video');
                         } finally {
@@ -750,7 +751,7 @@ export default function AnimateModal({
               
               {/* Last Frame Upload */}
               <div className="space-y-2">
-                <Label>Last Frame</Label>
+                <Label>Last Frame (Optional)</Label>
                 {lastFrameUrl ? (
                   <div className="relative rounded-xl overflow-hidden border border-border">
                     <img src={lastFrameUrl} alt="Last frame" className="w-full h-40 object-cover" />
@@ -802,29 +803,32 @@ export default function AnimateModal({
                   AI will enhance your prompt or analyze the images if left empty
                 </p>
               </div>
-              
-              {/* Generate Button */}
-              <div className="pt-4 border-t space-y-3">
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-muted-foreground">Cost:</span>
-                  <span className="font-medium">{creditCost.toFixed(2)} credits</span>
-                </div>
-                <Button
-                  onClick={handleGenerate}
-                  disabled={!canGenerate}
-                  className="w-full"
-                >
-                  {isGenerating ? (
-                    <>
-                      <Loader2 className="h-4 w-4 animate-spin mr-2" strokeWidth={1.5} />
-                      Generating...
-                    </>
-                  ) : (
-                    <>Generate Animation • {creditCost.toFixed(2)} credits</>
-                  )}
-                </Button>
-              </div>
               </>
+              )}
+              </div>
+
+              {/* Sticky Generate Button */}
+              {inputMode === 'generate' && (
+                <div className="shrink-0 p-4 border-t bg-background space-y-3">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-muted-foreground">Cost:</span>
+                    <span className="font-medium">{creditCost.toFixed(2)} credits</span>
+                  </div>
+                  <Button
+                    onClick={handleGenerate}
+                    disabled={!canGenerate}
+                    className="w-full"
+                  >
+                    {isGenerating ? (
+                      <>
+                        <Loader2 className="h-4 w-4 animate-spin mr-2" strokeWidth={1.5} />
+                        Generating...
+                      </>
+                    ) : (
+                      <>Generate Animation • {creditCost.toFixed(2)} credits</>
+                    )}
+                  </Button>
+                </div>
               )}
             </div>
             

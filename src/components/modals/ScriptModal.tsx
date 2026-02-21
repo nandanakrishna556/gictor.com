@@ -887,7 +887,8 @@ Example: Dashboard walkthrough for new users. Show: 1) Create project, 2) Add sc
           {/* Content */}
           <div className="flex-1 flex overflow-hidden">
             {/* Input Section */}
-            <div className="w-1/2 overflow-y-auto p-5 space-y-5 border-r border-border">
+            <div className="w-1/2 flex flex-col overflow-hidden border-r border-border">
+              <div className="flex-1 overflow-y-auto p-5 space-y-5">
               <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
                 Input
               </h3>
@@ -1177,31 +1178,6 @@ Example: Dashboard walkthrough for new users. Show: 1) Create project, 2) Add sc
                   className="min-h-[120px] resize-none text-sm"
                 />
               </div>
-
-              {/* Generate */}
-              <div className="pt-3 border-t border-border space-y-3">
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-muted-foreground">Cost:</span>
-                  <span className="font-medium">{CREDIT_COST} credits</span>
-                </div>
-                <Button
-                  onClick={handleGenerate}
-                  disabled={!canGenerate}
-                  className="w-full h-10"
-                >
-                  {isGenerating ? (
-                    <>
-                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      Generating...
-                    </>
-                  ) : (
-                    <>
-                      <Sparkles className="h-4 w-4 mr-2" />
-                      {isRefineMode ? `Refine Script • ${CREDIT_COST} credits` : `Generate Script • ${CREDIT_COST} credits`}
-                    </>
-                  )}
-                </Button>
-              </div>
                 </>
               ) : (
                 /* Paste Mode */
@@ -1228,9 +1204,38 @@ Example: Dashboard walkthrough for new users. Show: 1) Create project, 2) Add sc
                       </p>
                     )}
                   </div>
+                </>
+              )}
+              </div>
 
-                  {/* Save Script - Free */}
-                  <div className="pt-3 border-t border-border space-y-3">
+              {/* Sticky Generate/Save Button */}
+              <div className="shrink-0 p-4 border-t bg-background space-y-3">
+                {inputMode === 'generate' ? (
+                  <>
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-muted-foreground">Cost:</span>
+                      <span className="font-medium">{CREDIT_COST} credits</span>
+                    </div>
+                    <Button
+                      onClick={handleGenerate}
+                      disabled={!canGenerate}
+                      className="w-full h-10"
+                    >
+                      {isGenerating ? (
+                        <>
+                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                          Generating...
+                        </>
+                      ) : (
+                        <>
+                          <Sparkles className="h-4 w-4 mr-2" />
+                          {isRefineMode ? `Refine Script • ${CREDIT_COST} credits` : `Generate Script • ${CREDIT_COST} credits`}
+                        </>
+                      )}
+                    </Button>
+                  </>
+                ) : (
+                  <>
                     <div className="flex items-center justify-between text-sm">
                       <span className="text-muted-foreground">Cost:</span>
                       <span className="font-medium text-emerald-500">Free</span>
@@ -1242,9 +1247,9 @@ Example: Dashboard walkthrough for new users. Show: 1) Create project, 2) Add sc
                     >
                       Save Script <span className="ml-2 text-emerald-400">• Free</span>
                     </Button>
-                  </div>
-                </>
-              )}
+                  </>
+                )}
+              </div>
             </div>
 
             {/* Output Section */}
