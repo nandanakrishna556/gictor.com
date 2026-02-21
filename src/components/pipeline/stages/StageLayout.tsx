@@ -62,15 +62,17 @@ export default function StageLayout({
   return (
     <div className="flex h-full overflow-hidden">
       {/* Input Section */}
-      <div className="w-1/2 overflow-y-auto p-6 space-y-5 border-r border-border">
-        <div className="flex items-center justify-between">
-          <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">Input</h3>
+      <div className="w-1/2 flex flex-col overflow-hidden border-r border-border">
+        <div className="flex-1 overflow-y-auto p-6 space-y-5">
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">Input</h3>
+          </div>
+          
+          {inputContent}
         </div>
-        
-        {inputContent}
 
-        {/* Generate Section */}
-        <div className="pt-4 border-t space-y-3">
+        {/* Sticky Generate Section */}
+        <div className="shrink-0 p-4 border-t bg-background space-y-3">
           {creditsCost && (
             <div className="flex items-center justify-between text-sm">
               <span className="text-muted-foreground">Cost:</span>
@@ -98,38 +100,45 @@ export default function StageLayout({
       </div>
 
       {/* Output Section */}
-      <div className="w-1/2 overflow-y-auto p-6 space-y-6 bg-muted/10">
-        <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">Output</h3>
-        
-        {isGenerating ? (
-          <div className="space-y-4">
-            <div className="aspect-square rounded-xl bg-secondary/50 flex items-center justify-center">
-              <div className="text-center space-y-3">
-                <Loader2 className="h-10 w-10 animate-spin text-primary mx-auto" strokeWidth={1.5} />
-                <p className="text-sm text-muted-foreground">Generating your image...</p>
+      <div className="w-1/2 flex flex-col overflow-hidden bg-muted/10">
+        <div className="flex-1 overflow-y-auto p-6 space-y-6">
+          <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">Output</h3>
+          
+          {isGenerating ? (
+            <div className="space-y-4">
+              <div className="aspect-square rounded-xl bg-secondary/50 flex items-center justify-center">
+                <div className="text-center space-y-3">
+                  <Loader2 className="h-10 w-10 animate-spin text-primary mx-auto" strokeWidth={1.5} />
+                  <p className="text-sm text-muted-foreground">Generating your image...</p>
+                </div>
               </div>
             </div>
-          </div>
-        ) : hasOutput ? (
-          <div className="space-y-4 animate-fade-in">
-            {outputContent}
-            {/* Output actions - download, etc. */}
-            {outputActions && (
-              <div className="flex items-center gap-2">
-                {outputActions}
-              </div>
-            )}
-            {/* Continue Button */}
+          ) : hasOutput ? (
+            <div className="space-y-4 animate-fade-in">
+              {outputContent}
+              {/* Output actions - download, etc. */}
+              {outputActions && (
+                <div className="flex items-center gap-2">
+                  {outputActions}
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="aspect-square rounded-xl bg-secondary/30 border-2 border-dashed border-border flex flex-col items-center justify-center gap-2">
+              {emptyStateIcon || <ImageIcon className="h-10 w-10 text-muted-foreground/50" strokeWidth={1.5} />}
+              <p className="text-muted-foreground text-sm">{emptyStateTitle}</p>
+              <p className="text-muted-foreground/70 text-xs">{emptyStateSubtitle}</p>
+            </div>
+          )}
+        </div>
+
+        {/* Sticky Continue Button */}
+        {hasOutput && !isGenerating && (
+          <div className="shrink-0 p-4 border-t bg-background">
             <Button className="w-full" onClick={onContinue} disabled={!canContinue}>
               Continue to Next Stage
               <ArrowRight className="h-4 w-4 ml-2" />
             </Button>
-          </div>
-        ) : (
-          <div className="aspect-square rounded-xl bg-secondary/30 border-2 border-dashed border-border flex flex-col items-center justify-center gap-2">
-            {emptyStateIcon || <ImageIcon className="h-10 w-10 text-muted-foreground/50" strokeWidth={1.5} />}
-            <p className="text-muted-foreground text-sm">{emptyStateTitle}</p>
-            <p className="text-muted-foreground/70 text-xs">{emptyStateSubtitle}</p>
           </div>
         )}
       </div>

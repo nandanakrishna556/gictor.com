@@ -554,27 +554,30 @@ export default function SpeechStage({ pipelineId, onContinue }: SpeechStageProps
               </div>
             )}
 
-            {/* Generate Button */}
-            <div className="pt-4 border-t space-y-3">
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-muted-foreground">Estimated cost:</span>
-                <span className="font-medium">{creditCost.toFixed(2)} credits</span>
-              </div>
-              <p className="text-xs text-muted-foreground">{CREDIT_COST_PER_1000_CHARS} credits per 1,000 characters</p>
-              <Button onClick={handleGenerate} disabled={!canGenerate} className="w-full">
-                {isGenerating ? (
-                  <>
-                    <Loader2 className="h-4 w-4 animate-spin mr-2" strokeWidth={1.5} />
-                    Generating...
-                  </>
-                ) : (
-                  <>Generate • {creditCost.toFixed(2)} credits</>
-                )}
-              </Button>
-            </div>
           </>
         )}
         </div>
+
+        {/* Sticky Generate Button */}
+        {inputMode === 'generate' && (
+          <div className="shrink-0 p-4 border-t bg-background space-y-3">
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-muted-foreground">Estimated cost:</span>
+              <span className="font-medium">{creditCost.toFixed(2)} credits</span>
+            </div>
+            <p className="text-xs text-muted-foreground">{CREDIT_COST_PER_1000_CHARS} credits per 1,000 characters</p>
+            <Button onClick={handleGenerate} disabled={!canGenerate} className="w-full">
+              {isGenerating ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" strokeWidth={1.5} />
+                  Generating...
+                </>
+              ) : (
+                <>Generate • {creditCost.toFixed(2)} credits</>
+              )}
+            </Button>
+          </div>
+        )}
       </div>
 
       {/* Output Section */}
@@ -611,9 +614,6 @@ export default function SpeechStage({ pipelineId, onContinue }: SpeechStageProps
                 Download Audio
               </a>
             </Button>
-            <Button onClick={onContinue} className="w-full">
-              Continue to Lip Sync
-            </Button>
           </div>
         ) : (
           <div className="aspect-video rounded-xl bg-secondary/30 border-2 border-dashed border-border flex items-center justify-center">
@@ -621,6 +621,15 @@ export default function SpeechStage({ pipelineId, onContinue }: SpeechStageProps
           </div>
         )}
         </div>
+
+        {/* Sticky Continue Button */}
+        {hasOutput && outputUrl && !isGenerating && (
+          <div className="shrink-0 p-4 border-t bg-background">
+            <Button onClick={onContinue} className="w-full">
+              Continue to Lip Sync
+            </Button>
+          </div>
+        )}
       </div>
     </div>
   );
