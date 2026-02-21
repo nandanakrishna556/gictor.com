@@ -604,74 +604,85 @@ export default function FirstFrameStage({ pipelineId, onContinue }: FirstFrameSt
                 )}
               </div>
 
-              {/* Generate Section */}
-              <div className="pt-4 border-t space-y-3">
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-muted-foreground">Cost:</span>
-                  <span className="font-medium">{creditCost} credits</span>
-                </div>
-                <Button onClick={handleGenerate} disabled={!canGenerate} className="w-full">
-                  {isGenerating ? (
-                    <>
-                      <Loader2 className="h-4 w-4 animate-spin mr-2" strokeWidth={1.5} />
-                      Generating...
-                    </>
-                  ) : (
-                    `Generate • ${creditCost} credits`
-                  )}
-                </Button>
-              </div>
             </>
           )}
         </div>
+
+        {/* Sticky Generate Button */}
+        {inputMode === 'generate' && (
+          <div className="shrink-0 p-4 border-t bg-background space-y-3">
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-muted-foreground">Cost:</span>
+              <span className="font-medium">{creditCost} credits</span>
+            </div>
+            <Button onClick={handleGenerate} disabled={!canGenerate} className="w-full">
+              {isGenerating ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" strokeWidth={1.5} />
+                  Generating...
+                </>
+              ) : (
+                `Generate • ${creditCost} credits`
+              )}
+            </Button>
+          </div>
+        )}
       </div>
 
       {/* Output Section */}
-      <div className="w-1/2 overflow-y-auto p-6 space-y-6 bg-muted/10">
-        <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">Output</h3>
+      <div className="w-1/2 flex flex-col overflow-hidden bg-muted/10">
+        <div className="flex-1 overflow-y-auto p-6 space-y-6">
+          <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">Output</h3>
 
-        {isGenerating ? (
-          <div className="space-y-4">
-            <div className="aspect-square rounded-xl bg-secondary/50 flex items-center justify-center">
-              <div className="text-center space-y-4">
-                <Loader2 className="h-10 w-10 animate-spin text-primary mx-auto" strokeWidth={1.5} />
-                <div className="space-y-2">
-                  <p className="text-sm text-muted-foreground">Generating your image...</p>
-                  {pipeline?.progress !== undefined && pipeline.progress > 0 && pipeline.progress < 100 && (
-                    <div className="flex flex-col items-center gap-1">
-                      <div className="w-32 h-1.5 bg-secondary rounded-full overflow-hidden">
-                        <div 
-                          className="h-full bg-primary rounded-full transition-all duration-300"
-                          style={{ width: `${pipeline.progress}%` }}
-                        />
+          {isGenerating ? (
+            <div className="space-y-4">
+              <div className="aspect-square rounded-xl bg-secondary/50 flex items-center justify-center">
+                <div className="text-center space-y-4">
+                  <Loader2 className="h-10 w-10 animate-spin text-primary mx-auto" strokeWidth={1.5} />
+                  <div className="space-y-2">
+                    <p className="text-sm text-muted-foreground">Generating your image...</p>
+                    {pipeline?.progress !== undefined && pipeline.progress > 0 && pipeline.progress < 100 && (
+                      <div className="flex flex-col items-center gap-1">
+                        <div className="w-32 h-1.5 bg-secondary rounded-full overflow-hidden">
+                          <div 
+                            className="h-full bg-primary rounded-full transition-all duration-300"
+                            style={{ width: `${pipeline.progress}%` }}
+                          />
+                        </div>
+                        <p className="text-xs text-muted-foreground">{pipeline.progress}%</p>
                       </div>
-                      <p className="text-xs text-muted-foreground">{pipeline.progress}%</p>
-                    </div>
-                  )}
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
-        ) : hasOutput && outputUrl ? (
-          <div className="space-y-4 animate-fade-in">
-            <div className="rounded-xl border border-border overflow-hidden">
-              <img src={outputUrl} alt="Generated frame" className="w-full object-contain" />
+          ) : hasOutput && outputUrl ? (
+            <div className="space-y-4 animate-fade-in">
+              <div className="rounded-xl border border-border overflow-hidden">
+                <img src={outputUrl} alt="Generated frame" className="w-full object-contain" />
+              </div>
+              <Button variant="secondary" className="w-full" asChild>
+                <a href={outputUrl} download="first-frame.png">
+                  <Download className="h-4 w-4 mr-2" strokeWidth={1.5} />
+                  Download Image
+                </a>
+              </Button>
             </div>
-            <Button variant="secondary" className="w-full" asChild>
-              <a href={outputUrl} download="first-frame.png">
-                <Download className="h-4 w-4 mr-2" strokeWidth={1.5} />
-                Download Image
-              </a>
-            </Button>
+          ) : (
+            <div className="aspect-square rounded-xl bg-secondary/30 border-2 border-dashed border-border flex flex-col items-center justify-center gap-2">
+              <ImageIcon className="h-10 w-10 text-muted-foreground/50" strokeWidth={1.5} />
+              <p className="text-muted-foreground text-sm">Generated image will appear here</p>
+              <p className="text-muted-foreground/70 text-xs">Configure inputs and click Generate</p>
+            </div>
+          )}
+        </div>
+
+        {/* Sticky Continue Button */}
+        {hasOutput && outputUrl && !isGenerating && (
+          <div className="shrink-0 p-4 border-t bg-background">
             <Button onClick={onContinue} className="w-full">
               Continue to Speech
             </Button>
-          </div>
-        ) : (
-          <div className="aspect-square rounded-xl bg-secondary/30 border-2 border-dashed border-border flex flex-col items-center justify-center gap-2">
-            <ImageIcon className="h-10 w-10 text-muted-foreground/50" strokeWidth={1.5} />
-            <p className="text-muted-foreground text-sm">Generated image will appear here</p>
-            <p className="text-muted-foreground/70 text-xs">Configure inputs and click Generate</p>
           </div>
         )}
       </div>

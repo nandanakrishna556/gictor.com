@@ -509,48 +509,59 @@ export default function BRollAnimateStage({ pipelineId, onComplete }: BRollAnima
       </div>
       
       {/* Output Section */}
-      <div className="w-1/2 overflow-y-auto p-6 space-y-6 bg-muted/10">
-        <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">Output</h3>
+      <div className="w-1/2 flex flex-col overflow-hidden bg-muted/10">
+        <div className="flex-1 overflow-y-auto p-6 space-y-6">
+          <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">Output</h3>
         
-        {isGenerating && (
-          <div className="space-y-4">
-            <div className="aspect-video rounded-xl bg-secondary/50 flex items-center justify-center">
-              <div className="text-center space-y-3">
-                <Loader2 className="h-10 w-10 animate-spin text-primary mx-auto" strokeWidth={1.5} />
-                <p className="text-sm text-muted-foreground">Generating animation...</p>
+          {isGenerating && (
+            <div className="space-y-4">
+              <div className="aspect-video rounded-xl bg-secondary/50 flex items-center justify-center">
+                <div className="text-center space-y-3">
+                  <Loader2 className="h-10 w-10 animate-spin text-primary mx-auto" strokeWidth={1.5} />
+                  <p className="text-sm text-muted-foreground">Generating animation...</p>
+                </div>
               </div>
             </div>
-          </div>
-        )}
+          )}
         
-        {hasOutput && outputVideo?.url && (
-          <div className="space-y-4 animate-fade-in">
-            <div className="rounded-xl overflow-hidden border border-border">
-              <video
-                src={outputVideo.url}
-                controls
-                className="w-full"
-                autoPlay
-                muted
-                loop
-              />
+          {hasOutput && outputVideo?.url && (
+            <div className="space-y-4 animate-fade-in">
+              <div className="rounded-xl overflow-hidden border border-border">
+                <video
+                  src={outputVideo.url}
+                  controls
+                  className="w-full"
+                  autoPlay
+                  muted
+                  loop
+                />
+              </div>
+              <Button variant="secondary" className="w-full" asChild>
+                <a href={outputVideo.url} download>
+                  <Download className="h-4 w-4 mr-2" strokeWidth={1.5} />
+                  Download Video
+                </a>
+              </Button>
             </div>
-            <Button variant="secondary" className="w-full" asChild>
-              <a href={outputVideo.url} download>
-                <Download className="h-4 w-4 mr-2" strokeWidth={1.5} />
-                Download Video
-              </a>
+          )}
+        
+          {!isGenerating && !hasOutput && (
+            <div className="aspect-video rounded-xl bg-secondary/30 border-2 border-dashed border-border flex items-center justify-center">
+              <div className="text-center">
+                <Film className="h-12 w-12 text-muted-foreground/30 mx-auto mb-2" />
+                <p className="text-muted-foreground text-sm">No output yet</p>
+                <p className="text-muted-foreground/70 text-xs mt-1">Upload images and click generate</p>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Sticky Continue Button */}
+        {hasOutput && outputVideo?.url && !isGenerating && (
+          <div className="shrink-0 p-4 border-t bg-background">
+            <Button onClick={onComplete} className="w-full">
+              Continue
             </Button>
-          </div>
-        )}
-        
-        {!isGenerating && !hasOutput && (
-          <div className="aspect-video rounded-xl bg-secondary/30 border-2 border-dashed border-border flex items-center justify-center">
-            <div className="text-center">
-              <Film className="h-12 w-12 text-muted-foreground/30 mx-auto mb-2" />
-              <p className="text-muted-foreground text-sm">No output yet</p>
-              <p className="text-muted-foreground/70 text-xs mt-1">Upload images and click generate</p>
-            </div>
           </div>
         )}
       </div>
