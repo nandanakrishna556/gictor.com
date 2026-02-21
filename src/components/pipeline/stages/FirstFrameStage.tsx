@@ -20,7 +20,7 @@ interface FirstFrameStageProps {
   onContinue: () => void;
 }
 
-type FrameStyle = 'talking_head' | 'broll' | 'motion_graphics';
+type FrameStyle = 'talking_head' | 'broll';
 type SubStyle = 'ugc' | 'studio';
 type AspectRatio = '9:16' | '16:9' | '1:1';
 type CameraPerspective = '1st_person' | '3rd_person';
@@ -158,7 +158,7 @@ export default function FirstFrameStage({ pipelineId, onContinue }: FirstFrameSt
         input: {
           mode: inputMode,
           style: frameStyle,
-          substyle: frameStyle !== 'motion_graphics' ? subStyle : null,
+          substyle: subStyle,
           aspect_ratio: aspectRatio,
           camera_perspective: frameStyle === 'broll' ? cameraPerspective : null,
           resolution,
@@ -308,7 +308,7 @@ export default function FirstFrameStage({ pipelineId, onContinue }: FirstFrameSt
             project_id: pipeline?.project_id || null,
             frame_type: 'first',
             style: frameStyle,
-            substyle: frameStyle !== 'motion_graphics' ? subStyle : null,
+            substyle: subStyle,
             prompt: prompt,
             aspect_ratio: aspectRatio,
             frame_resolution: resolution,
@@ -462,31 +462,10 @@ export default function FirstFrameStage({ pipelineId, onContinue }: FirstFrameSt
                     )}
                   </div>
 
-                  {/* Motion Graphics Option */}
-                  <div 
-                    onClick={() => setFrameStyle('motion_graphics')}
-                    className={cn(
-                      "flex items-center justify-between p-3 rounded-lg border cursor-pointer transition-all",
-                      frameStyle === 'motion_graphics' 
-                        ? "border-primary bg-primary/5" 
-                        : "border-border hover:border-primary/50"
-                    )}
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className={cn(
-                        "h-4 w-4 rounded-full border-2 flex items-center justify-center",
-                        frameStyle === 'motion_graphics' ? "border-primary" : "border-muted-foreground"
-                      )}>
-                        {frameStyle === 'motion_graphics' && <div className="h-2 w-2 rounded-full bg-primary" />}
-                      </div>
-                      <span className="text-sm font-medium">Motion Graphics</span>
-                    </div>
-                  </div>
                 </div>
                 <p className="text-xs text-muted-foreground mt-2">
                   {frameStyle === 'talking_head' && "Person looking directly at camera"}
                   {frameStyle === 'broll' && "Person captured mid-action, natural movement"}
-                  {frameStyle === 'motion_graphics' && "Background only - colors, gradients, patterns"}
                 </p>
               </div>
 

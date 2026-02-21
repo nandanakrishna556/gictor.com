@@ -23,7 +23,7 @@ interface BRollFirstFrameStageProps {
   onComplete: () => void;
 }
 
-type Style = 'talking_head' | 'broll' | 'motion_graphics';
+type Style = 'talking_head' | 'broll';
 type SubStyle = 'ugc' | 'studio';
 type AspectRatio = '9:16' | '16:9' | '1:1';
 type CameraPerspective = '1st_person' | '3rd_person';
@@ -173,7 +173,7 @@ export default function BRollFirstFrameStage({ pipelineId, onComplete }: BRollFi
         mode: inputMode,
         frame_type: 'first',
         style,
-        substyle: style !== 'motion_graphics' ? subStyle : null,
+        substyle: subStyle,
         aspect_ratio: aspectRatio,
         camera_perspective: style === 'broll' ? cameraPerspective : null,
         resolution,
@@ -305,7 +305,7 @@ export default function BRollFirstFrameStage({ pipelineId, onComplete }: BRollFi
             prompt: prompt.trim(),
             frame_type: 'first',
             style,
-            substyle: style !== 'motion_graphics' ? subStyle : undefined,
+            substyle: subStyle,
             aspect_ratio: aspectRatio,
             camera_perspective: style === 'broll' ? cameraPerspective : undefined,
             frame_resolution: resolution,
@@ -482,31 +482,10 @@ export default function BRollFirstFrameStage({ pipelineId, onComplete }: BRollFi
                 )}
               </div>
 
-              {/* Motion Graphics */}
-              <div
-                className={cn(
-                  "flex items-center justify-between p-3 rounded-lg border cursor-pointer transition-all",
-                  style === 'motion_graphics'
-                    ? "border-primary bg-primary/5"
-                    : "border-border hover:border-primary/50"
-                )}
-                onClick={() => setStyle('motion_graphics')}
-              >
-                <div className="flex items-center gap-3">
-                  <div className={cn(
-                    "h-4 w-4 rounded-full border-2 flex items-center justify-center",
-                    style === 'motion_graphics' ? "border-primary" : "border-muted-foreground"
-                  )}>
-                    {style === 'motion_graphics' && <div className="h-2 w-2 rounded-full bg-primary" />}
-                  </div>
-                  <span className="text-sm font-medium">Motion Graphics</span>
-                </div>
-              </div>
             </div>
             <p className="text-xs text-muted-foreground mt-2">
               {style === 'talking_head' && "Person looking directly at camera"}
               {style === 'broll' && "Person captured mid-action, natural movement"}
-              {style === 'motion_graphics' && "Background only - colors, gradients, patterns"}
             </p>
           </div>
 
@@ -639,11 +618,9 @@ export default function BRollFirstFrameStage({ pipelineId, onComplete }: BRollFi
               value={prompt}
               onChange={(e) => setPrompt(e.target.value)}
               placeholder={
-                style === 'motion_graphics'
-                  ? "Describe the background: colors, gradients, patterns, abstract shapes..."
-                  : style === 'broll'
-                    ? "Describe the action, scene, and environment (person will be captured mid-action)..."
-                    : "Describe the person, their expression, clothing, and setting (looking at camera)..."
+                style === 'broll'
+                  ? "Describe the action, scene, and environment (person will be captured mid-action)..."
+                  : "Describe the person, their expression, clothing, and setting (looking at camera)..."
               }
               className="min-h-24 rounded-xl resize-none"
             />
