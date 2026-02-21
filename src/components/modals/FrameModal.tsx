@@ -56,7 +56,7 @@ const DEFAULT_STATUS_OPTIONS: StatusOption[] = [
 ];
 
 type FrameType = "first" | "last";
-type Style = "talking_head" | "broll" | "motion_graphics";
+type Style = "talking_head" | "broll";
 type SubStyle = "ugc" | "studio";
 type AspectRatio = "9:16" | "16:9" | "1:1";
 type CameraPerspective = "1st_person" | "3rd_person";
@@ -284,7 +284,7 @@ export default function FrameModal({
             generation_params: {
               frame_type: frameType,
               style,
-              substyle: style !== "motion_graphics" ? subStyle : null,
+              substyle: subStyle,
               aspect_ratio: aspectRatio,
               actor_id: style === "talking_head" ? selectedActorId : null,
               reference_images: referenceImages,
@@ -351,9 +351,7 @@ export default function FrameModal({
 
   const handleStyleChange = (newStyle: Style) => {
     setStyle(newStyle);
-    if (newStyle !== "motion_graphics") {
-      setSubStyle("ugc");
-    }
+    setSubStyle("ugc");
     setHasUnsavedChanges(true);
   };
 
@@ -520,7 +518,7 @@ export default function FrameModal({
           generation_params: {
             frame_type: frameType,
             style,
-            substyle: style !== "motion_graphics" ? subStyle : null,
+            substyle: subStyle,
             aspect_ratio: aspectRatio,
             actor_id: style === "talking_head" || style === "broll" ? selectedActorId : null,
             reference_images: referenceImages,
@@ -542,7 +540,7 @@ export default function FrameModal({
           file_name: name,
           frame_type: frameType,
           style,
-          substyle: style !== "motion_graphics" ? subStyle : null,
+          substyle: subStyle,
           aspect_ratio: aspectRatio,
           actor_id: style === "talking_head" || style === "broll" ? selectedActorId : null,
           actor_360_url: style === "talking_head" || style === "broll" ? selectedActor?.profile_360_url : null,
@@ -620,7 +618,7 @@ export default function FrameModal({
           generation_params: {
             frame_type: frameType,
             style,
-            substyle: style !== "motion_graphics" ? subStyle : null,
+            substyle: subStyle,
             aspect_ratio: aspectRatio,
             actor_id: style === "talking_head" ? selectedActorId : null,
             reference_images: referenceImages,
@@ -946,36 +944,10 @@ export default function FrameModal({
                     )}
                   </div>
 
-                  {/* Motion Graphics */}
-                  <div
-                    className={cn(
-                      "flex items-center justify-between p-3 rounded-lg border cursor-pointer transition-all",
-                      style === "motion_graphics"
-                        ? "border-primary bg-primary/5"
-                        : "border-border hover:border-primary/50",
-                    )}
-                    onClick={() => handleStyleChange("motion_graphics")}
-                  >
-                    <div className="flex items-center gap-3">
-                      <div
-                        className={cn(
-                          "h-4 w-4 rounded-full border-2 flex items-center justify-center",
-                          style === "motion_graphics" ? "border-primary" : "border-muted-foreground",
-                        )}
-                      >
-                        {style === "motion_graphics" && <div className="h-2 w-2 rounded-full bg-primary" />}
-                      </div>
-                      <span className="text-sm font-medium">Motion Graphics</span>
-                    </div>
-                  </div>
                 </div>
                 <p className="text-xs text-muted-foreground mt-2">
                   {style === "talking_head" && "Person looking directly at camera"}
                   {style === "broll" && "Person captured mid-action, natural movement"}
-                  {style === "motion_graphics" &&
-                    (frameType === "first"
-                      ? "Background only - colors, gradients, patterns"
-                      : "Graphics & elements - icons, shapes, text areas")}
                 </p>
               </div>
 
@@ -1127,13 +1099,9 @@ export default function FrameModal({
                   value={prompt}
                   onChange={(e) => handlePromptChange(e.target.value)}
                   placeholder={
-                    style === "motion_graphics"
-                      ? frameType === "first"
-                        ? "Describe the background: colors, gradients, patterns, abstract shapes..."
-                        : "Describe the graphics: icons, shapes, text areas, call-to-action elements..."
-                      : style === "broll"
-                        ? "Describe the action, scene, and environment (person will be captured mid-action)..."
-                        : "Describe the person, their expression, clothing, and setting (looking at camera)..."
+                    style === "broll"
+                      ? "Describe the action, scene, and environment (person will be captured mid-action)..."
+                      : "Describe the person, their expression, clothing, and setting (looking at camera)..."
                   }
                   rows={3}
                   className="resize-none"
