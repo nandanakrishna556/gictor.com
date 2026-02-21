@@ -26,7 +26,7 @@ export default function BRollFirstFrameStage({ pipelineId, onComplete }: BRollFi
   // Input state
   const [mode, setMode] = useState<InputMode>('generate');
   const [prompt, setPrompt] = useState('');
-  const [aspectRatio, setAspectRatio] = useState<'1:1' | '9:16' | '16:9'>('16:9');
+  const [aspectRatio, setAspectRatio] = useState<'1:1' | '9:16' | '16:9'>('9:16');
   const [referenceImages, setReferenceImages] = useState<string[]>([]);
   const [uploadedUrl, setUploadedUrl] = useState('');
   

@@ -995,39 +995,19 @@ export default function FrameModal({
                 </div>
               )}
 
-              {/* Aspect Ratio & Resolution - Same Row */}
+              {/* Aspect Ratio */}
               <div className="space-y-2">
-                <div className="flex gap-4">
-                  {/* Aspect Ratio Dropdown */}
-                  <div className="flex-1 space-y-1">
-                    <label className="text-sm font-medium">Aspect Ratio</label>
-                    <Select value={aspectRatio} onValueChange={(value) => handleAspectRatioChange(value as AspectRatio)}>
-                      <SelectTrigger className="w-full">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="9:16">9:16 (Vertical)</SelectItem>
-                        <SelectItem value="16:9">16:9 (Horizontal)</SelectItem>
-                        <SelectItem value="1:1">1:1 (Square)</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  
-                  {/* Resolution Dropdown */}
-                  <div className="flex-1 space-y-1">
-                    <label className="text-sm font-medium">Resolution</label>
-                    <Select value={resolution} onValueChange={(value) => { setResolution(value as Resolution); setHasUnsavedChanges(true); }}>
-                      <SelectTrigger className="w-full">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="1K">1K • 0.1 credits</SelectItem>
-                        <SelectItem value="2K">2K • 0.1 credits</SelectItem>
-                        <SelectItem value="4K">4K • 0.15 credits</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
+                <label className="text-sm font-medium">Aspect Ratio</label>
+                <Select value={aspectRatio} onValueChange={(value) => handleAspectRatioChange(value as AspectRatio)}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="9:16">9:16 (Vertical)</SelectItem>
+                    <SelectItem value="16:9">16:9 (Horizontal)</SelectItem>
+                    <SelectItem value="1:1">1:1 (Square)</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
 
               {/* Reference Images */}

@@ -53,7 +53,7 @@ export default function BRollFirstFrameStage({ pipelineId, onComplete }: BRollFi
   const [inputMode, setInputMode] = useState<InputMode>('generate');
   const [style, setStyle] = useState<Style>('broll'); // Default to B-Roll for B-Roll pipeline
   const [subStyle, setSubStyle] = useState<SubStyle>('ugc');
-  const [aspectRatio, setAspectRatio] = useState<AspectRatio>('16:9');
+  const [aspectRatio, setAspectRatio] = useState<AspectRatio>('9:16');
   const [cameraPerspective, setCameraPerspective] = useState<CameraPerspective>('3rd_person');
   const [resolution, setResolution] = useState<Resolution>('2K');
   const [selectedActorId, setSelectedActorId] = useState<string | null>(null);
@@ -99,7 +99,7 @@ export default function BRollFirstFrameStage({ pipelineId, onComplete }: BRollFi
       setInputMode(input.mode || 'generate');
       setStyle(input.style || 'broll');
       setSubStyle(input.substyle || 'ugc');
-      setAspectRatio(input.aspect_ratio || '16:9');
+      setAspectRatio(input.aspect_ratio || '9:16');
       setCameraPerspective(input.camera_perspective || '3rd_person');
       setResolution(input.resolution || '2K');
       setSelectedActorId(input.actor_id || null);
@@ -527,37 +527,19 @@ export default function BRollFirstFrameStage({ pipelineId, onComplete }: BRollFi
             </div>
           )}
 
-          {/* Aspect Ratio & Resolution - Same Row */}
+          {/* Aspect Ratio */}
           <div className="space-y-2">
-            <div className="flex gap-4">
-              <div className="flex-1 space-y-1">
-                <label className="text-sm font-medium">Aspect Ratio</label>
-                <Select value={aspectRatio} onValueChange={(v) => setAspectRatio(v as AspectRatio)}>
-                  <SelectTrigger className="w-full">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="9:16">9:16 (Vertical)</SelectItem>
-                    <SelectItem value="16:9">16:9 (Horizontal)</SelectItem>
-                    <SelectItem value="1:1">1:1 (Square)</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              
-              <div className="flex-1 space-y-1">
-                <label className="text-sm font-medium">Resolution</label>
-                <Select value={resolution} onValueChange={(v) => setResolution(v as Resolution)}>
-                  <SelectTrigger className="w-full">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="1K">1K • 0.25 credits</SelectItem>
-                    <SelectItem value="2K">2K • 0.25 credits</SelectItem>
-                    <SelectItem value="4K">4K • 0.5 credits</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
+            <label className="text-sm font-medium">Aspect Ratio</label>
+            <Select value={aspectRatio} onValueChange={(v) => setAspectRatio(v as AspectRatio)}>
+              <SelectTrigger className="w-full">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="9:16">9:16 (Vertical)</SelectItem>
+                <SelectItem value="16:9">16:9 (Horizontal)</SelectItem>
+                <SelectItem value="1:1">1:1 (Square)</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
 
           {/* Reference Images */}
