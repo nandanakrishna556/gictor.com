@@ -759,7 +759,8 @@ export default function FrameModal({
           {/* Content - Two column layout */}
           <div className="flex-1 flex min-h-0 overflow-hidden">
             {/* Input Section */}
-            <div className="w-1/2 overflow-y-auto p-6 space-y-5 border-r border-border">
+            <div className="w-1/2 flex flex-col overflow-hidden border-r border-border">
+              <div className="flex-1 overflow-y-auto p-6 space-y-5">
               <div className="flex items-center justify-between">
                 <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">Input</h3>
               </div>
@@ -1090,25 +1091,28 @@ export default function FrameModal({
                   <p className="text-xs text-muted-foreground">Describe what you'd like to change</p>
                 )}
               </div>
-
-              {/* Generate Section */}
-              <div className="pt-4 border-t space-y-3">
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-muted-foreground">Cost:</span>
-                  <span className="font-medium">{creditCost} credits</span>
-                </div>
-                <Button onClick={handleGenerate} disabled={!canGenerate || isGenerating} className="w-full">
-                  {isGenerating ? (
-                    <>
-                      <Loader2 className="h-4 w-4 animate-spin mr-2" strokeWidth={1.5} />
-                      Generating...
-                    </>
-                  ) : (
-                    `Generate • ${creditCost} credits`
-                  )}
-                </Button>
-              </div>
               </>
+              )}
+              </div>
+
+              {/* Sticky Generate Button */}
+              {inputMode === 'generate' && (
+                <div className="shrink-0 p-4 border-t bg-background space-y-3">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-muted-foreground">Cost:</span>
+                    <span className="font-medium">{creditCost} credits</span>
+                  </div>
+                  <Button onClick={handleGenerate} disabled={!canGenerate || isGenerating} className="w-full">
+                    {isGenerating ? (
+                      <>
+                        <Loader2 className="h-4 w-4 animate-spin mr-2" strokeWidth={1.5} />
+                        Generating...
+                      </>
+                    ) : (
+                      `Generate • ${creditCost} credits`
+                    )}
+                  </Button>
+                </div>
               )}
             </div>
 
