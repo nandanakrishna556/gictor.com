@@ -432,10 +432,10 @@ export default function SpeechStage({ pipelineId, onContinue }: SpeechStageProps
                     <Search className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                   </Button>
                 </PopoverTrigger>
-                <PopoverContent className="w-[400px] p-0" align="start">
+                <PopoverContent className="w-[400px] p-0 z-50" align="start" sideOffset={4}>
                   <Command>
                     <CommandInput placeholder="Search actors..." />
-                    <CommandList>
+                    <CommandList className="max-h-[240px] overflow-y-auto">
                       <CommandEmpty>
                         {availableActors.length === 0 ? (
                           <div className="py-6 text-center text-sm">
