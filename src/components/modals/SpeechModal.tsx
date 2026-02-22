@@ -695,7 +695,7 @@ export default function SpeechModal({
               {/* Actor Voice Selector */}
               <div className="space-y-2">
                 <label className="text-sm font-medium">Actor Voice (Required)</label>
-                <Popover open={actorSearchOpen} onOpenChange={setActorSearchOpen}>
+                <Popover open={actorSearchOpen} onOpenChange={setActorSearchOpen} modal={true}>
                   <PopoverTrigger asChild>
                     <Button
                       variant="outline"
