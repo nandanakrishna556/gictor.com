@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react';
-import { FolderPlus, X, Loader2, Mic, Image, FileText, Sparkles, RefreshCw, CircleUser, Wand2, Clapperboard, PlayCircle } from 'lucide-react';
+import { FolderPlus, X, Loader2, CircleUser } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
 import { v4 as uuidv4 } from 'uuid';
 import {
@@ -49,12 +49,12 @@ const workflows = [
     title: 'Talking Head',
     description: 'Create talking head video',
   },
-  {
-    id: 'b_roll' as WorkflowType,
-    icon: Clapperboard,
-    title: 'B-Roll',
-    description: 'Generate video clips',
-  },
+  // {
+  //   id: 'b_roll' as WorkflowType,
+  //   icon: Clapperboard,
+  //   title: 'B-Roll',
+  //   description: 'Generate video clips',
+  // },
 ];
 
 const elements = [
@@ -64,44 +64,44 @@ const elements = [
     title: 'Folder',
     description: 'Organize your content',
   },
-  {
-    id: 'script' as ElementType,
-    icon: FileText,
-    title: 'Script',
-    description: 'Generate script',
-  },
-  {
-    id: 'speech' as ElementType,
-    icon: Mic,
-    title: 'Speech',
-    description: 'Generate voice audio',
-  },
-  {
-    id: 'frame' as ElementType,
-    icon: Image,
-    title: 'Frame',
-    description: 'Generate AI images',
-    iconColor: 'text-cyan-500',
-  },
-  {
-    id: 'lip_sync' as ElementType,
-    icon: Wand2,
-    title: 'Lip Sync',
-    description: 'Sync audio to face',
-  },
-  {
-    id: 'animate' as ElementType,
-    icon: PlayCircle,
-    title: 'Animate',
-    description: 'Animate images to video',
-  },
-  {
-    id: 'swap' as ElementType,
-    icon: RefreshCw,
-    title: 'Swap',
-    description: 'Face swap',
-    comingSoon: true,
-  },
+  // {
+  //   id: 'script' as ElementType,
+  //   icon: FileText,
+  //   title: 'Script',
+  //   description: 'Generate script',
+  // },
+  // {
+  //   id: 'speech' as ElementType,
+  //   icon: Mic,
+  //   title: 'Speech',
+  //   description: 'Generate voice audio',
+  // },
+  // {
+  //   id: 'frame' as ElementType,
+  //   icon: Image,
+  //   title: 'Frame',
+  //   description: 'Generate AI images',
+  //   iconColor: 'text-cyan-500',
+  // },
+  // {
+  //   id: 'lip_sync' as ElementType,
+  //   icon: Wand2,
+  //   title: 'Lip Sync',
+  //   description: 'Sync audio to face',
+  // },
+  // {
+  //   id: 'animate' as ElementType,
+  //   icon: PlayCircle,
+  //   title: 'Animate',
+  //   description: 'Animate images to video',
+  // },
+  // {
+  //   id: 'swap' as ElementType,
+  //   icon: RefreshCw,
+  //   title: 'Swap',
+  //   description: 'Face swap',
+  //   comingSoon: true,
+  // },
 ];
 
 export default function CreateNewModal({
@@ -201,8 +201,8 @@ export default function CreateNewModal({
     }
   };
 
-  const handleElementSelect = async (element: typeof elements[0]) => {
-    if (element.comingSoon) {
+  const handleElementSelect = async (element: typeof elements[0] & { comingSoon?: boolean }) => {
+    if ((element as any).comingSoon) {
       toast.info(`${element.title} coming soon!`);
       return;
     }
@@ -374,10 +374,10 @@ export default function CreateNewModal({
                   <button
                     key={element.id}
                     onClick={() => handleElementSelect(element)}
-                    disabled={isCreating || element.comingSoon}
+                    disabled={isCreating || (element as any).comingSoon}
                     className="relative flex flex-col items-center rounded-xl border border-border bg-card p-6 text-center transition-apple hover:border-primary hover:bg-primary/5 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    {element.comingSoon && (
+                    {(element as any).comingSoon && (
                       <span className="absolute top-2 right-2 text-[10px] font-medium bg-muted px-1.5 py-0.5 rounded text-muted-foreground">
                         Soon
                       </span>

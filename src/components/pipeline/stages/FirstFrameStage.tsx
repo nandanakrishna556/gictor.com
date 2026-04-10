@@ -20,7 +20,7 @@ interface FirstFrameStageProps {
   onContinue: () => void;
 }
 
-type FrameStyle = 'talking_head' | 'broll';
+type FrameStyle = 'talking_head';
 type SubStyle = 'ugc' | 'studio';
 type AspectRatio = '9:16' | '16:9' | '1:1';
 type CameraPerspective = '1st_person' | '3rd_person';
@@ -160,9 +160,9 @@ export default function FirstFrameStage({ pipelineId, onContinue }: FirstFrameSt
           style: frameStyle,
           substyle: subStyle,
           aspect_ratio: aspectRatio,
-          camera_perspective: frameStyle === 'broll' ? cameraPerspective : null,
+          camera_perspective: null,
           resolution,
-          actor_id: (frameStyle === 'talking_head' || frameStyle === 'broll') ? selectedActorId : null,
+          actor_id: selectedActorId,
           reference_images: referenceImages,
           prompt,
           uploaded_url: uploadedImageUrl,
@@ -376,152 +376,49 @@ export default function FirstFrameStage({ pipelineId, onContinue }: FirstFrameSt
           ) : (
             /* Generate Mode UI */
             <>
-              {/* Style Selection */}
+              {/* Actor Selector */}
               <div className="space-y-2">
-                <label className="text-sm font-medium">Style</label>
-                <div className="space-y-2">
-                  {/* Talking Head Option */}
-                  <div 
-                    onClick={() => setFrameStyle('talking_head')}
-                    className={cn(
-                      "flex items-center justify-between p-3 rounded-lg border cursor-pointer transition-all",
-                      frameStyle === 'talking_head' 
-                        ? "border-primary bg-primary/5" 
-                        : "border-border hover:border-primary/50"
-                    )}
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className={cn(
-                        "h-4 w-4 rounded-full border-2 flex items-center justify-center",
-                        frameStyle === 'talking_head' ? "border-primary" : "border-muted-foreground"
-                      )}>
-                        {frameStyle === 'talking_head' && <div className="h-2 w-2 rounded-full bg-primary" />}
-                      </div>
-                      <span className="text-sm font-medium">Talking Head</span>
-                    </div>
-                    {frameStyle === 'talking_head' && (
-                      <div className="flex gap-1">
-                        <Button
-                          variant={subStyle === 'ugc' ? 'default' : 'outline'}
-                          size="sm"
-                          className="h-7 text-xs px-3"
-                          onClick={(e) => { e.stopPropagation(); setSubStyle('ugc'); }}
-                        >
-                          UGC
-                        </Button>
-                        <Button
-                          variant={subStyle === 'studio' ? 'default' : 'outline'}
-                          size="sm"
-                          className="h-7 text-xs px-3"
-                          onClick={(e) => { e.stopPropagation(); setSubStyle('studio'); }}
-                        >
-                          Studio
-                        </Button>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* B-Roll Option */}
-                  <div 
-                    onClick={() => setFrameStyle('broll')}
-                    className={cn(
-                      "flex items-center justify-between p-3 rounded-lg border cursor-pointer transition-all",
-                      frameStyle === 'broll' 
-                        ? "border-primary bg-primary/5" 
-                        : "border-border hover:border-primary/50"
-                    )}
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className={cn(
-                        "h-4 w-4 rounded-full border-2 flex items-center justify-center",
-                        frameStyle === 'broll' ? "border-primary" : "border-muted-foreground"
-                      )}>
-                        {frameStyle === 'broll' && <div className="h-2 w-2 rounded-full bg-primary" />}
-                      </div>
-                      <span className="text-sm font-medium">B-Roll</span>
-                    </div>
-                    {frameStyle === 'broll' && (
-                      <div className="flex gap-1">
-                        <Button
-                          variant={subStyle === 'ugc' ? 'default' : 'outline'}
-                          size="sm"
-                          className="h-7 text-xs px-3"
-                          onClick={(e) => { e.stopPropagation(); setSubStyle('ugc'); }}
-                        >
-                          UGC
-                        </Button>
-                        <Button
-                          variant={subStyle === 'studio' ? 'default' : 'outline'}
-                          size="sm"
-                          className="h-7 text-xs px-3"
-                          onClick={(e) => { e.stopPropagation(); setSubStyle('studio'); }}
-                        >
-                          Studio
-                        </Button>
-                      </div>
-                    )}
-                  </div>
-
-                </div>
-                <p className="text-xs text-muted-foreground mt-2">
-                  {frameStyle === 'talking_head' && "Person looking directly at camera"}
-                  {frameStyle === 'broll' && "Person captured mid-action, natural movement"}
-                </p>
+                <label className="text-sm font-medium">Select Actor</label>
+                <ActorSelectorPopover selectedActorId={selectedActorId} onSelect={handleActorSelect} />
               </div>
 
-              {/* Camera Perspective - Only show for B-Roll */}
-              {frameStyle === 'broll' && (
+              {/* Sub-Style & Aspect Ratio - Same Row */}
+              <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-2">
-                  <label className="text-sm font-medium">Camera Perspective</label>
-                  <div className="flex gap-2">
+                  <label className="text-sm font-medium">Sub-Style</label>
+                  <div className="flex gap-1">
                     <Button
-                      variant={cameraPerspective === '1st_person' ? 'default' : 'outline'}
+                      variant={subStyle === 'ugc' ? 'default' : 'outline'}
                       size="sm"
-                      className="flex-1"
-                      onClick={() => setCameraPerspective('1st_person')}
+                      className="flex-1 h-9"
+                      onClick={() => setSubStyle('ugc')}
                     >
-                      1st Person
+                      UGC
                     </Button>
                     <Button
-                      variant={cameraPerspective === '3rd_person' ? 'default' : 'outline'}
+                      variant={subStyle === 'studio' ? 'default' : 'outline'}
                       size="sm"
-                      className="flex-1"
-                      onClick={() => setCameraPerspective('3rd_person')}
+                      className="flex-1 h-9"
+                      onClick={() => setSubStyle('studio')}
                     >
-                      3rd Person
+                      Studio
                     </Button>
                   </div>
-                  <p className="text-xs text-muted-foreground">
-                    {cameraPerspective === '1st_person' 
-                      ? "POV shot - camera is the subject's eyes"
-                      : "Observer view - camera captures the subject from outside"
-                    }
-                  </p>
                 </div>
-              )}
-
-              {/* Actor Selector - Only for Talking Head and B-Roll */}
-              {(frameStyle === 'talking_head' || frameStyle === 'broll') && (
                 <div className="space-y-2">
-                  <label className="text-sm font-medium">Select Actor</label>
-                  <ActorSelectorPopover selectedActorId={selectedActorId} onSelect={handleActorSelect} />
+                  <label className="text-sm font-medium">Aspect Ratio</label>
+                  <Select value={aspectRatio} onValueChange={(v) => setAspectRatio(v as AspectRatio)}>
+                    <SelectTrigger className="w-full h-9">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="9:16">9:16 (Vertical)</SelectItem>
+                      <SelectItem value="16:9">16:9 (Horizontal)</SelectItem>
+                      <SelectItem value="1:1">1:1 (Square)</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
-              )}
-
-            {/* Aspect Ratio */}
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Aspect Ratio</label>
-              <Select value={aspectRatio} onValueChange={(v) => setAspectRatio(v as AspectRatio)}>
-                <SelectTrigger className="w-full">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="9:16">9:16 (Vertical)</SelectItem>
-                  <SelectItem value="16:9">16:9 (Horizontal)</SelectItem>
-                  <SelectItem value="1:1">1:1 (Square)</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+              </div>
 
             {/* Reference Images */}
             <div className="space-y-2">
