@@ -145,7 +145,7 @@ export default function FirstFrameStage({ pipelineId, onContinue }: FirstFrameSt
   }, [pipeline, pipelineId, queryClient, localGenerating]);
 
   // Auto-save inputs (debounced)
-  const autoSaveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const autoSaveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const saveInputs = useCallback(() => {
     if (!pipeline || !initialLoadDoneRef.current) return;
 
