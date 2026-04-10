@@ -293,86 +293,39 @@ export default function CreateNewModal({
             </div>
           </DialogHeader>
 
-          <div className="flex-1 overflow-y-auto p-6 space-y-6">
-            {/* Workflows Section */}
-            <div>
-              <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-4">
-                Workflows
-              </h3>
-              <div className="grid grid-cols-3 gap-4">
-                {workflows.map((workflow) => {
-                  const workflowWithComingSoon = workflow as typeof workflow & { comingSoon?: boolean };
-                  return (
-                  <button
-                    key={workflow.id}
-                    onClick={() => handleWorkflowSelect(workflow)}
-                    disabled={isCreating || workflowWithComingSoon.comingSoon}
-                    className="relative flex flex-col items-center rounded-xl border border-border bg-card p-6 text-center transition-apple hover:border-primary hover:bg-primary/5 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    {workflowWithComingSoon.comingSoon && (
-                      <span className="absolute top-2 right-2 text-[10px] font-medium bg-muted px-1.5 py-0.5 rounded text-muted-foreground">
-                        Soon
-                      </span>
+          <div className="flex-1 overflow-y-auto p-6">
+            <div className="grid grid-cols-3 gap-4">
+              {createItems.map((item) => (
+                <button
+                  key={item.id}
+                  onClick={() => {
+                    if (item.id === 'folder') {
+                      onOpenChange(false);
+                      onCreateFolder?.(initialStatus);
+                    } else {
+                      handleWorkflowSelect({ id: item.id as WorkflowType, icon: item.icon, title: item.title, description: item.description });
+                    }
+                  }}
+                  disabled={isCreating}
+                  className="relative flex flex-col items-center rounded-xl border border-border bg-card p-6 text-center transition-apple hover:border-primary hover:bg-primary/5 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10">
+                    {isCreating && creatingType === item.id ? (
+                      <Loader2 className="h-6 w-6 text-primary animate-spin" />
+                    ) : (
+                      <item.icon className="h-6 w-6 text-primary" />
                     )}
-                    <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10">
-                      {isCreating && creatingType === workflow.id ? (
-                        <Loader2 className="h-6 w-6 text-primary animate-spin" />
-                      ) : (
-                        <workflow.icon className="h-6 w-6 text-primary" />
-                      )}
-                    </div>
-                    <h3 className="font-medium text-foreground">
-                      {workflow.title}
-                    </h3>
-                    <p className="mt-1 text-sm text-muted-foreground">
-                      {isCreating && creatingType === workflow.id
-                        ? 'Creating...'
-                        : workflow.description}
-                    </p>
-                  </button>
-                  );
-                })}
-              </div>
-            </div>
-
-            <div className="border-t border-border" />
-
-            {/* Elements Section */}
-            <div>
-              <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-4">
-                Elements
-              </h3>
-              <div className="grid grid-cols-3 gap-4">
-                {elements.map((element) => (
-                  <button
-                    key={element.id}
-                    onClick={() => handleElementSelect(element)}
-                    disabled={isCreating || (element as any).comingSoon}
-                    className="relative flex flex-col items-center rounded-xl border border-border bg-card p-6 text-center transition-apple hover:border-primary hover:bg-primary/5 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    {(element as any).comingSoon && (
-                      <span className="absolute top-2 right-2 text-[10px] font-medium bg-muted px-1.5 py-0.5 rounded text-muted-foreground">
-                        Soon
-                      </span>
-                    )}
-                    <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10">
-                      {isCreating && creatingType === element.id ? (
-                        <Loader2 className="h-6 w-6 text-primary animate-spin" />
-                      ) : (
-                        <element.icon className="h-6 w-6 text-primary" />
-                      )}
-                    </div>
-                    <h3 className="font-medium text-foreground">
-                      {element.title}
-                    </h3>
-                    <p className="mt-1 text-sm text-muted-foreground">
-                      {isCreating && creatingType === element.id
-                        ? 'Creating...'
-                        : element.description}
-                    </p>
-                  </button>
-                ))}
-              </div>
+                  </div>
+                  <h3 className="font-medium text-foreground">
+                    {item.title}
+                  </h3>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    {isCreating && creatingType === item.id
+                      ? 'Creating...'
+                      : item.description}
+                  </p>
+                </button>
+              ))}
             </div>
           </div>
         </DialogContent>
