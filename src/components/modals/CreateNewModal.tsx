@@ -201,8 +201,8 @@ export default function CreateNewModal({
     }
   };
 
-  const handleElementSelect = async (element: typeof elements[0]) => {
-    if (element.comingSoon) {
+  const handleElementSelect = async (element: typeof elements[0] & { comingSoon?: boolean }) => {
+    if ((element as any).comingSoon) {
       toast.info(`${element.title} coming soon!`);
       return;
     }
@@ -374,10 +374,10 @@ export default function CreateNewModal({
                   <button
                     key={element.id}
                     onClick={() => handleElementSelect(element)}
-                    disabled={isCreating || element.comingSoon}
+                    disabled={isCreating || (element as any).comingSoon}
                     className="relative flex flex-col items-center rounded-xl border border-border bg-card p-6 text-center transition-apple hover:border-primary hover:bg-primary/5 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    {element.comingSoon && (
+                    {(element as any).comingSoon && (
                       <span className="absolute top-2 right-2 text-[10px] font-medium bg-muted px-1.5 py-0.5 rounded text-muted-foreground">
                         Soon
                       </span>
