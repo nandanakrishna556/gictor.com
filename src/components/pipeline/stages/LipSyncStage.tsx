@@ -286,6 +286,8 @@ export default function LipSyncStage({ pipelineId, onComplete }: LipSyncStagePro
 
       toast.success('Lip sync generation started!');
       queryClient.invalidateQueries({ queryKey: ['profile'] });
+      // Close modal immediately - generation continues in background
+      onComplete();
     } catch (error) {
       console.error('Generation error:', error);
       setLocalGenerating(false);

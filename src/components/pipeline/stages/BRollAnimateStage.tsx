@@ -273,6 +273,8 @@ export default function BRollAnimateStage({ pipelineId, onComplete }: BRollAnima
 
       toast.success('Animation generation started!');
       queryClient.invalidateQueries({ queryKey: ['profile'] });
+      // Close modal immediately - generation continues in background
+      onComplete();
     } catch (error) {
       console.error('Generation error:', error);
       toast.error(error instanceof Error ? error.message : 'Failed to start generation');

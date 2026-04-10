@@ -227,6 +227,8 @@ export default function MoGraphAnimateStage({ pipelineId, onComplete }: MoGraphA
 
       toast.success('Motion graphics generation started!');
       queryClient.invalidateQueries({ queryKey: ['profile'] });
+      // Close modal immediately - generation continues in background
+      onComplete();
     } catch (error) {
       console.error('Generation error:', error);
       toast.error(error instanceof Error ? error.message : 'Failed to start generation');
