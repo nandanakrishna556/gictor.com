@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Upload, Download, X, Loader2, AlertCircle, Mic, Wand2 } from 'lucide-react';
@@ -50,6 +50,8 @@ export default function LipSyncStage({ pipelineId, onComplete }: LipSyncStagePro
   
   // Generation state - local only for instant feedback before server confirms
   const [localGenerating, setLocalGenerating] = useState(false);
+  const autoSaveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const latestInputRef = useRef<any>(null);
 
   // Get the actual image and audio to use (override or from pipeline)
   const effectiveImageUrl = overrideImageUrl || imageUrl;
@@ -83,8 +85,74 @@ export default function LipSyncStage({ pipelineId, onComplete }: LipSyncStagePro
         setAudioUrl(pipeline.voice_output.url);
         setAudioDuration(pipeline.voice_output.duration_seconds || 0);
       }
+
+      const savedFinalInput = pipeline.final_video_input as any;
+      if (savedFinalInput?.first_frame_url) {
+        setOverrideImageUrl(savedFinalInput.first_frame_url);
+      }
+      if (savedFinalInput?.audio_url) {
+        setOverrideAudioUrl(savedFinalInput.audio_url);
+      }
+      if (typeof savedFinalInput?.audio_duration === 'number') {
+        setOverrideAudioDuration(savedFinalInput.audio_duration);
+      }
     }
   }, [pipeline]);
+
+  useEffect(() => {
+    latestInputRef.current = {
+      first_frame_url: effectiveImageUrl,
+      audio_url: effectiveAudioUrl,
+      audio_duration: effectiveAudioDuration,
+    };
+
+    queryClient.setQueryData(['pipeline', pipelineId], (current: any) =>
+      current
+        ? {
+            ...current,
+            final_video_input: latestInputRef.current,
+          }
+        : current
+    );
+  }, [pipelineId, queryClient, effectiveImageUrl, effectiveAudioUrl, effectiveAudioDuration]);
+
+  const persistInputs = useCallback(async () => {
+    if (!pipelineId || !latestInputRef.current) return;
+
+    await updateFinalVideo({
+      input: latestInputRef.current as any,
+    });
+  }, [pipelineId, updateFinalVideo]);
+
+  useEffect(() => {
+    if (!pipeline) return;
+
+    if (autoSaveTimeoutRef.current) {
+      clearTimeout(autoSaveTimeoutRef.current);
+    }
+
+    autoSaveTimeoutRef.current = setTimeout(() => {
+      void persistInputs();
+    }, 800);
+
+    return () => {
+      if (autoSaveTimeoutRef.current) {
+        clearTimeout(autoSaveTimeoutRef.current);
+        autoSaveTimeoutRef.current = null;
+      }
+    };
+  }, [pipeline, effectiveImageUrl, effectiveAudioUrl, effectiveAudioDuration, persistInputs]);
+
+  useEffect(() => {
+    return () => {
+      if (autoSaveTimeoutRef.current) {
+        clearTimeout(autoSaveTimeoutRef.current);
+        autoSaveTimeoutRef.current = null;
+      }
+
+      void persistInputs();
+    };
+  }, [persistInputs]);
 
   // Auto-detect audio duration from audio element
   useEffect(() => {
@@ -260,6 +328,60 @@ export default function LipSyncStage({ pipelineId, onComplete }: LipSyncStagePro
           },
         })
         .eq('id', pipelineId);
+
+      const generationStartedAt = new Date().toISOString();
+      const estimatedDuration = Math.max(1, Math.ceil(effectiveAudioDuration || 0));
+      const nextGenerationParams = {
+        pipeline_id: pipelineId,
+        pipeline_type: pipeline?.pipeline_type || 'lip_sync',
+        image_url: effectiveImageUrl,
+        first_frame_url: effectiveImageUrl,
+        audio_url: effectiveAudioUrl,
+      };
+
+      if (pipeline?.project_id) {
+        queryClient.setQueriesData({ queryKey: ['files', pipeline.project_id] }, (current: any) =>
+          Array.isArray(current)
+            ? current.map((file) => {
+                const params = file?.generation_params as Record<string, unknown> | null;
+                return params?.pipeline_id === pipelineId
+                  ? {
+                      ...file,
+                      generation_status: 'processing',
+                      generation_started_at: generationStartedAt,
+                      estimated_duration_seconds: estimatedDuration,
+                      generation_params: {
+                        ...(params || {}),
+                        ...nextGenerationParams,
+                      },
+                    }
+                  : file;
+              })
+            : current
+        );
+
+        queryClient.setQueryData(['pipeline-thumbnails', pipeline.project_id], (current: any) => {
+          const next = new Map(current ? Array.from(current.entries()) : []);
+          next.set(pipelineId, {
+            firstFrameUrl: effectiveImageUrl || undefined,
+          });
+          return next;
+        });
+      }
+
+      await supabase
+        .from('files')
+        .update({
+          generation_status: 'processing',
+          generation_started_at: generationStartedAt,
+          estimated_duration_seconds: estimatedDuration,
+          generation_params: nextGenerationParams as any,
+        })
+        .contains('generation_params', { pipeline_id: pipelineId });
+
+      if (pipeline?.project_id) {
+        queryClient.invalidateQueries({ queryKey: ['files', pipeline.project_id] });
+      }
 
       // Prepare payload for edge function
       const requestPayload = {

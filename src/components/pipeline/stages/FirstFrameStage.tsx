@@ -56,6 +56,8 @@ export default function FirstFrameStage({ pipelineId, onContinue }: FirstFrameSt
   // Generation state - local only for instant feedback before server confirms
   const [localGenerating, setLocalGenerating] = useState(false);
   const initialLoadDoneRef = useRef(false);
+  const autoSaveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const latestInputRef = useRef<any>(null);
   const prevStatusRef = useRef<string | null>(null);
   const toastShownRef = useRef<string | null>(null);
 
@@ -111,6 +113,50 @@ export default function FirstFrameStage({ pipelineId, onContinue }: FirstFrameSt
     }
   }, [selectedActorId, selectedActor, actors]);
 
+  useEffect(() => {
+    latestInputRef.current = {
+      mode: inputMode,
+      style: frameStyle,
+      substyle: subStyle,
+      aspect_ratio: aspectRatio,
+      camera_perspective: null,
+      resolution,
+      actor_id: selectedActorId,
+      reference_images: referenceImages,
+      prompt,
+      uploaded_url: uploadedImageUrl,
+    };
+
+    queryClient.setQueryData(['pipeline', pipelineId], (current: any) =>
+      current
+        ? {
+            ...current,
+            first_frame_input: latestInputRef.current,
+          }
+        : current
+    );
+  }, [
+    pipelineId,
+    queryClient,
+    inputMode,
+    frameStyle,
+    subStyle,
+    aspectRatio,
+    resolution,
+    selectedActorId,
+    referenceImages,
+    prompt,
+    uploadedImageUrl,
+  ]);
+
+  const persistInputs = useCallback(async () => {
+    if (!pipelineId || !latestInputRef.current) return;
+
+    await updateFirstFrame({
+      input: latestInputRef.current as any,
+    });
+  }, [pipelineId, updateFirstFrame]);
+
   // Handle status transitions - clear localGenerating and show toasts
   useEffect(() => {
     if (!pipeline) return;
@@ -145,42 +191,50 @@ export default function FirstFrameStage({ pipelineId, onContinue }: FirstFrameSt
   }, [pipeline, pipelineId, queryClient, localGenerating]);
 
   // Auto-save inputs (debounced)
-  const autoSaveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const saveInputs = useCallback(() => {
+  useEffect(() => {
     if (!pipeline || !initialLoadDoneRef.current) return;
 
     if (autoSaveTimeoutRef.current) {
       clearTimeout(autoSaveTimeoutRef.current);
     }
 
-    autoSaveTimeoutRef.current = setTimeout(async () => {
-      await updateFirstFrame({
-        input: {
-          mode: inputMode,
-          style: frameStyle,
-          substyle: subStyle,
-          aspect_ratio: aspectRatio,
-          camera_perspective: null,
-          resolution,
-          actor_id: selectedActorId,
-          reference_images: referenceImages,
-          prompt,
-          uploaded_url: uploadedImageUrl,
-        } as any,
-      });
-    }, 1500);
-  }, [pipeline, inputMode, frameStyle, subStyle, aspectRatio, cameraPerspective, resolution, selectedActorId, referenceImages, prompt, uploadedImageUrl, updateFirstFrame]);
+    autoSaveTimeoutRef.current = setTimeout(() => {
+      void persistInputs();
+    }, 800);
 
-  useEffect(() => {
-    if (initialLoadDoneRef.current) {
-      saveInputs();
-    }
     return () => {
       if (autoSaveTimeoutRef.current) {
         clearTimeout(autoSaveTimeoutRef.current);
+        autoSaveTimeoutRef.current = null;
       }
     };
-  }, [frameStyle, subStyle, aspectRatio, cameraPerspective, resolution, selectedActorId, referenceImages, prompt, inputMode, uploadedImageUrl, saveInputs]);
+  }, [
+    pipeline,
+    frameStyle,
+    subStyle,
+    aspectRatio,
+    cameraPerspective,
+    resolution,
+    selectedActorId,
+    referenceImages,
+    prompt,
+    inputMode,
+    uploadedImageUrl,
+    persistInputs,
+  ]);
+
+  useEffect(() => {
+    return () => {
+      if (autoSaveTimeoutRef.current) {
+        clearTimeout(autoSaveTimeoutRef.current);
+        autoSaveTimeoutRef.current = null;
+      }
+
+      if (initialLoadDoneRef.current) {
+        void persistInputs();
+      }
+    };
+  }, [persistInputs]);
 
   // Handle actor selection
   const handleActorSelect = (actorId: string | null, actor?: Actor) => {

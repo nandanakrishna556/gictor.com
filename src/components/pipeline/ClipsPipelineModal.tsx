@@ -431,7 +431,6 @@ export default function BRollPipelineModal({
                 <BRollAnimateStage
                   pipelineId={pipelineId}
                   onComplete={() => {
-                    toast.success('Animation video generated successfully!');
                     onSuccess?.();
                     onClose();
                   }}
