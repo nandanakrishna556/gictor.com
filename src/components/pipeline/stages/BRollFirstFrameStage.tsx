@@ -364,27 +364,7 @@ export default function BRollFirstFrameStage({ pipelineId, onComplete }: BRollFi
 
   const inputContent = (
     <div className="space-y-5">
-      {/* Generate/Upload Toggle */}
-      <InputModeToggle
-        mode={inputMode}
-        onModeChange={setInputMode}
-        uploadLabel="Upload"
-      />
-
-      {inputMode === 'upload' ? (
-        /* Upload Mode UI */
-        <div className="space-y-4">
-          <SingleImageUpload
-            value={uploadedUrl || undefined}
-            onChange={handleUploadComplete}
-            aspectRatio="video"
-            placeholder="Drag & drop your image or"
-            showGenerateLink={false}
-          />
-        </div>
-      ) : (
-        /* Generate Mode UI */
-        <>
+      {/* Generate Mode UI */}
           {/* Camera Perspective */}
           <div className="space-y-2">
             <label className="text-sm font-medium">Camera Perspective</label>
@@ -522,8 +502,6 @@ export default function BRollFirstFrameStage({ pipelineId, onComplete }: BRollFi
               className="min-h-24 rounded-xl resize-none"
             />
           </div>
-        </>
-      )}
     </div>
   );
 
@@ -554,7 +532,7 @@ export default function BRollFirstFrameStage({ pipelineId, onComplete }: BRollFi
       onContinue={onComplete}
       isGenerating={isGenerating}
       canContinue={hasOutput}
-      generateLabel={inputMode === 'upload' ? 'Save • Free' : `Generate First Frame • ${creditCost} Credits`}
+      generateLabel={`Generate First Frame • ${creditCost} Credits`}
       creditsCost=""
       isAIGenerated={wasAIGenerated}
       outputActions={outputActions}

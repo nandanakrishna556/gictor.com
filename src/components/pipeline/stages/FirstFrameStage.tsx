@@ -344,38 +344,7 @@ export default function FirstFrameStage({ pipelineId, onContinue }: FirstFrameSt
         <div className="flex-1 overflow-y-auto p-6 space-y-5">
           <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">Input</h3>
 
-          {/* Generate/Upload Toggle */}
-          <InputModeToggle mode={inputMode} onModeChange={setInputMode} uploadLabel="Upload" />
-
-          {inputMode === 'upload' ? (
-            /* Upload Mode UI */
-            <div className="space-y-4">
-              <SingleImageUpload
-                value={uploadedImageUrl || undefined}
-                onChange={(url) => setUploadedImageUrl(url || null)}
-                aspectRatio="video"
-                placeholder="Drag & drop your image or"
-                showGenerateLink={false}
-              />
-
-              {uploadedImageUrl && (
-                <Button onClick={handleSaveUpload} disabled={isSavingUpload} className="w-full">
-                  {isSavingUpload ? (
-                    <>
-                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                      Saving...
-                    </>
-                  ) : (
-                    <>
-                      Save Image <span className="text-emerald-400 ml-1">• Free</span>
-                    </>
-                  )}
-                </Button>
-              )}
-            </div>
-          ) : (
-            /* Generate Mode UI */
-            <>
+          {/* Generate Mode UI */}
               {/* Actor Selector */}
               <div className="space-y-2">
                 <label className="text-sm font-medium">Select Actor</label>
@@ -501,12 +470,10 @@ export default function FirstFrameStage({ pipelineId, onContinue }: FirstFrameSt
                 )}
               </div>
 
-            </>
-          )}
         </div>
 
         {/* Sticky Generate Button */}
-        {inputMode === 'generate' && (
+        {(
           <div className="shrink-0 p-4 border-t bg-background space-y-3">
             <div className="flex items-center justify-between text-sm">
               <span className="text-muted-foreground">Cost:</span>

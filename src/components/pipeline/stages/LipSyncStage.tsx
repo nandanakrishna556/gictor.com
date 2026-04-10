@@ -386,14 +386,7 @@ export default function LipSyncStage({ pipelineId, onComplete }: LipSyncStagePro
 
   const inputContent = (
     <div className="space-y-6">
-      <InputModeToggle
-        mode={mode}
-        onModeChange={setMode}
-        uploadLabel="Upload"
-      />
-
-      {mode === 'generate' ? (
-        <>
+      {/* Generate Mode UI */}
           {/* First Frame Preview/Override */}
           <div className="space-y-2">
             <div className="flex items-center justify-between">
@@ -517,56 +510,6 @@ export default function LipSyncStage({ pipelineId, onComplete }: LipSyncStagePro
               </div>
             )}
           </div>
-        </>
-      ) : (
-        /* Upload Mode */
-        <div className="space-y-4">
-          <Label>Upload lip sync video</Label>
-          {uploadedVideoUrl ? (
-            <div className="relative group">
-              <button
-                type="button"
-                onClick={handleRemoveVideo}
-                className="absolute -top-2 -left-2 z-10 rounded-full bg-foreground/80 p-1.5 text-background backdrop-blur transition-all duration-200 hover:bg-foreground opacity-0 group-hover:opacity-100"
-              >
-                <X className="h-4 w-4" />
-              </button>
-              <video src={uploadedVideoUrl} controls className="w-full rounded-xl" />
-            </div>
-          ) : (
-            <label 
-              className={cn(
-                "flex flex-col items-center justify-center rounded-xl border-2 border-dashed p-8 cursor-pointer transition-colors",
-                isDragging 
-                  ? "border-primary bg-primary/10" 
-                  : "hover:border-primary/50 hover:bg-secondary/50"
-              )}
-              onDragOver={handleDragOver}
-              onDragLeave={handleDragLeave}
-              onDrop={handleDrop}
-            >
-              <input
-                type="file"
-                accept="video/*"
-                onChange={handleFileUpload}
-                className="hidden"
-                disabled={isUploadingVideo}
-              />
-              {isUploadingVideo ? (
-                <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-              ) : (
-                <>
-                  <Upload className={cn("h-8 w-8 mb-2", isDragging ? "text-primary" : "text-muted-foreground")} />
-                  <p className="text-sm text-muted-foreground">
-                    {isDragging ? 'Drop your video file here' : 'Drag & drop or click to browse'}
-                  </p>
-                  <p className="text-xs text-muted-foreground mt-1">MP4, MOV, WebM • Max 500MB</p>
-                </>
-              )}
-            </label>
-          )}
-        </div>
-      )}
     </div>
   );
 
@@ -601,10 +544,10 @@ export default function LipSyncStage({ pipelineId, onComplete }: LipSyncStagePro
       onContinue={onComplete}
       isGenerating={isGenerating || isUploadingVideo || isUpdating}
       canContinue={hasOutput}
-      generateLabel={mode === 'upload' ? 'Save Video • Free' : 'Generate Lip Sync'}
-      creditsCost={mode === 'upload' ? '' : `${creditCost.toFixed(2)} credits`}
+      generateLabel="Generate Lip Sync"
+      creditsCost={`${creditCost.toFixed(2)} credits`}
       generateDisabled={!canGenerate}
-      isAIGenerated={mode === 'generate'}
+      isAIGenerated={true}
       outputActions={hasOutput ? outputActions : undefined}
       emptyStateIcon={<Wand2 className="h-10 w-10 text-muted-foreground/50" strokeWidth={1.5} />}
       emptyStateTitle="Generated video will appear here"

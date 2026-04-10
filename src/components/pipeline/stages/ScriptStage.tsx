@@ -271,15 +271,8 @@ export default function ScriptStage({ pipelineId, onContinue }: ScriptStageProps
 
   const inputContent = (
     <div className="space-y-6">
-      {/* Mode Toggle */}
-      <InputModeToggle
-        mode={mode}
-        onModeChange={setMode}
-        uploadLabel="Paste"
-      />
-
-      {mode === 'generate' ? (
-        <>
+      {/* Generate Mode UI */}
+      <>
           {/* Duration with stepper */}
           <div className="space-y-3">
             <Label>Estimated duration</Label>
@@ -394,20 +387,6 @@ export default function ScriptStage({ pipelineId, onContinue }: ScriptStageProps
             />
           </div>
         </>
-      ) : (
-        <div className="space-y-2">
-          <Label>Paste your script</Label>
-          <Textarea
-            value={pastedText}
-            onChange={(e) => setPastedText(e.target.value)}
-            placeholder="Paste your script here..."
-            className="min-h-64 rounded-xl resize-none"
-          />
-          <p className="text-sm text-muted-foreground">
-            {pastedText.length.toLocaleString()} characters • ~{Math.ceil(pastedText.length / 17)} seconds
-          </p>
-        </div>
-      )}
     </div>
   );
 
@@ -443,8 +422,8 @@ export default function ScriptStage({ pipelineId, onContinue }: ScriptStageProps
       onContinue={handleContinue}
       isGenerating={isGenerating || isUpdating}
       canContinue={hasOutput}
-      generateLabel={mode === 'upload' ? 'Use Pasted Script' : (isEditing ? 'Refine Script' : 'Generate Script')}
-      creditsCost={mode === 'upload' ? 'Free' : `${CREDIT_COST} credits`}
+      generateLabel={isEditing ? 'Refine Script' : 'Generate Script'}
+      creditsCost={`${CREDIT_COST} credits`}
       isAIGenerated={wasAIGenerated}
       outputActions={hasOutput ? outputActions : undefined}
       emptyStateIcon={<FileText className="h-10 w-10 text-muted-foreground/50" strokeWidth={1.5} />}

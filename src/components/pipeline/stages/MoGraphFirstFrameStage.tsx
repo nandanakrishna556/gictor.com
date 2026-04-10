@@ -273,25 +273,7 @@ export default function MoGraphFirstFrameStage({ pipelineId, onComplete, onConti
 
   const inputContent = (
     <div className="space-y-5">
-      {/* Generate/Upload Toggle */}
-      <InputModeToggle
-        mode={inputMode}
-        onModeChange={setInputMode}
-        uploadLabel="Upload"
-      />
-
-      {inputMode === 'upload' ? (
-        <div className="space-y-4">
-          <SingleImageUpload
-            value={uploadedUrl || undefined}
-            onChange={handleUploadComplete}
-            aspectRatio="video"
-            placeholder="Drag & drop your image or"
-            showGenerateLink={false}
-          />
-        </div>
-      ) : (
-        <>
+      {/* Generate Mode UI */}
           {/* Frame Type - First Frame locked */}
           <div className="space-y-2">
             <label className="text-sm font-medium">Frame Type</label>
@@ -400,12 +382,10 @@ export default function MoGraphFirstFrameStage({ pipelineId, onComplete, onConti
               className="min-h-[100px] resize-none"
             />
           </div>
-        </>
-      )}
     </div>
   );
 
-  const generateDisabled = !aspectRatio || (!prompt && inputMode === 'generate');
+  const generateDisabled = !aspectRatio || !prompt;
 
   const outputContent = outputUrl ? (
     <div className="rounded-xl border border-border overflow-hidden">
@@ -431,8 +411,8 @@ export default function MoGraphFirstFrameStage({ pipelineId, onComplete, onConti
       onGenerate={handleGenerate}
       onContinue={onContinue}
       canContinue={hasOutput}
-      generateLabel={inputMode === 'upload' ? 'Save' : 'Generate First Frame'}
-      creditsCost={inputMode === 'upload' ? '' : `${creditCost} Credits`}
+      generateLabel="Generate First Frame"
+      creditsCost={`${creditCost} Credits`}
       generateDisabled={generateDisabled}
       outputActions={outputActions}
       emptyStateTitle="Generated image will appear here"
