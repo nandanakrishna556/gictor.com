@@ -385,7 +385,7 @@ export default function MoGraphFirstFrameStage({ pipelineId, onComplete, onConti
     </div>
   );
 
-  const generateDisabled = !aspectRatio || (!prompt && inputMode === 'generate');
+  const generateDisabled = !aspectRatio || !prompt;
 
   const outputContent = outputUrl ? (
     <div className="rounded-xl border border-border overflow-hidden">
@@ -411,8 +411,8 @@ export default function MoGraphFirstFrameStage({ pipelineId, onComplete, onConti
       onGenerate={handleGenerate}
       onContinue={onContinue}
       canContinue={hasOutput}
-      generateLabel={inputMode === 'upload' ? 'Save' : 'Generate First Frame'}
-      creditsCost={inputMode === 'upload' ? '' : `${creditCost} Credits`}
+      generateLabel="Generate First Frame"
+      creditsCost={`${creditCost} Credits`}
       generateDisabled={generateDisabled}
       outputActions={outputActions}
       emptyStateTitle="Generated image will appear here"

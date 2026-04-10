@@ -523,7 +523,7 @@ export default function BRollLastFrameStage({ pipelineId, onComplete }: BRollLas
       onContinue={onComplete}
       isGenerating={isGenerating}
       canContinue={hasOutput}
-      generateLabel={inputMode === 'upload' ? 'Save • Free' : `Generate Last Frame • ${creditCost} Credits`}
+      generateLabel={`Generate Last Frame • ${creditCost} Credits`}
       creditsCost=""
       isAIGenerated={wasAIGenerated}
       outputActions={outputActions}

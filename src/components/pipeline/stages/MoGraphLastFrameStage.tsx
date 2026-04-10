@@ -397,7 +397,7 @@ export default function MoGraphLastFrameStage({ pipelineId, onComplete, onContin
     </div>
   );
 
-  const generateDisabled = !aspectRatio || (!prompt && inputMode === 'generate');
+  const generateDisabled = !aspectRatio || !prompt;
 
   const outputContent = outputUrl ? (
     <div className="rounded-xl border border-border overflow-hidden">
@@ -423,8 +423,8 @@ export default function MoGraphLastFrameStage({ pipelineId, onComplete, onContin
       onGenerate={handleGenerate}
       onContinue={onContinue}
       canContinue={hasOutput}
-      generateLabel={inputMode === 'upload' ? 'Save' : 'Generate Last Frame'}
-      creditsCost={inputMode === 'upload' ? '' : `${creditCost} Credits`}
+      generateLabel="Generate Last Frame"
+      creditsCost={`${creditCost} Credits`}
       generateDisabled={generateDisabled}
       outputActions={outputActions}
       emptyStateTitle="Generated image will appear here"

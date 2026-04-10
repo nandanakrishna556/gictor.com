@@ -532,7 +532,7 @@ export default function BRollFirstFrameStage({ pipelineId, onComplete }: BRollFi
       onContinue={onComplete}
       isGenerating={isGenerating}
       canContinue={hasOutput}
-      generateLabel={inputMode === 'upload' ? 'Save • Free' : `Generate First Frame • ${creditCost} Credits`}
+      generateLabel={`Generate First Frame • ${creditCost} Credits`}
       creditsCost=""
       isAIGenerated={wasAIGenerated}
       outputActions={outputActions}
