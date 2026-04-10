@@ -493,8 +493,6 @@ export default function BRollLastFrameStage({ pipelineId, onComplete }: BRollLas
               className="min-h-24 rounded-xl resize-none"
             />
           </div>
-        </>
-      )}
     </div>
   );
 

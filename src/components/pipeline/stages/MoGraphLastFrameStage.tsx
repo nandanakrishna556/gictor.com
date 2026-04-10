@@ -394,8 +394,6 @@ export default function MoGraphLastFrameStage({ pipelineId, onComplete, onContin
               className="min-h-[100px] resize-none"
             />
           </div>
-        </>
-      )}
     </div>
   );
 

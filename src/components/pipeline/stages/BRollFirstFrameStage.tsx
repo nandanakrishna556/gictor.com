@@ -502,8 +502,6 @@ export default function BRollFirstFrameStage({ pipelineId, onComplete }: BRollFi
               className="min-h-24 rounded-xl resize-none"
             />
           </div>
-        </>
-      )}
     </div>
   );
 

@@ -382,8 +382,6 @@ export default function MoGraphFirstFrameStage({ pipelineId, onComplete, onConti
               className="min-h-[100px] resize-none"
             />
           </div>
-        </>
-      )}
     </div>
   );
 
