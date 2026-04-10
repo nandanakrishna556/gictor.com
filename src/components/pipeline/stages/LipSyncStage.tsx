@@ -386,13 +386,7 @@ export default function LipSyncStage({ pipelineId, onComplete }: LipSyncStagePro
 
   const inputContent = (
     <div className="space-y-6">
-      <InputModeToggle
-        mode={mode}
-        onModeChange={setMode}
-        uploadLabel="Upload"
-      />
-
-      {mode === 'generate' ? (
+      {/* Generate Mode UI */}
         <>
           {/* First Frame Preview/Override */}
           <div className="space-y-2">
@@ -601,10 +595,10 @@ export default function LipSyncStage({ pipelineId, onComplete }: LipSyncStagePro
       onContinue={onComplete}
       isGenerating={isGenerating || isUploadingVideo || isUpdating}
       canContinue={hasOutput}
-      generateLabel={mode === 'upload' ? 'Save Video • Free' : 'Generate Lip Sync'}
-      creditsCost={mode === 'upload' ? '' : `${creditCost.toFixed(2)} credits`}
+      generateLabel="Generate Lip Sync"
+      creditsCost={`${creditCost.toFixed(2)} credits`}
       generateDisabled={!canGenerate}
-      isAIGenerated={mode === 'generate'}
+      isAIGenerated={true}
       outputActions={hasOutput ? outputActions : undefined}
       emptyStateIcon={<Wand2 className="h-10 w-10 text-muted-foreground/50" strokeWidth={1.5} />}
       emptyStateTitle="Generated video will appear here"

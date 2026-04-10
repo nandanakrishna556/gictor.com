@@ -311,64 +311,7 @@ export default function SpeechStage({ pipelineId, onContinue }: SpeechStageProps
         <div className="flex-1 overflow-y-auto p-6 space-y-6">
           <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">Input</h3>
 
-        {/* Generate/Upload Toggle */}
-        <InputModeToggle mode={inputMode} onModeChange={setInputMode} uploadLabel="Upload" />
-
-        {inputMode === 'upload' ? (
-          /* Upload Mode UI */
-          <div className="space-y-4">
-            <label className="text-sm font-medium">Upload Audio</label>
-            {uploadedAudioUrl ? (
-              <div className="space-y-3">
-                <AudioPlayer src={uploadedAudioUrl} />
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setUploadedAudioUrl(null)}
-                  className="w-full"
-                >
-                  Remove Audio
-                </Button>
-              </div>
-            ) : (
-              <label className="flex flex-col items-center justify-center h-40 rounded-xl border-2 border-dashed border-border hover:border-primary cursor-pointer transition-colors">
-                <input
-                  type="file"
-                  accept="audio/mpeg,audio/mp3,audio/wav,audio/m4a,audio/x-m4a,.mp3,.wav,.m4a"
-                  className="hidden"
-                  onChange={handleAudioUpload}
-                  disabled={isUploadingAudio}
-                />
-                {isUploadingAudio ? (
-                  <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" strokeWidth={1.5} />
-                ) : (
-                  <>
-                    <Mic className="h-8 w-8 text-muted-foreground mb-2" strokeWidth={1.5} />
-                    <span className="text-sm text-muted-foreground">Upload your audio</span>
-                    <span className="text-xs text-muted-foreground/70">MP3, WAV, M4A up to 50MB</span>
-                  </>
-                )}
-              </label>
-            )}
-
-            {uploadedAudioUrl && (
-              <Button onClick={handleSaveUpload} disabled={isSavingUpload} className="w-full">
-                {isSavingUpload ? (
-                  <>
-                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                    Saving...
-                  </>
-                ) : (
-                  <>
-                    Save Audio <span className="text-emerald-400 ml-1">• Free</span>
-                  </>
-                )}
-              </Button>
-            )}
-          </div>
-        ) : (
-          /* Generate Mode UI */
-          <>
+        {/* Generate Mode UI */}
             {/* Script Input */}
             <div className="space-y-2">
               <div className="flex items-center justify-between">
@@ -559,7 +502,7 @@ export default function SpeechStage({ pipelineId, onContinue }: SpeechStageProps
         </div>
 
         {/* Sticky Generate Button */}
-        {inputMode === 'generate' && (
+        {(
           <div className="shrink-0 p-4 border-t bg-background space-y-3">
             <div className="flex items-center justify-between text-sm">
               <span className="text-muted-foreground">Estimated cost:</span>
