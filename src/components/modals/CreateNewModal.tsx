@@ -108,7 +108,7 @@ export default function CreateNewModal({
     onOpenChange(false);
   };
 
-  const handleWorkflowSelect = async (workflow: typeof workflows[0]) => {
+  const handleWorkflowSelect = async (workflow: typeof createItems[0]) => {
     const workflowWithComingSoon = workflow as typeof workflow & { comingSoon?: boolean };
     if (workflowWithComingSoon.comingSoon) {
       toast.info(`${workflow.title} workflow coming soon!`);
@@ -174,7 +174,7 @@ export default function CreateNewModal({
     }
   };
 
-  const handleElementSelect = async (element: typeof elements[0] & { comingSoon?: boolean }) => {
+  const _handleElementSelect = async (element: any) => {
     if ((element as any).comingSoon) {
       toast.info(`${element.title} coming soon!`);
       return;
