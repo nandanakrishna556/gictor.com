@@ -52,6 +52,9 @@ export default function LipSyncStage({ pipelineId, onComplete }: LipSyncStagePro
   const [localGenerating, setLocalGenerating] = useState(false);
   const autoSaveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const latestInputRef = useRef<any>(null);
+  const initialLoadDoneRef = useRef(false);
+  const hasUserInteractedRef = useRef(false);
+  const hydratedStateKeyRef = useRef<string | null>(null);
 
   // Get the actual image and audio to use (override or from pipeline)
   const effectiveImageUrl = overrideImageUrl || imageUrl;
@@ -73,30 +76,37 @@ export default function LipSyncStage({ pipelineId, onComplete }: LipSyncStagePro
   // Force generating to false if we already have output
   const isGenerating = hasOutputForGenerating ? false : (localGenerating || isServerProcessingThisStage);
 
+  const markUserInteracted = useCallback(() => {
+    hasUserInteractedRef.current = true;
+  }, []);
+
   // Load existing data from pipeline
   useEffect(() => {
-    if (pipeline) {
-      // Get first frame from pipeline
-      if (pipeline.first_frame_output?.url) {
-        setImageUrl(pipeline.first_frame_output.url);
-      }
-      // Get audio from voice output
-      if (pipeline.voice_output?.url) {
-        setAudioUrl(pipeline.voice_output.url);
-        setAudioDuration(pipeline.voice_output.duration_seconds || 0);
-      }
+    if (!pipeline || hasUserInteractedRef.current) return;
 
-      const savedFinalInput = pipeline.final_video_input as any;
-      if (savedFinalInput?.first_frame_url) {
-        setOverrideImageUrl(savedFinalInput.first_frame_url);
-      }
-      if (savedFinalInput?.audio_url) {
-        setOverrideAudioUrl(savedFinalInput.audio_url);
-      }
-      if (typeof savedFinalInput?.audio_duration === 'number') {
-        setOverrideAudioDuration(savedFinalInput.audio_duration);
-      }
-    }
+    const savedFinalInput = pipeline.final_video_input as any;
+    const nextHydrationKey = JSON.stringify({
+      firstFrameUrl: pipeline.first_frame_output?.url ?? null,
+      audioUrl: pipeline.voice_output?.url ?? null,
+      audioDuration: pipeline.voice_output?.duration_seconds ?? 0,
+      overrideImageUrl: savedFinalInput?.first_frame_url ?? null,
+      overrideAudioUrl: savedFinalInput?.audio_url ?? null,
+      overrideAudioDuration: typeof savedFinalInput?.audio_duration === 'number' ? savedFinalInput.audio_duration : null,
+    });
+
+    if (hydratedStateKeyRef.current === nextHydrationKey) return;
+
+    hydratedStateKeyRef.current = nextHydrationKey;
+    initialLoadDoneRef.current = true;
+
+    setImageUrl((pipeline.first_frame_output?.url as string | undefined) ?? undefined);
+    setAudioUrl((pipeline.voice_output?.url as string | undefined) ?? undefined);
+    setAudioDuration(pipeline.voice_output?.duration_seconds || 0);
+    setOverrideImageUrl((savedFinalInput?.first_frame_url as string | undefined) ?? undefined);
+    setOverrideAudioUrl((savedFinalInput?.audio_url as string | undefined) ?? undefined);
+    setOverrideAudioDuration(
+      typeof savedFinalInput?.audio_duration === 'number' ? savedFinalInput.audio_duration : 0
+    );
   }, [pipeline]);
 
   useEffect(() => {
@@ -105,6 +115,8 @@ export default function LipSyncStage({ pipelineId, onComplete }: LipSyncStagePro
       audio_url: effectiveAudioUrl,
       audio_duration: effectiveAudioDuration,
     };
+
+    if (!initialLoadDoneRef.current) return;
 
     queryClient.setQueryData(['pipeline', pipelineId], (current: any) =>
       current
@@ -125,7 +137,7 @@ export default function LipSyncStage({ pipelineId, onComplete }: LipSyncStagePro
   }, [pipelineId, updateFinalVideo]);
 
   useEffect(() => {
-    if (!pipeline) return;
+    if (!initialLoadDoneRef.current || !hasUserInteractedRef.current) return;
 
     if (autoSaveTimeoutRef.current) {
       clearTimeout(autoSaveTimeoutRef.current);
@@ -141,7 +153,7 @@ export default function LipSyncStage({ pipelineId, onComplete }: LipSyncStagePro
         autoSaveTimeoutRef.current = null;
       }
     };
-  }, [pipeline, effectiveImageUrl, effectiveAudioUrl, effectiveAudioDuration, persistInputs]);
+  }, [effectiveImageUrl, effectiveAudioUrl, effectiveAudioDuration, persistInputs]);
 
   useEffect(() => {
     return () => {
@@ -150,7 +162,9 @@ export default function LipSyncStage({ pipelineId, onComplete }: LipSyncStagePro
         autoSaveTimeoutRef.current = null;
       }
 
-      void persistInputs();
+      if (initialLoadDoneRef.current && hasUserInteractedRef.current) {
+        void persistInputs();
+      }
     };
   }, [persistInputs]);
 
@@ -207,6 +221,7 @@ export default function LipSyncStage({ pipelineId, onComplete }: LipSyncStagePro
       return;
     }
     
+    markUserInteracted();
     setIsUploadingAudio(true);
     
     try {
@@ -267,6 +282,7 @@ export default function LipSyncStage({ pipelineId, onComplete }: LipSyncStagePro
   }, []);
 
   const handleRemoveOverrideAudio = () => {
+    markUserInteracted();
     setOverrideAudioUrl(undefined);
     setOverrideAudioDuration(0);
   };
@@ -520,7 +536,10 @@ export default function LipSyncStage({ pipelineId, onComplete }: LipSyncStagePro
                   variant="ghost"
                   size="sm"
                   className="h-6 text-xs"
-                  onClick={() => setOverrideImageUrl(undefined)}
+                  onClick={() => {
+                    markUserInteracted();
+                    setOverrideImageUrl(undefined);
+                  }}
                 >
                   Reset
                 </Button>
@@ -537,6 +556,7 @@ export default function LipSyncStage({ pipelineId, onComplete }: LipSyncStagePro
                 </div>
                 <button
                   onClick={() => {
+                    markUserInteracted();
                     setOverrideImageUrl(undefined);
                     setImageUrl(undefined);
                   }}
@@ -551,7 +571,10 @@ export default function LipSyncStage({ pipelineId, onComplete }: LipSyncStagePro
             ) : (
               <SingleImageUpload
                 value={overrideImageUrl}
-                onChange={setOverrideImageUrl}
+                onChange={(url) => {
+                  markUserInteracted();
+                  setOverrideImageUrl(url);
+                }}
               />
             )}
           </div>

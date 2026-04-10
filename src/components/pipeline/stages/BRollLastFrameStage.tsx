@@ -85,31 +85,45 @@ export default function BRollLastFrameStage({ pipelineId, onComplete }: BRollLas
   const initialLoadDone = useRef(false);
   const autoSaveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const latestInputRef = useRef<any>(null);
+  const hasUserInteractedRef = useRef(false);
+  const hydratedStateKeyRef = useRef<string | null>(null);
+
+  const markUserInteracted = useCallback(() => {
+    hasUserInteractedRef.current = true;
+  }, []);
   
   // Load existing data from script_input (repurposed for last frame) - only on first mount
   useEffect(() => {
-    if (pipeline?.script_input && !initialLoadDone.current) {
-      const input = pipeline.script_input as any;
-      if (input.frame_type === 'last') {
-        initialLoadDone.current = true;
-        setInputMode(input.mode || 'generate');
-        setStyle(input.style || 'broll');
-        setSubStyle(input.substyle || 'ugc');
-        setAspectRatio(input.aspect_ratio || '9:16');
-        setCameraPerspective(input.camera_perspective || '3rd_person');
-        setResolution(input.resolution || '2K');
-        setSelectedActorId(input.actor_id || null);
-        setReferenceImages(input.reference_images || []);
-        setPrompt(input.prompt || input.description || '');
-        setUploadedUrl(input.uploaded_url || '');
-      }
-    }
-    
-    // Initialize prev status
-    if (prevStatusRef.current === null && pipeline) {
+    if (!pipeline || hasUserInteractedRef.current) return;
+
+    const rawInput = pipeline.script_input as any;
+    const input = rawInput?.frame_type === 'last' ? rawInput : null;
+    const nextHydrationKey = JSON.stringify({
+      input,
+      firstFrameUrl: pipeline.first_frame_output?.url ?? null,
+      lastFrameUrl: pipeline.last_frame_output?.url ?? null,
+    });
+
+    if (hydratedStateKeyRef.current === nextHydrationKey) return;
+
+    hydratedStateKeyRef.current = nextHydrationKey;
+    initialLoadDone.current = true;
+
+    setInputMode((input?.mode as InputMode) || 'generate');
+    setStyle((input?.style as Style) || 'broll');
+    setSubStyle((input?.substyle as SubStyle) || 'ugc');
+    setAspectRatio((input?.aspect_ratio as AspectRatio) || '9:16');
+    setCameraPerspective((input?.camera_perspective as CameraPerspective) || '3rd_person');
+    setResolution((input?.resolution as Resolution) || '2K');
+    setSelectedActorId((input?.actor_id as string) || null);
+    setReferenceImages((input?.reference_images as string[]) || []);
+    setPrompt((input?.prompt || input?.description || '') as string);
+    setUploadedUrl((input?.uploaded_url as string) || '');
+
+    if (prevStatusRef.current === null) {
       prevStatusRef.current = pipeline.status;
       if (hasOutput) {
-        toastShownRef.current = pipelineId;
+        toastShownRef.current = `${pipelineId}_last`;
       }
     }
   }, [pipeline?.script_input, pipeline?.status, hasOutput, pipelineId]);
@@ -166,6 +180,8 @@ export default function BRollLastFrameStage({ pipelineId, onComplete }: BRollLas
       uploaded_url: uploadedUrl,
     };
 
+    if (!initialLoadDone.current) return;
+
     queryClient.setQueryData(['pipeline', pipelineId], (current: any) =>
       current
         ? {
@@ -210,7 +226,7 @@ export default function BRollLastFrameStage({ pipelineId, onComplete }: BRollLas
 
   // Auto-save inputs (debounced)
   useEffect(() => {
-    if (!initialLoadDone.current) return;
+    if (!initialLoadDone.current || !hasUserInteractedRef.current) return;
 
     if (autoSaveTimeoutRef.current) {
       clearTimeout(autoSaveTimeoutRef.current);
@@ -247,7 +263,7 @@ export default function BRollLastFrameStage({ pipelineId, onComplete }: BRollLas
         autoSaveTimeoutRef.current = null;
       }
 
-      if (initialLoadDone.current) {
+      if (initialLoadDone.current && hasUserInteractedRef.current) {
         void persistInput();
       }
     };
@@ -263,6 +279,7 @@ export default function BRollLastFrameStage({ pipelineId, onComplete }: BRollLas
       return;
     }
 
+    markUserInteracted();
     setUploadingIndex(index);
 
     try {
@@ -283,10 +300,12 @@ export default function BRollLastFrameStage({ pipelineId, onComplete }: BRollLas
   };
 
   const handleRemoveImage = (index: number) => {
+    markUserInteracted();
     setReferenceImages((prev) => prev.filter((_, i) => i !== index));
   };
 
   const handleActorSelect = (actorId: string | null, actor?: Actor) => {
+    markUserInteracted();
     setSelectedActorId(actorId);
     setSelectedActor(actor || null);
   };
@@ -426,7 +445,10 @@ export default function BRollLastFrameStage({ pipelineId, onComplete }: BRollLas
                 variant={cameraPerspective === '1st_person' ? 'default' : 'outline'}
                 size="sm"
                 className="flex-1"
-                onClick={() => setCameraPerspective('1st_person')}
+                  onClick={() => {
+                    markUserInteracted();
+                    setCameraPerspective('1st_person');
+                  }}
               >
                 1st Person
               </Button>
@@ -434,7 +456,10 @@ export default function BRollLastFrameStage({ pipelineId, onComplete }: BRollLas
                 variant={cameraPerspective === '3rd_person' ? 'default' : 'outline'}
                 size="sm"
                 className="flex-1"
-                onClick={() => setCameraPerspective('3rd_person')}
+                  onClick={() => {
+                    markUserInteracted();
+                    setCameraPerspective('3rd_person');
+                  }}
               >
                 3rd Person
               </Button>
@@ -461,7 +486,10 @@ export default function BRollLastFrameStage({ pipelineId, onComplete }: BRollLas
                   variant={subStyle === 'ugc' ? 'default' : 'outline'}
                   size="sm"
                   className="flex-1 h-9"
-                  onClick={() => setSubStyle('ugc')}
+                  onClick={() => {
+                    markUserInteracted();
+                    setSubStyle('ugc');
+                  }}
                 >
                   UGC
                 </Button>
@@ -469,7 +497,10 @@ export default function BRollLastFrameStage({ pipelineId, onComplete }: BRollLas
                   variant={subStyle === 'studio' ? 'default' : 'outline'}
                   size="sm"
                   className="flex-1 h-9"
-                  onClick={() => setSubStyle('studio')}
+                  onClick={() => {
+                    markUserInteracted();
+                    setSubStyle('studio');
+                  }}
                 >
                   Studio
                 </Button>
@@ -477,7 +508,13 @@ export default function BRollLastFrameStage({ pipelineId, onComplete }: BRollLas
             </div>
             <div className="space-y-2">
               <label className="text-sm font-medium">Aspect Ratio</label>
-              <Select value={aspectRatio} onValueChange={(v) => setAspectRatio(v as AspectRatio)}>
+              <Select
+                value={aspectRatio}
+                onValueChange={(v) => {
+                  markUserInteracted();
+                  setAspectRatio(v as AspectRatio);
+                }}
+              >
                 <SelectTrigger className="w-full h-9">
                   <SelectValue />
                 </SelectTrigger>
@@ -546,7 +583,10 @@ export default function BRollLastFrameStage({ pipelineId, onComplete }: BRollLas
             <label className="text-sm font-medium">Prompt</label>
             <Textarea
               value={prompt}
-              onChange={(e) => setPrompt(e.target.value)}
+              onChange={(e) => {
+                markUserInteracted();
+                setPrompt(e.target.value);
+              }}
               placeholder={
                 style === 'broll'
                   ? "Describe the action, scene, and environment (person will be captured mid-action)..."
