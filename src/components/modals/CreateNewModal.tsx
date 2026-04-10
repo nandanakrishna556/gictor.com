@@ -303,7 +303,7 @@ export default function CreateNewModal({
                       onOpenChange(false);
                       onCreateFolder?.(initialStatus);
                     } else {
-                      handleWorkflowSelect({ id: item.id as WorkflowType, icon: item.icon, title: item.title, description: item.description });
+                      handleWorkflowSelect(item);
                     }
                   }}
                   disabled={isCreating}
