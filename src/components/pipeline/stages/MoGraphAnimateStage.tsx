@@ -438,18 +438,16 @@ export default function MoGraphAnimateStage({ pipelineId, onComplete }: MoGraphA
                     </div>
                   </div>
                 </div>
-                {!hasRequiredInputs && inputMode === 'generate' && (
+                {!hasRequiredInputs && (
                   <p className="text-xs text-amber-500">
                     Both first and last frames are required for motion graphics transitions
                   </p>
                 )}
               </div>
-            </>
-          )}
         </div>
 
-        {/* Generate Button - only show in generate mode */}
-        {inputMode === 'generate' && (
+        {/* Generate Button */}
+        {(
           <div className="shrink-0 p-4 border-t border-border">
             <Button
               onClick={handleGenerate}
