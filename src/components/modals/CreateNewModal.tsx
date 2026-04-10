@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react';
-import { FolderPlus, X, Loader2, CircleUser } from 'lucide-react';
+import { FolderPlus, X, Loader2, CircleUser, Clapperboard } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
 import { v4 as uuidv4 } from 'uuid';
 import {
@@ -42,67 +42,40 @@ interface CreateNewModalProps {
 type WorkflowType = 'talking_head' | 'b_roll';
 type ElementType = 'folder' | 'lip_sync' | 'speech' | 'frame' | 'script' | 'swap' | 'animate';
 
-const workflows = [
+const createItems = [
   {
-    id: 'talking_head' as WorkflowType,
-    icon: CircleUser,
-    title: 'Talking Head',
-    description: 'Create talking head video',
-  },
-  // {
-  //   id: 'b_roll' as WorkflowType,
-  //   icon: Clapperboard,
-  //   title: 'B-Roll',
-  //   description: 'Generate video clips',
-  // },
-];
-
-const elements = [
-  {
-    id: 'folder' as ElementType,
+    id: 'folder' as const,
+    type: 'element' as const,
     icon: FolderPlus,
     title: 'Folder',
     description: 'Organize your content',
   },
-  // {
-  //   id: 'script' as ElementType,
-  //   icon: FileText,
-  //   title: 'Script',
-  //   description: 'Generate script',
-  // },
-  // {
-  //   id: 'speech' as ElementType,
-  //   icon: Mic,
-  //   title: 'Speech',
-  //   description: 'Generate voice audio',
-  // },
-  // {
-  //   id: 'frame' as ElementType,
-  //   icon: Image,
-  //   title: 'Frame',
-  //   description: 'Generate AI images',
-  //   iconColor: 'text-cyan-500',
-  // },
-  // {
-  //   id: 'lip_sync' as ElementType,
-  //   icon: Wand2,
-  //   title: 'Lip Sync',
-  //   description: 'Sync audio to face',
-  // },
-  // {
-  //   id: 'animate' as ElementType,
-  //   icon: PlayCircle,
-  //   title: 'Animate',
-  //   description: 'Animate images to video',
-  // },
-  // {
-  //   id: 'swap' as ElementType,
-  //   icon: RefreshCw,
-  //   title: 'Swap',
-  //   description: 'Face swap',
-  //   comingSoon: true,
-  // },
+  {
+    id: 'talking_head' as const,
+    type: 'workflow' as const,
+    icon: CircleUser,
+    title: 'Talking Head',
+    description: 'Create talking head video',
+  },
+  {
+    id: 'b_roll' as const,
+    type: 'workflow' as const,
+    icon: Clapperboard,
+    title: 'B-Roll',
+    description: 'Generate video clips',
+  },
 ];
+
+// Elements commented out - kept for future use
+// const elements = [
+//   {
+//     id: 'script' as ElementType,
+//     icon: FileText,
+//     title: 'Script',
+//     description: 'Generate script',
+//   },
+//   ...
+// ];
 
 export default function CreateNewModal({
   open,
@@ -135,7 +108,7 @@ export default function CreateNewModal({
     onOpenChange(false);
   };
 
-  const handleWorkflowSelect = async (workflow: typeof workflows[0]) => {
+  const handleWorkflowSelect = async (workflow: typeof createItems[0]) => {
     const workflowWithComingSoon = workflow as typeof workflow & { comingSoon?: boolean };
     if (workflowWithComingSoon.comingSoon) {
       toast.info(`${workflow.title} workflow coming soon!`);
@@ -201,7 +174,7 @@ export default function CreateNewModal({
     }
   };
 
-  const handleElementSelect = async (element: typeof elements[0] & { comingSoon?: boolean }) => {
+  const _handleElementSelect = async (element: any) => {
     if ((element as any).comingSoon) {
       toast.info(`${element.title} coming soon!`);
       return;
@@ -320,86 +293,39 @@ export default function CreateNewModal({
             </div>
           </DialogHeader>
 
-          <div className="flex-1 overflow-y-auto p-6 space-y-6">
-            {/* Workflows Section */}
-            <div>
-              <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-4">
-                Workflows
-              </h3>
-              <div className="grid grid-cols-3 gap-4">
-                {workflows.map((workflow) => {
-                  const workflowWithComingSoon = workflow as typeof workflow & { comingSoon?: boolean };
-                  return (
-                  <button
-                    key={workflow.id}
-                    onClick={() => handleWorkflowSelect(workflow)}
-                    disabled={isCreating || workflowWithComingSoon.comingSoon}
-                    className="relative flex flex-col items-center rounded-xl border border-border bg-card p-6 text-center transition-apple hover:border-primary hover:bg-primary/5 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    {workflowWithComingSoon.comingSoon && (
-                      <span className="absolute top-2 right-2 text-[10px] font-medium bg-muted px-1.5 py-0.5 rounded text-muted-foreground">
-                        Soon
-                      </span>
+          <div className="flex-1 overflow-y-auto p-6">
+            <div className="grid grid-cols-3 gap-4">
+              {createItems.map((item) => (
+                <button
+                  key={item.id}
+                  onClick={() => {
+                    if (item.id === 'folder') {
+                      onOpenChange(false);
+                      onCreateFolder?.(initialStatus);
+                    } else {
+                      handleWorkflowSelect(item);
+                    }
+                  }}
+                  disabled={isCreating}
+                  className="relative flex flex-col items-center rounded-xl border border-border bg-card p-6 text-center transition-apple hover:border-primary hover:bg-primary/5 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10">
+                    {isCreating && creatingType === item.id ? (
+                      <Loader2 className="h-6 w-6 text-primary animate-spin" />
+                    ) : (
+                      <item.icon className="h-6 w-6 text-primary" />
                     )}
-                    <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10">
-                      {isCreating && creatingType === workflow.id ? (
-                        <Loader2 className="h-6 w-6 text-primary animate-spin" />
-                      ) : (
-                        <workflow.icon className="h-6 w-6 text-primary" />
-                      )}
-                    </div>
-                    <h3 className="font-medium text-foreground">
-                      {workflow.title}
-                    </h3>
-                    <p className="mt-1 text-sm text-muted-foreground">
-                      {isCreating && creatingType === workflow.id
-                        ? 'Creating...'
-                        : workflow.description}
-                    </p>
-                  </button>
-                  );
-                })}
-              </div>
-            </div>
-
-            <div className="border-t border-border" />
-
-            {/* Elements Section */}
-            <div>
-              <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-4">
-                Elements
-              </h3>
-              <div className="grid grid-cols-3 gap-4">
-                {elements.map((element) => (
-                  <button
-                    key={element.id}
-                    onClick={() => handleElementSelect(element)}
-                    disabled={isCreating || (element as any).comingSoon}
-                    className="relative flex flex-col items-center rounded-xl border border-border bg-card p-6 text-center transition-apple hover:border-primary hover:bg-primary/5 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    {(element as any).comingSoon && (
-                      <span className="absolute top-2 right-2 text-[10px] font-medium bg-muted px-1.5 py-0.5 rounded text-muted-foreground">
-                        Soon
-                      </span>
-                    )}
-                    <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10">
-                      {isCreating && creatingType === element.id ? (
-                        <Loader2 className="h-6 w-6 text-primary animate-spin" />
-                      ) : (
-                        <element.icon className="h-6 w-6 text-primary" />
-                      )}
-                    </div>
-                    <h3 className="font-medium text-foreground">
-                      {element.title}
-                    </h3>
-                    <p className="mt-1 text-sm text-muted-foreground">
-                      {isCreating && creatingType === element.id
-                        ? 'Creating...'
-                        : element.description}
-                    </p>
-                  </button>
-                ))}
-              </div>
+                  </div>
+                  <h3 className="font-medium text-foreground">
+                    {item.title}
+                  </h3>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    {isCreating && creatingType === item.id
+                      ? 'Creating...'
+                      : item.description}
+                  </p>
+                </button>
+              ))}
             </div>
           </div>
         </DialogContent>
