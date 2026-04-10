@@ -128,7 +128,7 @@ export default function ScriptModal({
 
   // Auto-save state
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
-  const autoSaveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const autoSaveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Script inputs
   const [scriptType, setScriptType] = useState<ScriptType>('prompt');

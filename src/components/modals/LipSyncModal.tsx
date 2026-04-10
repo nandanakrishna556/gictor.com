@@ -81,7 +81,7 @@ export default function LipSyncModal({
   
   // Auto-save state
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
-  const autoSaveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const autoSaveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   
   // Input state
   const [imageUrl, setImageUrl] = useState<string | undefined>();

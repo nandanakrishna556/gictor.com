@@ -90,7 +90,7 @@ export default function BRollPipelineModal({
   
   // Auto-save indicator states
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
-  const autoSaveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const autoSaveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Helper to check if projectId is a valid UUID
   const isValidUUID = (id: string) => {

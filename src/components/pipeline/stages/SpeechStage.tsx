@@ -127,7 +127,7 @@ export default function SpeechStage({ pipelineId, onContinue }: SpeechStageProps
   }, [pipeline, pipelineId, queryClient]);
 
   // Auto-save inputs (debounced)
-  const autoSaveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const autoSaveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const saveInputs = useCallback(() => {
     if (!pipeline || !initialLoadDoneRef.current) return;
 
