@@ -49,12 +49,12 @@ const workflows = [
     title: 'Talking Head',
     description: 'Create talking head video',
   },
-  {
-    id: 'b_roll' as WorkflowType,
-    icon: Clapperboard,
-    title: 'B-Roll',
-    description: 'Generate video clips',
-  },
+  // {
+  //   id: 'b_roll' as WorkflowType,
+  //   icon: Clapperboard,
+  //   title: 'B-Roll',
+  //   description: 'Generate video clips',
+  // },
 ];
 
 const elements = [
@@ -64,44 +64,44 @@ const elements = [
     title: 'Folder',
     description: 'Organize your content',
   },
-  {
-    id: 'script' as ElementType,
-    icon: FileText,
-    title: 'Script',
-    description: 'Generate script',
-  },
-  {
-    id: 'speech' as ElementType,
-    icon: Mic,
-    title: 'Speech',
-    description: 'Generate voice audio',
-  },
-  {
-    id: 'frame' as ElementType,
-    icon: Image,
-    title: 'Frame',
-    description: 'Generate AI images',
-    iconColor: 'text-cyan-500',
-  },
-  {
-    id: 'lip_sync' as ElementType,
-    icon: Wand2,
-    title: 'Lip Sync',
-    description: 'Sync audio to face',
-  },
-  {
-    id: 'animate' as ElementType,
-    icon: PlayCircle,
-    title: 'Animate',
-    description: 'Animate images to video',
-  },
-  {
-    id: 'swap' as ElementType,
-    icon: RefreshCw,
-    title: 'Swap',
-    description: 'Face swap',
-    comingSoon: true,
-  },
+  // {
+  //   id: 'script' as ElementType,
+  //   icon: FileText,
+  //   title: 'Script',
+  //   description: 'Generate script',
+  // },
+  // {
+  //   id: 'speech' as ElementType,
+  //   icon: Mic,
+  //   title: 'Speech',
+  //   description: 'Generate voice audio',
+  // },
+  // {
+  //   id: 'frame' as ElementType,
+  //   icon: Image,
+  //   title: 'Frame',
+  //   description: 'Generate AI images',
+  //   iconColor: 'text-cyan-500',
+  // },
+  // {
+  //   id: 'lip_sync' as ElementType,
+  //   icon: Wand2,
+  //   title: 'Lip Sync',
+  //   description: 'Sync audio to face',
+  // },
+  // {
+  //   id: 'animate' as ElementType,
+  //   icon: PlayCircle,
+  //   title: 'Animate',
+  //   description: 'Animate images to video',
+  // },
+  // {
+  //   id: 'swap' as ElementType,
+  //   icon: RefreshCw,
+  //   title: 'Swap',
+  //   description: 'Face swap',
+  //   comingSoon: true,
+  // },
 ];
 
 export default function CreateNewModal({
