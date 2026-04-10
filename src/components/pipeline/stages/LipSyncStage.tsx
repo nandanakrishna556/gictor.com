@@ -387,7 +387,6 @@ export default function LipSyncStage({ pipelineId, onComplete }: LipSyncStagePro
   const inputContent = (
     <div className="space-y-6">
       {/* Generate Mode UI */}
-        <>
           {/* First Frame Preview/Override */}
           <div className="space-y-2">
             <div className="flex items-center justify-between">
