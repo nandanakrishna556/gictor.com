@@ -334,6 +334,7 @@ export default function PipelineModal({
     if (hasUnsavedChanges) {
       setShowUnsavedWarning(true);
     } else {
+      pipelineLoadedRef.current = false;
       onClose();
     }
   };
@@ -341,12 +342,15 @@ export default function PipelineModal({
   const handleConfirmClose = () => {
     setShowUnsavedWarning(false);
     setHasUnsavedChanges(false);
+    pipelineLoadedRef.current = false;
     onClose();
   };
 
   const handleSaveAndClose = async () => {
     await handleSave();
     setShowUnsavedWarning(false);
+    pipelineLoadedRef.current = false;
+    onClose();
   };
 
 
@@ -440,7 +444,6 @@ export default function PipelineModal({
                 <LipSyncStage
                   pipelineId={pipelineId}
                   onComplete={() => {
-                    toast.success('Video generated successfully!');
                     onSuccess?.();
                     onClose();
                   }}

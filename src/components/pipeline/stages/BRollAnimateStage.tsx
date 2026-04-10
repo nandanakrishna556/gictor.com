@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -49,6 +49,8 @@ export default function BRollAnimateStage({ pipelineId, onComplete }: BRollAnima
   
   // Generation state
   const [localGenerating, setLocalGenerating] = useState(false);
+  const autoSaveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const latestInputRef = useRef<any>(null);
   const isLocalGeneratingRef = useRef(false);
   const prevStatusRef = useRef<string | null>(null);
   const toastShownRef = useRef<string | null>(null);
@@ -98,6 +100,8 @@ export default function BRollAnimateStage({ pipelineId, onComplete }: BRollAnima
         setCameraFixed(input.camera_fixed || false);
         setAspectRatio(input.aspect_ratio || '9:16');
         setAudioEnabled(input.audio_enabled || false);
+        setFirstFrameUrl(input.first_frame_url || '');
+        setLastFrameUrl(input.last_frame_url || '');
       }
     }
     
@@ -124,6 +128,88 @@ export default function BRollAnimateStage({ pipelineId, onComplete }: BRollAnima
       setLastFrameUrl(originalLastFrame);
     }
   }, [originalLastFrame]);
+
+  useEffect(() => {
+    latestInputRef.current = {
+      animation_type: animationType,
+      prompt,
+      duration,
+      camera_fixed: cameraFixed,
+      aspect_ratio: aspectRatio,
+      audio_enabled: audioEnabled,
+      first_frame_url: effectiveFirstFrame,
+      last_frame_url: effectiveLastFrame,
+    };
+
+    queryClient.setQueryData(['pipeline', pipelineId], (current: any) =>
+      current
+        ? {
+            ...current,
+            voice_input: latestInputRef.current,
+          }
+        : current
+    );
+  }, [
+    pipelineId,
+    queryClient,
+    animationType,
+    prompt,
+    duration,
+    cameraFixed,
+    aspectRatio,
+    audioEnabled,
+    effectiveFirstFrame,
+    effectiveLastFrame,
+  ]);
+
+  const persistInputs = useCallback(async () => {
+    if (!pipelineId || !latestInputRef.current) return;
+
+    await updateVoice({
+      input: latestInputRef.current as any,
+    });
+  }, [pipelineId, updateVoice]);
+
+  useEffect(() => {
+    if (!pipeline) return;
+
+    if (autoSaveTimeoutRef.current) {
+      clearTimeout(autoSaveTimeoutRef.current);
+    }
+
+    autoSaveTimeoutRef.current = setTimeout(() => {
+      void persistInputs();
+    }, 800);
+
+    return () => {
+      if (autoSaveTimeoutRef.current) {
+        clearTimeout(autoSaveTimeoutRef.current);
+        autoSaveTimeoutRef.current = null;
+      }
+    };
+  }, [
+    pipeline,
+    animationType,
+    prompt,
+    duration,
+    cameraFixed,
+    aspectRatio,
+    audioEnabled,
+    effectiveFirstFrame,
+    effectiveLastFrame,
+    persistInputs,
+  ]);
+
+  useEffect(() => {
+    return () => {
+      if (autoSaveTimeoutRef.current) {
+        clearTimeout(autoSaveTimeoutRef.current);
+        autoSaveTimeoutRef.current = null;
+      }
+
+      void persistInputs();
+    };
+  }, [persistInputs]);
 
   // Handle status transitions - clear localGenerating and show toasts
   useEffect(() => {
@@ -220,18 +306,7 @@ export default function BRollAnimateStage({ pipelineId, onComplete }: BRollAnima
       }
 
       // Save input first
-      await updateVoice({
-        input: {
-          animation_type: animationType,
-          prompt,
-          duration,
-          camera_fixed: cameraFixed,
-          aspect_ratio: aspectRatio,
-          audio_enabled: audioEnabled,
-          first_frame_url: effectiveFirstFrame,
-          last_frame_url: effectiveLastFrame,
-        } as any,
-      });
+      await persistInputs();
 
       // Update pipeline status and current stage for proper tracking
       await supabase
@@ -242,6 +317,61 @@ export default function BRollAnimateStage({ pipelineId, onComplete }: BRollAnima
           updated_at: new Date().toISOString(),
         })
         .eq('id', pipelineId);
+
+      const generationStartedAt = new Date().toISOString();
+      const nextGenerationParams = {
+        pipeline_id: pipelineId,
+        pipeline_type: pipeline?.pipeline_type || 'clips',
+        first_frame_url: effectiveFirstFrame,
+        last_frame_url: effectiveLastFrame,
+        duration,
+        prompt,
+      };
+
+      if (pipeline?.project_id) {
+        queryClient.setQueriesData({ queryKey: ['files', pipeline.project_id] }, (current: any) =>
+          Array.isArray(current)
+            ? current.map((file) => {
+                const params = file?.generation_params as Record<string, unknown> | null;
+                return params?.pipeline_id === pipelineId
+                  ? {
+                      ...file,
+                      generation_status: 'processing',
+                      generation_started_at: generationStartedAt,
+                      estimated_duration_seconds: duration,
+                      generation_params: {
+                        ...(params || {}),
+                        ...nextGenerationParams,
+                      },
+                    }
+                  : file;
+              })
+            : current
+        );
+
+        queryClient.setQueryData(['pipeline-thumbnails', pipeline.project_id], (current: any) => {
+          const next = new Map(current ? Array.from(current.entries()) : []);
+          next.set(pipelineId, {
+            firstFrameUrl: effectiveFirstFrame || undefined,
+            lastFrameUrl: effectiveLastFrame || undefined,
+          });
+          return next;
+        });
+      }
+
+      await supabase
+        .from('files')
+        .update({
+          generation_status: 'processing',
+          generation_started_at: generationStartedAt,
+          estimated_duration_seconds: duration,
+          generation_params: nextGenerationParams as any,
+        })
+        .contains('generation_params', { pipeline_id: pipelineId });
+
+      if (pipeline?.project_id) {
+        queryClient.invalidateQueries({ queryKey: ['files', pipeline.project_id] });
+      }
 
       // Call edge function for animate generation
       const { data, error } = await supabase.functions.invoke('trigger-generation', {

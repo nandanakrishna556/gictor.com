@@ -47,6 +47,8 @@ export default function SpeechStage({ pipelineId, onContinue }: SpeechStageProps
   // Generation state - local only for instant feedback before server confirms
   const [localGenerating, setLocalGenerating] = useState(false);
   const initialLoadDoneRef = useRef(false);
+  const autoSaveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const latestInputRef = useRef<any>(null);
 
   // Get available actors with voice
   const availableActors = actors?.filter(
@@ -75,6 +77,32 @@ export default function SpeechStage({ pipelineId, onContinue }: SpeechStageProps
   // Refs for tracking status transitions
   const prevStatusRef = useRef<string | null>(null);
   const toastShownRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    latestInputRef.current = {
+      mode: inputMode,
+      voice_id: selectedActorId,
+      script,
+      uploaded_url: uploadedAudioUrl,
+    };
+
+    queryClient.setQueryData(['pipeline', pipelineId], (current: any) =>
+      current
+        ? {
+            ...current,
+            voice_input: latestInputRef.current,
+          }
+        : current
+    );
+  }, [pipelineId, queryClient, inputMode, selectedActorId, script, uploadedAudioUrl]);
+
+  const persistInputs = useCallback(async () => {
+    if (!pipelineId || !latestInputRef.current) return;
+
+    await updateVoice({
+      input: latestInputRef.current as any,
+    });
+  }, [pipelineId, updateVoice]);
 
   // Load saved state from pipeline
   useEffect(() => {
@@ -127,36 +155,37 @@ export default function SpeechStage({ pipelineId, onContinue }: SpeechStageProps
   }, [pipeline, pipelineId, queryClient]);
 
   // Auto-save inputs (debounced)
-  const autoSaveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const saveInputs = useCallback(() => {
+  useEffect(() => {
     if (!pipeline || !initialLoadDoneRef.current) return;
 
     if (autoSaveTimeoutRef.current) {
       clearTimeout(autoSaveTimeoutRef.current);
     }
 
-    autoSaveTimeoutRef.current = setTimeout(async () => {
-      await updateVoice({
-        input: {
-          mode: inputMode,
-          voice_id: selectedActorId,
-          script,
-          uploaded_url: uploadedAudioUrl,
-        } as any,
-      });
-    }, 1500);
-  }, [pipeline, inputMode, selectedActorId, script, uploadedAudioUrl, updateVoice]);
+    autoSaveTimeoutRef.current = setTimeout(() => {
+      void persistInputs();
+    }, 800);
 
-  useEffect(() => {
-    if (initialLoadDoneRef.current) {
-      saveInputs();
-    }
     return () => {
       if (autoSaveTimeoutRef.current) {
         clearTimeout(autoSaveTimeoutRef.current);
+        autoSaveTimeoutRef.current = null;
       }
     };
-  }, [inputMode, selectedActorId, script, uploadedAudioUrl, saveInputs]);
+  }, [pipeline, inputMode, selectedActorId, script, uploadedAudioUrl, persistInputs]);
+
+  useEffect(() => {
+    return () => {
+      if (autoSaveTimeoutRef.current) {
+        clearTimeout(autoSaveTimeoutRef.current);
+        autoSaveTimeoutRef.current = null;
+      }
+
+      if (initialLoadDoneRef.current) {
+        void persistInputs();
+      }
+    };
+  }, [persistInputs]);
 
   // Handle actor selection
   const handleActorSelect = (actorId: string) => {

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
@@ -90,6 +90,8 @@ export default function BRollFirstFrameStage({ pipelineId, onComplete }: BRollFi
 
   // Track if initial load is done to prevent overwriting user input
   const initialLoadDone = useRef(false);
+  const autoSaveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const latestInputRef = useRef<any>(null);
   
   // Load existing data only on first mount
   useEffect(() => {
@@ -130,6 +132,52 @@ export default function BRollFirstFrameStage({ pipelineId, onComplete }: BRollFi
     }
   }, [selectedActorId, actors]);
 
+  useEffect(() => {
+    latestInputRef.current = {
+      mode: inputMode,
+      frame_type: 'first',
+      style,
+      substyle: subStyle,
+      aspect_ratio: aspectRatio,
+      camera_perspective: style === 'broll' ? cameraPerspective : null,
+      resolution,
+      actor_id: (style === 'talking_head' || style === 'broll') ? selectedActorId : null,
+      reference_images: referenceImages,
+      prompt,
+      uploaded_url: uploadedUrl,
+    };
+
+    queryClient.setQueryData(['pipeline', pipelineId], (current: any) =>
+      current
+        ? {
+            ...current,
+            first_frame_input: latestInputRef.current,
+          }
+        : current
+    );
+  }, [
+    pipelineId,
+    queryClient,
+    inputMode,
+    style,
+    subStyle,
+    aspectRatio,
+    cameraPerspective,
+    resolution,
+    selectedActorId,
+    referenceImages,
+    prompt,
+    uploadedUrl,
+  ]);
+
+  const persistInput = useCallback(async () => {
+    if (!pipelineId || !latestInputRef.current) return;
+
+    await updateFirstFrame({
+      input: latestInputRef.current as any,
+    });
+  }, [pipelineId, updateFirstFrame]);
+
   // Handle status transitions - clear localGenerating and show toasts
   useEffect(() => {
     if (!pipeline) return;
@@ -166,36 +214,50 @@ export default function BRollFirstFrameStage({ pipelineId, onComplete }: BRollFi
     prevStatusRef.current = currentStatus;
   }, [pipeline, pipelineId, queryClient, localGenerating]);
 
-  // Save input changes
-  const saveInput = async () => {
-    await updateFirstFrame({
-      input: {
-        mode: inputMode,
-        frame_type: 'first',
-        style,
-        substyle: subStyle,
-        aspect_ratio: aspectRatio,
-        camera_perspective: style === 'broll' ? cameraPerspective : null,
-        resolution,
-        actor_id: (style === 'talking_head' || style === 'broll') ? selectedActorId : null,
-        reference_images: referenceImages,
-        prompt,
-        uploaded_url: uploadedUrl,
-      } as any,
-    });
-  };
+  // Auto-save inputs (debounced)
+  useEffect(() => {
+    if (!initialLoadDone.current) return;
 
-  // Auto-save on changes (excluding prompt to prevent typing interruption)
+    if (autoSaveTimeoutRef.current) {
+      clearTimeout(autoSaveTimeoutRef.current);
+    }
+
+    autoSaveTimeoutRef.current = setTimeout(() => {
+      void persistInput();
+    }, 800);
+
+    return () => {
+      if (autoSaveTimeoutRef.current) {
+        clearTimeout(autoSaveTimeoutRef.current);
+        autoSaveTimeoutRef.current = null;
+      }
+    };
+  }, [
+    inputMode,
+    style,
+    subStyle,
+    aspectRatio,
+    cameraPerspective,
+    resolution,
+    selectedActorId,
+    referenceImages,
+    prompt,
+    uploadedUrl,
+    persistInput,
+  ]);
+
   useEffect(() => {
-    const timer = setTimeout(saveInput, 500);
-    return () => clearTimeout(timer);
-  }, [inputMode, style, subStyle, aspectRatio, cameraPerspective, resolution, selectedActorId, referenceImages, uploadedUrl]);
-  
-  // Separate debounced save for prompt (longer delay)
-  useEffect(() => {
-    const timer = setTimeout(saveInput, 1500);
-    return () => clearTimeout(timer);
-  }, [prompt]);
+    return () => {
+      if (autoSaveTimeoutRef.current) {
+        clearTimeout(autoSaveTimeoutRef.current);
+        autoSaveTimeoutRef.current = null;
+      }
+
+      if (initialLoadDone.current) {
+        void persistInput();
+      }
+    };
+  }, [persistInput]);
 
   // Handle reference image upload
   const handleImageUpload = async (index: number, e: React.ChangeEvent<HTMLInputElement>) => {
@@ -274,7 +336,7 @@ export default function BRollFirstFrameStage({ pipelineId, onComplete }: BRollFi
 
     try {
       // Save input first
-      await saveInput();
+      await persistInput();
 
       // CRITICAL: Get fresh session for valid auth token
       const { data: sessionData, error: sessionError } = await supabase.auth.refreshSession();
