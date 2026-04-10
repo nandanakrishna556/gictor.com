@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react';
-import { FolderPlus, X, Loader2, Mic, Image, FileText, Sparkles, RefreshCw, CircleUser, Wand2, Clapperboard, PlayCircle } from 'lucide-react';
+import { FolderPlus, X, Loader2, CircleUser } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
 import { v4 as uuidv4 } from 'uuid';
 import {
