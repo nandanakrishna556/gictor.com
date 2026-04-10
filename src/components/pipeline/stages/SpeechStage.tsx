@@ -497,8 +497,6 @@ export default function SpeechStage({ pipelineId, onContinue }: SpeechStageProps
               </div>
             )}
 
-          </>
-        )}
         </div>
 
         {/* Sticky Generate Button */}

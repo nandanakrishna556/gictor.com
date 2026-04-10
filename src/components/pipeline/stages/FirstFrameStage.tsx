@@ -470,8 +470,6 @@ export default function FirstFrameStage({ pipelineId, onContinue }: FirstFrameSt
                 )}
               </div>
 
-            </>
-          )}
         </div>
 
         {/* Sticky Generate Button */}
