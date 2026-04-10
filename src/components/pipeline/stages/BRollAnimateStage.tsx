@@ -54,6 +54,8 @@ export default function BRollAnimateStage({ pipelineId, onComplete }: BRollAnima
   const isLocalGeneratingRef = useRef(false);
   const prevStatusRef = useRef<string | null>(null);
   const toastShownRef = useRef<string | null>(null);
+  const hasUserInteractedRef = useRef(false);
+  const hydratedStateKeyRef = useRef<string | null>(null);
 
   // Get frames from pipeline (from previous stages)
   const originalFirstFrame = pipeline?.first_frame_output?.url;
@@ -88,26 +90,44 @@ export default function BRollAnimateStage({ pipelineId, onComplete }: BRollAnima
 
   // Track if we've already loaded the initial data
   const initialLoadDoneRef = useRef(false);
+
+  const markUserInteracted = useCallback(() => {
+    hasUserInteractedRef.current = true;
+  }, []);
   
   // Load existing data from voice_input (repurposed for animate settings)
   useEffect(() => {
-    if (pipeline?.voice_input) {
-      const input = pipeline.voice_input as any;
-      if (input.animation_type) {
-        setAnimationType(input.animation_type);
-        setPrompt(input.prompt || '');
-        setDuration(input.duration || 8);
-        setCameraFixed(input.camera_fixed || false);
-        setAspectRatio(input.aspect_ratio || '9:16');
-        setAudioEnabled(input.audio_enabled || false);
-        setFirstFrameUrl(input.first_frame_url || '');
-        setLastFrameUrl(input.last_frame_url || '');
-      }
-    }
-    
-    // Initialize prev status for toast tracking only
-    // DO NOT set localGenerating here - isProcessing handles active generation detection
-    if (prevStatusRef.current === null && pipeline) {
+    if (!pipeline || hasUserInteractedRef.current) return;
+
+    const input = pipeline.voice_input as any;
+    const nextHydrationKey = JSON.stringify({
+      animationType: input?.animation_type ?? 'broll',
+      prompt: input?.prompt ?? '',
+      duration: input?.duration ?? 8,
+      cameraFixed: input?.camera_fixed ?? false,
+      aspectRatio: input?.aspect_ratio ?? '9:16',
+      audioEnabled: input?.audio_enabled ?? false,
+      firstFrameUrl: input?.first_frame_url ?? null,
+      lastFrameUrl: input?.last_frame_url ?? null,
+      originalFirstFrameUrl: pipeline.first_frame_output?.url ?? null,
+      originalLastFrameUrl: pipeline.last_frame_output?.url ?? null,
+    });
+
+    if (hydratedStateKeyRef.current === nextHydrationKey) return;
+
+    hydratedStateKeyRef.current = nextHydrationKey;
+    initialLoadDoneRef.current = true;
+
+    setAnimationType((input?.animation_type as 'broll' | 'motion_graphics') || 'broll');
+    setPrompt((input?.prompt as string) || '');
+    setDuration((input?.duration as number) || 8);
+    setCameraFixed(Boolean(input?.camera_fixed));
+    setAspectRatio((input?.aspect_ratio as '16:9' | '9:16') || '9:16');
+    setAudioEnabled(Boolean(input?.audio_enabled));
+    setFirstFrameUrl((input?.first_frame_url as string) || '');
+    setLastFrameUrl((input?.last_frame_url as string) || '');
+
+    if (prevStatusRef.current === null) {
       prevStatusRef.current = pipeline.status;
       if (hasOutput) {
         toastShownRef.current = pipelineId;
@@ -141,6 +161,8 @@ export default function BRollAnimateStage({ pipelineId, onComplete }: BRollAnima
       last_frame_url: effectiveLastFrame,
     };
 
+    if (!initialLoadDoneRef.current) return;
+
     queryClient.setQueryData(['pipeline', pipelineId], (current: any) =>
       current
         ? {
@@ -171,7 +193,7 @@ export default function BRollAnimateStage({ pipelineId, onComplete }: BRollAnima
   }, [pipelineId, updateVoice]);
 
   useEffect(() => {
-    if (!pipeline) return;
+    if (!initialLoadDoneRef.current || !hasUserInteractedRef.current) return;
 
     if (autoSaveTimeoutRef.current) {
       clearTimeout(autoSaveTimeoutRef.current);
@@ -188,7 +210,6 @@ export default function BRollAnimateStage({ pipelineId, onComplete }: BRollAnima
       }
     };
   }, [
-    pipeline,
     animationType,
     prompt,
     duration,
@@ -207,7 +228,9 @@ export default function BRollAnimateStage({ pipelineId, onComplete }: BRollAnima
         autoSaveTimeoutRef.current = null;
       }
 
-      void persistInputs();
+      if (initialLoadDoneRef.current && hasUserInteractedRef.current) {
+        void persistInputs();
+      }
     };
   }, [persistInputs]);
 
@@ -261,6 +284,7 @@ export default function BRollAnimateStage({ pipelineId, onComplete }: BRollAnima
     const setUploading = isFirstFrame ? setIsUploadingFirst : setIsUploadingLast;
     const setUrl = isFirstFrame ? setFirstFrameUrl : setLastFrameUrl;
     
+    markUserInteracted();
     setUploading(true);
     
     try {
@@ -447,7 +471,10 @@ export default function BRollAnimateStage({ pipelineId, onComplete }: BRollAnima
                   <div className="relative rounded-xl overflow-hidden border border-border">
                     <img src={effectiveFirstFrame} alt="First frame" className="w-full h-40 object-cover" />
                     <button
-                      onClick={() => setFirstFrameUrl('')}
+                      onClick={() => {
+                        markUserInteracted();
+                        setFirstFrameUrl('');
+                      }}
                       className="absolute top-2 right-2 p-1 rounded-full bg-background/80 hover:bg-background transition-colors"
                     >
                       <X className="h-4 w-4" strokeWidth={1.5} />
@@ -485,7 +512,10 @@ export default function BRollAnimateStage({ pipelineId, onComplete }: BRollAnima
                   <div className="relative rounded-xl overflow-hidden border border-border">
                     <img src={effectiveLastFrame} alt="Last frame" className="w-full h-40 object-cover" />
                     <button
-                      onClick={() => setLastFrameUrl('')}
+                      onClick={() => {
+                        markUserInteracted();
+                        setLastFrameUrl('');
+                      }}
                       className="absolute top-2 right-2 p-1 rounded-full bg-background/80 hover:bg-background transition-colors"
                     >
                       <X className="h-4 w-4" strokeWidth={1.5} />
@@ -521,7 +551,10 @@ export default function BRollAnimateStage({ pipelineId, onComplete }: BRollAnima
                 <Label>Prompt</Label>
                 <Textarea
                   value={prompt}
-                  onChange={(e) => setPrompt(e.target.value)}
+                  onChange={(e) => {
+                    markUserInteracted();
+                    setPrompt(e.target.value);
+                  }}
                   placeholder="Describe the motion you want (e.g., 'gentle camera pan across the scene')"
                   rows={3}
                 />

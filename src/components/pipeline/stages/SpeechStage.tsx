@@ -49,6 +49,8 @@ export default function SpeechStage({ pipelineId, onContinue }: SpeechStageProps
   const initialLoadDoneRef = useRef(false);
   const autoSaveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const latestInputRef = useRef<any>(null);
+  const hasUserInteractedRef = useRef(false);
+  const hydratedStateKeyRef = useRef<string | null>(null);
 
   // Get available actors with voice
   const availableActors = actors?.filter(
@@ -78,6 +80,10 @@ export default function SpeechStage({ pipelineId, onContinue }: SpeechStageProps
   const prevStatusRef = useRef<string | null>(null);
   const toastShownRef = useRef<string | null>(null);
 
+  const markUserInteracted = useCallback(() => {
+    hasUserInteractedRef.current = true;
+  }, []);
+
   useEffect(() => {
     latestInputRef.current = {
       mode: inputMode,
@@ -85,6 +91,8 @@ export default function SpeechStage({ pipelineId, onContinue }: SpeechStageProps
       script,
       uploaded_url: uploadedAudioUrl,
     };
+
+    if (!initialLoadDoneRef.current) return;
 
     queryClient.setQueryData(['pipeline', pipelineId], (current: any) =>
       current
@@ -106,27 +114,34 @@ export default function SpeechStage({ pipelineId, onContinue }: SpeechStageProps
 
   // Load saved state from pipeline
   useEffect(() => {
-    if (!pipeline || initialLoadDoneRef.current) return;
+    if (!pipeline || hasUserInteractedRef.current) return;
+
+    const voiceInput = pipeline.voice_input as any;
+    const nextHydrationKey = JSON.stringify({
+      mode: voiceInput?.mode ?? 'generate',
+      voiceId: voiceInput?.voice_id ?? null,
+      script: voiceInput?.script ?? '',
+      uploadedUrl: voiceInput?.uploaded_url ?? null,
+      outputUrl: pipeline.voice_output?.url ?? null,
+    });
+
+    if (hydratedStateKeyRef.current === nextHydrationKey) return;
+
+    hydratedStateKeyRef.current = nextHydrationKey;
     initialLoadDoneRef.current = true;
 
-    // Initialize prev status
-    prevStatusRef.current = pipeline.status;
+    if (prevStatusRef.current === null) {
+      prevStatusRef.current = pipeline.status;
+    }
+
     if (hasOutput) {
       toastShownRef.current = pipelineId;
     }
 
-    const input = pipeline.voice_input;
-    if (input) {
-      if (input.mode) setInputMode(input.mode as InputMode);
-      if (input.voice_id) setSelectedActorId(input.voice_id as string);
-      if (input.uploaded_url) setUploadedAudioUrl(input.uploaded_url as string);
-    }
-
-    // Load script from voice_input if available (stored alongside voice settings)
-    const voiceInput = pipeline.voice_input as any;
-    if (voiceInput?.script) {
-      setScript(voiceInput.script as string);
-    }
+    setInputMode((voiceInput?.mode as InputMode) || 'generate');
+    setSelectedActorId((voiceInput?.voice_id as string) || null);
+    setUploadedAudioUrl((voiceInput?.uploaded_url as string) || null);
+    setScript((voiceInput?.script as string) || '');
   }, [pipeline, hasOutput, pipelineId]);
 
   // Handle status transitions - detect completion and show toasts
@@ -156,7 +171,7 @@ export default function SpeechStage({ pipelineId, onContinue }: SpeechStageProps
 
   // Auto-save inputs (debounced)
   useEffect(() => {
-    if (!pipeline || !initialLoadDoneRef.current) return;
+    if (!initialLoadDoneRef.current || !hasUserInteractedRef.current) return;
 
     if (autoSaveTimeoutRef.current) {
       clearTimeout(autoSaveTimeoutRef.current);
@@ -172,7 +187,7 @@ export default function SpeechStage({ pipelineId, onContinue }: SpeechStageProps
         autoSaveTimeoutRef.current = null;
       }
     };
-  }, [pipeline, inputMode, selectedActorId, script, uploadedAudioUrl, persistInputs]);
+  }, [inputMode, selectedActorId, script, uploadedAudioUrl, persistInputs]);
 
   useEffect(() => {
     return () => {
@@ -181,7 +196,7 @@ export default function SpeechStage({ pipelineId, onContinue }: SpeechStageProps
         autoSaveTimeoutRef.current = null;
       }
 
-      if (initialLoadDoneRef.current) {
+      if (initialLoadDoneRef.current && hasUserInteractedRef.current) {
         void persistInputs();
       }
     };
@@ -189,6 +204,7 @@ export default function SpeechStage({ pipelineId, onContinue }: SpeechStageProps
 
   // Handle actor selection
   const handleActorSelect = (actorId: string) => {
+    markUserInteracted();
     setSelectedActorId(actorId);
     setActorSearchOpen(false);
   };
@@ -196,6 +212,7 @@ export default function SpeechStage({ pipelineId, onContinue }: SpeechStageProps
   // Handle script change
   const handleScriptChange = (value: string) => {
     if (value.length <= MAX_CHARACTERS) {
+      markUserInteracted();
       setScript(value);
     }
   };
@@ -215,6 +232,7 @@ export default function SpeechStage({ pipelineId, onContinue }: SpeechStageProps
       return;
     }
 
+    markUserInteracted();
     setIsUploadingAudio(true);
     try {
       const url = await uploadToR2(file, {
