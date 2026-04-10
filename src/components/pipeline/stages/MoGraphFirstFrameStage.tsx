@@ -273,25 +273,7 @@ export default function MoGraphFirstFrameStage({ pipelineId, onComplete, onConti
 
   const inputContent = (
     <div className="space-y-5">
-      {/* Generate/Upload Toggle */}
-      <InputModeToggle
-        mode={inputMode}
-        onModeChange={setInputMode}
-        uploadLabel="Upload"
-      />
-
-      {inputMode === 'upload' ? (
-        <div className="space-y-4">
-          <SingleImageUpload
-            value={uploadedUrl || undefined}
-            onChange={handleUploadComplete}
-            aspectRatio="video"
-            placeholder="Drag & drop your image or"
-            showGenerateLink={false}
-          />
-        </div>
-      ) : (
-        <>
+      {/* Generate Mode UI */}
           {/* Frame Type - First Frame locked */}
           <div className="space-y-2">
             <label className="text-sm font-medium">Frame Type</label>
