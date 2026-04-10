@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react';
-import { FolderPlus, X, Loader2, CircleUser } from 'lucide-react';
+import { FolderPlus, X, Loader2, CircleUser, Clapperboard } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
 import { v4 as uuidv4 } from 'uuid';
 import {
@@ -42,67 +42,40 @@ interface CreateNewModalProps {
 type WorkflowType = 'talking_head' | 'b_roll';
 type ElementType = 'folder' | 'lip_sync' | 'speech' | 'frame' | 'script' | 'swap' | 'animate';
 
-const workflows = [
+const createItems = [
   {
-    id: 'talking_head' as WorkflowType,
-    icon: CircleUser,
-    title: 'Talking Head',
-    description: 'Create talking head video',
-  },
-  // {
-  //   id: 'b_roll' as WorkflowType,
-  //   icon: Clapperboard,
-  //   title: 'B-Roll',
-  //   description: 'Generate video clips',
-  // },
-];
-
-const elements = [
-  {
-    id: 'folder' as ElementType,
+    id: 'folder' as const,
+    type: 'element' as const,
     icon: FolderPlus,
     title: 'Folder',
     description: 'Organize your content',
   },
-  // {
-  //   id: 'script' as ElementType,
-  //   icon: FileText,
-  //   title: 'Script',
-  //   description: 'Generate script',
-  // },
-  // {
-  //   id: 'speech' as ElementType,
-  //   icon: Mic,
-  //   title: 'Speech',
-  //   description: 'Generate voice audio',
-  // },
-  // {
-  //   id: 'frame' as ElementType,
-  //   icon: Image,
-  //   title: 'Frame',
-  //   description: 'Generate AI images',
-  //   iconColor: 'text-cyan-500',
-  // },
-  // {
-  //   id: 'lip_sync' as ElementType,
-  //   icon: Wand2,
-  //   title: 'Lip Sync',
-  //   description: 'Sync audio to face',
-  // },
-  // {
-  //   id: 'animate' as ElementType,
-  //   icon: PlayCircle,
-  //   title: 'Animate',
-  //   description: 'Animate images to video',
-  // },
-  // {
-  //   id: 'swap' as ElementType,
-  //   icon: RefreshCw,
-  //   title: 'Swap',
-  //   description: 'Face swap',
-  //   comingSoon: true,
-  // },
+  {
+    id: 'talking_head' as const,
+    type: 'workflow' as const,
+    icon: CircleUser,
+    title: 'Talking Head',
+    description: 'Create talking head video',
+  },
+  {
+    id: 'b_roll' as const,
+    type: 'workflow' as const,
+    icon: Clapperboard,
+    title: 'B-Roll',
+    description: 'Generate video clips',
+  },
 ];
+
+// Elements commented out - kept for future use
+// const elements = [
+//   {
+//     id: 'script' as ElementType,
+//     icon: FileText,
+//     title: 'Script',
+//     description: 'Generate script',
+//   },
+//   ...
+// ];
 
 export default function CreateNewModal({
   open,
