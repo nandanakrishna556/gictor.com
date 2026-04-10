@@ -397,12 +397,11 @@ export default function BRollAnimateStage({ pipelineId, onComplete }: BRollAnima
                   AI will enhance your prompt or analyze the images if left empty
                 </p>
               </div>
-            </>
-          )}
+
         </div>
 
-        {/* Sticky Generate Button (Generate mode only) */}
-        {inputMode === 'generate' && (
+        {/* Sticky Generate Button */}
+        {(
           <div className="shrink-0 p-4 border-t bg-background">
             <Button
               onClick={handleGenerate}
