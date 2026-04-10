@@ -361,7 +361,7 @@ export default function LipSyncStage({ pipelineId, onComplete }: LipSyncStagePro
         );
 
         queryClient.setQueryData(['pipeline-thumbnails', pipeline.project_id], (current: any) => {
-          const next = new Map(current ? Array.from(current.entries()) : []);
+          const next = new Map<string, any>(current ? Array.from((current as Map<string, any>).entries()) : []);
           next.set(pipelineId, {
             firstFrameUrl: effectiveImageUrl || undefined,
           });
