@@ -20,7 +20,7 @@ interface FirstFrameStageProps {
   onContinue: () => void;
 }
 
-type FrameStyle = 'talking_head' | 'broll';
+type FrameStyle = 'talking_head';
 type SubStyle = 'ugc' | 'studio';
 type AspectRatio = '9:16' | '16:9' | '1:1';
 type CameraPerspective = '1st_person' | '3rd_person';
