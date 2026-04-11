@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useLayoutEffect, useRef, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -95,8 +95,8 @@ export default function BRollAnimateStage({ pipelineId, onComplete }: BRollAnima
     hasUserInteractedRef.current = true;
   }, []);
   
-  // Load existing data from voice_input (repurposed for animate settings)
-  useEffect(() => {
+  // Load existing data from voice_input (repurposed for animate settings) - useLayoutEffect to hydrate before paint
+  useLayoutEffect(() => {
     if (!pipeline || hasUserInteractedRef.current) return;
 
     const input = pipeline.voice_input as any;
@@ -459,8 +459,18 @@ export default function BRollAnimateStage({ pipelineId, onComplete }: BRollAnima
   // Don't render form until pipeline data has been hydrated to avoid flash of empty fields
   if (!pipeline || !hydratedStateKeyRef.current) {
     return (
-      <div className="flex items-center justify-center h-full py-20">
-        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+      <div className="flex flex-1 overflow-hidden h-full">
+        <div className="w-1/2 flex flex-col overflow-hidden border-r p-6 space-y-4">
+          <div className="h-4 w-24 rounded bg-muted animate-pulse" />
+          <div className="h-40 w-full rounded-xl bg-muted animate-pulse" />
+          <div className="h-40 w-full rounded-xl bg-muted animate-pulse" />
+          <div className="h-10 w-full rounded-md bg-muted animate-pulse" />
+          <div className="h-24 w-full rounded-md bg-muted animate-pulse" />
+        </div>
+        <div className="w-1/2 flex flex-col overflow-hidden p-6 space-y-4">
+          <div className="h-4 w-20 rounded bg-muted animate-pulse" />
+          <div className="flex-1 rounded-xl bg-muted animate-pulse" />
+        </div>
       </div>
     );
   }
