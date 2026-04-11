@@ -681,6 +681,15 @@ export default function LipSyncStage({ pipelineId, onComplete }: LipSyncStagePro
     </div>
   );
 
+  // Don't render form until pipeline data has been hydrated to avoid flash of empty fields
+  if (!pipeline || !hydratedStateKeyRef.current) {
+    return (
+      <div className="flex items-center justify-center h-full py-20">
+        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
   return (
     <StageLayout
       inputContent={inputContent}
