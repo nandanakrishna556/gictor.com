@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useLayoutEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
@@ -92,15 +92,28 @@ export default function BRollLastFrameStage({ pipelineId, onComplete }: BRollLas
     hasUserInteractedRef.current = true;
   }, []);
   
-  // Load existing data from script_input (repurposed for last frame) - useLayoutEffect to hydrate before paint
-  useLayoutEffect(() => {
+  // Load existing data from script_input (repurposed for last frame)
+  useEffect(() => {
     if (!pipeline || hasUserInteractedRef.current) return;
 
     const rawInput = pipeline.script_input as any;
     const input = rawInput?.frame_type === 'last' ? rawInput : null;
+    const storedReferenceImages = Array.isArray(input?.reference_images) ? (input.reference_images as string[]) : [];
+    const firstFrameReferenceUrl = pipeline.first_frame_output?.url;
+    const resolvedReferenceImages = firstFrameReferenceUrl && !storedReferenceImages.includes(firstFrameReferenceUrl)
+      ? [firstFrameReferenceUrl, ...storedReferenceImages].slice(0, 3)
+      : storedReferenceImages;
     const nextHydrationKey = JSON.stringify({
-      input,
-      firstFrameUrl: pipeline.first_frame_output?.url ?? null,
+      mode: input?.mode ?? 'generate',
+      style: input?.style ?? 'broll',
+      subStyle: input?.substyle ?? 'ugc',
+      aspectRatio: input?.aspect_ratio ?? '9:16',
+      cameraPerspective: input?.camera_perspective ?? '3rd_person',
+      resolution: input?.resolution ?? '2K',
+      selectedActorId: input?.actor_id ?? null,
+      referenceImages: resolvedReferenceImages,
+      prompt: input?.prompt ?? input?.description ?? '',
+      uploadedUrl: input?.uploaded_url ?? '',
       lastFrameUrl: pipeline.last_frame_output?.url ?? null,
     });
 
@@ -116,7 +129,7 @@ export default function BRollLastFrameStage({ pipelineId, onComplete }: BRollLas
     setCameraPerspective((input?.camera_perspective as CameraPerspective) || '3rd_person');
     setResolution((input?.resolution as Resolution) || '2K');
     setSelectedActorId((input?.actor_id as string) || null);
-    setReferenceImages((input?.reference_images as string[]) || []);
+    setReferenceImages(resolvedReferenceImages);
     setPrompt((input?.prompt || input?.description || '') as string);
     setUploadedUrl((input?.uploaded_url as string) || '');
 
@@ -126,7 +139,14 @@ export default function BRollLastFrameStage({ pipelineId, onComplete }: BRollLas
         toastShownRef.current = `${pipelineId}_last`;
       }
     }
-  }, [pipeline?.script_input, pipeline?.status, hasOutput, pipelineId]);
+  }, [
+    pipeline?.script_input,
+    pipeline?.first_frame_output?.url,
+    pipeline?.last_frame_output?.url,
+    pipeline?.status,
+    hasOutput,
+    pipelineId,
+  ]);
 
   // Handle status transitions - show toasts on completion
   useEffect(() => {
@@ -182,14 +202,21 @@ export default function BRollLastFrameStage({ pipelineId, onComplete }: BRollLas
 
     if (!initialLoadDone.current) return;
 
-    queryClient.setQueryData(['pipeline', pipelineId], (current: any) =>
-      current
-        ? {
-            ...current,
-            script_input: latestInputRef.current,
-          }
-        : current
-    );
+    queryClient.setQueryData(['pipeline', pipelineId], (current: any) => {
+      if (!current) return current;
+
+      const previousInput = current.script_input ?? null;
+      const nextInput = latestInputRef.current;
+
+      if (JSON.stringify(previousInput) === JSON.stringify(nextInput)) {
+        return current;
+      }
+
+      return {
+        ...current,
+        script_input: nextInput,
+      };
+    });
   }, [
     pipelineId,
     queryClient,
