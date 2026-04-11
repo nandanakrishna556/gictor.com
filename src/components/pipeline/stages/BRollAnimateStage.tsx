@@ -142,19 +142,6 @@ export default function BRollAnimateStage({ pipelineId, onComplete }: BRollAnima
     pipelineId,
   ]);
 
-  // Auto-populate frames from previous stages when they become available
-  useEffect(() => {
-    // Only auto-populate if user hasn't manually cleared the frame
-    if (originalFirstFrame && !firstFrameUrl) {
-      setFirstFrameUrl(originalFirstFrame);
-    }
-  }, [originalFirstFrame]);
-  
-  useEffect(() => {
-    if (originalLastFrame && !lastFrameUrl) {
-      setLastFrameUrl(originalLastFrame);
-    }
-  }, [originalLastFrame]);
 
   useEffect(() => {
     latestInputRef.current = {

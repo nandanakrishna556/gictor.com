@@ -240,16 +240,6 @@ export default function BRollLastFrameStage({ pipelineId, onComplete }: BRollLas
     });
   }, [pipelineId, updateScript]);
 
-  // Auto-add first frame output as reference image if available
-  useEffect(() => {
-    const firstFrameUrl = pipeline?.first_frame_output?.url;
-    if (firstFrameUrl && !referenceImages.includes(firstFrameUrl)) {
-      setReferenceImages(prev => {
-        if (prev.includes(firstFrameUrl)) return prev;
-        return [firstFrameUrl, ...prev].slice(0, 3); // Keep max 3
-      });
-    }
-  }, [pipeline?.first_frame_output?.url]);
 
   // Auto-save inputs (debounced)
   useEffect(() => {
