@@ -92,8 +92,8 @@ export default function BRollLastFrameStage({ pipelineId, onComplete }: BRollLas
     hasUserInteractedRef.current = true;
   }, []);
   
-  // Load existing data from script_input (repurposed for last frame) - only on first mount
-  useEffect(() => {
+  // Load existing data from script_input (repurposed for last frame) - useLayoutEffect to hydrate before paint
+  useLayoutEffect(() => {
     if (!pipeline || hasUserInteractedRef.current) return;
 
     const rawInput = pipeline.script_input as any;

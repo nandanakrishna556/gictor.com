@@ -95,8 +95,8 @@ export default function BRollAnimateStage({ pipelineId, onComplete }: BRollAnima
     hasUserInteractedRef.current = true;
   }, []);
   
-  // Load existing data from voice_input (repurposed for animate settings)
-  useEffect(() => {
+  // Load existing data from voice_input (repurposed for animate settings) - useLayoutEffect to hydrate before paint
+  useLayoutEffect(() => {
     if (!pipeline || hasUserInteractedRef.current) return;
 
     const input = pipeline.voice_input as any;
