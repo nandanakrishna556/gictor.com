@@ -434,6 +434,15 @@ export default function BRollLastFrameStage({ pipelineId, onComplete }: BRollLas
     }
   };
 
+  // Don't render form until pipeline data has been hydrated to avoid flash of empty fields
+  if (!pipeline || !hydratedStateKeyRef.current) {
+    return (
+      <div className="flex items-center justify-center h-full py-20">
+        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
   const inputContent = (
     <div className="space-y-5">
       {/* Generate Mode UI */}
