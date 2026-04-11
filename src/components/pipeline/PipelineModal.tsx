@@ -191,9 +191,15 @@ export default function PipelineModal({
 
 
   const handleStageClick = (stage: PipelineStage) => {
-    // Only update the UI tab - don't update current_stage in DB
-    // This prevents stage isolation issues where clicking a tab triggers "Generating" state
     setActiveStage(stage);
+    // Persist the active tab so it restores on reopen
+    if (pipelineId) {
+      supabase
+        .from('pipelines')
+        .update({ current_stage: stage })
+        .eq('id', pipelineId)
+        .then();
+    }
   };
 
   const isStageComplete = (stage: PipelineStage): boolean => {

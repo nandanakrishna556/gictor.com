@@ -194,10 +194,23 @@ export default function BRollPipelineModal({
     };
   }, [hasUnsavedChanges, name, displayStatus, selectedTags, triggerAutoSave]);
 
+  const mapBRollStageToPipeline = (stage: BRollStage): string => {
+    if (stage === 'first_frame') return 'first_frame';
+    if (stage === 'last_frame') return 'script'; // mapped to script stage in DB
+    if (stage === 'animate') return 'voice';
+    return 'first_frame';
+  };
+
   const handleStageClick = (stage: BRollStage) => {
-    // Only update the UI tab - don't update current_stage in DB
-    // current_stage should only be set by the generation process to track what's actually processing
     setActiveStage(stage);
+    // Persist the active tab so it restores on reopen
+    if (pipelineId) {
+      supabase
+        .from('pipelines')
+        .update({ current_stage: mapBRollStageToPipeline(stage) })
+        .eq('id', pipelineId)
+        .then();
+    }
   };
 
   const isStageComplete = (stage: BRollStage): boolean => {
