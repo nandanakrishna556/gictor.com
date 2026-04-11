@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useLayoutEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -95,11 +95,13 @@ export default function BRollAnimateStage({ pipelineId, onComplete }: BRollAnima
     hasUserInteractedRef.current = true;
   }, []);
   
-  // Load existing data from voice_input (repurposed for animate settings) - useLayoutEffect to hydrate before paint
-  useLayoutEffect(() => {
+  // Load existing data from voice_input (repurposed for animate settings)
+  useEffect(() => {
     if (!pipeline || hasUserInteractedRef.current) return;
 
     const input = pipeline.voice_input as any;
+    const resolvedFirstFrameUrl = (input?.first_frame_url as string) || pipeline.first_frame_output?.url || '';
+    const resolvedLastFrameUrl = (input?.last_frame_url as string) || pipeline.last_frame_output?.url || '';
     const nextHydrationKey = JSON.stringify({
       animationType: input?.animation_type ?? 'broll',
       prompt: input?.prompt ?? '',
@@ -107,10 +109,8 @@ export default function BRollAnimateStage({ pipelineId, onComplete }: BRollAnima
       cameraFixed: input?.camera_fixed ?? false,
       aspectRatio: input?.aspect_ratio ?? '9:16',
       audioEnabled: input?.audio_enabled ?? false,
-      firstFrameUrl: input?.first_frame_url ?? null,
-      lastFrameUrl: input?.last_frame_url ?? null,
-      originalFirstFrameUrl: pipeline.first_frame_output?.url ?? null,
-      originalLastFrameUrl: pipeline.last_frame_output?.url ?? null,
+      firstFrameUrl: resolvedFirstFrameUrl,
+      lastFrameUrl: resolvedLastFrameUrl,
     });
 
     if (hydratedStateKeyRef.current === nextHydrationKey) return;
@@ -124,8 +124,8 @@ export default function BRollAnimateStage({ pipelineId, onComplete }: BRollAnima
     setCameraFixed(Boolean(input?.camera_fixed));
     setAspectRatio((input?.aspect_ratio as '16:9' | '9:16') || '9:16');
     setAudioEnabled(Boolean(input?.audio_enabled));
-    setFirstFrameUrl((input?.first_frame_url as string) || '');
-    setLastFrameUrl((input?.last_frame_url as string) || '');
+    setFirstFrameUrl(resolvedFirstFrameUrl);
+    setLastFrameUrl(resolvedLastFrameUrl);
 
     if (prevStatusRef.current === null) {
       prevStatusRef.current = pipeline.status;
@@ -133,21 +133,15 @@ export default function BRollAnimateStage({ pipelineId, onComplete }: BRollAnima
         toastShownRef.current = pipelineId;
       }
     }
-  }, [pipeline?.voice_input, pipeline?.status, hasOutput, pipelineId]);
+  }, [
+    pipeline?.voice_input,
+    pipeline?.first_frame_output?.url,
+    pipeline?.last_frame_output?.url,
+    pipeline?.status,
+    hasOutput,
+    pipelineId,
+  ]);
 
-  // Auto-populate frames from previous stages when they become available
-  useEffect(() => {
-    // Only auto-populate if user hasn't manually cleared the frame
-    if (originalFirstFrame && !firstFrameUrl) {
-      setFirstFrameUrl(originalFirstFrame);
-    }
-  }, [originalFirstFrame]);
-  
-  useEffect(() => {
-    if (originalLastFrame && !lastFrameUrl) {
-      setLastFrameUrl(originalLastFrame);
-    }
-  }, [originalLastFrame]);
 
   useEffect(() => {
     latestInputRef.current = {
@@ -163,14 +157,21 @@ export default function BRollAnimateStage({ pipelineId, onComplete }: BRollAnima
 
     if (!initialLoadDoneRef.current) return;
 
-    queryClient.setQueryData(['pipeline', pipelineId], (current: any) =>
-      current
-        ? {
-            ...current,
-            voice_input: latestInputRef.current,
-          }
-        : current
-    );
+    queryClient.setQueryData(['pipeline', pipelineId], (current: any) => {
+      if (!current) return current;
+
+      const previousInput = current.voice_input ?? null;
+      const nextInput = latestInputRef.current;
+
+      if (JSON.stringify(previousInput) === JSON.stringify(nextInput)) {
+        return current;
+      }
+
+      return {
+        ...current,
+        voice_input: nextInput,
+      };
+    });
   }, [
     pipelineId,
     queryClient,
