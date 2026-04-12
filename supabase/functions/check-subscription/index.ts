@@ -110,7 +110,7 @@ serve(async (req) => {
 
     logStep("Active subscription found", { productId, plan, priceId, subscriptionEnd });
 
-    await supabaseClient.from("profiles").update({ plan }).eq("id", user.id);
+    await supabaseAdmin.from("profiles").update({ plan }).eq("id", userId);
 
     return new Response(JSON.stringify({
       subscribed: true,
