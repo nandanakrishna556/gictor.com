@@ -173,7 +173,7 @@ export default function Billing() {
                         )}
                         {isPopular && (
                           <span className="rounded-full bg-primary px-3 py-1 text-xs font-semibold text-primary-foreground whitespace-nowrap shadow-sm">
-                            🔥 Most Popular
+                            ⚡ Most Popular
                           </span>
                         )}
                       </div>
@@ -207,7 +207,7 @@ export default function Billing() {
                       {/* Credits - Hero element */}
                       <div className="mt-4 rounded-xl bg-primary/5 border border-primary/10 p-4">
                         <div className="flex items-center gap-2">
-                          <Sparkles className="h-5 w-5 text-primary" />
+                          <span className="text-xl">🎬</span>
                           <span className="text-2xl font-bold text-foreground">
                             {isYearly ? pkg.yearlyTotalCredits : pkg.credits} credits
                           </span>
@@ -240,12 +240,12 @@ export default function Billing() {
 
                     {/* Features */}
                     <div className="flex-1 px-6 pb-6">
-                      <p className="mb-3 text-sm font-semibold text-foreground">What's Included</p>
-                      <ul className="space-y-3">
+                      <p className="mb-4 text-sm font-semibold text-foreground">What's Included</p>
+                      <ul className="space-y-3.5">
                         {pkg.features.map((feature) => (
-                          <li key={feature} className="flex items-start gap-2.5 text-sm font-medium text-foreground">
-                            <div className="mt-0.5 flex h-4 w-4 flex-shrink-0 items-center justify-center rounded-full bg-primary/15">
-                              <Check className="h-3 w-3 text-primary" />
+                          <li key={feature} className="flex items-start gap-3 text-[15px] font-medium text-foreground">
+                            <div className="mt-0.5 flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full bg-primary/15">
+                              <Check className="h-3.5 w-3.5 text-primary" />
                             </div>
                             {feature}
                           </li>
