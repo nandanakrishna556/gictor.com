@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Coins, Loader2, CheckCircle2, PartyPopper, Check, ArrowRight, Sparkles, Gift } from 'lucide-react';
+import { Coins, Loader2, CheckCircle2, PartyPopper, Check, ArrowRight, Sparkles, Gift, Crown } from 'lucide-react';
 import MainLayout from '@/components/layout/MainLayout';
 import AppHeader from '@/components/layout/AppHeader';
 import { Button } from '@/components/ui/button';
@@ -86,11 +86,21 @@ export default function Billing() {
 
             {/* Header */}
             <div className="mb-10 text-center">
-              <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-border bg-card px-4 py-1.5">
-                <Coins className="h-4 w-4 text-warning" />
-                <span className="text-sm font-medium text-foreground">
-                  {(profile?.credits ?? 0).toFixed(2)} credits available
-                </span>
+              <div className="mb-4 flex items-center justify-center gap-3">
+                <div className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-4 py-1.5">
+                  <Coins className="h-4 w-4 text-warning" />
+                  <span className="text-sm font-medium text-foreground">
+                    {(profile?.credits ?? 0).toFixed(2)} credits available
+                  </span>
+                </div>
+                {profile?.plan && (
+                  <div className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-4 py-1.5">
+                    <Crown className="h-4 w-4 text-primary" />
+                    <span className="text-sm font-medium text-primary capitalize">
+                      {profile.plan} Plan
+                    </span>
+                  </div>
+                )}
               </div>
               <h1 className="text-3xl font-bold text-foreground">Select plan</h1>
               <p className="mt-2 text-muted-foreground">
