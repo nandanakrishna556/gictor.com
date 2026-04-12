@@ -147,6 +147,8 @@ export default function Billing() {
             <div className="grid gap-6 lg:grid-cols-3">
               {CREDIT_PACKAGES.map((pkg) => {
                 const isPopular = pkg.popular;
+                const isBestValue = pkg.name === 'Pro';
+                const isCurrentPlan = profile?.plan === pkg.name.toLowerCase();
                 const priceId = isYearly ? pkg.yearlyPriceId : pkg.monthlyPriceId;
                 const isLoading = loadingPriceId === priceId;
 
@@ -157,21 +159,38 @@ export default function Billing() {
                       "relative flex flex-col rounded-2xl border bg-card transition-all duration-200",
                       isPopular
                         ? "border-primary shadow-lg ring-1 ring-primary/20"
-                        : "border-border hover:border-muted-foreground/30 hover:shadow-md"
+                        : isCurrentPlan
+                          ? "border-primary/50 shadow-md"
+                          : "border-border hover:border-muted-foreground/30 hover:shadow-md"
                     )}
                   >
-                    {/* Card Header */}
-                    <div className="p-6 pb-0">
-                      <div className="flex items-start justify-between">
-                        <div>
-                          <h3 className="text-xl font-bold text-foreground">{pkg.name}</h3>
-                          <p className="mt-1 text-sm text-muted-foreground">{pkg.description}</p>
-                        </div>
+                    {/* Badges - positioned above card */}
+                    {(isPopular || isBestValue || isCurrentPlan) && (
+                      <div className="absolute -top-3 left-0 right-0 flex items-center justify-center gap-2">
+                        {isCurrentPlan && (
+                          <span className="rounded-full bg-foreground px-3 py-1 text-xs font-semibold text-background whitespace-nowrap shadow-sm">
+                            Current Plan
+                          </span>
+                        )}
                         {isPopular && (
-                          <span className="rounded-md bg-primary px-2.5 py-1 text-xs font-semibold uppercase text-primary-foreground">
+                          <span className="rounded-full bg-primary px-3 py-1 text-xs font-semibold text-primary-foreground whitespace-nowrap shadow-sm">
                             Most Popular
                           </span>
                         )}
+                        {isBestValue && !isPopular && (
+                          <span className="rounded-full bg-emerald-500 px-3 py-1 text-xs font-semibold text-white whitespace-nowrap shadow-sm">
+                            Best Value
+                          </span>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Card Header */}
+                    <div className={cn("p-6 pb-0", (isPopular || isBestValue || isCurrentPlan) && "pt-8")}>
+                      <div>
+                        <h3 className="text-xl font-bold text-foreground">{pkg.name}</h3>
+                        <p className="mt-1 text-sm text-muted-foreground">{pkg.description}</p>
+                      </div>
                       </div>
 
                       {/* Price */}
