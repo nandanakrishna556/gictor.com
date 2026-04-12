@@ -72,14 +72,12 @@ export default function Actors() {
               </div>
               <div className="flex items-center gap-4">
                 {/* Actor count badge */}
-                {actorLimit > 0 && (
-                  <div className="flex items-center gap-2 rounded-full border border-border bg-card px-4 py-1.5">
-                    <Users className="h-4 w-4 text-primary" />
-                    <span className="text-sm font-medium text-foreground">
-                      {actorCount} / {actorLimit} active actors
-                    </span>
-                  </div>
-                )}
+                <div className="flex items-center gap-2 rounded-full border border-border bg-card px-4 py-1.5">
+                  <Users className="h-4 w-4 text-primary" />
+                  <span className="text-sm font-medium text-foreground">
+                    {actorCount}{actorLimit > 0 ? ` / ${actorLimit}` : ''} active actors
+                  </span>
+                </div>
                 <Button 
                   onClick={handleCreateClick}
                   className="gap-2 rounded-lg px-5"

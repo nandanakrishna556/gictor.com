@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { User, Search, Check } from 'lucide-react';
+import { User, Search, Check, Plus } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { useActors, Actor } from '@/hooks/useActors';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -20,6 +21,7 @@ export default function ActorSelectorPopover({
   className,
 }: ActorSelectorPopoverProps) {
   const { actors } = useActors();
+  const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
 
