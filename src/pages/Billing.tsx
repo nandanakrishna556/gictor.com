@@ -1,15 +1,14 @@
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Coins, CreditCard, Loader2, CheckCircle2, PartyPopper, Check, Film } from 'lucide-react';
+import { Coins, Loader2, CheckCircle2, PartyPopper, Check, ArrowRight } from 'lucide-react';
 import MainLayout from '@/components/layout/MainLayout';
 import AppHeader from '@/components/layout/AppHeader';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { useProfile } from '@/hooks/useProfile';
 import { toast } from 'sonner';
-import { CREDIT_PACKAGES, calculateVideoMinutes } from '@/constants/creditPackages';
+import { CREDIT_PACKAGES } from '@/constants/creditPackages';
 import { cn } from '@/lib/utils';
-import { Switch } from '@/components/ui/switch';
 
 export default function Billing() {
   const { profile, refetch: refetchProfile } = useProfile();
@@ -60,7 +59,7 @@ export default function Billing() {
         <AppHeader breadcrumbs={[{ label: 'Billing' }]} />
 
         <div className="flex-1 overflow-y-auto p-6">
-          <div className="mx-auto max-w-6xl">
+          <div className="mx-auto max-w-5xl">
             {/* Success Animation Overlay */}
             {showSuccess && (
               <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm animate-fade-in">
@@ -78,7 +77,7 @@ export default function Billing() {
                       <PartyPopper className="h-6 w-6 text-primary scale-x-[-1]" />
                     </div>
                     <p className="text-lg text-muted-foreground">
-                      <span className="font-bold text-primary">{purchasedCredits}</span> credits per month have been added to your plan
+                      Your plan is now active. Credits will be added each billing cycle.
                     </p>
                   </div>
                   <Button variant="outline" onClick={() => setShowSuccess(false)} className="mt-2">
@@ -96,112 +95,136 @@ export default function Billing() {
                   {(profile?.credits ?? 0).toFixed(2)} credits available
                 </span>
               </div>
-              <h1 className="text-3xl font-bold text-foreground">Choose Your Plan</h1>
+              <h1 className="text-3xl font-bold text-foreground">Select plan</h1>
               <p className="mt-2 text-muted-foreground">
-                Subscribe monthly or yearly. Credits are added each billing cycle and never expire.
+                Choose the best plan for your needs.<br />
+                No hidden fees. Cancel anytime.
               </p>
 
-              {/* Billing Toggle */}
-              <div className="mt-6 inline-flex items-center gap-3 rounded-full border border-border bg-card px-5 py-2.5">
-                <span className={cn("text-sm font-medium transition-colors", !isYearly ? "text-foreground" : "text-muted-foreground")}>
+              {/* Billing Toggle - pill style */}
+              <div className="mt-6 inline-flex items-center gap-1 rounded-full bg-muted p-1">
+                <button
+                  onClick={() => setIsYearly(false)}
+                  className={cn(
+                    "rounded-full px-5 py-2 text-sm font-medium transition-all",
+                    !isYearly
+                      ? "bg-foreground text-background shadow-sm"
+                      : "text-muted-foreground hover:text-foreground"
+                  )}
+                >
                   Monthly
-                </span>
-                <Switch checked={isYearly} onCheckedChange={setIsYearly} />
-                <span className={cn("text-sm font-medium transition-colors", isYearly ? "text-foreground" : "text-muted-foreground")}>
+                </button>
+                <button
+                  onClick={() => setIsYearly(true)}
+                  className={cn(
+                    "flex items-center gap-2 rounded-full px-5 py-2 text-sm font-medium transition-all",
+                    isYearly
+                      ? "bg-foreground text-background shadow-sm"
+                      : "text-muted-foreground hover:text-foreground"
+                  )}
+                >
                   Yearly
-                </span>
-                {isYearly && (
-                  <span className="ml-1 rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-semibold text-primary">
-                    Save 20%
+                  <span className="rounded-full bg-primary/15 px-2 py-0.5 text-xs font-semibold text-primary">
+                    -20%
                   </span>
-                )}
+                </button>
               </div>
             </div>
 
             {/* Pricing Cards */}
-            <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="grid gap-6 lg:grid-cols-3">
               {CREDIT_PACKAGES.map((pkg) => {
                 const isPopular = pkg.popular;
-                const currentPrice = isYearly ? pkg.yearlyPrice : pkg.monthlyPrice;
                 const displayPrice = isYearly ? Math.round(pkg.yearlyPrice / 12) : pkg.monthlyPrice;
+                const originalMonthly = pkg.monthlyPrice;
                 const priceId = isYearly ? pkg.yearlyPriceId : pkg.monthlyPriceId;
                 const isLoading = loadingPriceId === priceId;
-                const videoMinutes = calculateVideoMinutes(pkg.credits);
 
                 return (
                   <div
                     key={pkg.name}
                     className={cn(
-                      "relative flex flex-col rounded-xl border bg-card p-6 transition-all duration-200",
+                      "relative flex flex-col rounded-2xl border bg-card transition-all duration-200",
                       isPopular
-                        ? "border-primary shadow-lg ring-1 ring-primary/20 scale-[1.02] z-10"
+                        ? "border-primary shadow-lg ring-1 ring-primary/20"
                         : "border-border hover:border-muted-foreground/30 hover:shadow-md"
                     )}
                   >
-                    {isPopular && (
-                      <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                        <span className="rounded-full bg-primary px-3 py-1 text-xs font-semibold text-primary-foreground">
-                          Most Popular
-                        </span>
+                    {/* Card Header */}
+                    <div className="p-6 pb-0">
+                      <div className="flex items-start justify-between">
+                        <div>
+                          <h3 className="text-xl font-bold text-foreground">{pkg.name}</h3>
+                          <p className="mt-1 text-sm text-muted-foreground">{pkg.description}</p>
+                        </div>
+                        {isPopular && (
+                          <span className="rounded-md bg-primary px-2.5 py-1 text-xs font-semibold uppercase text-primary-foreground">
+                            Popular
+                          </span>
+                        )}
                       </div>
-                    )}
 
-                    {/* Package Name */}
-                    <p className="mb-4 text-sm font-semibold uppercase tracking-wider text-muted-foreground">
-                      {pkg.name}
-                    </p>
+                      {/* Price */}
+                      <div className="mt-6">
+                        {isYearly && (
+                          <span className="text-lg text-muted-foreground line-through mr-2">
+                            ${originalMonthly}
+                          </span>
+                        )}
+                        <div className="flex items-baseline gap-1">
+                          <span className="text-5xl font-extrabold tracking-tight text-foreground">
+                            ${displayPrice}
+                          </span>
+                          <span className="text-base text-muted-foreground">/mo</span>
+                        </div>
+                        {isYearly && (
+                          <p className="mt-1 text-sm text-muted-foreground">
+                            ${pkg.yearlyPrice} billed annually
+                          </p>
+                        )}
+                      </div>
 
-                    {/* Price (hero element) */}
-                    <div className="mb-1">
-                      <span className="text-4xl font-bold text-foreground">${displayPrice}</span>
-                      <span className="text-sm text-muted-foreground">/mo</span>
+                      <div className="my-6 h-px bg-border" />
                     </div>
-                    {isYearly && (
-                      <p className="mb-5 text-sm text-muted-foreground">
-                        ${currentPrice} billed annually
-                      </p>
-                    )}
-                    {!isYearly && (
-                      <p className="mb-5 text-sm text-muted-foreground">
-                        Billed monthly
-                      </p>
-                    )}
 
                     {/* Features */}
-                    <ul className="mb-6 flex-1 space-y-2.5">
-                      <li className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <Check className="h-4 w-4 flex-shrink-0 text-primary" />
-                        {pkg.credits} credits per month
-                      </li>
-                      <li className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <Film className="h-4 w-4 flex-shrink-0 text-primary" />
-                        ~{videoMinutes} min of video
-                      </li>
-                      <li className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <Check className="h-4 w-4 flex-shrink-0 text-primary" />
-                        Credits never expire
-                      </li>
-                    </ul>
+                    <div className="flex-1 px-6 pb-6">
+                      <ul className="space-y-3">
+                        {pkg.features.map((feature, i) => (
+                          <li key={i} className="flex items-start gap-2.5 text-sm text-muted-foreground">
+                            <Check className="mt-0.5 h-4 w-4 flex-shrink-0 text-primary" />
+                            {feature}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
 
                     {/* CTA Button */}
-                    <Button
-                      className="w-full"
-                      variant={isPopular ? "default" : "outline"}
-                      onClick={() => handlePurchase(priceId)}
-                      disabled={isLoading}
-                    >
-                      {isLoading ? (
-                        <>
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          Processing...
-                        </>
-                      ) : (
-                        <>
-                          <CreditCard className="mr-2 h-4 w-4" />
-                          Subscribe
-                        </>
-                      )}
-                    </Button>
+                    <div className="p-6 pt-0">
+                      <Button
+                        className={cn(
+                          "w-full h-12 text-sm font-semibold rounded-xl",
+                          isPopular
+                            ? ""
+                            : "bg-foreground text-background hover:bg-foreground/90"
+                        )}
+                        variant={isPopular ? "default" : "default"}
+                        onClick={() => handlePurchase(priceId)}
+                        disabled={isLoading}
+                      >
+                        {isLoading ? (
+                          <>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            Processing...
+                          </>
+                        ) : (
+                          <>
+                            Choose Plan
+                            <ArrowRight className="ml-2 h-4 w-4" />
+                          </>
+                        )}
+                      </Button>
+                    </div>
                   </div>
                 );
               })}

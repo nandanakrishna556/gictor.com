@@ -6,6 +6,9 @@ export interface CreditPackage {
   yearlyPriceId: string;
   popular?: boolean;
   name: string;
+  description: string;
+  actorSlots: number;
+  features: string[];
 }
 
 export const CREDIT_PACKAGES: CreditPackage[] = [
@@ -16,6 +19,14 @@ export const CREDIT_PACKAGES: CreditPackage[] = [
     monthlyPriceId: "price_1TLFlxJzf8eDXLMZ5L5jFgIO",
     yearlyPriceId: "price_1TLFn0Jzf8eDXLMZ2tMm9eT8",
     name: "Starter",
+    description: "For creators just getting started",
+    actorSlots: 3,
+    features: [
+      "10 credits per month",
+      "3 active actor slots",
+      "HD 1080p quality",
+      "Credits never expire",
+    ],
   },
   {
     credits: 28,
@@ -25,6 +36,15 @@ export const CREDIT_PACKAGES: CreditPackage[] = [
     yearlyPriceId: "price_1TLFnOJzf8eDXLMZdcIKZjCm",
     popular: true,
     name: "Creator",
+    description: "For growing brands ready to scale",
+    actorSlots: 10,
+    features: [
+      "28 credits per month",
+      "10 active actor slots",
+      "Custom AI actors",
+      "Faster generation queue",
+      "Credits never expire",
+    ],
   },
   {
     credits: 56,
@@ -33,6 +53,15 @@ export const CREDIT_PACKAGES: CreditPackage[] = [
     monthlyPriceId: "price_1TLFmWJzf8eDXLMZb5LO6VQP",
     yearlyPriceId: "price_1TLFncJzf8eDXLMZlgW2E0RQ",
     name: "Pro",
+    description: "For teams and agencies at scale",
+    actorSlots: 30,
+    features: [
+      "56 credits per month",
+      "30 active actor slots",
+      "Priority generation queue",
+      "Longer videos for deeper content",
+      "Credits never expire",
+    ],
   },
 ];
 
