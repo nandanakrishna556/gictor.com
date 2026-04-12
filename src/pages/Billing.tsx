@@ -121,6 +121,22 @@ export default function Billing() {
                     {profile?.plan ? `${profile.plan} Plan` : 'No Active Plan'}
                   </span>
                 </div>
+                {profile?.plan && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="rounded-full"
+                    onClick={handleManageSubscription}
+                    disabled={loadingPortal}
+                  >
+                    {loadingPortal ? (
+                      <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
+                    ) : (
+                      <Settings className="mr-1.5 h-3.5 w-3.5" />
+                    )}
+                    Manage Subscription
+                  </Button>
+                )}
               </div>
               <h1 className="text-3xl font-bold text-foreground">Select plan</h1>
               <p className="mt-2 text-muted-foreground">
