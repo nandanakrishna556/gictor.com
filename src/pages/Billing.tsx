@@ -276,14 +276,16 @@ export default function Billing() {
                             </p>
 
                             {/* Free credits value callout */}
-                            <div className="mt-3 flex items-start gap-2 rounded-lg bg-primary/10 px-3 py-2">
-                              <Gift className="mt-0.5 h-4 w-4 flex-shrink-0 text-primary" />
+                            <div className="mt-3 flex items-start gap-3 rounded-xl bg-primary/15 border border-primary/20 px-4 py-3">
+                              <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-primary/20">
+                                <Gift className="h-4.5 w-4.5 text-primary" />
+                              </div>
                               <div>
-                                <p className="text-sm font-semibold text-primary">
-                                  {pkg.yearlyFreeCredits} bonus credits included
+                                <p className="text-[15px] font-bold text-primary">
+                                  +{pkg.yearlyFreeCredits} bonus credits free
                                 </p>
-                                <p className="text-xs text-muted-foreground">
-                                  Worth {pkg.yearlyFreeCreditsValue} at no additional cost
+                                <p className="mt-0.5 text-sm text-muted-foreground">
+                                  Worth <span className="font-semibold text-foreground">{pkg.yearlyFreeCreditsValue}</span> at no additional cost
                                 </p>
                               </div>
                             </div>
