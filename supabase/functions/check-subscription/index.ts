@@ -55,17 +55,17 @@ serve(async (req) => {
     if (!userId || !email) throw new Error("User not authenticated or email not available");
     logStep("User authenticated", { userId, email });
 
-    const { data: profileData, error: profileError } = await supabaseClient
+    const { data: profileData, error: profileError } = await supabaseAdmin
       .from("profiles")
       .select("plan")
-      .eq("id", user.id)
+      .eq("id", userId)
       .maybeSingle();
 
     if (profileError) throw new Error(`Failed to load profile: ${profileError.message}`);
 
     const existingPlan = profileData?.plan ?? null;
     const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
-    const customers = await stripe.customers.list({ email: user.email, limit: 1 });
+    const customers = await stripe.customers.list({ email, limit: 1 });
 
     if (customers.data.length === 0) {
       logStep("No Stripe customer found, keeping existing plan", { existingPlan });
