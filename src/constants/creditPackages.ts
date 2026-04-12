@@ -34,7 +34,7 @@ export const CREDIT_PACKAGES: CreditPackage[] = [
     yearlyFreeCredits: 31,
     yearlyFreeCreditsValue: "$75+",
     monthlyVideoTime: "~1.3 min video",
-    yearlyVideoTime: "~18.7 min",
+    yearlyVideoTime: "~18.7 min video",
     features: [
       "3 active actors",
       "Credits never expire",
@@ -55,7 +55,7 @@ export const CREDIT_PACKAGES: CreditPackage[] = [
     yearlyFreeCredits: 84,
     yearlyFreeCreditsValue: "$210+",
     monthlyVideoTime: "~3.5 min video",
-    yearlyVideoTime: "~50 min",
+    yearlyVideoTime: "~50 min video",
     features: [
       "10 active actors",
       "Credits never expire",
@@ -76,7 +76,7 @@ export const CREDIT_PACKAGES: CreditPackage[] = [
     yearlyFreeCredits: 168,
     yearlyFreeCreditsValue: "$420+",
     monthlyVideoTime: "~7 min video",
-    yearlyVideoTime: "~1 hr 40 min",
+    yearlyVideoTime: "~1 hr 40 min video",
     features: [
       "30 active actors",
       "Credits never expire",
