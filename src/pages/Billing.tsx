@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Coins, Loader2, CheckCircle2, PartyPopper, Check, Gift, Crown } from 'lucide-react';
+import { Coins, Loader2, CheckCircle2, PartyPopper, Check, ArrowRight, Gift, Crown } from 'lucide-react';
 import MainLayout from '@/components/layout/MainLayout';
 import AppHeader from '@/components/layout/AppHeader';
 import { Button } from '@/components/ui/button';
@@ -172,25 +172,27 @@ export default function Billing() {
                       </div>
                     )}
                     {/* Card Header */}
-                    <div className={cn("p-6 pb-0", isCurrentPlan && "pt-8")}>
-                      <div className="flex items-center justify-between">
-                        <h3 className="text-xl font-bold text-foreground">{pkg.name}</h3>
+                    <div className={cn("px-6 pt-6 pb-0", isCurrentPlan && "pt-8")}>
+                      <div className="flex items-start justify-between gap-3">
+                        <div>
+                          <h3 className="text-xl font-bold text-foreground">{pkg.name}</h3>
+                          <p className="mt-1.5 text-sm text-muted-foreground">{pkg.description}</p>
+                        </div>
                         {isPopular && (
-                          <span className="rounded-lg bg-primary/15 px-3 py-1 text-xs font-semibold text-primary whitespace-nowrap">
+                          <span className="rounded-full bg-[hsl(100,60%,45%)] px-4 py-1.5 text-xs font-bold text-white whitespace-nowrap shadow-sm">
                             🔥 Most Popular
                           </span>
                         )}
                       </div>
-                      <p className="mt-1 text-sm text-muted-foreground">{pkg.description}</p>
 
                       {/* Price */}
-                      <div className="mt-6">
-                        <div className="flex items-baseline gap-1">
+                      <div className="mt-8">
+                        <div className="flex items-baseline gap-2">
                           <span className="text-5xl font-extrabold tracking-tight text-foreground">
                             ${isYearly ? pkg.yearlyPrice : pkg.monthlyPrice}
                           </span>
-                          <span className="text-base text-muted-foreground">
-                            {isYearly ? '/year' : '/mo'}
+                          <span className="text-lg text-muted-foreground font-medium">
+                            {isYearly ? 'per year' : 'per month'}
                           </span>
                         </div>
                         <p className="mt-1.5 text-sm text-muted-foreground">
@@ -204,7 +206,6 @@ export default function Billing() {
                       {/* Credits - Hero element */}
                       <div className="mt-4 rounded-xl bg-primary/5 border border-primary/10 p-4">
                         <div className="flex items-center gap-2">
-                          <span className="text-xl">🪙</span>
                           <span className="text-2xl font-bold text-foreground">
                             {isYearly ? pkg.yearlyTotalCredits : pkg.credits} credits
                           </span>
@@ -272,7 +273,10 @@ export default function Billing() {
                             Current Plan
                           </>
                         ) : (
-                          "Choose Plan"
+                          <>
+                            Choose Plan
+                            <ArrowRight className="ml-2 h-4 w-4" />
+                          </>
                         )}
                       </Button>
                     </div>
