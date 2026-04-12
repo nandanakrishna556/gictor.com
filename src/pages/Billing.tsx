@@ -203,8 +203,8 @@ export default function Billing() {
             <div className="grid gap-6 lg:grid-cols-3">
               {CREDIT_PACKAGES.map((pkg) => {
                 const isPopular = pkg.popular;
-                const isCurrentPlan = profile?.plan === pkg.name.toLowerCase();
                 const priceId = isYearly ? pkg.yearlyPriceId : pkg.monthlyPriceId;
+                const isCurrentPlan = activePriceId === priceId;
                 const isLoading = loadingPriceId === priceId;
 
                 return (
@@ -219,23 +219,16 @@ export default function Billing() {
                           : "border-border hover:border-muted-foreground/30 hover:shadow-md"
                     )}
                   >
-                    {/* Badge */}
-                    {(isPopular || isCurrentPlan) && (
-                      <div className="absolute -top-3.5 left-0 right-0 flex items-center justify-center gap-2">
-                        {isCurrentPlan && (
-                          <span className="rounded-full bg-foreground px-3 py-1 text-xs font-semibold text-background whitespace-nowrap shadow-sm">
-                            Current Plan
-                          </span>
-                        )}
-                        {isPopular && (
-                          <span className="rounded-full bg-primary px-4 py-1.5 text-xs font-bold text-primary-foreground whitespace-nowrap shadow-sm">
-                            🔥 Most Popular
-                          </span>
-                        )}
+                    {/* Badge - Only Most Popular */}
+                    {isPopular && (
+                      <div className="absolute -top-3.5 left-0 right-0 flex items-center justify-center">
+                        <span className="rounded-full bg-primary px-4 py-1.5 text-xs font-bold text-primary-foreground whitespace-nowrap shadow-sm">
+                          🔥 Most Popular
+                        </span>
                       </div>
                     )}
                     {/* Card Header */}
-                    <div className={cn("px-6 pt-6 pb-0", (isPopular || isCurrentPlan) && "pt-8")}>
+                    <div className={cn("px-6 pt-6 pb-0", isPopular && "pt-8")}>
                       <div>
                         <h3 className="text-xl font-bold text-foreground">{pkg.name}</h3>
                         <p className="mt-1.5 text-sm text-muted-foreground">{pkg.description}</p>
