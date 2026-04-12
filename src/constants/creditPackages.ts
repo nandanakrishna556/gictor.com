@@ -1,18 +1,39 @@
 export interface CreditPackage {
   credits: number;
-  price: number;
-  priceId: string;
+  monthlyPrice: number;
+  yearlyPrice: number;
+  monthlyPriceId: string;
+  yearlyPriceId: string;
   popular?: boolean;
   name: string;
 }
 
 export const CREDIT_PACKAGES: CreditPackage[] = [
-  { credits: 10, price: 30, priceId: "price_1SpA1zJzf8eDXLMZPi8s5Xrs", name: "Starter" },
-  { credits: 28, price: 79, priceId: "price_1SpA2FJzf8eDXLMZnKFWCMUQ", popular: true, name: "Creator" },
-  { credits: 56, price: 149, priceId: "price_1SpA2SJzf8eDXLMZLnZfvzYF", name: "Pro" },
-  { credits: 120, price: 299, priceId: "price_1SpA37Jzf8eDXLMZVGBXfegT", name: "Business" },
-  { credits: 400, price: 899, priceId: "price_1SpA3RJzf8eDXLMZEChNM5hq", name: "Scale" },
-  { credits: 1050, price: 1989, priceId: "price_1SpA3lJzf8eDXLMZ87RfaCt5", name: "Enterprise" },
+  {
+    credits: 10,
+    monthlyPrice: 30,
+    yearlyPrice: 288,
+    monthlyPriceId: "price_1TLFlxJzf8eDXLMZ5L5jFgIO",
+    yearlyPriceId: "price_1TLFn0Jzf8eDXLMZ2tMm9eT8",
+    name: "Starter",
+  },
+  {
+    credits: 28,
+    monthlyPrice: 79,
+    yearlyPrice: 756,
+    monthlyPriceId: "price_1TLFmHJzf8eDXLMZkoSzptGy",
+    yearlyPriceId: "price_1TLFnOJzf8eDXLMZdcIKZjCm",
+    popular: true,
+    name: "Creator",
+  },
+  {
+    credits: 56,
+    monthlyPrice: 149,
+    yearlyPrice: 1428,
+    monthlyPriceId: "price_1TLFmWJzf8eDXLMZb5LO6VQP",
+    yearlyPriceId: "price_1TLFncJzf8eDXLMZlgW2E0RQ",
+    name: "Pro",
+  },
 ];
 
 // Credit costs for different generation types
@@ -20,8 +41,8 @@ export const CREDIT_COSTS = {
   lip_sync_per_second: 0.15,
   speech_per_1000_chars: 0.25,
   script_per_generation: 0.25,
-  frame_per_generation: 0.1, // 1K/2K resolution
-  frame_4k: 0.15, // 4K resolution
+  frame_per_generation: 0.1,
+  frame_4k: 0.15,
   animate_per_second: 0.15,
 };
 

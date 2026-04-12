@@ -7,15 +7,17 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-// Credit packages with their Stripe price IDs
-const CREDIT_PACKAGES: Record<string, { credits: number; price: number }> = {
-  "price_1SpA1zJzf8eDXLMZPi8s5Xrs": { credits: 10, price: 30 },
-  "price_1SpA2FJzf8eDXLMZnKFWCMUQ": { credits: 28, price: 79 },
-  "price_1SpA2SJzf8eDXLMZLnZfvzYF": { credits: 56, price: 149 },
-  "price_1SpA37Jzf8eDXLMZVGBXfegT": { credits: 120, price: 299 },
-  "price_1SpA3RJzf8eDXLMZEChNM5hq": { credits: 400, price: 899 },
-  "price_1SpA3lJzf8eDXLMZ87RfaCt5": { credits: 1050, price: 1989 },
-};
+// Valid subscription price IDs
+const VALID_PRICE_IDS = new Set([
+  // Monthly
+  "price_1TLFlxJzf8eDXLMZ5L5jFgIO",
+  "price_1TLFmHJzf8eDXLMZkoSzptGy",
+  "price_1TLFmWJzf8eDXLMZb5LO6VQP",
+  // Yearly
+  "price_1TLFn0Jzf8eDXLMZ2tMm9eT8",
+  "price_1TLFnOJzf8eDXLMZdcIKZjCm",
+  "price_1TLFncJzf8eDXLMZlgW2E0RQ",
+]);
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -30,7 +32,7 @@ serve(async (req) => {
   try {
     const { priceId } = await req.json();
     
-    if (!priceId || !CREDIT_PACKAGES[priceId]) {
+    if (!priceId || !VALID_PRICE_IDS.has(priceId)) {
       throw new Error("Invalid price ID");
     }
 
@@ -51,9 +53,7 @@ serve(async (req) => {
       customerId = customers.data[0].id;
     }
 
-    const packageInfo = CREDIT_PACKAGES[priceId];
-
-    // Create checkout session
+    // Create subscription checkout session
     const session = await stripe.checkout.sessions.create({
       customer: customerId,
       customer_email: customerId ? undefined : user.email,
@@ -63,12 +63,11 @@ serve(async (req) => {
           quantity: 1,
         },
       ],
-      mode: "payment",
-      success_url: `${req.headers.get("origin")}/billing?success=true&credits=${packageInfo.credits}`,
+      mode: "subscription",
+      success_url: `${req.headers.get("origin")}/billing?success=true`,
       cancel_url: `${req.headers.get("origin")}/billing?canceled=true`,
       metadata: {
         user_id: user.id,
-        credits: packageInfo.credits.toString(),
       },
     });
 

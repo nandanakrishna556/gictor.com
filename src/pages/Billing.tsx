@@ -9,6 +9,7 @@ import { useProfile } from '@/hooks/useProfile';
 import { toast } from 'sonner';
 import { CREDIT_PACKAGES, calculateVideoMinutes } from '@/constants/creditPackages';
 import { cn } from '@/lib/utils';
+import { Switch } from '@/components/ui/switch';
 
 export default function Billing() {
   const { profile, refetch: refetchProfile } = useProfile();
@@ -16,6 +17,7 @@ export default function Billing() {
   const [loadingPriceId, setLoadingPriceId] = useState<string | null>(null);
   const [showSuccess, setShowSuccess] = useState(false);
   const [purchasedCredits, setPurchasedCredits] = useState<number | null>(null);
+  const [isYearly, setIsYearly] = useState(false);
 
   useEffect(() => {
     const success = searchParams.get('success');
@@ -72,11 +74,11 @@ export default function Billing() {
                   <div className="text-center">
                     <div className="mb-2 flex items-center justify-center gap-2">
                       <PartyPopper className="h-6 w-6 text-primary" />
-                      <h2 className="text-2xl font-bold text-foreground">Purchase Successful!</h2>
+                      <h2 className="text-2xl font-bold text-foreground">Subscription Active!</h2>
                       <PartyPopper className="h-6 w-6 text-primary scale-x-[-1]" />
                     </div>
                     <p className="text-lg text-muted-foreground">
-                      <span className="font-bold text-primary">{purchasedCredits}</span> credits have been added to your account
+                      <span className="font-bold text-primary">{purchasedCredits}</span> credits per month have been added to your plan
                     </p>
                   </div>
                   <Button variant="outline" onClick={() => setShowSuccess(false)} className="mt-2">
@@ -94,23 +96,41 @@ export default function Billing() {
                   {(profile?.credits ?? 0).toFixed(2)} credits available
                 </span>
               </div>
-              <h1 className="text-3xl font-bold text-foreground">Purchase Credits</h1>
+              <h1 className="text-3xl font-bold text-foreground">Choose Your Plan</h1>
               <p className="mt-2 text-muted-foreground">
-                Choose the package that fits your needs. The more you buy, the more you save.
+                Subscribe monthly or yearly. Credits are added each billing cycle and never expire.
               </p>
+
+              {/* Billing Toggle */}
+              <div className="mt-6 inline-flex items-center gap-3 rounded-full border border-border bg-card px-5 py-2.5">
+                <span className={cn("text-sm font-medium transition-colors", !isYearly ? "text-foreground" : "text-muted-foreground")}>
+                  Monthly
+                </span>
+                <Switch checked={isYearly} onCheckedChange={setIsYearly} />
+                <span className={cn("text-sm font-medium transition-colors", isYearly ? "text-foreground" : "text-muted-foreground")}>
+                  Yearly
+                </span>
+                {isYearly && (
+                  <span className="ml-1 rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-semibold text-primary">
+                    Save 20%
+                  </span>
+                )}
+              </div>
             </div>
 
             {/* Pricing Cards */}
             <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
               {CREDIT_PACKAGES.map((pkg) => {
                 const isPopular = pkg.popular;
-                const pricePerCredit = (pkg.price / pkg.credits).toFixed(2);
-                const isLoading = loadingPriceId === pkg.priceId;
+                const currentPrice = isYearly ? pkg.yearlyPrice : pkg.monthlyPrice;
+                const displayPrice = isYearly ? Math.round(pkg.yearlyPrice / 12) : pkg.monthlyPrice;
+                const priceId = isYearly ? pkg.yearlyPriceId : pkg.monthlyPriceId;
+                const isLoading = loadingPriceId === priceId;
                 const videoMinutes = calculateVideoMinutes(pkg.credits);
 
                 return (
                   <div
-                    key={pkg.priceId}
+                    key={pkg.name}
                     className={cn(
                       "relative flex flex-col rounded-xl border bg-card p-6 transition-all duration-200",
                       isPopular
@@ -133,17 +153,25 @@ export default function Billing() {
 
                     {/* Price (hero element) */}
                     <div className="mb-1">
-                      <span className="text-4xl font-bold text-foreground">${pkg.price}</span>
+                      <span className="text-4xl font-bold text-foreground">${displayPrice}</span>
+                      <span className="text-sm text-muted-foreground">/mo</span>
                     </div>
-                    <p className="mb-5 text-sm text-muted-foreground">
-                      ${pricePerCredit} per credit
-                    </p>
+                    {isYearly && (
+                      <p className="mb-5 text-sm text-muted-foreground">
+                        ${currentPrice} billed annually
+                      </p>
+                    )}
+                    {!isYearly && (
+                      <p className="mb-5 text-sm text-muted-foreground">
+                        Billed monthly
+                      </p>
+                    )}
 
                     {/* Features */}
                     <ul className="mb-6 flex-1 space-y-2.5">
                       <li className="flex items-center gap-2 text-sm text-muted-foreground">
                         <Check className="h-4 w-4 flex-shrink-0 text-primary" />
-                        {pkg.credits} generation credits
+                        {pkg.credits} credits per month
                       </li>
                       <li className="flex items-center gap-2 text-sm text-muted-foreground">
                         <Film className="h-4 w-4 flex-shrink-0 text-primary" />
@@ -151,7 +179,7 @@ export default function Billing() {
                       </li>
                       <li className="flex items-center gap-2 text-sm text-muted-foreground">
                         <Check className="h-4 w-4 flex-shrink-0 text-primary" />
-                        Never expires
+                        Credits never expire
                       </li>
                     </ul>
 
@@ -159,7 +187,7 @@ export default function Billing() {
                     <Button
                       className="w-full"
                       variant={isPopular ? "default" : "outline"}
-                      onClick={() => handlePurchase(pkg.priceId)}
+                      onClick={() => handlePurchase(priceId)}
                       disabled={isLoading}
                     >
                       {isLoading ? (
@@ -170,7 +198,7 @@ export default function Billing() {
                       ) : (
                         <>
                           <CreditCard className="mr-2 h-4 w-4" />
-                          Buy Now
+                          Subscribe
                         </>
                       )}
                     </Button>
