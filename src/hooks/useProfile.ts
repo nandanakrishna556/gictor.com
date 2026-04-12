@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { useEffect } from 'react';
 
 export interface Profile {
   id: string;
@@ -8,6 +9,7 @@ export interface Profile {
   full_name: string | null;
   avatar_url: string | null;
   credits: number;
+  plan: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -30,6 +32,24 @@ export function useProfile() {
     },
     enabled: !!user,
   });
+
+  // Check subscription status on load and periodically
+  useEffect(() => {
+    if (!user) return;
+
+    const checkSubscription = async () => {
+      try {
+        await supabase.functions.invoke('check-subscription');
+        queryClient.invalidateQueries({ queryKey: ['profile'] });
+      } catch (e) {
+        console.error('Failed to check subscription:', e);
+      }
+    };
+
+    checkSubscription();
+    const interval = setInterval(checkSubscription, 60000); // every minute
+    return () => clearInterval(interval);
+  }, [user, queryClient]);
 
   const updateProfileMutation = useMutation({
     mutationFn: async (updates: Partial<Profile>) => {

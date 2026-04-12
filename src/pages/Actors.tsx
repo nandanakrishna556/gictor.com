@@ -1,17 +1,45 @@
 import { useState } from 'react';
-import { Plus, UserPlus } from 'lucide-react';
+import { Plus, UserPlus, Users } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import MainLayout from '@/components/layout/MainLayout';
 import { Button } from '@/components/ui/button';
 import { ActorCard, ActorCardSkeleton } from '@/components/actors/ActorCard';
 import CreateActorModal from '@/components/modals/CreateActorModal';
 import ConfirmDeleteDialog from '@/components/modals/ConfirmDeleteDialog';
 import { useActors } from '@/hooks/useActors';
+import { useProfile } from '@/hooks/useProfile';
+import { getActorLimit } from '@/constants/planLimits';
+import { toast } from 'sonner';
 
 export default function Actors() {
   const { actors, isLoading, deleteActor } = useActors();
+  const { profile } = useProfile();
+  const navigate = useNavigate();
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [actorToDelete, setActorToDelete] = useState<{ id: string; name: string } | null>(null);
+
+  const actorLimit = getActorLimit(profile?.plan);
+  const actorCount = actors?.length ?? 0;
+  const canCreateActor = actorLimit > 0 && actorCount < actorLimit;
+
+  const handleCreateClick = () => {
+    if (actorLimit === 0) {
+      toast.error('No active plan', {
+        description: 'Subscribe to a plan to create actors.',
+        action: { label: 'View Plans', onClick: () => navigate('/billing') },
+      });
+      return;
+    }
+    if (!canCreateActor) {
+      toast.error('Actor limit reached', {
+        description: `Your ${profile?.plan} plan allows ${actorLimit} active actors. Delete an actor or upgrade your plan.`,
+        action: { label: 'Upgrade', onClick: () => navigate('/billing') },
+      });
+      return;
+    }
+    setCreateModalOpen(true);
+  };
 
   const handleDeleteClick = (actorId: string) => {
     const actor = actors?.find((a) => a.id === actorId);
@@ -42,13 +70,24 @@ export default function Actors() {
                   Create and manage your AI actors
                 </p>
               </div>
-              <Button 
-                onClick={() => setCreateModalOpen(true)}
-                className="gap-2 rounded-lg px-5"
-              >
-                <Plus className="w-4 h-4" />
-                Create Actor
-              </Button>
+              <div className="flex items-center gap-4">
+                {/* Actor count badge */}
+                {actorLimit > 0 && (
+                  <div className="flex items-center gap-2 rounded-full border border-border bg-card px-4 py-1.5">
+                    <Users className="h-4 w-4 text-primary" />
+                    <span className="text-sm font-medium text-foreground">
+                      {actorCount} / {actorLimit} active actors
+                    </span>
+                  </div>
+                )}
+                <Button 
+                  onClick={handleCreateClick}
+                  className="gap-2 rounded-lg px-5"
+                >
+                  <Plus className="w-4 h-4" />
+                  Create Actor
+                </Button>
+              </div>
             </div>
           </div>
         </div>
@@ -69,8 +108,9 @@ export default function Actors() {
               <h2 className="text-lg font-medium text-foreground mb-1">No actors yet</h2>
               <p className="text-sm text-muted-foreground mb-6">
                 Create your first AI actor to get started
+                {actorLimit > 0 && ` — your plan allows up to ${actorLimit} active actors`}
               </p>
-              <Button onClick={() => setCreateModalOpen(true)} className="gap-2">
+              <Button onClick={handleCreateClick} className="gap-2">
                 <Plus className="w-4 h-4" />
                 Create Actor
               </Button>
