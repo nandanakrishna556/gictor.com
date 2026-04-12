@@ -107,9 +107,6 @@ export default function Billing() {
                 const pricePerCredit = (pkg.price / pkg.credits).toFixed(2);
                 const isLoading = loadingPriceId === pkg.priceId;
                 const videoMinutes = calculateVideoMinutes(pkg.credits);
-                const savings = pkg.credits >= 56
-                  ? Math.round((1 - (pkg.price / pkg.credits) / (30 / 10)) * 100)
-                  : null;
 
                 return (
                   <div
@@ -156,12 +153,6 @@ export default function Billing() {
                         <Check className="h-4 w-4 flex-shrink-0 text-primary" />
                         Never expires
                       </li>
-                      {savings && savings > 0 && (
-                        <li className="flex items-center gap-2 text-sm text-muted-foreground">
-                          <Check className="h-4 w-4 flex-shrink-0 text-primary" />
-                          Save {savings}% vs starter
-                        </li>
-                      )}
                     </ul>
 
                     {/* CTA Button */}
