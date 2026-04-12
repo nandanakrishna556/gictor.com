@@ -39,7 +39,21 @@ export default function Billing() {
     }
   };
 
+  // Fetch the active Stripe price ID for accurate plan matching
   useEffect(() => {
+    const fetchActivePriceId = async () => {
+      try {
+        const { data } = await supabase.functions.invoke('check-subscription');
+        if (data?.price_id) {
+          setActivePriceId(data.price_id);
+        }
+      } catch (e) {
+        console.error('Failed to fetch subscription details:', e);
+      }
+    };
+    fetchActivePriceId();
+  }, []);
+
     const success = searchParams.get('success');
     const canceled = searchParams.get('canceled');
 
