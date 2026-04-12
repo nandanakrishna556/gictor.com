@@ -24,7 +24,7 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
-  const supabaseClient = createClient(
+  const supabaseAdmin = createClient(
     Deno.env.get("SUPABASE_URL") ?? "",
     Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
     { auth: { persistSession: false } }
@@ -39,24 +39,33 @@ serve(async (req) => {
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) throw new Error("No authorization header provided");
 
-    const token = authHeader.replace("Bearer ", "");
-    const { data: userData, error: userError } = await supabaseClient.auth.getUser(token);
-    if (userError) throw new Error(`Authentication error: ${userError.message}`);
-    const user = userData.user;
-    if (!user?.email) throw new Error("User not authenticated or email not available");
-    logStep("User authenticated", { userId: user.id, email: user.email });
+    // Use anon key client with user's auth header for JWT validation
+    const supabaseAuth = createClient(
+      Deno.env.get("SUPABASE_URL") ?? "",
+      Deno.env.get("SUPABASE_ANON_KEY") ?? "",
+      { global: { headers: { Authorization: authHeader } }, auth: { persistSession: false } }
+    );
 
-    const { data: profileData, error: profileError } = await supabaseClient
+    const token = authHeader.replace("Bearer ", "");
+    const { data: claimsData, error: claimsError } = await supabaseAuth.auth.getClaims(token);
+    if (claimsError || !claimsData?.claims) throw new Error(`Authentication error: ${claimsError?.message || "invalid claims"}`);
+    
+    const userId = claimsData.claims.sub as string;
+    const email = claimsData.claims.email as string;
+    if (!userId || !email) throw new Error("User not authenticated or email not available");
+    logStep("User authenticated", { userId, email });
+
+    const { data: profileData, error: profileError } = await supabaseAdmin
       .from("profiles")
       .select("plan")
-      .eq("id", user.id)
+      .eq("id", userId)
       .maybeSingle();
 
     if (profileError) throw new Error(`Failed to load profile: ${profileError.message}`);
 
     const existingPlan = profileData?.plan ?? null;
     const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
-    const customers = await stripe.customers.list({ email: user.email, limit: 1 });
+    const customers = await stripe.customers.list({ email, limit: 1 });
 
     if (customers.data.length === 0) {
       logStep("No Stripe customer found, keeping existing plan", { existingPlan });
@@ -101,7 +110,7 @@ serve(async (req) => {
 
     logStep("Active subscription found", { productId, plan, priceId, subscriptionEnd });
 
-    await supabaseClient.from("profiles").update({ plan }).eq("id", user.id);
+    await supabaseAdmin.from("profiles").update({ plan }).eq("id", userId);
 
     return new Response(JSON.stringify({
       subscribed: true,
