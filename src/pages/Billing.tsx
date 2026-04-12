@@ -164,25 +164,25 @@ export default function Billing() {
                     )}
                   >
                     {/* Badge */}
-                    {isCurrentPlan && (
-                      <div className="absolute -top-3 left-0 right-0 flex items-center justify-center">
-                        <span className="rounded-full bg-foreground px-3 py-1 text-xs font-semibold text-background whitespace-nowrap shadow-sm">
-                          Current Plan
-                        </span>
-                      </div>
-                    )}
-                    {/* Card Header */}
-                    <div className={cn("px-6 pt-6 pb-0", isCurrentPlan && "pt-8")}>
-                      <div className="flex items-start justify-between gap-3">
-                        <div>
-                          <h3 className="text-xl font-bold text-foreground">{pkg.name}</h3>
-                          <p className="mt-1.5 text-sm text-muted-foreground">{pkg.description}</p>
-                        </div>
+                    {(isPopular || isCurrentPlan) && (
+                      <div className="absolute -top-3.5 left-0 right-0 flex items-center justify-center gap-2">
+                        {isCurrentPlan && (
+                          <span className="rounded-full bg-foreground px-3 py-1 text-xs font-semibold text-background whitespace-nowrap shadow-sm">
+                            Current Plan
+                          </span>
+                        )}
                         {isPopular && (
-                          <span className="rounded-full bg-[hsl(100,60%,45%)] px-4 py-1.5 text-xs font-bold text-white whitespace-nowrap shadow-sm">
+                          <span className="rounded-full bg-primary px-4 py-1.5 text-xs font-bold text-primary-foreground whitespace-nowrap shadow-sm">
                             🔥 Most Popular
                           </span>
                         )}
+                      </div>
+                    )}
+                    {/* Card Header */}
+                    <div className={cn("px-6 pt-6 pb-0", (isPopular || isCurrentPlan) && "pt-8")}>
+                      <div>
+                        <h3 className="text-xl font-bold text-foreground">{pkg.name}</h3>
+                        <p className="mt-1.5 text-sm text-muted-foreground">{pkg.description}</p>
                       </div>
 
                       {/* Price */}
