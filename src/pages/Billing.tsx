@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Coins, CreditCard, Loader2, Sparkles, CheckCircle2, PartyPopper } from 'lucide-react';
+import { Coins, CreditCard, Loader2, CheckCircle2, PartyPopper, Check } from 'lucide-react';
 import MainLayout from '@/components/layout/MainLayout';
 import AppHeader from '@/components/layout/AppHeader';
 import { Button } from '@/components/ui/button';
@@ -10,18 +10,13 @@ import { toast } from 'sonner';
 import { CREDIT_PACKAGES } from '@/constants/creditPackages';
 import { cn } from '@/lib/utils';
 
-// Find the 28 credits package priceId for default selection
-const DEFAULT_PACKAGE = CREDIT_PACKAGES.find((pkg) => pkg.credits === 28)?.priceId || CREDIT_PACKAGES[1]?.priceId;
-
 export default function Billing() {
   const { profile, refetch: refetchProfile } = useProfile();
   const [searchParams, setSearchParams] = useSearchParams();
-  const [selectedPackage, setSelectedPackage] = useState<string | null>(DEFAULT_PACKAGE);
-  const [isLoading, setIsLoading] = useState(false);
+  const [loadingPriceId, setLoadingPriceId] = useState<string | null>(null);
   const [showSuccess, setShowSuccess] = useState(false);
   const [purchasedCredits, setPurchasedCredits] = useState<number | null>(null);
 
-  // Handle success/cancel from Stripe redirect
   useEffect(() => {
     const success = searchParams.get('success');
     const canceled = searchParams.get('canceled');
@@ -32,7 +27,6 @@ export default function Billing() {
       setShowSuccess(true);
       refetchProfile();
       setSearchParams({});
-      // Hide success animation after 4 seconds
       setTimeout(() => setShowSuccess(false), 4000);
     } else if (canceled === 'true') {
       toast.info('Purchase canceled');
@@ -40,20 +34,12 @@ export default function Billing() {
     }
   }, [searchParams, setSearchParams, refetchProfile]);
 
-  const selectedPkg = CREDIT_PACKAGES.find((pkg) => pkg.priceId === selectedPackage);
-
-  const handlePurchase = async () => {
-    if (!selectedPackage) {
-      toast.error('Please select a credit package');
-      return;
-    }
-
-    setIsLoading(true);
+  const handlePurchase = async (priceId: string) => {
+    setLoadingPriceId(priceId);
     try {
       const { data, error } = await supabase.functions.invoke('create-checkout', {
-        body: { priceId: selectedPackage },
+        body: { priceId },
       });
-
       if (error) throw error;
       if (data?.url) {
         window.open(data.url, '_blank');
@@ -62,7 +48,7 @@ export default function Billing() {
       console.error('Checkout error:', error);
       toast.error('Failed to start checkout');
     } finally {
-      setIsLoading(false);
+      setLoadingPriceId(null);
     }
   };
 
@@ -72,11 +58,11 @@ export default function Billing() {
         <AppHeader breadcrumbs={[{ label: 'Billing' }]} />
 
         <div className="flex-1 overflow-y-auto p-6">
-          <div className="mx-auto max-w-5xl">
+          <div className="mx-auto max-w-6xl">
             {/* Success Animation Overlay */}
             {showSuccess && (
               <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm animate-fade-in">
-                <div className="flex flex-col items-center gap-6 rounded-3xl border border-primary/20 bg-card p-12 shadow-2xl animate-scale-in">
+                <div className="flex flex-col items-center gap-6 rounded-2xl border border-primary/20 bg-card p-12 shadow-2xl animate-scale-in">
                   <div className="relative">
                     <div className="absolute inset-0 animate-ping rounded-full bg-primary/20" />
                     <div className="relative flex h-24 w-24 items-center justify-center rounded-full bg-primary/10">
@@ -93,126 +79,111 @@ export default function Billing() {
                       <span className="font-bold text-primary">{purchasedCredits}</span> credits have been added to your account
                     </p>
                   </div>
-                  <Button
-                    variant="outline"
-                    onClick={() => setShowSuccess(false)}
-                    className="mt-2"
-                  >
+                  <Button variant="outline" onClick={() => setShowSuccess(false)} className="mt-2">
                     Continue
                   </Button>
                 </div>
               </div>
             )}
 
-            {/* Current Balance */}
-            <div className="mb-8 rounded-2xl border border-border bg-card p-8 shadow-apple">
-              <div className="flex items-center gap-4">
-                <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-warning/10">
-                  <Coins className="h-7 w-7 text-warning" />
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">
-                    Available Credits
-                  </p>
-                  <p className="text-4xl font-semibold text-foreground">
-                    {(profile?.credits ?? 0).toFixed(2)}
-                  </p>
-                </div>
+            {/* Header */}
+            <div className="mb-10 text-center">
+              <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-border bg-card px-4 py-1.5">
+                <Coins className="h-4 w-4 text-warning" />
+                <span className="text-sm font-medium text-foreground">
+                  {(profile?.credits ?? 0).toFixed(2)} credits available
+                </span>
               </div>
+              <h1 className="text-3xl font-bold text-foreground">Purchase Credits</h1>
+              <p className="mt-2 text-muted-foreground">
+                Choose the package that fits your needs. The more you buy, the more you save.
+              </p>
             </div>
 
-            {/* Purchase Credits */}
-            <div className="mb-8">
-              <h2 className="mb-4 text-lg font-semibold text-foreground">
-                Purchase Credits
-              </h2>
-              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                {CREDIT_PACKAGES.map((pkg) => {
-                  const isSelected = selectedPackage === pkg.priceId;
-                  const isMostPopular = pkg.credits === 28;
-                  return (
-                    <button
-                      key={pkg.priceId}
-                      onClick={() => setSelectedPackage(pkg.priceId)}
-                      className={cn(
-                        "relative rounded-2xl border bg-card p-5 text-left shadow-apple transition-all duration-200",
-                        "hover:border-primary/50 hover:shadow-lg",
-                        isSelected
-                          ? "border-primary ring-2 ring-primary scale-[1.02]"
-                          : isMostPopular
-                          ? "border-primary/30"
-                          : "border-border"
-                      )}
-                    >
-                      {isMostPopular && (
-                        <span className="absolute -top-2.5 left-1/2 -translate-x-1/2 rounded-full bg-primary px-3 py-0.5 text-xs font-medium text-primary-foreground">
+            {/* Pricing Cards */}
+            <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+              {CREDIT_PACKAGES.map((pkg) => {
+                const isPopular = pkg.popular;
+                const pricePerCredit = (pkg.price / pkg.credits).toFixed(2);
+                const isLoading = loadingPriceId === pkg.priceId;
+                const savings = pkg.credits >= 56
+                  ? Math.round((1 - (pkg.price / pkg.credits) / (30 / 10)) * 100)
+                  : null;
+
+                return (
+                  <div
+                    key={pkg.priceId}
+                    className={cn(
+                      "relative flex flex-col rounded-xl border bg-card p-6 transition-all duration-200",
+                      isPopular
+                        ? "border-primary shadow-lg ring-1 ring-primary/20 scale-[1.02] z-10"
+                        : "border-border hover:border-muted-foreground/30 hover:shadow-md"
+                    )}
+                  >
+                    {isPopular && (
+                      <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+                        <span className="rounded-full bg-primary px-3 py-1 text-xs font-semibold text-primary-foreground">
                           Most Popular
                         </span>
-                      )}
-                      {isSelected && (
-                        <div className="absolute -top-2 -right-2 flex h-6 w-6 items-center justify-center rounded-full bg-primary">
-                          <Sparkles className="h-3.5 w-3.5 text-primary-foreground" />
-                        </div>
-                      )}
-                      <div className="mb-2">
-                        <p className="text-3xl font-bold text-foreground">
-                          {pkg.credits}
-                        </p>
-                        <p className="text-sm text-muted-foreground">credits</p>
                       </div>
-                      <div className="text-sm text-muted-foreground">
-                        ${(pkg.price / pkg.credits).toFixed(2)} per credit
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
+                    )}
 
-              {/* Selected Package Summary & Buy Button */}
-              <div className="mt-6 rounded-2xl border border-border bg-card p-6 shadow-apple">
-                {selectedPkg ? (
-                  <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                    <div className="flex items-center gap-6">
-                      <div>
-                        <p className="text-sm text-muted-foreground">Selected</p>
-                        <p className="text-2xl font-bold text-foreground">
-                          {selectedPkg.credits} credits
-                        </p>
-                      </div>
-                      <div className="h-10 w-px bg-border" />
-                      <div>
-                        <p className="text-sm text-muted-foreground">Total Price</p>
-                        <p className="text-3xl font-bold text-primary">
-                          ${selectedPkg.price}
-                        </p>
-                      </div>
+                    {/* Credits */}
+                    <div className="mb-4">
+                      <p className="text-4xl font-bold text-foreground">{pkg.credits}</p>
+                      <p className="text-sm text-muted-foreground">credits</p>
                     </div>
+
+                    {/* Price */}
+                    <div className="mb-6">
+                      <p className="text-3xl font-bold text-foreground">
+                        ${pkg.price}
+                      </p>
+                      <p className="mt-1 text-sm text-muted-foreground">
+                        ${pricePerCredit} per credit
+                      </p>
+                    </div>
+
+                    {/* Features */}
+                    <ul className="mb-6 flex-1 space-y-2.5">
+                      <li className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <Check className="h-4 w-4 flex-shrink-0 text-primary" />
+                        {pkg.credits} generation credits
+                      </li>
+                      <li className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <Check className="h-4 w-4 flex-shrink-0 text-primary" />
+                        Never expires
+                      </li>
+                      {savings && savings > 0 && (
+                        <li className="flex items-center gap-2 text-sm text-muted-foreground">
+                          <Check className="h-4 w-4 flex-shrink-0 text-primary" />
+                          Save {savings}% vs starter
+                        </li>
+                      )}
+                    </ul>
+
+                    {/* CTA Button */}
                     <Button
-                      size="lg"
-                      onClick={handlePurchase}
+                      className="w-full"
+                      variant={isPopular ? "default" : "outline"}
+                      onClick={() => handlePurchase(pkg.priceId)}
                       disabled={isLoading}
-                      className="min-w-[180px] rounded-xl text-base font-semibold shadow-primary-glow"
                     >
                       {isLoading ? (
                         <>
-                          <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                           Processing...
                         </>
                       ) : (
                         <>
-                          <CreditCard className="mr-2 h-5 w-5" />
+                          <CreditCard className="mr-2 h-4 w-4" />
                           Buy Now
                         </>
                       )}
                     </Button>
                   </div>
-                ) : (
-                  <div className="flex items-center justify-center py-4 text-muted-foreground">
-                    <Sparkles className="mr-2 h-5 w-5" />
-                    Select a credit package above to continue
-                  </div>
-                )}
-              </div>
+                );
+              })}
             </div>
           </div>
         </div>
