@@ -16,6 +16,7 @@ export default function Billing() {
   const [loadingPriceId, setLoadingPriceId] = useState<string | null>(null);
   const [showSuccess, setShowSuccess] = useState(false);
   const [isYearly, setIsYearly] = useState(false);
+  const [activePriceId, setActivePriceId] = useState<string | null>(null);
   const [loadingPortal, setLoadingPortal] = useState(false);
 
   const handleManageSubscription = async () => {
