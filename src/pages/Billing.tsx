@@ -93,14 +93,17 @@ export default function Billing() {
                     {(profile?.credits ?? 0).toFixed(2)} credits available
                   </span>
                 </div>
-                {profile?.plan && (
-                  <div className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-4 py-1.5">
-                    <Crown className="h-4 w-4 text-primary" />
-                    <span className="text-sm font-medium text-primary capitalize">
-                      {profile.plan} Plan
-                    </span>
-                  </div>
-                )}
+                <div className={cn(
+                  "inline-flex items-center gap-2 rounded-full px-4 py-1.5",
+                  profile?.plan
+                    ? "border border-primary/30 bg-primary/10"
+                    : "border border-border bg-card"
+                )}>
+                  <Crown className={cn("h-4 w-4", profile?.plan ? "text-primary" : "text-muted-foreground")} />
+                  <span className={cn("text-sm font-medium capitalize", profile?.plan ? "text-primary" : "text-muted-foreground")}>
+                    {profile?.plan ? `${profile.plan} Plan` : 'No Active Plan'}
+                  </span>
+                </div>
               </div>
               <h1 className="text-3xl font-bold text-foreground">Select plan</h1>
               <p className="mt-2 text-muted-foreground">
