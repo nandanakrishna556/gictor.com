@@ -82,6 +82,7 @@ serve(async (req) => {
     }
 
     const subscription = subscriptions.data[0];
+    const priceId = subscription.items.data[0].price.id;
     const productId = subscription.items.data[0].price.product as string;
     const plan = PRODUCT_TO_PLAN[productId];
     const subscriptionEnd = new Date(subscription.current_period_end * 1000).toISOString();
@@ -91,19 +92,21 @@ serve(async (req) => {
       return new Response(JSON.stringify({
         subscribed: true,
         plan: existingPlan,
+        price_id: priceId,
         subscription_end: subscriptionEnd,
       }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    logStep("Active subscription found", { productId, plan, subscriptionEnd });
+    logStep("Active subscription found", { productId, plan, priceId, subscriptionEnd });
 
     await supabaseClient.from("profiles").update({ plan }).eq("id", user.id);
 
     return new Response(JSON.stringify({
       subscribed: true,
       plan,
+      price_id: priceId,
       subscription_end: subscriptionEnd,
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
