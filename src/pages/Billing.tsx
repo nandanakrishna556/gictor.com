@@ -182,7 +182,6 @@ export default function Billing() {
                         )}
                       </div>
                       <p className="mt-1 text-sm text-muted-foreground">{pkg.description}</p>
-                      </div>
 
                       {/* Price */}
                       <div className="mt-6">
