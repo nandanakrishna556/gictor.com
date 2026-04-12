@@ -310,7 +310,7 @@ export default function BRollAnimateStage({ pipelineId, onComplete }: BRollAnima
 
     if (!profile || (profile.credits ?? 0) < creditCost) {
       toast.error('Insufficient credits', { 
-        description: `You need ${creditCost.toFixed(2)} credits but have ${profile?.credits ?? 0}.`,
+        description: `You need ${creditCost.toFixed(2)} credits but have ${(profile?.credits ?? 0).toFixed(2)}.`,
         action: {
           label: 'Buy Credits',
           onClick: () => window.location.href = '/billing',

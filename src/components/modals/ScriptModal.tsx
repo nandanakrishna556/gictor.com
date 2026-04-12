@@ -521,7 +521,7 @@ Example: Dashboard walkthrough for new users. Show: 1) Create project, 2) Add sc
 
     if ((profile.credits ?? 0) < CREDIT_COST) {
       toast.error('Insufficient credits', { 
-        description: `You need ${CREDIT_COST} credits but have ${profile.credits ?? 0}.`,
+        description: `You need ${CREDIT_COST} credits but have ${(profile.credits ?? 0).toFixed(2)}.`,
         action: {
           label: 'Buy Credits',
           onClick: () => window.location.href = '/billing',
@@ -645,7 +645,7 @@ Example: Dashboard walkthrough for new users. Show: 1) Create project, 2) Add sc
 
     if ((profile.credits ?? 0) < HUMANIZE_CREDIT_COST) {
       toast.error('Insufficient credits', { 
-        description: `You need ${HUMANIZE_CREDIT_COST} credits but have ${profile.credits ?? 0}.`,
+        description: `You need ${HUMANIZE_CREDIT_COST} credits but have ${(profile.credits ?? 0).toFixed(2)}.`,
         action: {
           label: 'Buy Credits',
           onClick: () => window.location.href = '/billing',

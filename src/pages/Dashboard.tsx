@@ -18,7 +18,7 @@ export default function Dashboard() {
     },
     {
       title: 'Credits Available',
-      value: profile?.credits ?? 0,
+      value: (profile?.credits ?? 0).toFixed(2),
       icon: LayoutDashboard,
       color: 'text-green-500',
     },
