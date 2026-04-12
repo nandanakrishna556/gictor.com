@@ -178,7 +178,7 @@ export default function Billing() {
                           </span>
                         )}
                         {isBestValue && !isPopular && (
-                          <span className="rounded-full bg-emerald-500 px-3 py-1 text-xs font-semibold text-white whitespace-nowrap shadow-sm">
+                          <span className="rounded-full bg-accent-foreground px-3 py-1 text-xs font-semibold text-accent whitespace-nowrap shadow-sm">
                             Best Value
                           </span>
                         )}
