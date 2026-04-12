@@ -1,4 +1,5 @@
-import { Check, UserCircle } from 'lucide-react';
+import { Check, UserCircle, Plus } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { Actor, useActors } from '@/hooks/useActors';
 import {
   Select,
@@ -25,7 +26,7 @@ export function ActorSelector({
   className,
 }: ActorSelectorProps) {
   const { actors } = useActors();
-
+  const navigate = useNavigate();
   // Filter actors based on type and status
   const filteredActors = actors?.filter((actor) => {
     if (actor.status !== 'completed') return false;
@@ -96,6 +97,16 @@ export function ActorSelector({
             </div>
           </SelectItem>
         ))}
+        <div className="border-t border-border mt-1 pt-1">
+          <button
+            type="button"
+            className="flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-sm text-muted-foreground hover:bg-accent hover:text-foreground"
+            onClick={() => navigate('/actors')}
+          >
+            <Plus className="h-4 w-4" />
+            Create New Actor
+          </button>
+        </div>
       </SelectContent>
     </Select>
   );

@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { User, Search, Check } from 'lucide-react';
+import { User, Search, Check, Plus } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { useActors, Actor } from '@/hooks/useActors';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -20,6 +21,7 @@ export default function ActorSelectorPopover({
   className,
 }: ActorSelectorPopoverProps) {
   const { actors } = useActors();
+  const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -214,6 +216,20 @@ export default function ActorSelectorPopover({
               </p>
             </div>
           )}
+        </div>
+        {/* Create New Actor button */}
+        <div className="border-t border-border p-2">
+          <Button
+            variant="ghost"
+            className="w-full justify-start gap-2 text-sm text-muted-foreground hover:text-foreground"
+            onClick={() => {
+              setOpen(false);
+              navigate('/actors');
+            }}
+          >
+            <Plus className="h-4 w-4" />
+            Create New Actor
+          </Button>
         </div>
       </PopoverContent>
     </Popover>
