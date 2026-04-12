@@ -1,13 +1,13 @@
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Coins, Loader2, CheckCircle2, PartyPopper, Check, ArrowRight } from 'lucide-react';
+import { Coins, Loader2, CheckCircle2, PartyPopper, Check, ArrowRight, Film } from 'lucide-react';
 import MainLayout from '@/components/layout/MainLayout';
 import AppHeader from '@/components/layout/AppHeader';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { useProfile } from '@/hooks/useProfile';
 import { toast } from 'sonner';
-import { CREDIT_PACKAGES } from '@/constants/creditPackages';
+import { CREDIT_PACKAGES, calculateVideoMinutes } from '@/constants/creditPackages';
 import { cn } from '@/lib/utils';
 
 export default function Billing() {
@@ -108,7 +108,7 @@ export default function Billing() {
                   className={cn(
                     "rounded-full px-5 py-2 text-sm font-medium transition-all",
                     !isYearly
-                      ? "bg-foreground text-background shadow-sm"
+                      ? "bg-primary text-primary-foreground shadow-sm"
                       : "text-muted-foreground hover:text-foreground"
                   )}
                 >
@@ -119,13 +119,18 @@ export default function Billing() {
                   className={cn(
                     "flex items-center gap-2 rounded-full px-5 py-2 text-sm font-medium transition-all",
                     isYearly
-                      ? "bg-foreground text-background shadow-sm"
+                      ? "bg-primary text-primary-foreground shadow-sm"
                       : "text-muted-foreground hover:text-foreground"
                   )}
                 >
                   Yearly
-                  <span className="rounded-full bg-primary/15 px-2 py-0.5 text-xs font-semibold text-primary">
-                    -20%
+                  <span className={cn(
+                    "rounded-full px-2 py-0.5 text-xs font-semibold",
+                    isYearly
+                      ? "bg-primary-foreground/20 text-primary-foreground"
+                      : "bg-primary/15 text-primary"
+                  )}>
+                    2 months free
                   </span>
                 </button>
               </div>
@@ -139,6 +144,7 @@ export default function Billing() {
                 const originalMonthly = pkg.monthlyPrice;
                 const priceId = isYearly ? pkg.yearlyPriceId : pkg.monthlyPriceId;
                 const isLoading = loadingPriceId === priceId;
+                const videoMinutes = calculateVideoMinutes(pkg.credits);
 
                 return (
                   <div
@@ -190,25 +196,30 @@ export default function Billing() {
                     {/* Features */}
                     <div className="flex-1 px-6 pb-6">
                       <ul className="space-y-3">
-                        {pkg.features.map((feature, i) => (
-                          <li key={i} className="flex items-start gap-2.5 text-sm text-muted-foreground">
-                            <Check className="mt-0.5 h-4 w-4 flex-shrink-0 text-primary" />
-                            {feature}
-                          </li>
-                        ))}
+                        <li className="flex items-start gap-2.5 text-sm text-muted-foreground">
+                          <Check className="mt-0.5 h-4 w-4 flex-shrink-0 text-primary" />
+                          {pkg.credits} credits per month
+                        </li>
+                        <li className="flex items-start gap-2.5 text-sm text-muted-foreground">
+                          <Check className="mt-0.5 h-4 w-4 flex-shrink-0 text-primary" />
+                          {pkg.actorSlots} active actor slots
+                        </li>
+                        <li className="flex items-start gap-2.5 text-sm text-muted-foreground">
+                          <Film className="mt-0.5 h-4 w-4 flex-shrink-0 text-primary" />
+                          ~{videoMinutes} min of video
+                        </li>
+                        <li className="flex items-start gap-2.5 text-sm text-muted-foreground">
+                          <Check className="mt-0.5 h-4 w-4 flex-shrink-0 text-primary" />
+                          Credits never expire
+                        </li>
                       </ul>
                     </div>
 
                     {/* CTA Button */}
                     <div className="p-6 pt-0">
                       <Button
-                        className={cn(
-                          "w-full h-12 text-sm font-semibold rounded-xl",
-                          isPopular
-                            ? ""
-                            : "bg-foreground text-background hover:bg-foreground/90"
-                        )}
-                        variant={isPopular ? "default" : "default"}
+                        className="w-full h-12 text-sm font-semibold rounded-xl"
+                        variant={isPopular ? "default" : "outline"}
                         onClick={() => handlePurchase(priceId)}
                         disabled={isLoading}
                       >
