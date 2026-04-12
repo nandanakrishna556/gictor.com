@@ -1,7 +1,7 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useEffect } from 'react';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { useEffect } from 'react';
 
 export interface Profile {
   id: string;
@@ -33,7 +33,23 @@ export function useProfile() {
     enabled: !!user,
   });
 
-  // Check subscription status on load and periodically
+  const updateProfileMutation = useMutation({
+    mutationFn: async (updates: Partial<Profile>) => {
+      const { data, error } = await supabase
+        .from('profiles')
+        .update(updates)
+        .eq('id', user!.id)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data as Profile;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['profile', user?.id] });
+    },
+  });
+
   useEffect(() => {
     if (!user) return;
 
@@ -59,9 +75,6 @@ export function useProfile() {
       clearInterval(interval);
     };
   }, [user, queryClient]);
-
-  // NOTE: Credit operations are handled server-side in the trigger-generation edge function
-  // to ensure security and prevent client-side manipulation.
 
   const refetch = () => {
     queryClient.invalidateQueries({ queryKey: ['profile', user?.id] });
