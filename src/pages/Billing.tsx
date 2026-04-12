@@ -54,6 +54,7 @@ export default function Billing() {
     fetchActivePriceId();
   }, []);
 
+  useEffect(() => {
     const success = searchParams.get('success');
     const canceled = searchParams.get('canceled');
 
