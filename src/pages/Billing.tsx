@@ -147,7 +147,6 @@ export default function Billing() {
             <div className="grid gap-6 lg:grid-cols-3">
               {CREDIT_PACKAGES.map((pkg) => {
                 const isPopular = pkg.popular;
-                const isBestValue = pkg.name === 'Pro';
                 const isCurrentPlan = profile?.plan === pkg.name.toLowerCase();
                 const priceId = isYearly ? pkg.yearlyPriceId : pkg.monthlyPriceId;
                 const isLoading = loadingPriceId === priceId;
@@ -164,8 +163,8 @@ export default function Billing() {
                           : "border-border hover:border-muted-foreground/30 hover:shadow-md"
                     )}
                   >
-                    {/* Badges - positioned above card */}
-                    {(isPopular || isBestValue || isCurrentPlan) && (
+                    {/* Badge */}
+                    {(isPopular || isCurrentPlan) && (
                       <div className="absolute -top-3 left-0 right-0 flex items-center justify-center gap-2">
                         {isCurrentPlan && (
                           <span className="rounded-full bg-foreground px-3 py-1 text-xs font-semibold text-background whitespace-nowrap shadow-sm">
@@ -174,19 +173,14 @@ export default function Billing() {
                         )}
                         {isPopular && (
                           <span className="rounded-full bg-primary px-3 py-1 text-xs font-semibold text-primary-foreground whitespace-nowrap shadow-sm">
-                            Most Popular
-                          </span>
-                        )}
-                        {isBestValue && !isPopular && (
-                          <span className="rounded-full bg-accent-foreground px-3 py-1 text-xs font-semibold text-accent whitespace-nowrap shadow-sm">
-                            Best Value
+                            🔥 Most Popular
                           </span>
                         )}
                       </div>
                     )}
 
                     {/* Card Header */}
-                    <div className={cn("p-6 pb-0", (isPopular || isBestValue || isCurrentPlan) && "pt-8")}>
+                    <div className={cn("p-6 pb-0", (isPopular || isCurrentPlan) && "pt-8")}>
                       <div>
                         <h3 className="text-xl font-bold text-foreground">{pkg.name}</h3>
                         <p className="mt-1 text-sm text-muted-foreground">{pkg.description}</p>
@@ -246,10 +240,13 @@ export default function Billing() {
 
                     {/* Features */}
                     <div className="flex-1 px-6 pb-6">
+                      <p className="mb-3 text-sm font-semibold text-foreground">What's Included</p>
                       <ul className="space-y-3">
                         {pkg.features.map((feature) => (
-                          <li key={feature} className="flex items-start gap-2.5 text-sm text-muted-foreground">
-                            <Check className="mt-0.5 h-4 w-4 flex-shrink-0 text-primary" />
+                          <li key={feature} className="flex items-start gap-2.5 text-sm font-medium text-foreground">
+                            <div className="mt-0.5 flex h-4 w-4 flex-shrink-0 items-center justify-center rounded-full bg-primary/15">
+                              <Check className="h-3 w-3 text-primary" />
+                            </div>
                             {feature}
                           </li>
                         ))}
