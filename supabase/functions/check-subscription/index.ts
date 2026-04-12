@@ -46,14 +46,21 @@ serve(async (req) => {
     if (!user?.email) throw new Error("User not authenticated or email not available");
     logStep("User authenticated", { userId: user.id, email: user.email });
 
+    const { data: profileData, error: profileError } = await supabaseClient
+      .from("profiles")
+      .select("plan")
+      .eq("id", user.id)
+      .maybeSingle();
+
+    if (profileError) throw new Error(`Failed to load profile: ${profileError.message}`);
+
+    const existingPlan = profileData?.plan ?? null;
     const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
     const customers = await stripe.customers.list({ email: user.email, limit: 1 });
 
     if (customers.data.length === 0) {
-      logStep("No Stripe customer found, setting plan to null");
-      // Update profile plan to null
-      await supabaseClient.from("profiles").update({ plan: null }).eq("id", user.id);
-      return new Response(JSON.stringify({ subscribed: false, plan: null }), {
+      logStep("No Stripe customer found, keeping existing plan", { existingPlan });
+      return new Response(JSON.stringify({ subscribed: false, plan: existingPlan }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
@@ -68,21 +75,30 @@ serve(async (req) => {
     });
 
     if (subscriptions.data.length === 0) {
-      logStep("No active subscription");
-      await supabaseClient.from("profiles").update({ plan: null }).eq("id", user.id);
-      return new Response(JSON.stringify({ subscribed: false, plan: null }), {
+      logStep("No active subscription, keeping existing plan", { existingPlan });
+      return new Response(JSON.stringify({ subscribed: false, plan: existingPlan }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
     const subscription = subscriptions.data[0];
     const productId = subscription.items.data[0].price.product as string;
-    const plan = PRODUCT_TO_PLAN[productId] || null;
+    const plan = PRODUCT_TO_PLAN[productId];
     const subscriptionEnd = new Date(subscription.current_period_end * 1000).toISOString();
+
+    if (!plan) {
+      logStep("Unknown product mapping, keeping existing plan", { productId, existingPlan, subscriptionEnd });
+      return new Response(JSON.stringify({
+        subscribed: true,
+        plan: existingPlan,
+        subscription_end: subscriptionEnd,
+      }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
     logStep("Active subscription found", { productId, plan, subscriptionEnd });
 
-    // Update the profile with the current plan
     await supabaseClient.from("profiles").update({ plan }).eq("id", user.id);
 
     return new Response(JSON.stringify({
