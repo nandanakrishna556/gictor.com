@@ -246,7 +246,7 @@ export default function Billing() {
                         </div>
                         <p className="mt-1.5 text-sm text-muted-foreground">
                           ${isYearly
-                            ? (pkg.yearlyPrice / pkg.yearlyTotalCredits).toFixed(2)
+                            ? (pkg.yearlyPrice / pkg.yearlyBaseCredits).toFixed(2)
                             : (pkg.monthlyPrice / pkg.credits).toFixed(2)
                           } per credit
                         </p>
@@ -254,31 +254,52 @@ export default function Billing() {
 
                       {/* Credits - Hero element */}
                       <div className="mt-4 rounded-xl bg-primary/5 border border-primary/10 p-4">
-                        <div className="flex items-center gap-2">
-                          <span className="text-2xl font-bold text-foreground">
-                            {isYearly ? pkg.yearlyTotalCredits : pkg.credits} credits
-                          </span>
-                          <span className="text-sm text-muted-foreground">
-                            {isYearly ? '/year' : '/mo'}
-                          </span>
-                        </div>
-                        <p className="mt-1 text-sm text-muted-foreground">
-                          {isYearly ? pkg.yearlyVideoTime : pkg.monthlyVideoTime}
-                        </p>
-
-                        {/* Yearly free credits callout */}
-                        {isYearly && (
-                          <div className="mt-3 flex items-start gap-2 rounded-lg bg-primary/10 px-3 py-2">
-                            <Gift className="mt-0.5 h-4 w-4 flex-shrink-0 text-primary" />
-                            <div>
-                              <p className="text-sm font-semibold text-primary">
-                                Includes {pkg.yearlyFreeCredits} free credits
-                              </p>
-                              <p className="text-xs text-muted-foreground">
-                                Worth {pkg.yearlyFreeCreditsValue} at no additional cost
-                              </p>
+                        {isYearly ? (
+                          <>
+                            <div className="flex items-center justify-between">
+                              <span className="text-lg font-semibold text-foreground">
+                                {pkg.yearlyBaseCredits} base credits
+                              </span>
+                              <span className="text-sm text-muted-foreground">/year</span>
                             </div>
-                          </div>
+                            <div className="mt-2 flex items-center gap-2">
+                              <span className="text-sm font-semibold text-primary">+ {pkg.yearlyFreeCredits} free credits</span>
+                            </div>
+                            <div className="mt-2 h-px bg-border" />
+                            <div className="mt-2 flex items-center justify-between">
+                              <span className="text-2xl font-bold text-foreground">
+                                {pkg.yearlyTotalCredits} total credits
+                              </span>
+                            </div>
+                            <p className="mt-1 text-sm text-muted-foreground">
+                              {pkg.yearlyVideoTime}
+                            </p>
+
+                            {/* Free credits value callout */}
+                            <div className="mt-3 flex items-start gap-2 rounded-lg bg-primary/10 px-3 py-2">
+                              <Gift className="mt-0.5 h-4 w-4 flex-shrink-0 text-primary" />
+                              <div>
+                                <p className="text-sm font-semibold text-primary">
+                                  {pkg.yearlyFreeCredits} bonus credits included
+                                </p>
+                                <p className="text-xs text-muted-foreground">
+                                  Worth {pkg.yearlyFreeCreditsValue} at no additional cost
+                                </p>
+                              </div>
+                            </div>
+                          </>
+                        ) : (
+                          <>
+                            <div className="flex items-center gap-2">
+                              <span className="text-2xl font-bold text-foreground">
+                                {pkg.credits} credits
+                              </span>
+                              <span className="text-sm text-muted-foreground">/mo</span>
+                            </div>
+                            <p className="mt-1 text-sm text-muted-foreground">
+                              {pkg.monthlyVideoTime}
+                            </p>
+                          </>
                         )}
                       </div>
 
