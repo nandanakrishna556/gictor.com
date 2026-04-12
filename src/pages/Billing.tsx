@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Coins, Loader2, CheckCircle2, PartyPopper, Check, ArrowRight, Sparkles, Gift } from 'lucide-react';
+import { Coins, Loader2, CheckCircle2, PartyPopper, Check, ArrowRight, Sparkles, Gift, Crown } from 'lucide-react';
 import MainLayout from '@/components/layout/MainLayout';
 import AppHeader from '@/components/layout/AppHeader';
 import { Button } from '@/components/ui/button';
@@ -86,11 +86,21 @@ export default function Billing() {
 
             {/* Header */}
             <div className="mb-10 text-center">
-              <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-border bg-card px-4 py-1.5">
-                <Coins className="h-4 w-4 text-warning" />
-                <span className="text-sm font-medium text-foreground">
-                  {(profile?.credits ?? 0).toFixed(2)} credits available
-                </span>
+              <div className="mb-4 flex items-center justify-center gap-3">
+                <div className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-4 py-1.5">
+                  <Coins className="h-4 w-4 text-warning" />
+                  <span className="text-sm font-medium text-foreground">
+                    {(profile?.credits ?? 0).toFixed(2)} credits available
+                  </span>
+                </div>
+                {profile?.plan && (
+                  <div className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-4 py-1.5">
+                    <Crown className="h-4 w-4 text-primary" />
+                    <span className="text-sm font-medium text-primary capitalize">
+                      {profile.plan} Plan
+                    </span>
+                  </div>
+                )}
               </div>
               <h1 className="text-3xl font-bold text-foreground">Select plan</h1>
               <p className="mt-2 text-muted-foreground">
@@ -137,6 +147,8 @@ export default function Billing() {
             <div className="grid gap-6 lg:grid-cols-3">
               {CREDIT_PACKAGES.map((pkg) => {
                 const isPopular = pkg.popular;
+                const isBestValue = pkg.name === 'Pro';
+                const isCurrentPlan = profile?.plan === pkg.name.toLowerCase();
                 const priceId = isYearly ? pkg.yearlyPriceId : pkg.monthlyPriceId;
                 const isLoading = loadingPriceId === priceId;
 
@@ -147,21 +159,37 @@ export default function Billing() {
                       "relative flex flex-col rounded-2xl border bg-card transition-all duration-200",
                       isPopular
                         ? "border-primary shadow-lg ring-1 ring-primary/20"
-                        : "border-border hover:border-muted-foreground/30 hover:shadow-md"
+                        : isCurrentPlan
+                          ? "border-primary/50 shadow-md"
+                          : "border-border hover:border-muted-foreground/30 hover:shadow-md"
                     )}
                   >
-                    {/* Card Header */}
-                    <div className="p-6 pb-0">
-                      <div className="flex items-start justify-between">
-                        <div>
-                          <h3 className="text-xl font-bold text-foreground">{pkg.name}</h3>
-                          <p className="mt-1 text-sm text-muted-foreground">{pkg.description}</p>
-                        </div>
+                    {/* Badges - positioned above card */}
+                    {(isPopular || isBestValue || isCurrentPlan) && (
+                      <div className="absolute -top-3 left-0 right-0 flex items-center justify-center gap-2">
+                        {isCurrentPlan && (
+                          <span className="rounded-full bg-foreground px-3 py-1 text-xs font-semibold text-background whitespace-nowrap shadow-sm">
+                            Current Plan
+                          </span>
+                        )}
                         {isPopular && (
-                          <span className="rounded-md bg-primary px-2.5 py-1 text-xs font-semibold uppercase text-primary-foreground">
+                          <span className="rounded-full bg-primary px-3 py-1 text-xs font-semibold text-primary-foreground whitespace-nowrap shadow-sm">
                             Most Popular
                           </span>
                         )}
+                        {isBestValue && !isPopular && (
+                          <span className="rounded-full bg-accent-foreground px-3 py-1 text-xs font-semibold text-accent whitespace-nowrap shadow-sm">
+                            Best Value
+                          </span>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Card Header */}
+                    <div className={cn("p-6 pb-0", (isPopular || isBestValue || isCurrentPlan) && "pt-8")}>
+                      <div>
+                        <h3 className="text-xl font-bold text-foreground">{pkg.name}</h3>
+                        <p className="mt-1 text-sm text-muted-foreground">{pkg.description}</p>
                       </div>
 
                       {/* Price */}
@@ -232,14 +260,19 @@ export default function Billing() {
                     <div className="p-6 pt-0">
                       <Button
                         className="w-full h-12 text-sm font-semibold rounded-xl"
-                        variant={isPopular ? "default" : "outline"}
-                        onClick={() => handlePurchase(priceId)}
-                        disabled={isLoading}
+                        variant={isCurrentPlan ? "secondary" : isPopular ? "default" : "outline"}
+                        onClick={() => !isCurrentPlan && handlePurchase(priceId)}
+                        disabled={isLoading || isCurrentPlan}
                       >
                         {isLoading ? (
                           <>
                             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                             Processing...
+                          </>
+                        ) : isCurrentPlan ? (
+                          <>
+                            <Check className="mr-2 h-4 w-4" />
+                            Current Plan
                           </>
                         ) : (
                           <>
