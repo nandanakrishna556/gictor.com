@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { useEffect } from 'react';
 
 export interface Profile {
   id: string;
@@ -8,6 +9,7 @@ export interface Profile {
   full_name: string | null;
   avatar_url: string | null;
   credits: number;
+  plan: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -48,9 +50,26 @@ export function useProfile() {
     },
   });
 
+  // Check subscription status on load and periodically
+  useEffect(() => {
+    if (!user) return;
+
+    const checkSubscription = async () => {
+      try {
+        await supabase.functions.invoke('check-subscription');
+        queryClient.invalidateQueries({ queryKey: ['profile'] });
+      } catch (e) {
+        console.error('Failed to check subscription:', e);
+      }
+    };
+
+    checkSubscription();
+    const interval = setInterval(checkSubscription, 60000);
+    return () => clearInterval(interval);
+  }, [user, queryClient]);
+
   // NOTE: Credit operations are handled server-side in the trigger-generation edge function
-  // to ensure security and prevent client-side manipulation. Do not add client-side credit
-  // deduction methods here.
+  // to ensure security and prevent client-side manipulation.
 
   const refetch = () => {
     queryClient.invalidateQueries({ queryKey: ['profile'] });
