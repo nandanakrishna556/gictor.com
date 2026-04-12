@@ -260,14 +260,19 @@ export default function Billing() {
                     <div className="p-6 pt-0">
                       <Button
                         className="w-full h-12 text-sm font-semibold rounded-xl"
-                        variant={isPopular ? "default" : "outline"}
-                        onClick={() => handlePurchase(priceId)}
-                        disabled={isLoading}
+                        variant={isCurrentPlan ? "secondary" : isPopular ? "default" : "outline"}
+                        onClick={() => !isCurrentPlan && handlePurchase(priceId)}
+                        disabled={isLoading || isCurrentPlan}
                       >
                         {isLoading ? (
                           <>
                             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                             Processing...
+                          </>
+                        ) : isCurrentPlan ? (
+                          <>
+                            <Check className="mr-2 h-4 w-4" />
+                            Current Plan
                           </>
                         ) : (
                           <>
