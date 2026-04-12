@@ -57,6 +57,12 @@ export function useProfile() {
 
     const checkSubscription = async () => {
       try {
+        // Refresh session to ensure a valid JWT before calling the edge function
+        const { error: refreshError } = await supabase.auth.refreshSession();
+        if (refreshError) {
+          console.error('Failed to refresh session:', refreshError);
+          return;
+        }
         await supabase.functions.invoke('check-subscription');
         if (!cancelled) {
           queryClient.invalidateQueries({ queryKey: ['profile', user.id] });
