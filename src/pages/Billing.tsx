@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Coins, Loader2, CheckCircle2, PartyPopper, Check, ArrowRight, Gift, Crown } from 'lucide-react';
+import { Coins, Loader2, CheckCircle2, PartyPopper, Check, Gift, Crown } from 'lucide-react';
 import MainLayout from '@/components/layout/MainLayout';
 import AppHeader from '@/components/layout/AppHeader';
 import { Button } from '@/components/ui/button';
@@ -164,27 +164,24 @@ export default function Billing() {
                     )}
                   >
                     {/* Badge */}
-                    {(isPopular || isCurrentPlan) && (
-                      <div className="absolute -top-3 left-0 right-0 flex items-center justify-center gap-2">
-                        {isCurrentPlan && (
-                          <span className="rounded-full bg-foreground px-3 py-1 text-xs font-semibold text-background whitespace-nowrap shadow-sm">
-                            Current Plan
-                          </span>
-                        )}
-                        {isPopular && (
-                          <span className="rounded-full bg-foreground px-3 py-1 text-xs font-semibold text-background whitespace-nowrap shadow-sm">
-                            ✦ Most Popular
-                          </span>
-                        )}
+                    {isCurrentPlan && (
+                      <div className="absolute -top-3 left-0 right-0 flex items-center justify-center">
+                        <span className="rounded-full bg-foreground px-3 py-1 text-xs font-semibold text-background whitespace-nowrap shadow-sm">
+                          Current Plan
+                        </span>
                       </div>
                     )}
-
                     {/* Card Header */}
-                    <div className={cn("p-6 pb-0", (isPopular || isCurrentPlan) && "pt-8")}>
-                      <div>
+                    <div className={cn("p-6 pb-0", isCurrentPlan && "pt-8")}>
+                      <div className="flex items-center justify-between">
                         <h3 className="text-xl font-bold text-foreground">{pkg.name}</h3>
-                        <p className="mt-1 text-sm text-muted-foreground">{pkg.description}</p>
+                        {isPopular && (
+                          <span className="rounded-lg bg-primary/15 px-3 py-1 text-xs font-semibold text-primary whitespace-nowrap">
+                            🔥 Most Popular
+                          </span>
+                        )}
                       </div>
+                      <p className="mt-1 text-sm text-muted-foreground">{pkg.description}</p>
 
                       {/* Price */}
                       <div className="mt-6">
@@ -256,7 +253,10 @@ export default function Billing() {
                     {/* CTA */}
                     <div className="p-6 pt-0">
                       <Button
-                        className="w-full h-12 text-sm font-semibold rounded-xl"
+                        className={cn(
+                          "w-full h-12 text-base font-bold rounded-xl tracking-wide",
+                          !isCurrentPlan && !isPopular && "border-2"
+                        )}
                         variant={isCurrentPlan ? "secondary" : isPopular ? "default" : "outline"}
                         onClick={() => !isCurrentPlan && handlePurchase(priceId)}
                         disabled={isLoading || isCurrentPlan}
@@ -272,10 +272,7 @@ export default function Billing() {
                             Current Plan
                           </>
                         ) : (
-                          <>
-                            Get Started
-                            <ArrowRight className="ml-2 h-4 w-4" />
-                          </>
+                          "Choose Plan"
                         )}
                       </Button>
                     </div>

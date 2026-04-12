@@ -37,7 +37,6 @@ export const CREDIT_PACKAGES: CreditPackage[] = [
     yearlyVideoTime: "~18.7 min",
     features: [
       "3 active actors",
-      "HD 1080p quality",
       "Credits never expire",
     ],
   },
@@ -59,9 +58,8 @@ export const CREDIT_PACKAGES: CreditPackage[] = [
     yearlyVideoTime: "~50 min",
     features: [
       "10 active actors",
-      "Custom AI actors",
-      "Faster generation queue",
       "Credits never expire",
+      "Priority support",
     ],
   },
   {
@@ -81,9 +79,8 @@ export const CREDIT_PACKAGES: CreditPackage[] = [
     yearlyVideoTime: "~1 hr 40 min",
     features: [
       "30 active actors",
-      "Priority generation queue",
-      "Longer videos for deeper content",
       "Credits never expire",
+      "Priority support",
     ],
   },
 ];
