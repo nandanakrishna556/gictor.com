@@ -191,7 +191,6 @@ export default function Billing() {
                         <h3 className="text-xl font-bold text-foreground">{pkg.name}</h3>
                         <p className="mt-1 text-sm text-muted-foreground">{pkg.description}</p>
                       </div>
-                      </div>
 
                       {/* Price */}
                       <div className="mt-6">
