@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Coins, Loader2, CheckCircle2, PartyPopper, Check, ArrowRight, Gift, Crown } from 'lucide-react';
+import { Coins, Loader2, CheckCircle2, PartyPopper, Check, ArrowRight, Gift, Crown, Settings } from 'lucide-react';
 import MainLayout from '@/components/layout/MainLayout';
 import AppHeader from '@/components/layout/AppHeader';
 import { Button } from '@/components/ui/button';
@@ -16,6 +16,23 @@ export default function Billing() {
   const [loadingPriceId, setLoadingPriceId] = useState<string | null>(null);
   const [showSuccess, setShowSuccess] = useState(false);
   const [isYearly, setIsYearly] = useState(false);
+  const [loadingPortal, setLoadingPortal] = useState(false);
+
+  const handleManageSubscription = async () => {
+    setLoadingPortal(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('customer-portal');
+      if (error) throw error;
+      if (data?.url) {
+        window.open(data.url, '_blank');
+      }
+    } catch (error) {
+      console.error('Portal error:', error);
+      toast.error('Failed to open subscription management');
+    } finally {
+      setLoadingPortal(false);
+    }
+  };
 
   useEffect(() => {
     const success = searchParams.get('success');
@@ -104,6 +121,22 @@ export default function Billing() {
                     {profile?.plan ? `${profile.plan} Plan` : 'No Active Plan'}
                   </span>
                 </div>
+                {profile?.plan && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="rounded-full"
+                    onClick={handleManageSubscription}
+                    disabled={loadingPortal}
+                  >
+                    {loadingPortal ? (
+                      <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
+                    ) : (
+                      <Settings className="mr-1.5 h-3.5 w-3.5" />
+                    )}
+                    Manage Subscription
+                  </Button>
+                )}
               </div>
               <h1 className="text-3xl font-bold text-foreground">Select plan</h1>
               <p className="mt-2 text-muted-foreground">
