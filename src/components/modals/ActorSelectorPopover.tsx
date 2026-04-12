@@ -217,6 +217,20 @@ export default function ActorSelectorPopover({
             </div>
           )}
         </div>
+        {/* Create New Actor button */}
+        <div className="border-t border-border p-2">
+          <Button
+            variant="ghost"
+            className="w-full justify-start gap-2 text-sm text-muted-foreground hover:text-foreground"
+            onClick={() => {
+              setOpen(false);
+              navigate('/actors');
+            }}
+          >
+            <Plus className="h-4 w-4" />
+            Create New Actor
+          </Button>
+        </div>
       </PopoverContent>
     </Popover>
   );
