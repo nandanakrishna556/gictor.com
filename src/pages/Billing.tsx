@@ -174,6 +174,12 @@ export default function Billing() {
                             {isYearly ? '/year' : '/mo'}
                           </span>
                         </div>
+                        <p className="mt-1.5 text-sm text-muted-foreground">
+                          ${isYearly
+                            ? (pkg.yearlyPrice / pkg.yearlyTotalCredits).toFixed(2)
+                            : (pkg.monthlyPrice / pkg.credits).toFixed(2)
+                          } per credit
+                        </p>
                       </div>
 
                       {/* Credits - Hero element */}
@@ -200,7 +206,7 @@ export default function Billing() {
                                 Includes {pkg.yearlyFreeCredits} free credits
                               </p>
                               <p className="text-xs text-muted-foreground">
-                                Worth {pkg.yearlyFreeCreditsValue} — at no additional cost
+                                Worth {pkg.yearlyFreeCreditsValue} at no additional cost
                               </p>
                             </div>
                           </div>
