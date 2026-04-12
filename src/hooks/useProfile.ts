@@ -1,7 +1,7 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useEffect } from 'react';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { useEffect } from 'react';
 
 export interface Profile {
   id: string;
@@ -33,24 +33,6 @@ export function useProfile() {
     enabled: !!user,
   });
 
-  // Check subscription status on load and periodically
-  useEffect(() => {
-    if (!user) return;
-
-    const checkSubscription = async () => {
-      try {
-        await supabase.functions.invoke('check-subscription');
-        queryClient.invalidateQueries({ queryKey: ['profile'] });
-      } catch (e) {
-        console.error('Failed to check subscription:', e);
-      }
-    };
-
-    checkSubscription();
-    const interval = setInterval(checkSubscription, 60000); // every minute
-    return () => clearInterval(interval);
-  }, [user, queryClient]);
-
   const updateProfileMutation = useMutation({
     mutationFn: async (updates: Partial<Profile>) => {
       const { data, error } = await supabase
@@ -64,29 +46,29 @@ export function useProfile() {
       return data as Profile;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['profile'] });
+      queryClient.invalidateQueries({ queryKey: ['profile', user?.id] });
     },
   });
 
-  // Check subscription status on load and periodically
   useEffect(() => {
     if (!user) return;
 
     let cancelled = false;
+
     const checkSubscription = async () => {
       try {
         await supabase.functions.invoke('check-subscription');
         if (!cancelled) {
-          queryClient.invalidateQueries({ queryKey: ['profile'] });
+          queryClient.invalidateQueries({ queryKey: ['profile', user.id] });
         }
       } catch (e) {
         console.error('Failed to check subscription:', e);
       }
     };
 
-    // Delay initial check to avoid interfering with React's render cycle
     const timeout = setTimeout(checkSubscription, 2000);
     const interval = setInterval(checkSubscription, 60000);
+
     return () => {
       cancelled = true;
       clearTimeout(timeout);
@@ -94,11 +76,8 @@ export function useProfile() {
     };
   }, [user, queryClient]);
 
-  // NOTE: Credit operations are handled server-side in the trigger-generation edge function
-  // to ensure security and prevent client-side manipulation.
-
   const refetch = () => {
-    queryClient.invalidateQueries({ queryKey: ['profile'] });
+    queryClient.invalidateQueries({ queryKey: ['profile', user?.id] });
   };
 
   return {
