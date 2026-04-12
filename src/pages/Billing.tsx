@@ -1,13 +1,13 @@
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Coins, Loader2, CheckCircle2, PartyPopper, Check, ArrowRight, Film } from 'lucide-react';
+import { Coins, Loader2, CheckCircle2, PartyPopper, Check, ArrowRight, Sparkles, Gift } from 'lucide-react';
 import MainLayout from '@/components/layout/MainLayout';
 import AppHeader from '@/components/layout/AppHeader';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { useProfile } from '@/hooks/useProfile';
 import { toast } from 'sonner';
-import { CREDIT_PACKAGES, calculateVideoMinutes } from '@/constants/creditPackages';
+import { CREDIT_PACKAGES } from '@/constants/creditPackages';
 import { cn } from '@/lib/utils';
 
 export default function Billing() {
@@ -15,16 +15,13 @@ export default function Billing() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [loadingPriceId, setLoadingPriceId] = useState<string | null>(null);
   const [showSuccess, setShowSuccess] = useState(false);
-  const [purchasedCredits, setPurchasedCredits] = useState<number | null>(null);
   const [isYearly, setIsYearly] = useState(false);
 
   useEffect(() => {
     const success = searchParams.get('success');
     const canceled = searchParams.get('canceled');
-    const credits = searchParams.get('credits');
 
     if (success === 'true') {
-      setPurchasedCredits(Number(credits) || 0);
       setShowSuccess(true);
       refetchProfile();
       setSearchParams({});
@@ -60,7 +57,7 @@ export default function Billing() {
 
         <div className="flex-1 overflow-y-auto p-6">
           <div className="mx-auto max-w-5xl">
-            {/* Success Animation Overlay */}
+            {/* Success Overlay */}
             {showSuccess && (
               <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm animate-fade-in">
                 <div className="flex flex-col items-center gap-6 rounded-2xl border border-primary/20 bg-card p-12 shadow-2xl animate-scale-in">
@@ -101,7 +98,7 @@ export default function Billing() {
                 No hidden fees. Cancel anytime.
               </p>
 
-              {/* Billing Toggle - pill style */}
+              {/* Billing Toggle */}
               <div className="mt-6 inline-flex items-center gap-1 rounded-full bg-muted p-1">
                 <button
                   onClick={() => setIsYearly(false)}
@@ -130,7 +127,7 @@ export default function Billing() {
                       ? "bg-primary-foreground/20 text-primary-foreground"
                       : "bg-primary/15 text-primary"
                   )}>
-                    2 months free
+                    Get free credits
                   </span>
                 </button>
               </div>
@@ -140,11 +137,8 @@ export default function Billing() {
             <div className="grid gap-6 lg:grid-cols-3">
               {CREDIT_PACKAGES.map((pkg) => {
                 const isPopular = pkg.popular;
-                const displayPrice = isYearly ? Math.round(pkg.yearlyPrice / 12) : pkg.monthlyPrice;
-                const originalMonthly = pkg.monthlyPrice;
                 const priceId = isYearly ? pkg.yearlyPriceId : pkg.monthlyPriceId;
                 const isLoading = loadingPriceId === priceId;
-                const videoMinutes = calculateVideoMinutes(pkg.credits);
 
                 return (
                   <div
@@ -165,28 +159,51 @@ export default function Billing() {
                         </div>
                         {isPopular && (
                           <span className="rounded-md bg-primary px-2.5 py-1 text-xs font-semibold uppercase text-primary-foreground">
-                            Popular
+                            Most Popular
                           </span>
                         )}
                       </div>
 
                       {/* Price */}
                       <div className="mt-6">
-                        {isYearly && (
-                          <span className="text-lg text-muted-foreground line-through mr-2">
-                            ${originalMonthly}
-                          </span>
-                        )}
                         <div className="flex items-baseline gap-1">
                           <span className="text-5xl font-extrabold tracking-tight text-foreground">
-                            ${displayPrice}
+                            ${isYearly ? pkg.yearlyPrice : pkg.monthlyPrice}
                           </span>
-                          <span className="text-base text-muted-foreground">/mo</span>
+                          <span className="text-base text-muted-foreground">
+                            {isYearly ? '/year' : '/mo'}
+                          </span>
                         </div>
+                      </div>
+
+                      {/* Credits - Hero element */}
+                      <div className="mt-4 rounded-xl bg-primary/5 border border-primary/10 p-4">
+                        <div className="flex items-center gap-2">
+                          <Sparkles className="h-5 w-5 text-primary" />
+                          <span className="text-2xl font-bold text-foreground">
+                            {isYearly ? pkg.yearlyTotalCredits : pkg.credits} credits
+                          </span>
+                          <span className="text-sm text-muted-foreground">
+                            {isYearly ? '/year' : '/mo'}
+                          </span>
+                        </div>
+                        <p className="mt-1 text-sm text-muted-foreground">
+                          {isYearly ? pkg.yearlyVideoTime : pkg.monthlyVideoTime}
+                        </p>
+
+                        {/* Yearly free credits callout */}
                         {isYearly && (
-                          <p className="mt-1 text-sm text-muted-foreground">
-                            ${pkg.yearlyPrice} billed annually
-                          </p>
+                          <div className="mt-3 flex items-start gap-2 rounded-lg bg-primary/10 px-3 py-2">
+                            <Gift className="mt-0.5 h-4 w-4 flex-shrink-0 text-primary" />
+                            <div>
+                              <p className="text-sm font-semibold text-primary">
+                                Includes {pkg.yearlyFreeCredits} free credits
+                              </p>
+                              <p className="text-xs text-muted-foreground">
+                                Worth {pkg.yearlyFreeCreditsValue} — at no additional cost
+                              </p>
+                            </div>
+                          </div>
                         )}
                       </div>
 
@@ -196,26 +213,16 @@ export default function Billing() {
                     {/* Features */}
                     <div className="flex-1 px-6 pb-6">
                       <ul className="space-y-3">
-                        <li className="flex items-start gap-2.5 text-sm text-muted-foreground">
-                          <Check className="mt-0.5 h-4 w-4 flex-shrink-0 text-primary" />
-                          {pkg.credits} credits per month
-                        </li>
-                        <li className="flex items-start gap-2.5 text-sm text-muted-foreground">
-                          <Check className="mt-0.5 h-4 w-4 flex-shrink-0 text-primary" />
-                          {pkg.actorSlots} active actor slots
-                        </li>
-                        <li className="flex items-start gap-2.5 text-sm text-muted-foreground">
-                          <Film className="mt-0.5 h-4 w-4 flex-shrink-0 text-primary" />
-                          ~{videoMinutes} min of video
-                        </li>
-                        <li className="flex items-start gap-2.5 text-sm text-muted-foreground">
-                          <Check className="mt-0.5 h-4 w-4 flex-shrink-0 text-primary" />
-                          Credits never expire
-                        </li>
+                        {pkg.features.map((feature) => (
+                          <li key={feature} className="flex items-start gap-2.5 text-sm text-muted-foreground">
+                            <Check className="mt-0.5 h-4 w-4 flex-shrink-0 text-primary" />
+                            {feature}
+                          </li>
+                        ))}
                       </ul>
                     </div>
 
-                    {/* CTA Button */}
+                    {/* CTA */}
                     <div className="p-6 pt-0">
                       <Button
                         className="w-full h-12 text-sm font-semibold rounded-xl"
@@ -230,7 +237,7 @@ export default function Billing() {
                           </>
                         ) : (
                           <>
-                            Choose Plan
+                            Get Started
                             <ArrowRight className="ml-2 h-4 w-4" />
                           </>
                         )}

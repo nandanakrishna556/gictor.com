@@ -9,11 +9,19 @@ export interface CreditPackage {
   description: string;
   actorSlots: number;
   features: string[];
+  // Yearly bonus info
+  yearlyTotalCredits: number;
+  yearlyBaseCredits: number;
+  yearlyFreeCredits: number;
+  yearlyFreeCreditsValue: string;
+  // Video time display
+  monthlyVideoTime: string;
+  yearlyVideoTime: string;
 }
 
 export const CREDIT_PACKAGES: CreditPackage[] = [
   {
-    credits: 10,
+    credits: 13,
     monthlyPrice: 30,
     yearlyPrice: 288,
     monthlyPriceId: "price_1TLFlxJzf8eDXLMZ5L5jFgIO",
@@ -21,15 +29,20 @@ export const CREDIT_PACKAGES: CreditPackage[] = [
     name: "Starter",
     description: "For creators just getting started",
     actorSlots: 3,
+    yearlyTotalCredits: 187,
+    yearlyBaseCredits: 156,
+    yearlyFreeCredits: 31,
+    yearlyFreeCreditsValue: "$75+",
+    monthlyVideoTime: "~1.3 min video",
+    yearlyVideoTime: "~18.7 min",
     features: [
-      "10 credits per month",
       "3 active actor slots",
       "HD 1080p quality",
       "Credits never expire",
     ],
   },
   {
-    credits: 28,
+    credits: 35,
     monthlyPrice: 79,
     yearlyPrice: 756,
     monthlyPriceId: "price_1TLFmHJzf8eDXLMZkoSzptGy",
@@ -38,8 +51,13 @@ export const CREDIT_PACKAGES: CreditPackage[] = [
     name: "Creator",
     description: "For growing brands ready to scale",
     actorSlots: 10,
+    yearlyTotalCredits: 504,
+    yearlyBaseCredits: 420,
+    yearlyFreeCredits: 84,
+    yearlyFreeCreditsValue: "$210+",
+    monthlyVideoTime: "~3.5 min video",
+    yearlyVideoTime: "~50 min",
     features: [
-      "28 credits per month",
       "10 active actor slots",
       "Custom AI actors",
       "Faster generation queue",
@@ -47,7 +65,7 @@ export const CREDIT_PACKAGES: CreditPackage[] = [
     ],
   },
   {
-    credits: 56,
+    credits: 70,
     monthlyPrice: 149,
     yearlyPrice: 1428,
     monthlyPriceId: "price_1TLFmWJzf8eDXLMZb5LO6VQP",
@@ -55,8 +73,13 @@ export const CREDIT_PACKAGES: CreditPackage[] = [
     name: "Pro",
     description: "For teams and agencies at scale",
     actorSlots: 30,
+    yearlyTotalCredits: 1008,
+    yearlyBaseCredits: 840,
+    yearlyFreeCredits: 168,
+    yearlyFreeCreditsValue: "$420+",
+    monthlyVideoTime: "~7 min video",
+    yearlyVideoTime: "~1 hr 40 min",
     features: [
-      "56 credits per month",
       "30 active actor slots",
       "Priority generation queue",
       "Longer videos for deeper content",
@@ -74,12 +97,6 @@ export const CREDIT_COSTS = {
   frame_4k: 0.15,
   animate_per_second: 0.15,
 };
-
-// Helper to calculate estimated video minutes from credits
-export function calculateVideoMinutes(credits: number): number {
-  const totalSeconds = credits / CREDIT_COSTS.animate_per_second;
-  return Math.floor(totalSeconds / 60);
-}
 
 // Helper to calculate lip sync cost
 export function calculateLipSyncCost(durationSeconds: number): number {
