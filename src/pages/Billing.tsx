@@ -172,8 +172,8 @@ export default function Billing() {
                           </span>
                         )}
                         {isPopular && (
-                          <span className="rounded-full bg-primary px-3 py-1 text-xs font-semibold text-primary-foreground whitespace-nowrap shadow-sm">
-                            ⚡ Most Popular
+                          <span className="rounded-full bg-foreground px-3 py-1 text-xs font-semibold text-background whitespace-nowrap shadow-sm">
+                            ✦ Most Popular
                           </span>
                         )}
                       </div>
@@ -207,7 +207,7 @@ export default function Billing() {
                       {/* Credits - Hero element */}
                       <div className="mt-4 rounded-xl bg-primary/5 border border-primary/10 p-4">
                         <div className="flex items-center gap-2">
-                          <span className="text-xl">🎬</span>
+                          <span className="text-xl">🪙</span>
                           <span className="text-2xl font-bold text-foreground">
                             {isYearly ? pkg.yearlyTotalCredits : pkg.credits} credits
                           </span>
