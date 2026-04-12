@@ -1,13 +1,13 @@
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Coins, CreditCard, Loader2, CheckCircle2, PartyPopper, Check } from 'lucide-react';
+import { Coins, CreditCard, Loader2, CheckCircle2, PartyPopper, Check, Film } from 'lucide-react';
 import MainLayout from '@/components/layout/MainLayout';
 import AppHeader from '@/components/layout/AppHeader';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { useProfile } from '@/hooks/useProfile';
 import { toast } from 'sonner';
-import { CREDIT_PACKAGES } from '@/constants/creditPackages';
+import { CREDIT_PACKAGES, calculateVideoMinutes } from '@/constants/creditPackages';
 import { cn } from '@/lib/utils';
 
 export default function Billing() {
@@ -106,6 +106,7 @@ export default function Billing() {
                 const isPopular = pkg.popular;
                 const pricePerCredit = (pkg.price / pkg.credits).toFixed(2);
                 const isLoading = loadingPriceId === pkg.priceId;
+                const videoMinutes = calculateVideoMinutes(pkg.credits);
                 const savings = pkg.credits >= 56
                   ? Math.round((1 - (pkg.price / pkg.credits) / (30 / 10)) * 100)
                   : null;
@@ -128,27 +129,28 @@ export default function Billing() {
                       </div>
                     )}
 
-                    {/* Credits */}
-                    <div className="mb-4">
-                      <p className="text-4xl font-bold text-foreground">{pkg.credits}</p>
-                      <p className="text-sm text-muted-foreground">credits</p>
-                    </div>
+                    {/* Package Name */}
+                    <p className="mb-4 text-sm font-semibold uppercase tracking-wider text-muted-foreground">
+                      {pkg.name}
+                    </p>
 
-                    {/* Price */}
-                    <div className="mb-6">
-                      <p className="text-3xl font-bold text-foreground">
-                        ${pkg.price}
-                      </p>
-                      <p className="mt-1 text-sm text-muted-foreground">
-                        ${pricePerCredit} per credit
-                      </p>
+                    {/* Price (hero element) */}
+                    <div className="mb-1">
+                      <span className="text-4xl font-bold text-foreground">${pkg.price}</span>
                     </div>
+                    <p className="mb-5 text-sm text-muted-foreground">
+                      ${pricePerCredit} per credit
+                    </p>
 
                     {/* Features */}
                     <ul className="mb-6 flex-1 space-y-2.5">
                       <li className="flex items-center gap-2 text-sm text-muted-foreground">
                         <Check className="h-4 w-4 flex-shrink-0 text-primary" />
                         {pkg.credits} generation credits
+                      </li>
+                      <li className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <Film className="h-4 w-4 flex-shrink-0 text-primary" />
+                        ~{videoMinutes} min of video
                       </li>
                       <li className="flex items-center gap-2 text-sm text-muted-foreground">
                         <Check className="h-4 w-4 flex-shrink-0 text-primary" />

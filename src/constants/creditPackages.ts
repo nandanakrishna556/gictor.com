@@ -3,15 +3,16 @@ export interface CreditPackage {
   price: number;
   priceId: string;
   popular?: boolean;
+  name: string;
 }
 
 export const CREDIT_PACKAGES: CreditPackage[] = [
-  { credits: 10, price: 30, priceId: "price_1SpA1zJzf8eDXLMZPi8s5Xrs" },
-  { credits: 28, price: 79, priceId: "price_1SpA2FJzf8eDXLMZnKFWCMUQ", popular: true },
-  { credits: 56, price: 149, priceId: "price_1SpA2SJzf8eDXLMZLnZfvzYF" },
-  { credits: 120, price: 299, priceId: "price_1SpA37Jzf8eDXLMZVGBXfegT" },
-  { credits: 400, price: 899, priceId: "price_1SpA3RJzf8eDXLMZEChNM5hq" },
-  { credits: 1050, price: 1989, priceId: "price_1SpA3lJzf8eDXLMZ87RfaCt5" },
+  { credits: 10, price: 30, priceId: "price_1SpA1zJzf8eDXLMZPi8s5Xrs", name: "Starter" },
+  { credits: 28, price: 79, priceId: "price_1SpA2FJzf8eDXLMZnKFWCMUQ", popular: true, name: "Creator" },
+  { credits: 56, price: 149, priceId: "price_1SpA2SJzf8eDXLMZLnZfvzYF", name: "Pro" },
+  { credits: 120, price: 299, priceId: "price_1SpA37Jzf8eDXLMZVGBXfegT", name: "Business" },
+  { credits: 400, price: 899, priceId: "price_1SpA3RJzf8eDXLMZEChNM5hq", name: "Scale" },
+  { credits: 1050, price: 1989, priceId: "price_1SpA3lJzf8eDXLMZ87RfaCt5", name: "Enterprise" },
 ];
 
 // Credit costs for different generation types
@@ -23,6 +24,12 @@ export const CREDIT_COSTS = {
   frame_4k: 0.15, // 4K resolution
   animate_per_second: 0.15,
 };
+
+// Helper to calculate estimated video minutes from credits
+export function calculateVideoMinutes(credits: number): number {
+  const totalSeconds = credits / CREDIT_COSTS.animate_per_second;
+  return Math.floor(totalSeconds / 60);
+}
 
 // Helper to calculate lip sync cost
 export function calculateLipSyncCost(durationSeconds: number): number {
