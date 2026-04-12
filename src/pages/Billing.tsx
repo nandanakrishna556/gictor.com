@@ -23,6 +23,10 @@ export default function Billing() {
     try {
       const { data, error } = await supabase.functions.invoke('customer-portal');
       if (error) throw error;
+      if (data?.fallback) {
+        toast.error(data.error || 'Please subscribe to a plan first.');
+        return;
+      }
       if (data?.url) {
         window.open(data.url, '_blank');
       }
