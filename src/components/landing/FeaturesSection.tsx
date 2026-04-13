@@ -1,4 +1,4 @@
-import { User, Copy, FileText, Film, Wand2, LayoutGrid, Globe, Mic } from "lucide-react";
+import { User, Copy, FileText, Film, Wand2, LayoutGrid } from "lucide-react";
 
 import screenshotCustomAiActors from "@/assets/screenshot-custom-ai-actors.webp";
 import screenshotCloneYourself from "@/assets/screenshot-clone-yourself.webp";
