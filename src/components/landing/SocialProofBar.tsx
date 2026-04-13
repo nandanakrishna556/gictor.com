@@ -14,7 +14,7 @@ export function SocialProofBar() {
               <div className="text-4xl md:text-5xl font-bold text-gray-900 tracking-tight leading-none mb-2">
                 {stat.value}
               </div>
-              <div className="text-base text-gray-600 font-medium">{stat.label}</div>
+              <div className="text-gray-600 font-medium text-lg">{stat.label}</div>
             </div>
           ))}
         </div>
