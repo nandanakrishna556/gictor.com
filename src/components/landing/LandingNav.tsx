@@ -60,19 +60,28 @@ export function LandingNav() {
             </button>
 
             {servicesOpen && (
-              <div className="absolute top-full left-1/2 -translate-x-1/2 pt-3">
-                <div className="bg-white rounded-xl border border-gray-200 shadow-lg p-2 min-w-[280px]">
-                  {services.map((service) => (
-                    <Link
-                      key={service.href}
-                      to={service.href}
-                      className="flex flex-col gap-0.5 px-4 py-3 rounded-lg hover:bg-gray-50 transition-colors"
-                      onClick={() => setServicesOpen(false)}
-                    >
-                      <span className="text-base font-semibold text-gray-900">{service.label}</span>
-                      <span className="text-sm text-gray-500">{service.description}</span>
-                    </Link>
-                  ))}
+              <div className="absolute top-full left-1/2 -translate-x-1/2 pt-4">
+                <div className="bg-white rounded-2xl border border-gray-200 shadow-xl p-6 min-w-[520px]">
+                  <h3 className="text-xl font-bold text-gray-900 mb-1">Our Services</h3>
+                  <p className="text-base text-gray-500 mb-5">End-to-end video production and distribution powered by AI.</p>
+                  <div className="space-y-1">
+                    {services.map((service) => (
+                      <Link
+                        key={service.href}
+                        to={service.href}
+                        className="flex items-start gap-4 px-4 py-4 rounded-xl hover:bg-gray-50 transition-colors group"
+                        onClick={() => setServicesOpen(false)}
+                      >
+                        <div className="h-10 w-10 rounded-lg bg-orange-50 flex items-center justify-center shrink-0 mt-0.5 group-hover:bg-orange-100 transition-colors">
+                          <service.icon className="h-5 w-5 text-orange-600" />
+                        </div>
+                        <div>
+                          <span className="text-base font-bold text-gray-900 block">{service.label}</span>
+                          <span className="text-base text-gray-500 leading-snug">{service.description}</span>
+                        </div>
+                      </Link>
+                    ))}
+                  </div>
                 </div>
               </div>
             )}
