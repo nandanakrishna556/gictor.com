@@ -63,7 +63,7 @@ export function LandingNav() {
               <div className="absolute top-full left-1/2 -translate-x-1/2 pt-4">
                 <div className="bg-white rounded-2xl border border-gray-200 shadow-xl p-6 min-w-[520px]">
                   <h3 className="text-xl font-bold text-gray-900 mb-1">Our Services</h3>
-                  <p className="text-base text-gray-500 mb-5">End-to-end video production and distribution powered by AI.</p>
+                  <p className="text-gray-500 mb-5 text-lg">End-to-end video production and distribution powered by AI.</p>
                   <div className="space-y-1">
                     {services.map((service) => (
                       <Link
@@ -77,7 +77,7 @@ export function LandingNav() {
                         </div>
                         <div>
                           <span className="text-base font-bold text-gray-900 block">{service.label}</span>
-                          <span className="text-base text-gray-500 leading-snug">{service.description}</span>
+                          <span className="text-gray-500 leading-snug text-lg">{service.description}</span>
                         </div>
                       </Link>
                     ))}
