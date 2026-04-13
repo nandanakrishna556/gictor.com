@@ -2,7 +2,7 @@ import { LandingNav } from "@/components/landing/LandingNav";
 import { LandingFooter } from "@/components/landing/LandingFooter";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
-import { ArrowRight, Check, Play, Film, Mic, PenTool, BarChart3, Layers } from "lucide-react";
+import { ArrowRight, Check, Film, Mic, PenTool, BarChart3, Layers } from "lucide-react";
 
 const benefits = [
   {

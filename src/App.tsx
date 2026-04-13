@@ -18,6 +18,9 @@ import Settings from "./pages/Settings";
 import Billing from "./pages/Billing";
 import Actors from "./pages/Actors";
 import NotFound from "./pages/NotFound";
+import ServiceYouTube from "./pages/ServiceYouTube";
+import ServiceMediaBuying from "./pages/ServiceMediaBuying";
+import ServiceShortForm from "./pages/ServiceShortForm";
 
 const queryClient = new QueryClient();
 
