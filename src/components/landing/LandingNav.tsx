@@ -18,62 +18,44 @@ export function LandingNav() {
           <img src="/logo.png" alt="Gictor" className="h-8" />
         </Link>
 
-        {/* Desktop Nav */}
         <div className="hidden md:flex items-center gap-8">
-          <button
-            onClick={() => scrollToSection("how-it-works")}
-            className="text-sm text-gray-500 hover:text-gray-900 transition-colors font-medium"
-          >
+          <button onClick={() => scrollToSection("how-it-works")} className="text-base text-gray-500 hover:text-gray-900 transition-colors font-medium">
             How It Works
           </button>
-          <button
-            onClick={() => scrollToSection("features")}
-            className="text-sm text-gray-500 hover:text-gray-900 transition-colors font-medium"
-          >
+          <button onClick={() => scrollToSection("features")} className="text-base text-gray-500 hover:text-gray-900 transition-colors font-medium">
             Features
           </button>
-          <button
-            onClick={() => scrollToSection("use-cases")}
-            className="text-sm text-gray-500 hover:text-gray-900 transition-colors font-medium"
-          >
+          <button onClick={() => scrollToSection("use-cases")} className="text-base text-gray-500 hover:text-gray-900 transition-colors font-medium">
             Use Cases
           </button>
-          <button
-            onClick={() => scrollToSection("faq")}
-            className="text-sm text-gray-500 hover:text-gray-900 transition-colors font-medium"
-          >
+          <button onClick={() => scrollToSection("faq")} className="text-base text-gray-500 hover:text-gray-900 transition-colors font-medium">
             FAQ
           </button>
         </div>
 
         <div className="hidden md:flex items-center gap-3">
-          <Button variant="ghost" className="text-sm text-gray-600 hover:text-gray-900" asChild>
+          <Button variant="ghost" className="text-base text-gray-600 hover:text-gray-900" asChild>
             <Link to="/login">Log In</Link>
           </Button>
-          <Button className="text-sm px-5 bg-gray-900 hover:bg-gray-800 text-white rounded-full" asChild>
+          <Button className="text-base px-6 bg-orange-600 hover:bg-orange-700 text-white rounded-full" asChild>
             <Link to="/signup">Get Started Free</Link>
           </Button>
         </div>
 
-        {/* Mobile hamburger */}
-        <button
-          className="md:hidden p-2 text-gray-600"
-          onClick={() => setMobileOpen(!mobileOpen)}
-        >
+        <button className="md:hidden p-2 text-gray-600" onClick={() => setMobileOpen(!mobileOpen)}>
           {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
         </button>
       </div>
 
-      {/* Mobile menu */}
       {mobileOpen && (
         <div className="md:hidden bg-white border-b border-gray-100 px-6 pb-6 pt-2 space-y-4">
-          <button onClick={() => scrollToSection("how-it-works")} className="block text-sm text-gray-600 hover:text-gray-900">How It Works</button>
-          <button onClick={() => scrollToSection("features")} className="block text-sm text-gray-600 hover:text-gray-900">Features</button>
-          <button onClick={() => scrollToSection("use-cases")} className="block text-sm text-gray-600 hover:text-gray-900">Use Cases</button>
-          <button onClick={() => scrollToSection("faq")} className="block text-sm text-gray-600 hover:text-gray-900">FAQ</button>
+          <button onClick={() => scrollToSection("how-it-works")} className="block text-base text-gray-600 hover:text-gray-900">How It Works</button>
+          <button onClick={() => scrollToSection("features")} className="block text-base text-gray-600 hover:text-gray-900">Features</button>
+          <button onClick={() => scrollToSection("use-cases")} className="block text-base text-gray-600 hover:text-gray-900">Use Cases</button>
+          <button onClick={() => scrollToSection("faq")} className="block text-base text-gray-600 hover:text-gray-900">FAQ</button>
           <div className="flex gap-3 pt-2">
-            <Button variant="ghost" className="text-sm" asChild><Link to="/login">Log In</Link></Button>
-            <Button className="text-sm bg-gray-900 text-white rounded-full" asChild><Link to="/signup">Get Started</Link></Button>
+            <Button variant="ghost" className="text-base" asChild><Link to="/login">Log In</Link></Button>
+            <Button className="text-base bg-orange-600 hover:bg-orange-700 text-white rounded-full" asChild><Link to="/signup">Get Started</Link></Button>
           </div>
         </div>
       )}

@@ -4,7 +4,7 @@ import { ChevronDown } from "lucide-react";
 const faqs = [
   {
     q: "How realistic do the AI actors look?",
-    a: "Our AI actors use state-of-the-art video generation technology. They feature natural lip-syncing, realistic body movements, and authentic expressions. Many of our users report that viewers can't tell the difference from real UGC content.",
+    a: "Our AI actors use state-of-the-art video generation technology. They feature natural lip-syncing, realistic body movements, and authentic expressions. Many of our users report that viewers can't tell the difference from real content.",
   },
   {
     q: "How long does it take to generate a video?",
@@ -12,7 +12,7 @@ const faqs = [
   },
   {
     q: "Can I clone my own face and voice?",
-    a: "Yes! Upload a photo and a voice sample, and we'll create an AI version of you. Your clone can then deliver any script in your likeness — perfect for scaling personal brand content.",
+    a: "Yes! Upload a photo and a voice sample, and we'll create an AI version of you. Your clone can then deliver any script in your likeness, perfect for scaling personal brand content.",
   },
   {
     q: "What languages are supported?",
@@ -20,7 +20,7 @@ const faqs = [
   },
   {
     q: "Do I need video editing experience?",
-    a: "Not at all. Gictor handles everything from script to final video. You can add B-roll, motion graphics, and captions all within the platform — no editing software needed.",
+    a: "Not at all. Gictor handles everything from script to final video. You can add B-roll and captions all within the platform. No editing software needed.",
   },
   {
     q: "What platforms can I use the videos on?",
@@ -36,13 +36,13 @@ export function FAQSection() {
   const [openIndex, setOpenIndex] = useState<number | null>(0);
 
   return (
-    <section id="faq" className="py-24 px-6 bg-gray-50">
+    <section id="faq" className="py-28 px-6 bg-gray-50">
       <div className="max-w-3xl mx-auto">
-        <div className="text-center mb-16">
+        <div className="text-center mb-20">
           <p className="text-orange-600 font-semibold text-sm mb-3 tracking-widest uppercase">
             FAQ
           </p>
-          <h2 className="text-4xl md:text-5xl font-bold text-gray-900 tracking-tight mb-4">
+          <h2 className="text-4xl md:text-5xl lg:text-6xl font-extrabold text-gray-900 tracking-tight mb-5">
             Common Questions
           </h2>
         </div>
@@ -55,18 +55,18 @@ export function FAQSection() {
             >
               <button
                 onClick={() => setOpenIndex(openIndex === i ? null : i)}
-                className="w-full flex items-center justify-between p-5 text-left hover:bg-gray-50 transition-colors"
+                className="w-full flex items-center justify-between p-6 text-left hover:bg-gray-50 transition-colors"
               >
-                <span className="text-sm font-semibold text-gray-900 pr-4">{faq.q}</span>
+                <span className="text-base font-semibold text-gray-900 pr-4">{faq.q}</span>
                 <ChevronDown
-                  className={`h-4 w-4 text-gray-400 flex-shrink-0 transition-transform ${
+                  className={`h-5 w-5 text-gray-400 flex-shrink-0 transition-transform ${
                     openIndex === i ? "rotate-180" : ""
                   }`}
                 />
               </button>
               {openIndex === i && (
-                <div className="px-5 pb-5 pt-0">
-                  <p className="text-sm text-gray-500 leading-relaxed">{faq.a}</p>
+                <div className="px-6 pb-6 pt-0">
+                  <p className="text-base text-gray-500 leading-relaxed">{faq.a}</p>
                 </div>
               )}
             </div>
