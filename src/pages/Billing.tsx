@@ -250,7 +250,7 @@ export default function Billing() {
                         </>
                       ) : (
                         <>
-                          {pkg.popular ? "Start free trial" : "Choose Plan"}
+                          Choose Plan
                           <ArrowRight className="ml-2 h-4 w-4" />
                         </>
                       )}

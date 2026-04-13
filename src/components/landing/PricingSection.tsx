@@ -74,7 +74,8 @@ export function PricingSection() {
                 asChild
               >
                 <Link to="/signup">
-                  {pkg.popular ? "Start free trial" : "Choose Plan"}
+                  Choose Plan
+                  <ArrowRight className="ml-2 h-4 w-4" />
                 </Link>
               </Button>
 
