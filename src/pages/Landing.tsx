@@ -4,9 +4,9 @@ import { SocialProofBar } from "@/components/landing/SocialProofBar";
 import { HowItWorksSection } from "@/components/landing/HowItWorksSection";
 import { FeaturesSection } from "@/components/landing/FeaturesSection";
 import { UseCasesSection } from "@/components/landing/UseCasesSection";
-import { ComparisonSection } from "@/components/landing/ComparisonSection";
-import { ToolConsolidationSection } from "@/components/landing/ToolConsolidationSection";
+import { PopularFeaturesSection } from "@/components/landing/PopularFeaturesSection";
 import { TestimonialsSection } from "@/components/landing/TestimonialsSection";
+import { PricingSection } from "@/components/landing/PricingSection";
 import { FAQSection } from "@/components/landing/FAQSection";
 import { FinalCTASection } from "@/components/landing/FinalCTASection";
 import { LandingFooter } from "@/components/landing/LandingFooter";
@@ -21,9 +21,9 @@ export default function Landing() {
         <HowItWorksSection />
         <FeaturesSection />
         <UseCasesSection />
-        <ComparisonSection />
-        <ToolConsolidationSection />
+        <PopularFeaturesSection />
         <TestimonialsSection />
+        <PricingSection />
         <FAQSection />
         <FinalCTASection />
       </main>
