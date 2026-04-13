@@ -1,27 +1,25 @@
 import { useState } from "react";
-import { Megaphone, Building2, ShoppingBag, Monitor, Check } from "lucide-react";
+import { Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 
 const tabs = [
   {
-    id: "ads",
-    icon: Megaphone,
-    label: "Paid Ads",
-    headline: "High-Converting Talking Head Ads at Scale",
-    description: "Generate dozens of ad variations in a single day. Test different actors, scripts, and hooks to find what converts best. No actors to hire, no shoots to schedule.",
+    id: "ecommerce",
+    label: "E-commerce",
+    headline: "Make your products go viral",
+    description: "Create compelling product video ads with AI actors that present your products naturally. Test multiple hooks, angles, and scripts. Find what converts best without a single camera.",
     bullets: [
-      "Realistic AI actors that build trust",
-      "Test multiple hooks and angles instantly",
-      "Ready for Meta Ads, YouTube, TikTok, and more",
+      "AI actors naturally present your product",
+      "Test dozens of ad variations in a single day",
+      "Ready for TikTok Shop, Meta Ads, and more",
     ],
   },
   {
     id: "agencies",
-    icon: Building2,
     label: "Agencies",
-    headline: "Scale Creative Output 10x",
-    description: "Deliver more ad variations to clients without increasing headcount. Generate dozens of creatives per campaign, A/B test at scale, and improve ROAS across every account.",
+    headline: "Scale creative output for every client",
+    description: "Deliver more ad variations to clients without increasing headcount. Generate dozens of creatives per campaign and improve ROAS across every account you manage.",
     bullets: [
       "Unlimited creative variations per client",
       "Custom AI actors for each brand",
@@ -29,90 +27,96 @@ const tabs = [
     ],
   },
   {
-    id: "ecommerce",
-    icon: ShoppingBag,
-    label: "E-commerce",
-    headline: "Product Ads That Drive Sales",
-    description: "Create compelling product demonstration videos with AI actors that present your products naturally. Test 20 angles in a day instead of waiting weeks for a single shoot.",
+    id: "creators",
+    label: "Content Creator",
+    headline: "Clone yourself and scale your content",
+    description: "Let your AI clone post content daily while you focus on strategy. Create videos in 30+ languages and reach new audiences globally.",
     bullets: [
-      "AI actors naturally present your product",
-      "Test multiple hooks and angles instantly",
-      "Ready for TikTok Shop, Meta Ads, and more",
+      "Clone your face and voice effortlessly",
+      "Post content daily without filming",
+      "Reach global audiences in 30+ languages",
     ],
   },
   {
     id: "saas",
-    icon: Monitor,
-    label: "SaaS & Apps",
-    headline: "Explainer Videos That Convert",
-    description: "Have AI actors present your software, walk through features, and explain benefits. Perfect for product demos, tutorials, and onboarding videos.",
+    label: "Software",
+    headline: "Create profitable ads for your SaaS",
+    description: "Have AI actors promote or explain your tool with state-of-the-art lip-syncing. Perfect for product demos, explainer videos, and onboarding content.",
     bullets: [
-      "Perfect for product demos and tutorials",
+      "Perfect for explainers and product tutorials",
       "Localize into 30+ languages instantly",
-      "Scale your video marketing effortlessly",
+      "Use custom backgrounds to show your app",
     ],
   },
 ];
 
 export function UseCasesSection() {
-  const [activeTab, setActiveTab] = useState("ads");
+  const [activeTab, setActiveTab] = useState("ecommerce");
   const active = tabs.find((t) => t.id === activeTab)!;
 
   return (
-    <section id="use-cases" className="py-28 px-6 bg-white">
-      <div className="max-w-6xl mx-auto">
+    <section id="use-cases" className="py-24 px-6">
+      <div className="max-w-6xl mx-auto bg-orange-50/50 rounded-[32px] py-20 px-6 md:px-12">
         <div className="text-center mb-14">
-          <p className="text-orange-600 font-semibold text-sm mb-3 tracking-widest uppercase">
-            Built For You
-          </p>
-          <h2 className="text-4xl md:text-5xl lg:text-6xl font-extrabold text-gray-900 tracking-tight mb-5">
-            Scale Your Video Ads
+          <h2 className="text-[36px] md:text-[44px] font-bold text-gray-900 tracking-tight mb-4">
+            Scale your content
           </h2>
-          <p className="text-xl text-gray-500 max-w-2xl mx-auto">
-            Hundreds of ad creatives in minutes, not weeks.
+          <p className="text-lg text-gray-500 max-w-2xl mx-auto">
+            Get hundreds of ad creatives in minutes, not weeks, all without the hassle of hiring real creators.
           </p>
         </div>
 
-        <div className="flex flex-wrap justify-center gap-3 mb-14">
-          {tabs.map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={`flex items-center gap-2 px-6 py-3 rounded-full text-base font-semibold transition-all ${
-                activeTab === tab.id
-                  ? "bg-orange-600 text-white shadow-md"
-                  : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-              }`}
-            >
-              <tab.icon className="h-4 w-4" />
-              {tab.label}
-            </button>
-          ))}
-        </div>
-
-        <div className="grid md:grid-cols-2 gap-14 items-center">
-          <div>
-            <h3 className="text-3xl md:text-4xl font-bold text-gray-900 mb-5">{active.headline}</h3>
-            <p className="text-lg text-gray-500 leading-relaxed mb-8">{active.description}</p>
-            <ul className="space-y-4 mb-10">
-              {active.bullets.map((bullet, i) => (
-                <li key={i} className="flex items-start gap-3">
-                  <div className="w-6 h-6 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0 mt-0.5">
-                    <Check className="h-3.5 w-3.5 text-green-600" />
-                  </div>
-                  <span className="text-base text-gray-700 font-medium">{bullet}</span>
-                </li>
-              ))}
-            </ul>
-            <Button className="bg-orange-600 text-white rounded-full px-8 py-3 text-base font-semibold hover:bg-orange-700" asChild>
-              <Link to="/signup">Get Started Free</Link>
-            </Button>
+        {/* Tabs */}
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+          <div className="flex border-b border-gray-100">
+            {tabs.map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`flex-1 py-4 text-[15px] font-medium transition-colors relative ${
+                  activeTab === tab.id
+                    ? "text-orange-600"
+                    : "text-gray-500 hover:text-gray-700"
+                }`}
+              >
+                {tab.label}
+                {activeTab === tab.id && (
+                  <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-orange-600" />
+                )}
+              </button>
+            ))}
           </div>
-          <div className="bg-gray-100 rounded-2xl aspect-[4/3] flex items-center justify-center border border-gray-200">
-            <div className="text-center text-gray-400">
-              <div className="w-16 h-16 rounded-2xl bg-gray-200 mx-auto mb-3" />
-              <p className="text-base font-medium">Use case preview</p>
-              <p className="text-sm text-gray-400 mt-1">Add screenshot or video here</p>
+
+          <div className="grid md:grid-cols-2 gap-10 p-8 md:p-12">
+            <div className="flex flex-col justify-center">
+              <h3 className="text-[28px] md:text-[32px] font-bold text-gray-900 mb-4 leading-tight">
+                {active.headline}
+              </h3>
+              <p className="text-[15px] text-gray-500 leading-relaxed mb-8">
+                {active.description}
+              </p>
+              <ul className="space-y-3 mb-8">
+                {active.bullets.map((bullet, i) => (
+                  <li key={i} className="flex items-center gap-3">
+                    <div className="w-5 h-5 rounded-full bg-orange-100 flex items-center justify-center flex-shrink-0">
+                      <Check className="h-3 w-3 text-orange-600" />
+                    </div>
+                    <span className="text-[15px] text-gray-700">{bullet}</span>
+                  </li>
+                ))}
+              </ul>
+              <Button className="bg-orange-600 text-white rounded-full px-7 py-3 text-[15px] font-semibold hover:bg-orange-700 self-start" asChild>
+                <Link to="/signup">Get started</Link>
+              </Button>
+            </div>
+
+            {/* PLACEHOLDER: Replace with use case video/image */}
+            <div className="bg-gray-100 rounded-2xl aspect-[4/5] flex items-center justify-center border border-gray-200">
+              <div className="text-center text-gray-400">
+                <div className="w-16 h-16 rounded-2xl bg-gray-200 mx-auto mb-3" />
+                <p className="text-[15px] font-medium">Use case preview</p>
+                <p className="text-sm text-gray-400 mt-1">Add screenshot or video here</p>
+              </div>
             </div>
           </div>
         </div>

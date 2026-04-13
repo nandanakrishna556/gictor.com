@@ -1,76 +1,81 @@
-import { User, Copy, Film, Mic } from "lucide-react";
-
-import screenshotCustomAiActors from "@/assets/screenshot-custom-ai-actors.webp";
-import screenshotCloneYourself from "@/assets/screenshot-clone-yourself.webp";
-import screenshotRealisticBroll from "@/assets/screenshot-realistic-broll.webp";
-import screenshotKanbanView from "@/assets/screenshot-kanban-view.webp";
+import { User, Copy, Mic, Film, Globe, Users, Sparkles, Layers } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Link } from "react-router-dom";
 
 const features = [
   {
-    icon: User,
-    title: "Generate Custom AI Actors",
-    description: "Create hyper-realistic AI actors from scratch. Choose their appearance, voice, and personality to match your brand perfectly.",
-    image: screenshotCustomAiActors,
+    icon: Sparkles,
+    title: "Custom AI Actors",
+    description: "Generate hyper-realistic AI actors from scratch to match your brand perfectly.",
   },
   {
     icon: Copy,
     title: "Clone Yourself",
-    description: "Upload a photo and voice sample to create your AI twin. Scale your personal brand without ever stepping in front of a camera again.",
-    image: screenshotCloneYourself,
+    description: "Upload a photo and voice sample to create your AI twin and scale your personal brand.",
   },
   {
     icon: Mic,
-    title: "Realistic Lip-Synced Speech",
-    description: "Natural-sounding voices with precise lip-sync. Choose from 30+ languages with native accents that sound completely authentic.",
-    image: screenshotKanbanView,
+    title: "Realistic Lip-Sync",
+    description: "Natural-sounding voices with precise lip-sync that looks and sounds completely authentic.",
+  },
+  {
+    icon: User,
+    title: "AI Avatar Generator",
+    description: "Create unique AI avatars with the most realistic AI image generator available.",
+  },
+  {
+    icon: Globe,
+    title: "30+ Languages",
+    description: "Reach global audiences with multilingual voiceovers and native-sounding accents.",
+  },
+  {
+    icon: Users,
+    title: "Actor Library",
+    description: "Choose from a diverse range of realistic AI actors to suit every audience and niche.",
   },
   {
     icon: Film,
-    title: "AI-Generated B-Roll",
-    description: "Automatically generate cinematic B-roll footage to complement your talking head ads and boost engagement.",
-    image: screenshotRealisticBroll,
+    title: "AI B-Roll",
+    description: "Automatically generate cinematic B-roll footage to complement your talking head ads.",
+  },
+  {
+    icon: Layers,
+    title: "Full Pipeline",
+    description: "From script to final video, manage your entire ad creation workflow in one place.",
   },
 ];
 
 export function FeaturesSection() {
   return (
-    <section id="features" className="py-28 px-6 bg-gray-50">
+    <section id="features" className="py-24 px-6 bg-white">
       <div className="max-w-6xl mx-auto">
-        <div className="text-center mb-20">
-          <p className="text-orange-600 font-semibold text-sm mb-3 tracking-widest uppercase">
-            Powerful Features
-          </p>
-          <h2 className="text-4xl md:text-5xl lg:text-6xl font-extrabold text-gray-900 tracking-tight mb-5">
-            Everything You Need to Create
-          </h2>
-          <p className="text-xl text-gray-500 max-w-2xl mx-auto">
-            One platform. Every tool. No switching between apps.
-          </p>
+        <div className="flex flex-col md:flex-row md:items-end md:justify-between mb-14 gap-6">
+          <div>
+            <h2 className="text-[36px] md:text-[44px] font-bold text-gray-900 tracking-tight leading-tight mb-3">
+              Build winning ads with
+              <br />
+              powerful features
+            </h2>
+            <p className="text-lg text-gray-500 max-w-lg">
+              Everything you need to create talking head video ads that look real and actually convert.
+            </p>
+          </div>
+          <Button className="bg-orange-600 hover:bg-orange-700 text-white rounded-full px-7 py-3 text-[15px] font-semibold self-start md:self-auto" asChild>
+            <Link to="/signup">Start your free trial</Link>
+          </Button>
         </div>
 
-        <div className="grid md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {features.map((feature, i) => (
             <div
               key={i}
-              className="bg-white rounded-2xl overflow-hidden border border-gray-100 hover:border-gray-200 transition-all duration-300 hover:shadow-lg group"
+              className="bg-white rounded-2xl p-6 border border-gray-100 hover:border-gray-200 hover:shadow-md transition-all group"
             >
-              <div className="aspect-[16/10] bg-gray-50 overflow-hidden">
-                <img
-                  src={feature.image}
-                  alt={feature.title}
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                  loading="lazy"
-                />
+              <div className="h-11 w-11 rounded-xl bg-orange-50 flex items-center justify-center mb-5">
+                <feature.icon className="h-5 w-5 text-orange-600" />
               </div>
-              <div className="p-8">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="h-10 w-10 rounded-xl bg-orange-50 flex items-center justify-center">
-                    <feature.icon className="h-5 w-5 text-orange-600" />
-                  </div>
-                  <h3 className="text-xl font-bold text-gray-900">{feature.title}</h3>
-                </div>
-                <p className="text-base text-gray-500 leading-relaxed">{feature.description}</p>
-              </div>
+              <h3 className="text-[15px] font-bold text-gray-900 mb-1.5">{feature.title}</h3>
+              <p className="text-[14px] text-gray-500 leading-relaxed">{feature.description}</p>
             </div>
           ))}
         </div>

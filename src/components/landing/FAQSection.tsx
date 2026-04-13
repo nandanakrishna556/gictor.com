@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ChevronDown } from "lucide-react";
+import { Plus, Minus } from "lucide-react";
 
 const faqs = [
   {
@@ -20,15 +20,11 @@ const faqs = [
   },
   {
     q: "Do I need video editing experience?",
-    a: "Not at all. Gictor handles everything from script to final video. You can add B-roll and captions all within the platform. No editing software needed.",
-  },
-  {
-    q: "What platforms can I use the videos on?",
-    a: "Videos are optimized for TikTok, Instagram Reels, YouTube Shorts, Facebook Ads, and Meta Ads. You can export in any aspect ratio and resolution you need.",
+    a: "Not at all. Gictor handles everything from script to final video. No editing software needed.",
   },
   {
     q: "Is there a free trial?",
-    a: "Yes! You can create a free account and start generating videos immediately. No credit card required.",
+    a: "Yes! You can create a free account and explore the platform. No credit card required to get started.",
   },
 ];
 
@@ -36,15 +32,15 @@ export function FAQSection() {
   const [openIndex, setOpenIndex] = useState<number | null>(0);
 
   return (
-    <section id="faq" className="py-28 px-6 bg-gray-50">
+    <section id="faq" className="py-24 px-6 bg-white">
       <div className="max-w-3xl mx-auto">
-        <div className="text-center mb-20">
-          <p className="text-orange-600 font-semibold text-sm mb-3 tracking-widest uppercase">
-            FAQ
-          </p>
-          <h2 className="text-4xl md:text-5xl lg:text-6xl font-extrabold text-gray-900 tracking-tight mb-5">
-            Common Questions
+        <div className="text-center mb-14">
+          <h2 className="text-[36px] md:text-[44px] font-bold text-gray-900 tracking-tight mb-4">
+            Got questions? We've got answers
           </h2>
+          <p className="text-lg text-gray-500">
+            Don't hesitate to drop us a line if you have any questions or need help.
+          </p>
         </div>
 
         <div className="space-y-3">
@@ -55,18 +51,20 @@ export function FAQSection() {
             >
               <button
                 onClick={() => setOpenIndex(openIndex === i ? null : i)}
-                className="w-full flex items-center justify-between p-6 text-left hover:bg-gray-50 transition-colors"
+                className="w-full flex items-center justify-between p-5 text-left hover:bg-gray-50/50 transition-colors"
               >
-                <span className="text-base font-semibold text-gray-900 pr-4">{faq.q}</span>
-                <ChevronDown
-                  className={`h-5 w-5 text-gray-400 flex-shrink-0 transition-transform ${
-                    openIndex === i ? "rotate-180" : ""
-                  }`}
-                />
+                <span className="text-[15px] font-semibold text-gray-900 pr-4">{faq.q}</span>
+                <div className="w-7 h-7 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0">
+                  {openIndex === i ? (
+                    <Minus className="h-3.5 w-3.5 text-gray-500" />
+                  ) : (
+                    <Plus className="h-3.5 w-3.5 text-gray-500" />
+                  )}
+                </div>
               </button>
               {openIndex === i && (
-                <div className="px-6 pb-6 pt-0">
-                  <p className="text-base text-gray-500 leading-relaxed">{faq.a}</p>
+                <div className="px-5 pb-5 pt-0">
+                  <p className="text-[15px] text-gray-500 leading-relaxed">{faq.a}</p>
                 </div>
               )}
             </div>
