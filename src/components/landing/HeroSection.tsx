@@ -11,8 +11,18 @@ const headlines = [
 
 export function HeroSection() {
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [isAnimating, setIsAnimating] = useState(false);
   const videoRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setIsAnimating(true);
+      setTimeout(() => {
+        setCurrentIndex((prev) => (prev + 1) % headlines.length);
+        setIsAnimating(false);
+      }, 400);
+    }, 3500);
+    return () => clearInterval(interval);
+  }, []);
 
   useEffect(() => {
     const playerScript = document.createElement("script");
@@ -27,8 +37,8 @@ export function HeroSection() {
     document.head.appendChild(embedScript);
 
     return () => {
-      try { document.head.removeChild(playerScript); } catch (e) {}
-      try { document.head.removeChild(embedScript); } catch (e) {}
+      try { document.head.removeChild(playerScript); } catch (_) {}
+      try { document.head.removeChild(embedScript); } catch (_) {}
     };
   }, []);
 
@@ -41,8 +51,17 @@ export function HeroSection() {
   return (
     <section className="relative pt-44 pb-24 px-6 bg-white">
       <div className="max-w-4xl mx-auto text-center">
-        <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight text-gray-900 leading-[1.08] mb-7">
-          Clone yourself with AI
+        <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight text-gray-900 leading-[1.08] mb-7 h-[1.2em] overflow-hidden">
+          <span
+            key={currentIndex}
+            className={`inline-block transition-all duration-400 ${
+              isAnimating
+                ? "opacity-0 translate-y-6"
+                : "opacity-100 translate-y-0"
+            }`}
+          >
+            {headlines[currentIndex]}
+          </span>
         </h1>
 
         <p className="text-xl md:text-2xl text-gray-600 max-w-2xl mx-auto mb-12 leading-relaxed">
