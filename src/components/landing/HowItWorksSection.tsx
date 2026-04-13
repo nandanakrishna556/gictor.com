@@ -21,13 +21,13 @@ const steps = [
 
 export function HowItWorksSection() {
   return (
-    <section id="how-it-works" className="py-24 px-6">
+    <section id="how-it-works" className="py-28 px-6">
       <div className="max-w-6xl mx-auto bg-orange-50/60 rounded-[32px] py-20 px-6 md:px-12">
         <div className="text-center mb-16">
-          <h2 className="text-[36px] md:text-[44px] font-bold text-gray-900 tracking-tight mb-4">
+          <h2 className="text-4xl md:text-5xl font-bold text-gray-900 tracking-tight mb-5">
             Video ads in 3 steps
           </h2>
-          <p className="text-lg text-gray-500 max-w-xl mx-auto">
+          <p className="text-lg text-gray-600 max-w-xl mx-auto leading-relaxed">
             From idea to lifelike video, Gictor makes the process effortless,
             fast, and unbelievably real.
           </p>
@@ -37,20 +37,20 @@ export function HowItWorksSection() {
           {steps.map((step, i) => (
             <div
               key={i}
-              className="bg-white rounded-2xl p-7 border border-gray-100 shadow-sm"
+              className="bg-white rounded-2xl p-8 border border-gray-200 shadow-sm"
             >
-              <div className="inline-flex items-center px-3.5 py-1 rounded-full bg-orange-100 text-orange-700 text-[13px] font-semibold mb-5">
+              <div className="inline-flex items-center px-4 py-1.5 rounded-full bg-orange-100 text-orange-700 text-sm font-semibold mb-6">
                 {step.number}
               </div>
-              <h3 className="text-xl font-bold text-gray-900 mb-2">{step.title}</h3>
-              <p className="text-[15px] text-gray-500 leading-relaxed mb-6">{step.description}</p>
+              <h3 className="text-xl font-bold text-gray-900 mb-3">{step.title}</h3>
+              <p className="text-base text-gray-600 leading-relaxed mb-6">{step.description}</p>
               
               {/* PLACEHOLDER: Replace with actual screenshot/GIF */}
-              <div className="bg-gray-50 rounded-xl border border-gray-100 aspect-[4/3] flex items-center justify-center">
+              <div className="bg-gray-50 rounded-xl border border-gray-200 aspect-[4/3] flex items-center justify-center">
                 <div className="text-center text-gray-400">
                   <div className="w-14 h-14 rounded-xl bg-gray-200 mx-auto mb-3" />
-                  <p className="text-sm font-medium">Preview placeholder</p>
-                  <p className="text-xs text-gray-400 mt-1">Add screenshot or GIF here</p>
+                  <p className="text-base font-medium">Preview placeholder</p>
+                  <p className="text-sm text-gray-400 mt-1">Add screenshot or GIF here</p>
                 </div>
               </div>
             </div>

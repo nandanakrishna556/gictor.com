@@ -47,35 +47,35 @@ const features = [
 
 export function FeaturesSection() {
   return (
-    <section id="features" className="py-24 px-6 bg-white">
+    <section id="features" className="py-28 px-6 bg-white">
       <div className="max-w-6xl mx-auto">
-        <div className="flex flex-col md:flex-row md:items-end md:justify-between mb-14 gap-6">
+        <div className="flex flex-col md:flex-row md:items-end md:justify-between mb-16 gap-6">
           <div>
-            <h2 className="text-[36px] md:text-[44px] font-bold text-gray-900 tracking-tight leading-tight mb-3">
+            <h2 className="text-4xl md:text-5xl font-bold text-gray-900 tracking-tight leading-tight mb-4">
               Build winning ads with
               <br />
               powerful features
             </h2>
-            <p className="text-lg text-gray-500 max-w-lg">
+            <p className="text-lg text-gray-600 max-w-lg leading-relaxed">
               Everything you need to create talking head video ads that look real and actually convert.
             </p>
           </div>
-          <Button className="bg-orange-600 hover:bg-orange-700 text-white rounded-full px-7 py-3 text-[15px] font-semibold self-start md:self-auto" asChild>
+          <Button className="bg-orange-600 hover:bg-orange-700 text-white rounded-full px-8 py-3.5 h-auto text-base font-semibold self-start md:self-auto" asChild>
             <Link to="/signup">Start your free trial</Link>
           </Button>
         </div>
 
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-5">
           {features.map((feature, i) => (
             <div
               key={i}
-              className="bg-white rounded-2xl p-6 border border-gray-100 hover:border-gray-200 hover:shadow-md transition-all group"
+              className="bg-white rounded-2xl p-7 border border-gray-200 hover:border-gray-300 hover:shadow-md transition-all group"
             >
-              <div className="h-11 w-11 rounded-xl bg-orange-50 flex items-center justify-center mb-5">
-                <feature.icon className="h-5 w-5 text-orange-600" />
+              <div className="h-12 w-12 rounded-xl bg-orange-50 flex items-center justify-center mb-5">
+                <feature.icon className="h-6 w-6 text-orange-600" />
               </div>
-              <h3 className="text-[15px] font-bold text-gray-900 mb-1.5">{feature.title}</h3>
-              <p className="text-[14px] text-gray-500 leading-relaxed">{feature.description}</p>
+              <h3 className="text-base font-bold text-gray-900 mb-2">{feature.title}</h3>
+              <p className="text-base text-gray-600 leading-relaxed">{feature.description}</p>
             </div>
           ))}
         </div>

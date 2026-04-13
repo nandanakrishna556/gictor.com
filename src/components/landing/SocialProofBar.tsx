@@ -6,15 +6,15 @@ export function SocialProofBar() {
   ];
 
   return (
-    <section className="py-16 px-6 bg-white border-y border-gray-100">
+    <section className="py-16 px-6 bg-white border-y border-gray-200">
       <div className="max-w-5xl mx-auto">
         <div className="grid grid-cols-3 gap-8 md:gap-16">
           {stats.map((stat, i) => (
             <div key={i} className="text-center">
-              <div className="text-[36px] md:text-[48px] font-bold text-gray-900 tracking-tight leading-none mb-2">
+              <div className="text-4xl md:text-5xl font-bold text-gray-900 tracking-tight leading-none mb-2">
                 {stat.value}
               </div>
-              <div className="text-[15px] text-gray-500 font-medium">{stat.label}</div>
+              <div className="text-base text-gray-600 font-medium">{stat.label}</div>
             </div>
           ))}
         </div>

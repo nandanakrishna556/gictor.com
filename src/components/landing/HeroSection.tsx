@@ -23,35 +23,34 @@ export function HeroSection() {
   }, []);
 
   return (
-    <section className="relative pt-40 pb-20 px-6 bg-white">
+    <section className="relative pt-44 pb-24 px-6 bg-white">
       <div className="max-w-4xl mx-auto text-center">
-        <h1 className="text-[48px] md:text-[56px] lg:text-[64px] font-bold tracking-tight text-gray-900 leading-[1.1] mb-6">
+        <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight text-gray-900 leading-[1.08] mb-7">
           Create AI Talking Head Ads
           <br />
           That Actually Convert
         </h1>
 
-        <p className="text-lg md:text-xl text-gray-500 max-w-2xl mx-auto mb-10 leading-relaxed">
+        <p className="text-xl md:text-2xl text-gray-600 max-w-2xl mx-auto mb-12 leading-relaxed">
           Generate hyper-realistic talking head video ads in minutes.
           No actors, no cameras, no editing. Ready for Meta, TikTok, and YouTube.
         </p>
 
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-20">
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-24">
           <button
             onClick={() => document.getElementById("demo-video")?.scrollIntoView({ behavior: "smooth" })}
-            className="flex items-center gap-3 px-8 py-3.5 rounded-full border border-gray-200 text-[15px] font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+            className="flex items-center gap-3 px-9 py-4 rounded-full border-2 border-gray-200 text-base font-semibold text-gray-700 hover:bg-gray-50 hover:border-gray-300 transition-all"
           >
-            <Play className="h-4 w-4 text-gray-500" />
+            <Play className="h-5 w-5 text-gray-600" />
             Watch demo
           </button>
           <Button
-            size="lg"
-            className="text-[15px] px-8 py-3.5 bg-orange-600 hover:bg-orange-700 text-white rounded-full font-semibold shadow-none"
+            className="text-base px-9 py-4 h-auto bg-orange-600 hover:bg-orange-700 text-white rounded-full font-semibold shadow-none"
             asChild
           >
             <Link to="/signup">
               Start Creating Free
-              <ArrowRight className="h-4 w-4 ml-2" />
+              <ArrowRight className="h-5 w-5 ml-2" />
             </Link>
           </Button>
         </div>
@@ -61,7 +60,7 @@ export function HeroSection() {
           {[1, 2, 3, 4, 5].map((i) => (
             <div
               key={i}
-              className="w-[160px] md:w-[200px] aspect-[9/16] rounded-2xl bg-gradient-to-b from-gray-100 to-gray-50 flex items-center justify-center overflow-hidden border border-gray-200 shadow-sm flex-shrink-0"
+              className="w-[160px] md:w-[200px] aspect-[9/16] rounded-2xl bg-gradient-to-b from-gray-100 to-gray-50 flex items-center justify-center overflow-hidden border-2 border-gray-200 shadow-sm flex-shrink-0"
             >
               {/* PLACEHOLDER: Replace with actual AI video thumbnails */}
               <div className="text-center p-4">
@@ -76,7 +75,7 @@ export function HeroSection() {
         {/* VSL Video */}
         <div
           id="demo-video"
-          className="max-w-4xl mx-auto rounded-2xl overflow-hidden border border-gray-200 shadow-xl"
+          className="max-w-4xl mx-auto rounded-2xl overflow-hidden border-2 border-gray-200 shadow-xl"
           dangerouslySetInnerHTML={{
             __html: `<style>wistia-player[media-id='v3ecln3xzv']:not(:defined) { background: center / contain no-repeat url('https://fast.wistia.com/embed/medias/v3ecln3xzv/swatch'); display: block; filter: blur(5px); padding-top:56.25%; }</style><wistia-player media-id="v3ecln3xzv" aspect="1.7777777777777777"></wistia-player>`,
           }}
