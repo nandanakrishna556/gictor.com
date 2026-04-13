@@ -276,17 +276,36 @@ export default function Billing() {
                     <div className="border-t border-border pt-6">
                       <p className="text-base font-bold text-foreground mb-4 uppercase tracking-wide">What's included</p>
                       <ul className="space-y-3">
-                        {pkg.features.map((feature) => (
-                          <li key={feature} className="flex items-start gap-3">
-                            <div className={cn(
-                              "w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5",
-                              pkg.popular ? "bg-primary/15" : "bg-muted"
-                            )}>
-                              <Check className={cn("h-3.5 w-3.5", pkg.popular ? "text-primary" : "text-muted-foreground")} />
-                            </div>
-                            <span className="text-foreground text-lg">{feature}</span>
-                          </li>
-                        ))}
+                        {(() => {
+                          const features = isYearly
+                            ? [
+                                `${pkg.yearlyTotalCredits} credits per year (${pkg.yearlyFreeCredits} bonus)`,
+                                pkg.yearlyVideoTime,
+                                `${pkg.actorSlots} active AI actors`,
+                                "Credits never expire",
+                                ...(pkg.features.includes("Priority support") ? ["Priority support"] : ["All core features"]),
+                                i === 0 ? "Email support" : i === 1 ? "All Starter features" : "All Creator features",
+                              ]
+                            : [
+                                `${pkg.credits} credits per month`,
+                                pkg.monthlyVideoTime,
+                                `${pkg.actorSlots} active AI actors`,
+                                "Credits never expire",
+                                ...(pkg.features.includes("Priority support") ? ["Priority support"] : ["All core features"]),
+                                i === 0 ? "Email support" : i === 1 ? "All Starter features" : "All Creator features",
+                              ];
+                          return features.map((feature, j) => (
+                            <li key={j} className="flex items-start gap-3">
+                              <div className={cn(
+                                "w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5",
+                                pkg.popular ? "bg-primary/15" : "bg-muted"
+                              )}>
+                                <Check className={cn("h-3.5 w-3.5", pkg.popular ? "text-primary" : "text-muted-foreground")} />
+                              </div>
+                              <span className="text-foreground text-lg">{feature}</span>
+                            </li>
+                          ));
+                        })()}
                       </ul>
                     </div>
                   </div>
