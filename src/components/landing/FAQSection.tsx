@@ -35,10 +35,10 @@ export function FAQSection() {
     <section id="faq" className="py-24 px-6 bg-white">
       <div className="max-w-3xl mx-auto">
         <div className="text-center mb-14">
-          <h2 className="text-[36px] md:text-[44px] font-bold text-gray-900 tracking-tight mb-4">
+          <h2 className="text-4xl md:text-5xl font-bold text-gray-900 tracking-tight mb-5">
             Got questions? We've got answers
           </h2>
-          <p className="text-lg text-gray-500">
+          <p className="text-lg text-gray-600 leading-relaxed">
             Don't hesitate to drop us a line if you have any questions or need help.
           </p>
         </div>
@@ -47,24 +47,24 @@ export function FAQSection() {
           {faqs.map((faq, i) => (
             <div
               key={i}
-              className="bg-white rounded-xl border border-gray-100 overflow-hidden"
+              className="bg-white rounded-xl border border-gray-200 overflow-hidden"
             >
               <button
                 onClick={() => setOpenIndex(openIndex === i ? null : i)}
-                className="w-full flex items-center justify-between p-5 text-left hover:bg-gray-50/50 transition-colors"
+                className="w-full flex items-center justify-between p-6 text-left hover:bg-gray-50/50 transition-colors"
               >
-                <span className="text-[15px] font-semibold text-gray-900 pr-4">{faq.q}</span>
-                <div className="w-7 h-7 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0">
+                <span className="text-lg font-semibold text-gray-900 pr-4">{faq.q}</span>
+                <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0">
                   {openIndex === i ? (
-                    <Minus className="h-3.5 w-3.5 text-gray-500" />
+                    <Minus className="h-4 w-4 text-gray-600" />
                   ) : (
-                    <Plus className="h-3.5 w-3.5 text-gray-500" />
+                    <Plus className="h-4 w-4 text-gray-600" />
                   )}
                 </div>
               </button>
               {openIndex === i && (
-                <div className="px-5 pb-5 pt-0">
-                  <p className="text-[15px] text-gray-500 leading-relaxed">{faq.a}</p>
+                <div className="px-6 pb-6 pt-0">
+                  <p className="text-base text-gray-600 leading-relaxed">{faq.a}</p>
                 </div>
               )}
             </div>

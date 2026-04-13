@@ -125,7 +125,7 @@ export function PricingSection() {
               }`}
             >
               {plan.popular && (
-                <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-orange-600 text-white text-sm font-bold px-5 py-1 rounded-full">
+                <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-orange-600 text-white text-base font-bold px-5 py-1 rounded-full">
                   Most Popular
                 </div>
               )}
@@ -143,11 +143,7 @@ export function PricingSection() {
               </div>
 
               <Button
-                className={`w-full rounded-full py-3.5 h-auto text-base font-semibold mb-6 ${
-                  plan.popular
-                    ? "bg-orange-600 hover:bg-orange-700 text-white"
-                    : "bg-orange-600 hover:bg-orange-700 text-white"
-                }`}
+                className="w-full rounded-full py-3.5 h-auto text-base font-semibold mb-6 bg-orange-600 hover:bg-orange-700 text-white"
                 asChild
               >
                 <Link to="/signup">
@@ -156,7 +152,7 @@ export function PricingSection() {
               </Button>
 
               <div className="border-t border-gray-200 pt-6">
-                <p className="text-sm font-bold text-gray-900 mb-4 uppercase tracking-wide">What's included</p>
+                <p className="text-base font-bold text-gray-900 mb-4 uppercase tracking-wide">What's included</p>
                 <ul className="space-y-3">
                   {(isYearly ? plan.yearlyFeatures : plan.features).map((feature, j) => (
                     <li key={j} className="flex items-start gap-3">
@@ -165,7 +161,7 @@ export function PricingSection() {
                       }`}>
                         <Check className={`h-3.5 w-3.5 ${plan.popular ? "text-orange-600" : "text-gray-600"}`} />
                       </div>
-                      <span className="text-base text-gray-600">{feature}</span>
+                      <span className="text-base text-gray-700">{feature}</span>
                     </li>
                   ))}
                 </ul>

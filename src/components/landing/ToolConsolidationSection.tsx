@@ -23,7 +23,7 @@ export function ToolConsolidationSection() {
     <section className="py-28 px-6 bg-white">
       <div className="max-w-5xl mx-auto">
         <div className="text-center mb-20">
-          <p className="text-orange-600 font-bold text-sm mb-3 tracking-widest uppercase">
+          <p className="text-orange-600 font-bold text-base mb-3 tracking-widest uppercase">
             All-in-One
           </p>
           <h2 className="text-4xl md:text-5xl font-bold text-gray-900 tracking-tight mb-5">
@@ -41,7 +41,7 @@ export function ToolConsolidationSection() {
             <div className="space-y-5 mb-8">
               {tools.map((tool, i) => (
                 <div key={i} className="flex items-center justify-between">
-                  <span className="text-base text-gray-600">{tool.name}</span>
+                  <span className="text-base text-gray-700 font-medium">{tool.name}</span>
                   <span className="text-base text-gray-500 font-medium">{tool.cost}</span>
                 </div>
               ))}
@@ -64,7 +64,7 @@ export function ToolConsolidationSection() {
                   <svg className="w-5 h-5 text-orange-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                   </svg>
-                  <span className="text-base text-gray-300">{feature}</span>
+                  <span className="text-base text-gray-300 font-medium">{feature}</span>
                 </div>
               ))}
             </div>

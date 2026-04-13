@@ -18,6 +18,9 @@ import Settings from "./pages/Settings";
 import Billing from "./pages/Billing";
 import Actors from "./pages/Actors";
 import NotFound from "./pages/NotFound";
+import ServiceYouTube from "./pages/ServiceYouTube";
+import ServiceMediaBuying from "./pages/ServiceMediaBuying";
+import ServiceShortForm from "./pages/ServiceShortForm";
 
 const queryClient = new QueryClient();
 
@@ -33,6 +36,9 @@ const App = () => (
               {/* Public routes */}
               <Route path="/" element={<Landing />} />
               <Route path="/home" element={<Landing />} />
+              <Route path="/services/youtube-videos" element={<ServiceYouTube />} />
+              <Route path="/services/media-buying" element={<ServiceMediaBuying />} />
+              <Route path="/services/short-form-content" element={<ServiceShortForm />} />
               <Route path="/login" element={<Login />} />
               <Route path="/signup" element={<Signup />} />
               <Route path="/forgot-password" element={<ForgotPassword />} />
