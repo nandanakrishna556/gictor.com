@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Check, Gift } from "lucide-react";
+import { Check, Gift, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { CREDIT_PACKAGES } from "@/constants/creditPackages";
