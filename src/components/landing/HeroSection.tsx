@@ -1,9 +1,11 @@
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { ArrowRight, Play } from "lucide-react";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 
 export function HeroSection() {
+  const videoRef = useRef<HTMLDivElement>(null);
+
   useEffect(() => {
     const playerScript = document.createElement("script");
     playerScript.src = "https://fast.wistia.com/player.js";
@@ -17,9 +19,15 @@ export function HeroSection() {
     document.head.appendChild(embedScript);
 
     return () => {
-      document.head.removeChild(playerScript);
-      document.head.removeChild(embedScript);
+      try { document.head.removeChild(playerScript); } catch (e) {}
+      try { document.head.removeChild(embedScript); } catch (e) {}
     };
+  }, []);
+
+  useEffect(() => {
+    if (videoRef.current) {
+      videoRef.current.innerHTML = `<style>wistia-player[media-id='v3ecln3xzv']:not(:defined) { background: center / contain no-repeat url('https://fast.wistia.com/embed/medias/v3ecln3xzv/swatch'); display: block; filter: blur(5px); padding-top:56.25%; }</style><wistia-player media-id="v3ecln3xzv" aspect="1.7777777777777777"></wistia-player>`;
+    }
   }, []);
 
   return (
@@ -60,7 +68,6 @@ export function HeroSection() {
               key={i}
               className="w-[160px] md:w-[200px] aspect-[9/16] rounded-2xl bg-gradient-to-b from-gray-100 to-gray-50 flex items-center justify-center overflow-hidden border-2 border-gray-200 shadow-sm flex-shrink-0"
             >
-              {/* PLACEHOLDER: Replace with actual AI video thumbnails */}
               <div className="text-center p-4">
                 <div className="w-12 h-12 rounded-full bg-gray-200 mx-auto mb-3" />
                 <div className="h-2 w-16 bg-gray-200 rounded mx-auto mb-1.5" />
@@ -73,10 +80,8 @@ export function HeroSection() {
         {/* VSL Video */}
         <div
           id="demo-video"
+          ref={videoRef}
           className="max-w-4xl mx-auto rounded-2xl overflow-hidden border-2 border-gray-200 shadow-xl"
-          dangerouslySetInnerHTML={{
-            __html: `<style>wistia-player[media-id='v3ecln3xzv']:not(:defined) { background: center / contain no-repeat url('https://fast.wistia.com/embed/medias/v3ecln3xzv/swatch'); display: block; filter: blur(5px); padding-top:56.25%; }</style><wistia-player media-id="v3ecln3xzv" aspect="1.7777777777777777"></wistia-player>`,
-          }}
         />
       </div>
     </section>
