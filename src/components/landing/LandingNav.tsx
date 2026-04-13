@@ -62,7 +62,7 @@ export function LandingNav() {
             {servicesOpen && (
               <div className="absolute top-full left-1/2 -translate-x-1/2 pt-4">
                 <div className="bg-white rounded-2xl border border-gray-200 shadow-xl p-6 min-w-[520px]">
-                  <h3 className="text-xl font-bold text-gray-900 mb-1">Our Services</h3>
+                  <h3 className="font-bold text-gray-900 mb-1 text-2xl">Our Services</h3>
                   <p className="text-gray-500 mb-5 text-lg">End-to-end video production and distribution powered by AI.</p>
                   <div className="space-y-1">
                     {services.map((service) => (
@@ -76,7 +76,7 @@ export function LandingNav() {
                           <service.icon className="h-5 w-5 text-orange-600" />
                         </div>
                         <div>
-                          <span className="text-base font-bold text-gray-900 block">{service.label}</span>
+                          <span className="font-bold text-gray-900 block text-xl">{service.label}</span>
                           <span className="text-gray-500 leading-snug text-lg">{service.description}</span>
                         </div>
                       </Link>
