@@ -27,7 +27,7 @@ export function HowItWorksSection() {
           <h2 className="text-4xl md:text-5xl font-bold text-gray-900 tracking-tight mb-5">
             Video ads in 3 steps
           </h2>
-          <p className="text-lg text-gray-600 max-w-xl mx-auto leading-relaxed">
+          <p className="text-gray-600 max-w-xl mx-auto leading-relaxed text-xl">
             From idea to lifelike video, Gictor makes the process effortless,
             fast, and unbelievably real.
           </p>
@@ -39,11 +39,11 @@ export function HowItWorksSection() {
               key={i}
               className="bg-white rounded-2xl p-8 border border-gray-200 shadow-sm"
             >
-              <div className="inline-flex items-center px-4 py-1.5 rounded-full bg-orange-100 text-orange-700 text-sm font-semibold mb-6">
+              <div className="inline-flex items-center px-4 py-1.5 rounded-full bg-orange-100 text-orange-700 font-semibold mb-6 text-base">
                 {step.number}
               </div>
               <h3 className="text-xl font-bold text-gray-900 mb-3">{step.title}</h3>
-              <p className="text-base text-gray-600 leading-relaxed mb-6">{step.description}</p>
+              <p className="text-gray-600 leading-relaxed mb-6 text-lg font-medium">{step.description}</p>
               
               {/* PLACEHOLDER: Replace with actual screenshot/GIF */}
               <div className="bg-gray-50 rounded-xl border border-gray-200 aspect-[4/3] flex items-center justify-center">

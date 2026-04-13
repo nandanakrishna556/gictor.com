@@ -61,7 +61,7 @@ export function UseCasesSection() {
           <h2 className="text-4xl md:text-5xl font-bold text-gray-900 tracking-tight mb-5">
             Scale your content
           </h2>
-          <p className="text-lg text-gray-600 max-w-2xl mx-auto leading-relaxed">
+          <p className="text-gray-600 max-w-2xl mx-auto leading-relaxed text-xl">
             Get hundreds of ad creatives in minutes, not weeks, all without the hassle of hiring real creators.
           </p>
         </div>
@@ -73,7 +73,7 @@ export function UseCasesSection() {
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`flex-1 py-5 text-base font-semibold transition-colors relative ${
+                className={`flex-1 py-5 font-semibold transition-colors relative text-lg ${
                   activeTab === tab.id
                     ? "text-orange-600"
                     : "text-gray-500 hover:text-gray-700"
@@ -92,16 +92,16 @@ export function UseCasesSection() {
               <h3 className="text-3xl md:text-4xl font-bold text-gray-900 mb-5 leading-tight">
                 {active.headline}
               </h3>
-              <p className="text-base text-gray-600 leading-relaxed mb-8">
+              <p className="text-gray-600 leading-relaxed mb-8 text-lg">
                 {active.description}
               </p>
               <ul className="space-y-4 mb-8">
                 {active.bullets.map((bullet, i) => (
                   <li key={i} className="flex items-center gap-3">
                     <div className="w-6 h-6 rounded-full bg-orange-100 flex items-center justify-center flex-shrink-0">
-                      <Check className="h-3.5 w-3.5 text-orange-600" />
+                      <Check className="h-3.5 w-3.5 text-orange-600 font-semibold" />
                     </div>
-                    <span className="text-base text-gray-700 font-medium">{bullet}</span>
+                    <span className="text-gray-700 font-medium text-lg">{bullet}</span>
                   </li>
                 ))}
               </ul>
