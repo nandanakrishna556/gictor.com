@@ -1,75 +1,82 @@
 import { Check, X } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 const oldWay = [
-  "Guess which angle might work",
-  "Wait weeks for production",
-  "Find out it doesn't convert",
-  "Repeat the expensive cycle",
+  { step: "Hire UGC creators", time: "1–2 weeks" },
+  { step: "Wait for content delivery", time: "2–4 weeks" },
+  { step: "Discover it doesn't convert", time: "$$$ wasted" },
+  { step: "Start the cycle again", time: "Repeat" },
 ];
 
 const newWay = [
-  "Test 20 angles in a day",
-  "Find winners in hours, not weeks",
-  "Know what converts before you scale",
-  "Iterate and improve continuously",
+  { step: "Write or generate a script", time: "30 seconds" },
+  { step: "Pick an AI actor", time: "10 seconds" },
+  { step: "Generate your video", time: "~3 minutes" },
+  { step: "Test, iterate, and scale", time: "Same day" },
 ];
 
 export function ComparisonSection() {
   return (
-    <section id="pricing" className="py-24 px-6 bg-card/50">
+    <section className="py-24 px-6 bg-gray-50">
       <div className="max-w-5xl mx-auto">
         <div className="text-center mb-16">
-          <p className="text-primary font-semibold text-lg mb-4 tracking-wide uppercase">The Difference</p>
-          <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 tracking-tight">
-            The New Playbook
+          <p className="text-orange-600 font-semibold text-sm mb-3 tracking-widest uppercase">
+            Speed to Market
+          </p>
+          <h2 className="text-4xl md:text-5xl font-bold text-gray-900 tracking-tight mb-4">
+            Don't Wait for Samples
           </h2>
-          <p className="text-xl md:text-2xl text-muted-foreground max-w-2xl mx-auto leading-relaxed">
-            Test cheap. Scale what wins.
+          <p className="text-lg text-gray-500 max-w-xl mx-auto">
+            Start selling the moment you have an idea. No samples, no delays, no risk.
           </p>
         </div>
 
-        <div className="grid md:grid-cols-2 gap-8">
-          <Card className="border-border bg-background">
-            <CardHeader className="pb-4">
-              <CardTitle className="text-2xl text-muted-foreground font-bold">
-                The Old Way
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ul className="space-y-5">
-                {oldWay.map((item, index) => (
-                  <li key={index} className="flex items-center gap-4">
-                    <div className="h-8 w-8 rounded-full bg-destructive/10 flex items-center justify-center flex-shrink-0">
-                      <X className="h-5 w-5 text-destructive" />
+        <div className="grid md:grid-cols-2 gap-6">
+          {/* Old way */}
+          <div className="bg-white rounded-2xl p-8 border border-gray-200">
+            <h3 className="text-lg font-bold text-gray-400 mb-6">The Old Way</h3>
+            <ul className="space-y-5">
+              {oldWay.map((item, i) => (
+                <li key={i} className="flex items-center justify-between gap-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-7 h-7 rounded-full bg-red-50 flex items-center justify-center flex-shrink-0">
+                      <X className="h-4 w-4 text-red-400" />
                     </div>
-                    <span className="text-lg text-muted-foreground">{item}</span>
-                  </li>
-                ))}
-              </ul>
-            </CardContent>
-          </Card>
+                    <span className="text-sm text-gray-500">{item.step}</span>
+                  </div>
+                  <span className="text-xs text-gray-400 font-medium whitespace-nowrap">{item.time}</span>
+                </li>
+              ))}
+            </ul>
+            <div className="mt-6 pt-6 border-t border-gray-100">
+              <p className="text-sm text-gray-400">
+                Weeks of delay. Missed trends. Wasted budget.
+              </p>
+            </div>
+          </div>
 
-          <Card className="border-primary/50 bg-background shadow-primary-glow relative overflow-hidden">
-            <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent pointer-events-none" />
-            <CardHeader className="pb-4 relative">
-              <CardTitle className="text-2xl text-primary font-bold">
-                The Gictor Way
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="relative">
-              <ul className="space-y-5">
-                {newWay.map((item, index) => (
-                  <li key={index} className="flex items-center gap-4">
-                    <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-                      <Check className="h-5 w-5 text-primary" />
+          {/* New way */}
+          <div className="bg-gray-900 rounded-2xl p-8 border border-gray-800 text-white relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-orange-500/10 rounded-full blur-3xl" />
+            <h3 className="text-lg font-bold text-orange-400 mb-6 relative">With Gictor</h3>
+            <ul className="space-y-5 relative">
+              {newWay.map((item, i) => (
+                <li key={i} className="flex items-center justify-between gap-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-7 h-7 rounded-full bg-orange-500/20 flex items-center justify-center flex-shrink-0">
+                      <Check className="h-4 w-4 text-orange-400" />
                     </div>
-                    <span className="text-lg font-medium">{item}</span>
-                  </li>
-                ))}
-              </ul>
-            </CardContent>
-          </Card>
+                    <span className="text-sm text-gray-200">{item.step}</span>
+                  </div>
+                  <span className="text-xs text-orange-400 font-semibold whitespace-nowrap">{item.time}</span>
+                </li>
+              ))}
+            </ul>
+            <div className="mt-6 pt-6 border-t border-gray-700 relative">
+              <p className="text-sm text-gray-400">
+                Start selling today. Scale what works.
+              </p>
+            </div>
+          </div>
         </div>
       </div>
     </section>
