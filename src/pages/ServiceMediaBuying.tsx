@@ -81,7 +81,7 @@ export default function ServiceMediaBuying() {
               <h2 className="text-4xl md:text-5xl font-bold text-gray-900 tracking-tight mb-5">
                 Full-stack media buying
               </h2>
-              <p className="text-lg text-gray-600 max-w-xl mx-auto leading-relaxed">
+              <p className="text-gray-600 max-w-xl mx-auto leading-relaxed text-xl">
                 From creative production to campaign management, we handle every piece of the puzzle.
               </p>
             </div>
@@ -92,8 +92,8 @@ export default function ServiceMediaBuying() {
                   <div className="h-12 w-12 rounded-xl bg-orange-50 flex items-center justify-center mb-5">
                     <service.icon className="h-6 w-6 text-orange-600" />
                   </div>
-                  <h3 className="text-lg font-bold text-gray-900 mb-3">{service.title}</h3>
-                  <p className="text-base text-gray-600 leading-relaxed">{service.description}</p>
+                  <h3 className="font-bold text-gray-900 mb-3 text-xl">{service.title}</h3>
+                  <p className="text-gray-600 leading-relaxed text-lg">{service.description}</p>
                 </div>
               ))}
             </div>
