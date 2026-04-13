@@ -81,7 +81,7 @@ export default function ServiceShortForm() {
               <h2 className="text-4xl md:text-5xl font-bold text-gray-900 tracking-tight mb-5">
                 End-to-end short-form production
               </h2>
-              <p className="text-lg text-gray-600 max-w-xl mx-auto leading-relaxed">
+              <p className="text-gray-600 max-w-xl mx-auto leading-relaxed text-xl">
                 From ideation to posting, we handle every step of your short-form content strategy.
               </p>
             </div>
@@ -92,8 +92,8 @@ export default function ServiceShortForm() {
                   <div className="h-12 w-12 rounded-xl bg-orange-50 flex items-center justify-center mb-5">
                     <service.icon className="h-6 w-6 text-orange-600" />
                   </div>
-                  <h3 className="text-lg font-bold text-gray-900 mb-3">{service.title}</h3>
-                  <p className="text-base text-gray-600 leading-relaxed">{service.description}</p>
+                  <h3 className="font-bold text-gray-900 mb-3 text-xl">{service.title}</h3>
+                  <p className="text-gray-600 leading-relaxed text-lg">{service.description}</p>
                 </div>
               ))}
             </div>
@@ -108,7 +108,7 @@ export default function ServiceShortForm() {
                 <h2 className="text-4xl md:text-5xl font-bold text-gray-900 tracking-tight mb-6 leading-tight">
                   Content for every platform and format
                 </h2>
-                <p className="text-lg text-gray-600 leading-relaxed mb-8">
+                <p className="text-gray-600 leading-relaxed mb-8 text-lg">
                   We create platform-native content that feels organic, not like an ad. Built to perform on every short-form channel.
                 </p>
                 <Button className="text-base px-8 py-3.5 h-auto bg-orange-600 hover:bg-orange-700 text-white rounded-full font-semibold" asChild>
