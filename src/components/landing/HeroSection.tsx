@@ -11,6 +11,7 @@ const headlines = [
 
 export function HeroSection() {
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [isAnimating, setIsAnimating] = useState(false);
   const videoRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
