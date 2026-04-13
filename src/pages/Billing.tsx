@@ -42,6 +42,8 @@ export default function Billing() {
   useEffect(() => {
     const fetchActivePriceId = async () => {
       try {
+        const { data: sessionData } = await supabase.auth.getSession();
+        if (!sessionData?.session?.access_token) return;
         const { data } = await supabase.functions.invoke('check-subscription');
         if (data?.price_id) {
           setActivePriceId(data.price_id);
