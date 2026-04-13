@@ -19,7 +19,7 @@ export function ComparisonSection() {
     <section className="py-28 px-6 bg-gray-50">
       <div className="max-w-5xl mx-auto">
         <div className="text-center mb-20">
-          <p className="text-orange-600 font-bold text-sm mb-3 tracking-widest uppercase">
+          <p className="text-orange-600 font-bold text-base mb-3 tracking-widest uppercase">
             Speed to Market
           </p>
           <h2 className="text-4xl md:text-5xl font-bold text-gray-900 tracking-tight mb-5">
@@ -41,14 +41,14 @@ export function ComparisonSection() {
                     <div className="w-9 h-9 rounded-full bg-red-50 flex items-center justify-center flex-shrink-0">
                       <X className="h-4 w-4 text-red-400" />
                     </div>
-                    <span className="text-base text-gray-600">{item.step}</span>
+                    <span className="text-base text-gray-700 font-medium">{item.step}</span>
                   </div>
                   <span className="text-base text-gray-400 font-medium whitespace-nowrap">{item.time}</span>
                 </li>
               ))}
             </ul>
             <div className="mt-8 pt-6 border-t border-gray-200">
-              <p className="text-base text-gray-500">
+              <p className="text-base text-gray-600">
                 Weeks of delay. Missed trends. Wasted budget.
               </p>
             </div>
@@ -65,7 +65,7 @@ export function ComparisonSection() {
                     <div className="w-9 h-9 rounded-full bg-orange-500/20 flex items-center justify-center flex-shrink-0">
                       <Check className="h-4 w-4 text-orange-400" />
                     </div>
-                    <span className="text-base text-gray-200">{item.step}</span>
+                    <span className="text-base text-gray-200 font-medium">{item.step}</span>
                   </div>
                   <span className="text-base text-orange-400 font-semibold whitespace-nowrap">{item.time}</span>
                 </li>

@@ -1,15 +1,39 @@
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
-import { useState } from "react";
-import { Menu, X } from "lucide-react";
+import { useState, useRef, useEffect } from "react";
+import { Menu, X, ChevronDown } from "lucide-react";
+
+const services = [
+  { label: "YouTube Videos", href: "/services/youtube-videos", description: "Full-service YouTube ad production with AI actors" },
+  { label: "Media Buying", href: "/services/media-buying", description: "Performance-driven ad buying across all platforms" },
+  { label: "Short-form Content", href: "/services/short-form-content", description: "TikTok, Reels, and Shorts content at scale" },
+];
 
 export function LandingNav() {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [servicesOpen, setServicesOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const scrollToSection = (id: string) => {
     setMobileOpen(false);
     document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
   };
+
+  const handleMouseEnter = () => {
+    if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    setServicesOpen(true);
+  };
+
+  const handleMouseLeave = () => {
+    timeoutRef.current = setTimeout(() => setServicesOpen(false), 150);
+  };
+
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    };
+  }, []);
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 bg-white/90 backdrop-blur-lg border-b border-gray-200">
@@ -22,9 +46,38 @@ export function LandingNav() {
           <button onClick={() => scrollToSection("how-it-works")} className="text-base text-gray-700 hover:text-gray-900 transition-colors font-medium">
             Demo
           </button>
-          <button onClick={() => scrollToSection("features")} className="text-base text-gray-700 hover:text-gray-900 transition-colors font-medium">
-            Features
-          </button>
+
+          {/* Services dropdown */}
+          <div
+            ref={dropdownRef}
+            className="relative"
+            onMouseEnter={handleMouseEnter}
+            onMouseLeave={handleMouseLeave}
+          >
+            <button className="flex items-center gap-1 text-base text-gray-700 hover:text-gray-900 transition-colors font-medium">
+              Services
+              <ChevronDown className={`h-4 w-4 transition-transform duration-200 ${servicesOpen ? "rotate-180" : ""}`} />
+            </button>
+
+            {servicesOpen && (
+              <div className="absolute top-full left-1/2 -translate-x-1/2 pt-3">
+                <div className="bg-white rounded-xl border border-gray-200 shadow-lg p-2 min-w-[280px]">
+                  {services.map((service) => (
+                    <Link
+                      key={service.href}
+                      to={service.href}
+                      className="flex flex-col gap-0.5 px-4 py-3 rounded-lg hover:bg-gray-50 transition-colors"
+                      onClick={() => setServicesOpen(false)}
+                    >
+                      <span className="text-base font-semibold text-gray-900">{service.label}</span>
+                      <span className="text-sm text-gray-500">{service.description}</span>
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+
           <button onClick={() => scrollToSection("pricing")} className="text-base text-gray-700 hover:text-gray-900 transition-colors font-medium">
             Pricing
           </button>
@@ -50,7 +103,21 @@ export function LandingNav() {
       {mobileOpen && (
         <div className="md:hidden bg-white border-b border-gray-200 px-6 pb-6 pt-2 space-y-4">
           <button onClick={() => scrollToSection("how-it-works")} className="block text-base text-gray-700 hover:text-gray-900 font-medium">Demo</button>
-          <button onClick={() => scrollToSection("features")} className="block text-base text-gray-700 hover:text-gray-900 font-medium">Features</button>
+          <div>
+            <p className="text-base text-gray-700 font-medium mb-2">Services</p>
+            <div className="pl-4 space-y-2">
+              {services.map((service) => (
+                <Link
+                  key={service.href}
+                  to={service.href}
+                  className="block text-base text-gray-600 hover:text-gray-900"
+                  onClick={() => setMobileOpen(false)}
+                >
+                  {service.label}
+                </Link>
+              ))}
+            </div>
+          </div>
           <button onClick={() => scrollToSection("pricing")} className="block text-base text-gray-700 hover:text-gray-900 font-medium">Pricing</button>
           <button onClick={() => scrollToSection("faq")} className="block text-base text-gray-700 hover:text-gray-900 font-medium">FAQ</button>
           <div className="flex gap-3 pt-2">
