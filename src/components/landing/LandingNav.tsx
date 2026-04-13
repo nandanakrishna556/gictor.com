@@ -1,12 +1,12 @@
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { useState, useRef, useEffect } from "react";
-import { Menu, X, ChevronDown } from "lucide-react";
+import { Menu, X, ChevronDown, Youtube, BarChart3, Zap } from "lucide-react";
 
 const services = [
-  { label: "YouTube Videos", href: "/services/youtube-videos", description: "Full-service YouTube ad production with AI actors" },
-  { label: "Media Buying", href: "/services/media-buying", description: "Performance-driven ad buying across all platforms" },
-  { label: "Short-form Content", href: "/services/short-form-content", description: "TikTok, Reels, and Shorts content at scale" },
+  { label: "YouTube Videos", href: "/services/youtube-videos", description: "Full-service YouTube ad production with AI actors", icon: Youtube },
+  { label: "Media Buying", href: "/services/media-buying", description: "Performance-driven ad buying across all platforms", icon: BarChart3 },
+  { label: "Short-form Content", href: "/services/short-form-content", description: "TikTok, Reels, and Shorts content at scale", icon: Zap },
 ];
 
 export function LandingNav() {
