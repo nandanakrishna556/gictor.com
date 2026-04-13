@@ -89,7 +89,7 @@ export function PricingSection() {
           <h2 className="text-4xl md:text-5xl font-bold text-gray-900 tracking-tight mb-5">
             Pricing
           </h2>
-          <p className="text-lg text-gray-600 max-w-xl mx-auto leading-relaxed">
+          <p className="text-gray-600 max-w-xl mx-auto leading-relaxed text-xl">
             Whether you're just starting out or scaling, find the plan that works for you.
           </p>
 
@@ -97,7 +97,7 @@ export function PricingSection() {
           <div className="flex items-center justify-center gap-3 mt-8">
             <button
               onClick={() => setIsYearly(false)}
-              className={`px-6 py-2.5 rounded-full text-base font-semibold transition-colors ${
+              className={`px-6 py-2.5 rounded-full font-semibold transition-colors text-lg ${
                 !isYearly ? "bg-gray-900 text-white" : "bg-gray-100 text-gray-600 hover:bg-gray-200"
               }`}
             >
@@ -105,7 +105,7 @@ export function PricingSection() {
             </button>
             <button
               onClick={() => setIsYearly(true)}
-              className={`px-6 py-2.5 rounded-full text-base font-semibold transition-colors ${
+              className={`px-6 py-2.5 rounded-full font-semibold transition-colors text-lg ${
                 isYearly ? "bg-orange-600 text-white" : "bg-gray-100 text-gray-600 hover:bg-gray-200"
               }`}
             >
@@ -131,8 +131,8 @@ export function PricingSection() {
               )}
 
               <div className="mb-6">
-                <h3 className="text-xl font-bold text-gray-900 mb-1">{plan.name}</h3>
-                <p className="text-base text-gray-600">{plan.description}</p>
+                <h3 className="font-bold text-gray-900 mb-1 text-3xl">{plan.name}</h3>
+                <p className="text-gray-600 text-lg">{plan.description}</p>
               </div>
 
               <div className="mb-6">
@@ -161,7 +161,7 @@ export function PricingSection() {
                       }`}>
                         <Check className={`h-3.5 w-3.5 ${plan.popular ? "text-orange-600" : "text-gray-600"}`} />
                       </div>
-                      <span className="text-base text-gray-700">{feature}</span>
+                      <span className="text-gray-700 text-lg">{feature}</span>
                     </li>
                   ))}
                 </ul>

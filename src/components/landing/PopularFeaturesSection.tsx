@@ -28,7 +28,7 @@ export function PopularFeaturesSection() {
             <h2 className="text-4xl md:text-5xl font-bold text-gray-900 tracking-tight mb-4">
               Most popular features
             </h2>
-            <p className="text-lg text-gray-600 leading-relaxed">
+            <p className="text-gray-600 leading-relaxed text-xl">
               Check out our most popular features that help you create ads in minutes.
             </p>
           </div>
@@ -49,8 +49,8 @@ export function PopularFeaturesSection() {
               </div>
               <div className="p-7">
                 <h3 className="text-lg font-bold text-gray-900 mb-2">{feature.title}</h3>
-                <p className="text-base text-gray-600 leading-relaxed mb-4">{feature.description}</p>
-                <span className="text-base text-orange-600 font-semibold group-hover:underline cursor-pointer">
+                <p className="text-gray-600 leading-relaxed mb-4 text-lg">{feature.description}</p>
+                <span className="text-orange-600 font-semibold group-hover:underline cursor-pointer text-lg">
                   {feature.linkText} &rarr;
                 </span>
               </div>

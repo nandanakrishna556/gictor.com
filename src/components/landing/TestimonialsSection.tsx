@@ -28,7 +28,7 @@ export function TestimonialsSection() {
                   <svg className="w-8 h-8 text-orange-200 mb-3" fill="currentColor" viewBox="0 0 24 24">
                     <path d="M14.017 21v-7.391c0-5.704 3.731-9.57 8.983-10.609l.995 2.151c-2.432.917-3.995 3.638-3.995 5.849h4v10h-9.983zm-14.017 0v-7.391c0-5.704 3.748-9.57 9-10.609l.996 2.151c-2.433.917-3.996 3.638-3.996 5.849h3.983v10h-9.983z" />
                   </svg>
-                  <p className="text-base text-gray-600 leading-relaxed mb-5">
+                  <p className="text-gray-600 leading-relaxed mb-5 text-lg">
                     We went from spending $2,000 per video to generating 50 variations for a fraction of the cost. The AI actors are incredibly realistic, and our ROAS improved 3x since switching.
                   </p>
                   <p className="text-base font-bold text-gray-900">Sarah K.</p>
