@@ -34,7 +34,7 @@ export function HeroSection() {
     <section className="relative pt-44 pb-24 px-6 bg-white">
       <div className="max-w-4xl mx-auto text-center">
         <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight text-gray-900 leading-[1.08] mb-7">
-          Clone yourself with AI
+          Generate an AI Influencer
         </h1>
 
         <p className="text-xl md:text-2xl text-gray-600 max-w-2xl mx-auto mb-12 leading-relaxed">
