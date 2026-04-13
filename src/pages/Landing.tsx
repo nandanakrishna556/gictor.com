@@ -4,7 +4,6 @@ import { SocialProofBar } from "@/components/landing/SocialProofBar";
 import { HowItWorksSection } from "@/components/landing/HowItWorksSection";
 import { FeaturesSection } from "@/components/landing/FeaturesSection";
 import { UseCasesSection } from "@/components/landing/UseCasesSection";
-import { PopularFeaturesSection } from "@/components/landing/PopularFeaturesSection";
 import { TestimonialsSection } from "@/components/landing/TestimonialsSection";
 import { PricingSection } from "@/components/landing/PricingSection";
 import { FAQSection } from "@/components/landing/FAQSection";
@@ -21,7 +20,6 @@ export default function Landing() {
         <HowItWorksSection />
         <FeaturesSection />
         <UseCasesSection />
-        <PopularFeaturesSection />
         <TestimonialsSection />
         <PricingSection />
         <FAQSection />
