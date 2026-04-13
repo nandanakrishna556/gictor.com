@@ -81,7 +81,7 @@ export default function ServiceYouTube() {
               <h2 className="text-4xl md:text-5xl font-bold text-gray-900 tracking-tight mb-5">
                 Everything included in your package
               </h2>
-              <p className="text-lg text-gray-600 max-w-xl mx-auto leading-relaxed">
+              <p className="text-gray-600 max-w-xl mx-auto leading-relaxed text-xl">
                 A complete done-for-you YouTube ad production service powered by our AI technology.
               </p>
             </div>
@@ -92,8 +92,8 @@ export default function ServiceYouTube() {
                   <div className="h-12 w-12 rounded-xl bg-orange-50 flex items-center justify-center mb-5">
                     <benefit.icon className="h-6 w-6 text-orange-600" />
                   </div>
-                  <h3 className="text-lg font-bold text-gray-900 mb-3">{benefit.title}</h3>
-                  <p className="text-base text-gray-600 leading-relaxed">{benefit.description}</p>
+                  <h3 className="font-bold text-gray-900 mb-3 text-xl">{benefit.title}</h3>
+                  <p className="text-gray-600 leading-relaxed text-lg">{benefit.description}</p>
                 </div>
               ))}
             </div>
