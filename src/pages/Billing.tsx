@@ -39,7 +39,6 @@ export default function Billing() {
     }
   };
 
-  // Fetch the active Stripe price ID for accurate plan matching
   useEffect(() => {
     const fetchActivePriceId = async () => {
       try {
@@ -160,19 +159,18 @@ export default function Billing() {
               </div>
               <h1 className="text-3xl font-bold text-foreground">Select plan</h1>
               <p className="mt-2 text-muted-foreground">
-                Choose the best plan for your needs.<br />
-                No hidden fees. Cancel anytime.
+                Choose the best plan for your needs. No hidden fees. Cancel anytime.
               </p>
 
-              {/* Billing Toggle */}
-              <div className="mt-6 inline-flex items-center gap-1 rounded-full bg-muted p-1">
+              {/* Billing Toggle - matching landing page style */}
+              <div className="flex items-center justify-center gap-3 mt-6">
                 <button
                   onClick={() => setIsYearly(false)}
                   className={cn(
-                    "rounded-full px-5 py-2 text-sm font-medium transition-all",
+                    "px-6 py-2.5 rounded-full font-semibold transition-colors text-base",
                     !isYearly
-                      ? "bg-primary text-primary-foreground shadow-sm"
-                      : "text-muted-foreground hover:text-foreground"
+                      ? "bg-foreground text-background"
+                      : "bg-muted text-muted-foreground hover:bg-muted/80"
                   )}
                 >
                   Monthly
@@ -180,29 +178,20 @@ export default function Billing() {
                 <button
                   onClick={() => setIsYearly(true)}
                   className={cn(
-                    "flex items-center gap-2 rounded-full px-5 py-2 text-sm font-medium transition-all",
+                    "px-6 py-2.5 rounded-full font-semibold transition-colors text-base",
                     isYearly
-                      ? "bg-primary text-primary-foreground shadow-sm"
-                      : "text-muted-foreground hover:text-foreground"
+                      ? "bg-primary text-primary-foreground"
+                      : "bg-muted text-muted-foreground hover:bg-muted/80"
                   )}
                 >
-                  Yearly
-                  <span className={cn(
-                    "rounded-full px-2 py-0.5 text-xs font-semibold",
-                    isYearly
-                      ? "bg-primary-foreground/20 text-primary-foreground"
-                      : "bg-primary/15 text-primary"
-                  )}>
-                    Get free credits
-                  </span>
+                  Yearly (Get free credits)
                 </button>
               </div>
             </div>
 
-            {/* Pricing Cards */}
+            {/* Pricing Cards - matching landing page design */}
             <div className="grid gap-6 lg:grid-cols-3">
-              {CREDIT_PACKAGES.map((pkg) => {
-                const isPopular = pkg.popular;
+              {CREDIT_PACKAGES.map((pkg, i) => {
                 const priceId = isYearly ? pkg.yearlyPriceId : pkg.monthlyPriceId;
                 const isCurrentPlan = activePriceId === priceId;
                 const isLoading = loadingPriceId === priceId;
@@ -211,146 +200,94 @@ export default function Billing() {
                   <div
                     key={pkg.name}
                     className={cn(
-                      "relative flex flex-col rounded-2xl border bg-card transition-all duration-200",
-                      isPopular
-                        ? "border-primary shadow-lg ring-1 ring-primary/20"
-                        : isCurrentPlan
-                          ? "border-primary/50 shadow-md"
-                          : "border-border hover:border-muted-foreground/30 hover:shadow-md"
+                      "relative rounded-2xl p-8 border-2 transition-shadow",
+                      pkg.popular
+                        ? "border-primary shadow-lg ring-1 ring-primary"
+                        : "border-border shadow-sm"
                     )}
                   >
-                    {/* Badge - Only Most Popular */}
-                    {isPopular && (
-                      <div className="absolute -top-3.5 left-0 right-0 flex items-center justify-center">
-                        <span className="rounded-full bg-primary px-4 py-1.5 text-xs font-bold text-primary-foreground whitespace-nowrap shadow-sm">
-                          🔥 Most Popular
-                        </span>
+                    {pkg.popular && (
+                      <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-primary text-primary-foreground text-base font-bold px-5 py-1 rounded-full whitespace-nowrap">
+                        Most Popular
                       </div>
                     )}
-                    {/* Card Header */}
-                    <div className={cn("px-6 pt-6 pb-0", isPopular && "pt-8")}>
-                      <div>
-                        <h3 className="text-xl font-bold text-foreground">{pkg.name}</h3>
-                        <p className="mt-1.5 text-sm text-muted-foreground">{pkg.description}</p>
-                      </div>
 
-                      {/* Price */}
-                      <div className="mt-8">
-                        <div className="flex items-baseline gap-2">
-                          <span className="text-5xl font-extrabold tracking-tight text-foreground">
-                            ${isYearly ? pkg.yearlyPrice : pkg.monthlyPrice}
-                          </span>
-                          <span className="text-lg text-muted-foreground font-medium">
-                            {isYearly ? 'per year' : 'per month'}
-                          </span>
-                        </div>
-                        <p className="mt-1.5 text-sm text-muted-foreground">
-                          ${isYearly
-                            ? (pkg.yearlyPrice / pkg.yearlyBaseCredits).toFixed(2)
-                            : (pkg.monthlyPrice / pkg.credits).toFixed(2)
-                          } per credit
-                        </p>
-                      </div>
-
-                      {/* Credits - Hero element */}
-                      <div className="mt-4 rounded-xl bg-primary/5 border border-primary/10 p-4">
-                        {isYearly ? (
-                          <>
-                            <div className="flex items-center justify-between">
-                              <span className="text-lg font-semibold text-foreground">
-                                {pkg.yearlyBaseCredits} base credits
-                              </span>
-                              <span className="text-sm text-muted-foreground">/year</span>
-                            </div>
-                            <div className="mt-2 flex items-center gap-2">
-                              <span className="text-sm font-semibold text-primary">+ {pkg.yearlyFreeCredits} free credits</span>
-                            </div>
-                            <div className="mt-2 h-px bg-border" />
-                            <div className="mt-2 flex items-center justify-between">
-                              <span className="text-2xl font-bold text-foreground">
-                                {pkg.yearlyTotalCredits} total credits
-                              </span>
-                            </div>
-                            <p className="mt-1 text-sm text-muted-foreground">
-                              {pkg.yearlyVideoTime}
-                            </p>
-
-                            {/* Free credits value callout */}
-                            <div className="mt-3 flex items-start gap-3 rounded-xl bg-primary/15 border border-primary/20 px-4 py-3">
-                              <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-primary/20">
-                                <Gift className="h-4.5 w-4.5 text-primary" />
-                              </div>
-                              <div>
-                                <p className="text-[15px] font-bold text-primary">
-                                  +{pkg.yearlyFreeCredits} bonus credits free
-                                </p>
-                                <p className="mt-0.5 text-sm text-muted-foreground">
-                                  Worth <span className="font-semibold text-foreground">{pkg.yearlyFreeCreditsValue}</span> at no additional cost
-                                </p>
-                              </div>
-                            </div>
-                          </>
-                        ) : (
-                          <>
-                            <div className="flex items-center gap-2">
-                              <span className="text-2xl font-bold text-foreground">
-                                {pkg.credits} credits
-                              </span>
-                              <span className="text-sm text-muted-foreground">/mo</span>
-                            </div>
-                            <p className="mt-1 text-sm text-muted-foreground">
-                              {pkg.monthlyVideoTime}
-                            </p>
-                          </>
-                        )}
-                      </div>
-
-                      <div className="my-6 h-px bg-border" />
+                    <div className="mb-6">
+                      <h3 className="font-bold text-foreground mb-1 text-3xl">{pkg.name}</h3>
+                      <p className="text-muted-foreground text-lg">{pkg.description}</p>
                     </div>
 
-                    {/* Features */}
-                    <div className="flex-1 px-6 pb-6">
-                      <p className="mb-4 text-sm font-semibold text-foreground">What's Included</p>
-                      <ul className="space-y-3.5">
+                    <div className="mb-6">
+                      <span className="text-5xl font-bold text-foreground">
+                        ${isYearly ? pkg.yearlyPrice : pkg.monthlyPrice}
+                      </span>
+                      <span className="text-base text-muted-foreground ml-1">
+                        {isYearly ? 'per year' : 'per month'}
+                      </span>
+                    </div>
+
+                    {/* CTA Button */}
+                    <Button
+                      className={cn(
+                        "w-full rounded-full py-3.5 h-auto text-base font-semibold mb-6",
+                        isCurrentPlan
+                          ? ""
+                          : "bg-primary hover:bg-primary/90 text-primary-foreground"
+                      )}
+                      variant={isCurrentPlan ? "secondary" : "default"}
+                      onClick={() => !isCurrentPlan && handlePurchase(priceId)}
+                      disabled={isLoading || isCurrentPlan}
+                    >
+                      {isLoading ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Processing...
+                        </>
+                      ) : isCurrentPlan ? (
+                        <>
+                          <Check className="mr-2 h-4 w-4" />
+                          Current Plan
+                        </>
+                      ) : (
+                        <>
+                          {pkg.popular ? "Start free trial" : "Choose Plan"}
+                          <ArrowRight className="ml-2 h-4 w-4" />
+                        </>
+                      )}
+                    </Button>
+
+                    {/* Bonus credits gift box for yearly */}
+                    {isYearly && (
+                      <div className="flex items-start gap-3 rounded-xl bg-primary/10 border border-primary/20 px-4 py-3 mb-6">
+                        <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-primary/20">
+                          <Gift className="h-4 w-4 text-primary" />
+                        </div>
+                        <div>
+                          <p className="text-[15px] font-bold text-primary">
+                            +{pkg.yearlyFreeCredits} bonus credits free
+                          </p>
+                          <p className="mt-0.5 text-sm text-muted-foreground">
+                            Worth <span className="font-semibold text-foreground">{pkg.yearlyFreeCreditsValue}</span> at no additional cost
+                          </p>
+                        </div>
+                      </div>
+                    )}
+
+                    <div className="border-t border-border pt-6">
+                      <p className="text-base font-bold text-foreground mb-4 uppercase tracking-wide">What's included</p>
+                      <ul className="space-y-3">
                         {pkg.features.map((feature) => (
-                          <li key={feature} className="flex items-start gap-3 text-[15px] font-medium text-foreground">
-                            <div className="mt-0.5 flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full bg-primary/15">
-                              <Check className="h-3.5 w-3.5 text-primary" />
+                          <li key={feature} className="flex items-start gap-3">
+                            <div className={cn(
+                              "w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5",
+                              pkg.popular ? "bg-primary/15" : "bg-muted"
+                            )}>
+                              <Check className={cn("h-3.5 w-3.5", pkg.popular ? "text-primary" : "text-muted-foreground")} />
                             </div>
-                            {feature}
+                            <span className="text-foreground text-lg">{feature}</span>
                           </li>
                         ))}
                       </ul>
-                    </div>
-
-                    {/* CTA */}
-                    <div className="p-6 pt-0">
-                      <Button
-                        className={cn(
-                          "w-full h-12 text-base font-bold rounded-xl tracking-wide",
-                          !isCurrentPlan && !isPopular && "border-2"
-                        )}
-                        variant={isCurrentPlan ? "secondary" : isPopular ? "default" : "outline"}
-                        onClick={() => !isCurrentPlan && handlePurchase(priceId)}
-                        disabled={isLoading || isCurrentPlan}
-                      >
-                        {isLoading ? (
-                          <>
-                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                            Processing...
-                          </>
-                        ) : isCurrentPlan ? (
-                          <>
-                            <Check className="mr-2 h-4 w-4" />
-                            Current Plan
-                          </>
-                        ) : (
-                          <>
-                            Choose Plan
-                            <ArrowRight className="ml-2 h-4 w-4" />
-                          </>
-                        )}
-                      </Button>
                     </div>
                   </div>
                 );
