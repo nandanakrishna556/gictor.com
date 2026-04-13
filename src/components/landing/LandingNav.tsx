@@ -43,7 +43,7 @@ export function LandingNav() {
         </Link>
 
         <div className="hidden md:flex items-center gap-10">
-          <button onClick={() => scrollToSection("how-it-works")} className="text-base text-gray-700 hover:text-gray-900 transition-colors font-medium">
+          <button onClick={() => scrollToSection("how-it-works")} className="text-gray-700 hover:text-gray-900 transition-colors font-medium text-lg">
             Demo
           </button>
 
@@ -54,7 +54,7 @@ export function LandingNav() {
             onMouseEnter={handleMouseEnter}
             onMouseLeave={handleMouseLeave}
           >
-            <button className="flex items-center gap-1 text-base text-gray-700 hover:text-gray-900 transition-colors font-medium">
+            <button className="flex items-center gap-1 text-gray-700 hover:text-gray-900 transition-colors font-medium text-lg">
               Services
               <ChevronDown className={`h-4 w-4 transition-transform duration-200 ${servicesOpen ? "rotate-180" : ""}`} />
             </button>
@@ -87,10 +87,10 @@ export function LandingNav() {
             )}
           </div>
 
-          <button onClick={() => scrollToSection("pricing")} className="text-base text-gray-700 hover:text-gray-900 transition-colors font-medium">
+          <button onClick={() => scrollToSection("pricing")} className="text-gray-700 hover:text-gray-900 transition-colors font-medium text-lg">
             Pricing
           </button>
-          <button onClick={() => scrollToSection("faq")} className="text-base text-gray-700 hover:text-gray-900 transition-colors font-medium">
+          <button onClick={() => scrollToSection("faq")} className="text-gray-700 hover:text-gray-900 transition-colors font-medium text-lg">
             FAQ
           </button>
         </div>
