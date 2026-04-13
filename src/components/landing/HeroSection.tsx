@@ -1,9 +1,17 @@
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { ArrowRight, Play } from "lucide-react";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
+
+const headlines = [
+  "Clone yourself with AI",
+  "Generate an AI influencer",
+  "Create winning ads with AI",
+];
 
 export function HeroSection() {
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [isAnimating, setIsAnimating] = useState(false);
   const videoRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
