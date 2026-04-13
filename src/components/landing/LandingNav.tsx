@@ -99,7 +99,7 @@ export function LandingNav() {
           <Button variant="ghost" className="text-base text-gray-700 hover:text-gray-900 font-medium px-5 py-2.5" asChild>
             <Link to="/login">Log In</Link>
           </Button>
-          <Button className="text-base px-7 py-3 h-auto bg-orange-600 hover:bg-orange-700 text-white rounded-full font-semibold" asChild>
+          <Button className="px-7 py-3 h-auto bg-orange-600 hover:bg-orange-700 text-white rounded-full font-semibold text-lg" asChild>
             <Link to="/signup">Get started</Link>
           </Button>
         </div>
@@ -131,7 +131,7 @@ export function LandingNav() {
           <button onClick={() => scrollToSection("faq")} className="block text-base text-gray-700 hover:text-gray-900 font-medium">FAQ</button>
           <div className="flex gap-3 pt-2">
             <Button variant="ghost" className="text-base" asChild><Link to="/login">Log In</Link></Button>
-            <Button className="text-base bg-orange-600 hover:bg-orange-700 text-white rounded-full px-7 py-3 h-auto" asChild><Link to="/signup">Get started</Link></Button>
+            <Button className="bg-orange-600 hover:bg-orange-700 text-white rounded-full px-7 py-3 h-auto text-lg" asChild><Link to="/signup">Get started</Link></Button>
           </div>
         </div>
       )}
