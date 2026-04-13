@@ -21,7 +21,7 @@ export function FinalCTASection() {
           high-converting video ads at scale.
         </p>
 
-        <div className="flex flex-col items-center gap-5">
+        <div className="flex flex-col items-center gap-5 text-left">
           <Button
             className="text-lg px-10 py-5 h-auto bg-orange-600 text-white hover:bg-orange-700 rounded-full shadow-lg group font-semibold"
             asChild
@@ -31,7 +31,7 @@ export function FinalCTASection() {
               <ArrowRight className="h-5 w-5 ml-2 group-hover:translate-x-1 transition-transform" />
             </Link>
           </Button>
-          <span className="text-base text-gray-500">
+          <span className="text-gray-500 text-lg">
             No credit card required. Setup in 2 minutes.
           </span>
         </div>

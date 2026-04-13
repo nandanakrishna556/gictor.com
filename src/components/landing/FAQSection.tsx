@@ -38,7 +38,7 @@ export function FAQSection() {
           <h2 className="text-4xl md:text-5xl font-bold text-gray-900 tracking-tight mb-5">
             Got questions? We've got answers
           </h2>
-          <p className="text-lg text-gray-600 leading-relaxed">
+          <p className="text-gray-600 leading-relaxed text-xl">
             Don't hesitate to drop us a line if you have any questions or need help.
           </p>
         </div>
@@ -53,7 +53,7 @@ export function FAQSection() {
                 onClick={() => setOpenIndex(openIndex === i ? null : i)}
                 className="w-full flex items-center justify-between p-6 text-left hover:bg-gray-50/50 transition-colors"
               >
-                <span className="text-lg font-semibold text-gray-900 pr-4">{faq.q}</span>
+                <span className="font-semibold text-gray-900 pr-4 text-xl">{faq.q}</span>
                 <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0">
                   {openIndex === i ? (
                     <Minus className="h-4 w-4 text-gray-600" />
@@ -64,7 +64,7 @@ export function FAQSection() {
               </button>
               {openIndex === i && (
                 <div className="px-6 pb-6 pt-0">
-                  <p className="text-base text-gray-600 leading-relaxed">{faq.a}</p>
+                  <p className="text-gray-600 leading-relaxed text-lg">{faq.a}</p>
                 </div>
               )}
             </div>
