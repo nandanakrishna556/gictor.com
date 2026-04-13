@@ -23,13 +23,13 @@ export function ToolConsolidationSection() {
     <section className="py-28 px-6 bg-white">
       <div className="max-w-5xl mx-auto">
         <div className="text-center mb-20">
-          <p className="text-orange-600 font-semibold text-sm mb-3 tracking-widest uppercase">
+          <p className="text-orange-600 font-bold text-sm mb-3 tracking-widest uppercase">
             All-in-One
           </p>
-          <h2 className="text-4xl md:text-5xl lg:text-6xl font-extrabold text-gray-900 tracking-tight mb-5">
+          <h2 className="text-4xl md:text-5xl font-bold text-gray-900 tracking-tight mb-5">
             Replace Your Entire Stack
           </h2>
-          <p className="text-xl text-gray-500 max-w-2xl mx-auto">
+          <p className="text-xl text-gray-600 max-w-2xl mx-auto leading-relaxed">
             Stop paying for 6 different tools. Get everything in one platform.
           </p>
         </div>
@@ -41,13 +41,13 @@ export function ToolConsolidationSection() {
             <div className="space-y-5 mb-8">
               {tools.map((tool, i) => (
                 <div key={i} className="flex items-center justify-between">
-                  <span className="text-base text-gray-500">{tool.name}</span>
-                  <span className="text-base text-gray-400 font-medium">{tool.cost}</span>
+                  <span className="text-base text-gray-600">{tool.name}</span>
+                  <span className="text-base text-gray-500 font-medium">{tool.cost}</span>
                 </div>
               ))}
             </div>
             <div className="border-t border-gray-200 pt-5 flex items-center justify-between">
-              <span className="text-base font-bold text-gray-600">Total wasted</span>
+              <span className="text-base font-bold text-gray-700">Total wasted</span>
               <span className="text-xl font-bold text-red-500 line-through">{totalCost}/mo</span>
             </div>
           </div>
@@ -58,7 +58,7 @@ export function ToolConsolidationSection() {
             <h3 className="text-lg font-bold text-orange-400 mb-8 uppercase tracking-wide relative">
               With Gictor
             </h3>
-            <div className="space-y-4 mb-8 relative">
+            <div className="space-y-5 mb-8 relative">
               {gictorFeatures.map((feature, i) => (
                 <div key={i} className="flex items-center gap-3">
                   <svg className="w-5 h-5 text-orange-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>

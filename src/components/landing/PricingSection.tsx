@@ -83,13 +83,13 @@ export function PricingSection() {
   const [isYearly, setIsYearly] = useState(false);
 
   return (
-    <section id="pricing" className="py-24 px-6 bg-white">
+    <section id="pricing" className="py-28 px-6 bg-white">
       <div className="max-w-5xl mx-auto">
-        <div className="text-center mb-14">
-          <h2 className="text-[36px] md:text-[44px] font-bold text-gray-900 tracking-tight mb-4">
+        <div className="text-center mb-16">
+          <h2 className="text-4xl md:text-5xl font-bold text-gray-900 tracking-tight mb-5">
             Pricing
           </h2>
-          <p className="text-lg text-gray-500 max-w-xl mx-auto">
+          <p className="text-lg text-gray-600 max-w-xl mx-auto leading-relaxed">
             Whether you're just starting out or scaling, find the plan that works for you.
           </p>
 
@@ -97,7 +97,7 @@ export function PricingSection() {
           <div className="flex items-center justify-center gap-3 mt-8">
             <button
               onClick={() => setIsYearly(false)}
-              className={`px-5 py-2 rounded-full text-[14px] font-semibold transition-colors ${
+              className={`px-6 py-2.5 rounded-full text-base font-semibold transition-colors ${
                 !isYearly ? "bg-gray-900 text-white" : "bg-gray-100 text-gray-600 hover:bg-gray-200"
               }`}
             >
@@ -105,7 +105,7 @@ export function PricingSection() {
             </button>
             <button
               onClick={() => setIsYearly(true)}
-              className={`px-5 py-2 rounded-full text-[14px] font-semibold transition-colors ${
+              className={`px-6 py-2.5 rounded-full text-base font-semibold transition-colors ${
                 isYearly ? "bg-orange-600 text-white" : "bg-gray-100 text-gray-600 hover:bg-gray-200"
               }`}
             >
@@ -118,35 +118,35 @@ export function PricingSection() {
           {plans.map((plan, i) => (
             <div
               key={i}
-              className={`relative rounded-2xl p-7 border transition-shadow ${
+              className={`relative rounded-2xl p-8 border-2 transition-shadow ${
                 plan.popular
                   ? "border-orange-600 shadow-lg ring-1 ring-orange-600"
                   : "border-gray-200 shadow-sm"
               }`}
             >
               {plan.popular && (
-                <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-orange-600 text-white text-[12px] font-bold px-4 py-1 rounded-full">
+                <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-orange-600 text-white text-sm font-bold px-5 py-1 rounded-full">
                   Most Popular
                 </div>
               )}
 
               <div className="mb-6">
-                <h3 className="text-lg font-bold text-gray-900 mb-1">{plan.name}</h3>
-                <p className="text-[14px] text-gray-500">{plan.description}</p>
+                <h3 className="text-xl font-bold text-gray-900 mb-1">{plan.name}</h3>
+                <p className="text-base text-gray-600">{plan.description}</p>
               </div>
 
               <div className="mb-6">
-                <span className="text-[40px] font-bold text-gray-900">
+                <span className="text-5xl font-bold text-gray-900">
                   ${isYearly ? plan.yearlyPrice : plan.monthlyPrice}
                 </span>
-                <span className="text-[15px] text-gray-500 ml-1">per month</span>
+                <span className="text-base text-gray-500 ml-1">per month</span>
               </div>
 
               <Button
-                className={`w-full rounded-full py-3 text-[15px] font-semibold mb-6 ${
+                className={`w-full rounded-full py-3.5 h-auto text-base font-semibold mb-6 ${
                   plan.popular
                     ? "bg-orange-600 hover:bg-orange-700 text-white"
-                    : "bg-gray-900 hover:bg-gray-800 text-white"
+                    : "bg-orange-600 hover:bg-orange-700 text-white"
                 }`}
                 asChild
               >
@@ -155,17 +155,17 @@ export function PricingSection() {
                 </Link>
               </Button>
 
-              <div className="border-t border-gray-100 pt-5">
-                <p className="text-[13px] font-semibold text-gray-900 mb-4 uppercase tracking-wide">What's included</p>
+              <div className="border-t border-gray-200 pt-6">
+                <p className="text-sm font-bold text-gray-900 mb-4 uppercase tracking-wide">What's included</p>
                 <ul className="space-y-3">
                   {(isYearly ? plan.yearlyFeatures : plan.features).map((feature, j) => (
                     <li key={j} className="flex items-start gap-3">
-                      <div className={`w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 ${
+                      <div className={`w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 ${
                         plan.popular ? "bg-orange-100" : "bg-gray-100"
                       }`}>
-                        <Check className={`h-3 w-3 ${plan.popular ? "text-orange-600" : "text-gray-600"}`} />
+                        <Check className={`h-3.5 w-3.5 ${plan.popular ? "text-orange-600" : "text-gray-600"}`} />
                       </div>
-                      <span className="text-[14px] text-gray-600">{feature}</span>
+                      <span className="text-base text-gray-600">{feature}</span>
                     </li>
                   ))}
                 </ul>

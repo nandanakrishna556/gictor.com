@@ -9,7 +9,7 @@ export function FinalCTASection() {
       <div className="absolute bottom-0 right-1/4 w-64 h-64 bg-orange-500/5 rounded-full blur-3xl pointer-events-none" />
 
       <div className="max-w-3xl mx-auto text-center relative">
-        <h2 className="text-4xl md:text-5xl lg:text-6xl font-extrabold text-white mb-8 tracking-tight">
+        <h2 className="text-4xl md:text-5xl lg:text-6xl font-extrabold text-white mb-8 tracking-tight leading-tight">
           Ready to Create Your
           <br />
           <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-orange-500">
@@ -23,8 +23,7 @@ export function FinalCTASection() {
 
         <div className="flex flex-col items-center gap-5">
           <Button
-            size="lg"
-            className="text-lg px-10 py-7 bg-orange-600 text-white hover:bg-orange-700 rounded-full shadow-lg group font-semibold"
+            className="text-lg px-10 py-5 h-auto bg-orange-600 text-white hover:bg-orange-700 rounded-full shadow-lg group font-semibold"
             asChild
           >
             <Link to="/signup">
