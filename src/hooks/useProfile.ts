@@ -57,13 +57,21 @@ export function useProfile() {
 
     const checkSubscription = async () => {
       try {
+        const { data: sessionData } = await supabase.auth.getSession();
+        if (!sessionData?.session?.access_token) {
+          return;
+        }
         // Refresh session to ensure a valid JWT before calling the edge function
         const { error: refreshError } = await supabase.auth.refreshSession();
         if (refreshError) {
           console.error('Failed to refresh session:', refreshError);
           return;
         }
-        await supabase.functions.invoke('check-subscription');
+        const { error: fnError } = await supabase.functions.invoke('check-subscription');
+        if (fnError) {
+          console.error('check-subscription error:', fnError);
+          return;
+        }
         if (!cancelled) {
           queryClient.invalidateQueries({ queryKey: ['profile', user.id] });
         }
