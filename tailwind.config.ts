@@ -33,6 +33,11 @@ export default {
         'xl': ['1.125rem', { lineHeight: '1.4' }],
         '2xl': ['1.25rem', { lineHeight: '1.35' }],
         '3xl': ['1.5rem', { lineHeight: '1.3' }],
+        '4xl': ['2.25rem', { lineHeight: '1.2' }],
+        '5xl': ['3rem', { lineHeight: '1.1' }],
+        '6xl': ['3.75rem', { lineHeight: '1.05' }],
+        '7xl': ['4.5rem', { lineHeight: '1' }],
+        '8xl': ['6rem', { lineHeight: '1' }],
       },
       colors: {
         border: "hsl(var(--border))",
@@ -134,6 +139,10 @@ export default {
         "shimmer": {
           "100%": { transform: "translateX(100%)" },
         },
+        "marquee": {
+          "0%": { transform: "translateX(0%)" },
+          "100%": { transform: "translateX(-50%)" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.15s ease-out",
@@ -144,6 +153,7 @@ export default {
         "slide-in-left": "slide-in-left 0.2s ease-out",
         "slide-out-left": "slide-out-left 0.2s ease-out",
         "shimmer": "shimmer 2s infinite",
+        "marquee": "marquee 30s linear infinite",
       },
     },
   },

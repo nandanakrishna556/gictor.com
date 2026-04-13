@@ -1,70 +1,77 @@
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
+import { useState } from "react";
+import { ChevronDown } from "lucide-react";
 
 const faqs = [
   {
-    question: "What languages and accents are supported?",
-    answer:
-      "We support 29+ languages including English, Spanish, French, German, Portuguese, and more. Each language offers multiple accent options and voice styles to match your target audience perfectly.",
+    q: "How realistic do the AI actors look?",
+    a: "Our AI actors use state-of-the-art video generation technology. They feature natural lip-syncing, realistic body movements, and authentic expressions. Many of our users report that viewers can't tell the difference from real UGC content.",
   },
   {
-    question: "Can I clone myself or use my own face?",
-    answer:
-      "Absolutely. Upload a photo and voice sample to create an AI version of yourself. Use it across unlimited videos. Many founders use this to scale their personal brand without being on camera every day.",
+    q: "How long does it take to generate a video?",
+    a: "Most videos are ready in under 3 minutes. The exact time depends on video length and complexity, but our pipeline is optimized for speed without compromising quality.",
   },
   {
-    question: "What if I already have scripts?",
-    answer:
-      "You can paste your own scripts for free. Use the AI humanizer to make any script sound more natural, or skip it entirely and go straight to video generation.",
+    q: "Can I clone my own face and voice?",
+    a: "Yes! Upload a photo and a voice sample, and we'll create an AI version of you. Your clone can then deliver any script in your likeness — perfect for scaling personal brand content.",
   },
   {
-    question: "How fast is video generation?",
-    answer:
-      "Most videos are ready in 2-5 minutes. Scripts generate in seconds. You can go from idea to testable video in under 10 minutes.",
+    q: "What languages are supported?",
+    a: "We support 30+ languages with native-sounding accents and lip-syncing. This means you can localize your ads for different markets instantly without hiring translators or voice actors.",
   },
   {
-    question: "Do I own the content I create?",
-    answer:
-      "Yes. Everything you generate is yours to use commercially however you want. No licensing restrictions, no usage fees, no surprises.",
+    q: "Do I need video editing experience?",
+    a: "Not at all. Gictor handles everything from script to final video. You can add B-roll, motion graphics, and captions all within the platform — no editing software needed.",
   },
   {
-    question: "Can I use these videos anywhere?",
-    answer:
-      "Yes. Download your videos in standard formats and use them anywhere — Meta Ads, TikTok, YouTube, email campaigns, landing pages, or your website. No restrictions on where you publish.",
+    q: "What platforms can I use the videos on?",
+    a: "Videos are optimized for TikTok, Instagram Reels, YouTube Shorts, Facebook Ads, and Meta Ads. You can export in any aspect ratio and resolution you need.",
+  },
+  {
+    q: "Is there a free trial?",
+    a: "Yes! You can create a free account and start generating videos immediately. No credit card required.",
   },
 ];
 
 export function FAQSection() {
+  const [openIndex, setOpenIndex] = useState<number | null>(0);
+
   return (
-    <section id="faq" className="py-24 px-6">
+    <section id="faq" className="py-24 px-6 bg-gray-50">
       <div className="max-w-3xl mx-auto">
         <div className="text-center mb-16">
-          <p className="text-primary font-semibold text-lg mb-4 tracking-wide uppercase">FAQ</p>
-          <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight">
-            Questions & Answers
+          <p className="text-orange-600 font-semibold text-sm mb-3 tracking-widest uppercase">
+            FAQ
+          </p>
+          <h2 className="text-4xl md:text-5xl font-bold text-gray-900 tracking-tight mb-4">
+            Common Questions
           </h2>
         </div>
 
-        <Accordion type="single" collapsible className="space-y-4">
-          {faqs.map((faq, index) => (
-            <AccordionItem
-              key={index}
-              value={`item-${index}`}
-              className="bg-card border border-border rounded-xl px-6"
+        <div className="space-y-3">
+          {faqs.map((faq, i) => (
+            <div
+              key={i}
+              className="bg-white rounded-xl border border-gray-100 overflow-hidden"
             >
-              <AccordionTrigger className="text-left hover:no-underline text-lg py-5 font-semibold">
-                {faq.question}
-              </AccordionTrigger>
-              <AccordionContent className="text-base text-muted-foreground leading-relaxed pb-5">
-                {faq.answer}
-              </AccordionContent>
-            </AccordionItem>
+              <button
+                onClick={() => setOpenIndex(openIndex === i ? null : i)}
+                className="w-full flex items-center justify-between p-5 text-left hover:bg-gray-50 transition-colors"
+              >
+                <span className="text-sm font-semibold text-gray-900 pr-4">{faq.q}</span>
+                <ChevronDown
+                  className={`h-4 w-4 text-gray-400 flex-shrink-0 transition-transform ${
+                    openIndex === i ? "rotate-180" : ""
+                  }`}
+                />
+              </button>
+              {openIndex === i && (
+                <div className="px-5 pb-5 pt-0">
+                  <p className="text-sm text-gray-500 leading-relaxed">{faq.a}</p>
+                </div>
+              )}
+            </div>
           ))}
-        </Accordion>
+        </div>
       </div>
     </section>
   );

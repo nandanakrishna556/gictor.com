@@ -1,12 +1,10 @@
-import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Link } from "react-router-dom";
-import { Sparkles, Zap } from "lucide-react";
+import { ArrowRight, Play } from "lucide-react";
+import { useEffect } from "react";
 
 export function HeroSection() {
   useEffect(() => {
-    // Load Wistia scripts
     const playerScript = document.createElement("script");
     playerScript.src = "https://fast.wistia.com/player.js";
     playerScript.async = true;
@@ -25,47 +23,78 @@ export function HeroSection() {
   }, []);
 
   return (
-    <section className="pt-36 pb-24 px-6 relative overflow-hidden">
-      {/* Background gradient */}
-      <div className="absolute inset-0 bg-gradient-to-b from-primary/5 via-transparent to-transparent pointer-events-none" />
-      <div className="absolute top-20 left-1/4 w-96 h-96 bg-primary/10 rounded-full blur-3xl pointer-events-none" />
-      <div className="absolute top-40 right-1/4 w-64 h-64 bg-primary/5 rounded-full blur-3xl pointer-events-none" />
-      
-      <div className="max-w-5xl mx-auto text-center relative">
-        <Badge variant="secondary" className="mb-8 gap-2 px-4 py-2 text-sm">
-          <Zap className="h-4 w-4 text-primary" />
-          AI-Powered UGC
-        </Badge>
+    <section className="relative pt-32 pb-20 px-6 overflow-hidden bg-white">
+      {/* Subtle gradient background */}
+      <div className="absolute inset-0 bg-gradient-to-b from-orange-50/60 via-white to-white pointer-events-none" />
 
-        <h1 className="text-5xl md:text-7xl lg:text-8xl font-bold tracking-tight mb-8 leading-[1.1]">
-          Videos That Look Human.
+      <div className="max-w-5xl mx-auto text-center relative">
+        {/* Announcement badge */}
+        <div className="inline-flex items-center gap-2 bg-orange-50 text-orange-700 text-xs font-semibold px-4 py-2 rounded-full mb-8 border border-orange-100">
+          <span className="w-1.5 h-1.5 rounded-full bg-orange-500 animate-pulse" />
+          Now with AI-powered B-Roll & Motion Graphics
+        </div>
+
+        <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight text-gray-900 mb-6 leading-[1.05]">
+          Create AI UGC Videos
           <br />
-          <span className="text-primary">Made By AI.</span>
+          <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-500 to-orange-600">
+            That Actually Convert
+          </span>
         </h1>
 
-        <p className="text-xl md:text-2xl text-muted-foreground max-w-3xl mx-auto mb-12 leading-relaxed">
-          Create unlimited ad variations with AI actors that{" "}
-          <span className="text-foreground font-medium">move, speak, and convert</span> like the real thing.
+        <p className="text-lg md:text-xl text-gray-500 max-w-2xl mx-auto mb-10 leading-relaxed">
+          Write a script, pick an AI actor, generate a video. Realistic talking-head ads
+          ready for TikTok, Reels, and Meta — in under 3 minutes.
         </p>
 
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-16">
+          <Button
+            size="lg"
+            className="text-base px-8 py-6 bg-gray-900 hover:bg-gray-800 text-white rounded-full shadow-lg hover:shadow-xl transition-all group"
+            asChild
+          >
+            <Link to="/signup">
+              Start Creating Free
+              <ArrowRight className="h-4 w-4 ml-2 group-hover:translate-x-1 transition-transform" />
+            </Link>
+          </Button>
+          <button
+            onClick={() => document.getElementById("demo-video")?.scrollIntoView({ behavior: "smooth" })}
+            className="flex items-center gap-2 text-sm text-gray-500 hover:text-gray-700 transition-colors font-medium"
+          >
+            <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center">
+              <Play className="h-4 w-4 text-gray-600 ml-0.5" />
+            </div>
+            Watch Demo
+          </button>
+        </div>
+
+        {/* Video showcase grid - placeholder thumbnails for AI-generated videos */}
+        <div className="flex justify-center gap-3 md:gap-4 mb-12 overflow-hidden">
+          {[1, 2, 3, 4, 5].map((i) => (
+            <div
+              key={i}
+              className="w-[140px] md:w-[180px] aspect-[9/16] rounded-2xl bg-gradient-to-b from-gray-100 to-gray-200 flex items-center justify-center overflow-hidden border border-gray-200/60 shadow-sm"
+              style={{ transform: `rotate(${(i - 3) * 3}deg)` }}
+            >
+              {/* PLACEHOLDER: Replace with actual AI UGC video thumbnails/GIFs */}
+              <div className="text-center p-3">
+                <div className="w-12 h-12 rounded-full bg-gray-300/60 mx-auto mb-2" />
+                <div className="h-2 w-16 bg-gray-300/60 rounded mx-auto mb-1" />
+                <div className="h-2 w-10 bg-gray-300/60 rounded mx-auto" />
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* VSL Video */}
         <div
-          className="max-w-4xl mx-auto mb-12 rounded-2xl overflow-hidden border border-border shadow-elevated"
+          id="demo-video"
+          className="max-w-4xl mx-auto rounded-2xl overflow-hidden border border-gray-200 shadow-2xl"
           dangerouslySetInnerHTML={{
             __html: `<style>wistia-player[media-id='v3ecln3xzv']:not(:defined) { background: center / contain no-repeat url('https://fast.wistia.com/embed/medias/v3ecln3xzv/swatch'); display: block; filter: blur(5px); padding-top:56.25%; }</style><wistia-player media-id="v3ecln3xzv" aspect="1.7777777777777777"></wistia-player>`,
           }}
         />
-
-        <div className="flex flex-col items-center gap-4">
-          <Button size="lg" className="text-lg px-10 py-7 rounded-xl shadow-primary-glow" asChild>
-            <Link to="/signup">
-              <Sparkles className="h-5 w-5 mr-2" />
-              Create Free Account
-            </Link>
-          </Button>
-          <span className="text-muted-foreground">
-            No credit card required
-          </span>
-        </div>
       </div>
     </section>
   );
