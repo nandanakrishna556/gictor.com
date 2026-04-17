@@ -1,7 +1,9 @@
 import { createContext, useContext, useEffect, useState, useRef, ReactNode } from 'react';
 import { User, Session } from '@supabase/supabase-js';
+import { useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { syncSubscription } from '@/lib/subscription-sync';
 
 interface AuthContextType {
   user: User | null;
@@ -38,9 +40,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
   const navigate = useNavigate();
   const location = useLocation();
   const hasInitialSession = useRef(false);
+  const isSubscriptionSyncing = useRef(false);
+  const lastSubscriptionSync = useRef<{ token: string | null; timestamp: number }>({
+    token: null,
+    timestamp: 0,
+  });
 
   // Save URL whenever it changes (except auth pages)
   useEffect(() => {
@@ -92,6 +100,55 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     return () => subscription.unsubscribe();
   }, [navigate, location.pathname]);
+
+  useEffect(() => {
+    const accessToken = session?.access_token;
+
+    if (!user?.id || !accessToken) {
+      lastSubscriptionSync.current = { token: null, timestamp: 0 };
+      return;
+    }
+
+    let cancelled = false;
+
+    const runSubscriptionSync = async () => {
+      const now = Date.now();
+      const lastSync = lastSubscriptionSync.current;
+
+      if (isSubscriptionSyncing.current) return;
+      if (lastSync.token === accessToken && now - lastSync.timestamp < 5000) return;
+
+      isSubscriptionSyncing.current = true;
+      lastSubscriptionSync.current = { token: accessToken, timestamp: now };
+
+      try {
+        const { error } = await syncSubscription(accessToken);
+
+        if (error) {
+          console.error('check-subscription error:', error);
+          return;
+        }
+
+        if (!cancelled) {
+          queryClient.invalidateQueries({ queryKey: ['profile', user.id] });
+        }
+      } catch (error) {
+        console.error('Failed to check subscription:', error);
+      } finally {
+        isSubscriptionSyncing.current = false;
+      }
+    };
+
+    void runSubscriptionSync();
+    const interval = window.setInterval(() => {
+      void runSubscriptionSync();
+    }, 60000);
+
+    return () => {
+      cancelled = true;
+      window.clearInterval(interval);
+    };
+  }, [queryClient, session?.access_token, user?.id]);
 
   const signInWithGoogle = async () => {
     const { error } = await supabase.auth.signInWithOAuth({

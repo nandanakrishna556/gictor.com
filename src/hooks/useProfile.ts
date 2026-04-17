@@ -1,4 +1,3 @@
-import { useEffect } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -49,46 +48,6 @@ export function useProfile() {
       queryClient.invalidateQueries({ queryKey: ['profile', user?.id] });
     },
   });
-
-  useEffect(() => {
-    if (!user) return;
-
-    let cancelled = false;
-
-    const checkSubscription = async () => {
-      try {
-        const { data: sessionData } = await supabase.auth.getSession();
-        if (!sessionData?.session?.access_token) {
-          return;
-        }
-        // Refresh session to ensure a valid JWT before calling the edge function
-        const { error: refreshError } = await supabase.auth.refreshSession();
-        if (refreshError) {
-          console.error('Failed to refresh session:', refreshError);
-          return;
-        }
-        const { error: fnError } = await supabase.functions.invoke('check-subscription');
-        if (fnError) {
-          console.error('check-subscription error:', fnError);
-          return;
-        }
-        if (!cancelled) {
-          queryClient.invalidateQueries({ queryKey: ['profile', user.id] });
-        }
-      } catch (e) {
-        console.error('Failed to check subscription:', e);
-      }
-    };
-
-    const timeout = setTimeout(checkSubscription, 2000);
-    const interval = setInterval(checkSubscription, 60000);
-
-    return () => {
-      cancelled = true;
-      clearTimeout(timeout);
-      clearInterval(interval);
-    };
-  }, [user, queryClient]);
 
   const refetch = () => {
     queryClient.invalidateQueries({ queryKey: ['profile', user?.id] });
