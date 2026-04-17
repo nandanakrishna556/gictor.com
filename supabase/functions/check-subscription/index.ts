@@ -37,7 +37,13 @@ serve(async (req) => {
     if (!stripeKey) throw new Error("STRIPE_SECRET_KEY is not set");
 
     const authHeader = req.headers.get("Authorization");
-    if (!authHeader) throw new Error("No authorization header provided");
+    if (!authHeader?.startsWith("Bearer ")) {
+      logStep("Unauthorized request", { reason: "missing or invalid authorization header" });
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 401,
+      });
+    }
 
     // Use anon key client with user's auth header for JWT validation
     const supabaseAuth = createClient(
@@ -48,11 +54,23 @@ serve(async (req) => {
 
     const token = authHeader.replace("Bearer ", "");
     const { data: claimsData, error: claimsError } = await supabaseAuth.auth.getClaims(token);
-    if (claimsError || !claimsData?.claims) throw new Error(`Authentication error: ${claimsError?.message || "invalid claims"}`);
+    if (claimsError || !claimsData?.claims) {
+      logStep("Authentication failed", { message: claimsError?.message || "invalid claims" });
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 401,
+      });
+    }
     
     const userId = claimsData.claims.sub as string;
     const email = claimsData.claims.email as string;
-    if (!userId || !email) throw new Error("User not authenticated or email not available");
+    if (!userId || !email) {
+      logStep("Authentication failed", { reason: "missing required claims" });
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 401,
+      });
+    }
     logStep("User authenticated", { userId, email });
 
     const { data: profileData, error: profileError } = await supabaseAdmin
@@ -110,7 +128,8 @@ serve(async (req) => {
 
     logStep("Active subscription found", { productId, plan, priceId, subscriptionEnd });
 
-    await supabaseAdmin.from("profiles").update({ plan }).eq("id", userId);
+    const { error: updateError } = await supabaseAdmin.from("profiles").update({ plan }).eq("id", userId);
+    if (updateError) throw new Error(`Failed to update profile plan: ${updateError.message}`);
 
     return new Response(JSON.stringify({
       subscribed: true,

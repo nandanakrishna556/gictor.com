@@ -9,6 +9,7 @@ import { useProfile } from '@/hooks/useProfile';
 import { toast } from 'sonner';
 import { CREDIT_PACKAGES } from '@/constants/creditPackages';
 import { cn } from '@/lib/utils';
+import { syncSubscription } from '@/lib/subscription-sync';
 
 export default function Billing() {
   const { profile, refetch: refetchProfile } = useProfile();
@@ -43,8 +44,12 @@ export default function Billing() {
     const fetchActivePriceId = async () => {
       try {
         const { data: sessionData } = await supabase.auth.getSession();
-        if (!sessionData?.session?.access_token) return;
-        const { data } = await supabase.functions.invoke('check-subscription');
+        const accessToken = sessionData?.session?.access_token;
+        if (!accessToken) return;
+
+        const { data, error } = await syncSubscription(accessToken);
+        if (error) throw error;
+
         if (data?.price_id) {
           setActivePriceId(data.price_id);
         }
