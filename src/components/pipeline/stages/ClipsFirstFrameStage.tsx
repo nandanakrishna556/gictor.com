@@ -217,8 +217,7 @@ export default function BRollFirstFrameStage({ pipelineId, onComplete }: BRollFi
             <Textarea
               value={prompt}
               onChange={(e) => setPrompt(e.target.value)}
-              placeholder={isEditing ? "Describe the changes you want..." : "Describe the B-Roll scene you want to generate..."}
-              className="min-h-32 rounded-xl resize-none"
+              className="min-h-48 rounded-xl resize-none"
             />
           </div>
         </>
