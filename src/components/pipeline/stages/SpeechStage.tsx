@@ -393,8 +393,7 @@ export default function SpeechStage({ pipelineId, onContinue }: SpeechStageProps
               <Textarea
                 value={script}
                 onChange={(e) => handleScriptChange(e.target.value)}
-                placeholder="Enter the text you want to convert to speech..."
-                className="min-h-[200px] resize-none"
+                className="min-h-[280px] resize-none"
               />
               {characterCount < MIN_CHARACTERS && characterCount > 0 && (
                 <p className="text-xs text-muted-foreground">Minimum {MIN_CHARACTERS} characters required</p>

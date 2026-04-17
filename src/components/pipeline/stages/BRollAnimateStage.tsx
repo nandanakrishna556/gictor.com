@@ -575,12 +575,8 @@ export default function BRollAnimateStage({ pipelineId, onComplete }: BRollAnima
                     markUserInteracted();
                     setPrompt(e.target.value);
                   }}
-                  placeholder="Describe the motion you want (e.g., 'gentle camera pan across the scene')"
-                  rows={3}
+                  className="min-h-48 resize-none"
                 />
-                <p className="text-xs text-muted-foreground">
-                  AI will enhance your prompt or analyze the images if left empty
-                </p>
               </div>
 
         </div>
