@@ -216,9 +216,16 @@ export default function SeedanceModal({
 
   const hasOutput = file?.generation_status === 'completed' && !!file?.download_url;
 
+  // Reset hydration flag when modal closes so reopening rehydrates fresh state
+  useEffect(() => {
+    if (!open) {
+      fileLoadedRef.current = false;
+    }
+  }, [open]);
+
   // Hydrate from file row
   useEffect(() => {
-    if (file && !fileLoadedRef.current) {
+    if (open && file && !fileLoadedRef.current) {
       fileLoadedRef.current = true;
       setName(file.name);
       setDisplayStatus(file.status || initialStatusRef.current || 'draft');
@@ -246,7 +253,7 @@ export default function SeedanceModal({
         setIsGenerating(true);
       }
     }
-  }, [file]);
+  }, [open, file]);
 
   // Detect generation completion
   useEffect(() => {
@@ -945,9 +952,9 @@ export default function SeedanceModal({
                 </div>
 
                 {/* Aspect ratio + Video duration in same row */}
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-2">
-                    <Label>Aspect ratio</Label>
+                    <Label className="text-sm font-medium">Aspect Ratio</Label>
                     <Select
                       value={aspectRatio}
                       onValueChange={(v) => {
@@ -955,37 +962,34 @@ export default function SeedanceModal({
                         markDirty();
                       }}
                     >
-                      <SelectTrigger className="rounded-xl">
+                      <SelectTrigger className="w-full h-9">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="9:16">9:16 (Portrait)</SelectItem>
-                        <SelectItem value="16:9">16:9 (Landscape)</SelectItem>
+                        <SelectItem value="9:16">9:16 (Vertical)</SelectItem>
+                        <SelectItem value="16:9">16:9 (Horizontal)</SelectItem>
                         <SelectItem value="1:1">1:1 (Square)</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
 
                   <div className="space-y-2">
-                    <Label>Video duration</Label>
-                    <div className="flex rounded-xl border border-border bg-secondary/50 p-1">
+                    <Label className="text-sm font-medium">Video Duration</Label>
+                    <div className="flex gap-1">
                       {([10, 15] as const).map((opt) => (
-                        <button
-                          type="button"
+                        <Button
                           key={opt}
+                          type="button"
+                          variant={duration === opt ? 'default' : 'outline'}
+                          size="sm"
+                          className="flex-1 h-9"
                           onClick={() => {
                             setDuration(opt);
                             markDirty();
                           }}
-                          className={cn(
-                            'flex-1 rounded-lg py-1.5 text-sm font-medium transition-all duration-200',
-                            duration === opt
-                              ? 'bg-background text-foreground shadow-sm'
-                              : 'text-muted-foreground hover:text-foreground',
-                          )}
                         >
                           {opt}s
-                        </button>
+                        </Button>
                       ))}
                     </div>
                   </div>
