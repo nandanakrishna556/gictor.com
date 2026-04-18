@@ -1318,6 +1318,16 @@ function FileCard({
               </div>
             );
           }
+
+          if (file.file_type === 'seedance') {
+            return (
+              <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-primary/5 flex items-center justify-center">
+                <div className="h-16 w-16 rounded-full bg-primary/20 flex items-center justify-center">
+                  <FileTypeIcon fileType="seedance" size="lg" className="h-8 w-8 text-primary" />
+                </div>
+              </div>
+            );
+          }
           
           return (
             <div className="absolute inset-0 bg-gradient-to-br from-slate-500/10 to-gray-500/10 flex items-center justify-center">
@@ -1774,6 +1784,16 @@ function KanbanCard({
               <div className="absolute inset-0 bg-gradient-to-br from-rose-500/10 to-pink-500/10 flex items-center justify-center">
                 <div className="h-16 w-16 rounded-full bg-rose-500/20 flex items-center justify-center">
                   <FileTypeIcon fileType="b_roll" size="lg" className="h-8 w-8 text-rose-500" />
+                </div>
+              </div>
+            );
+          }
+
+          if (file?.file_type === 'seedance') {
+            return (
+              <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-primary/5 flex items-center justify-center">
+                <div className="h-16 w-16 rounded-full bg-primary/20 flex items-center justify-center">
+                  <FileTypeIcon fileType="seedance" size="lg" className="h-8 w-8 text-primary" />
                 </div>
               </div>
             );
