@@ -244,20 +244,27 @@ export default function SeedanceModal({
 
       const params = file.generation_params as Record<string, unknown> | null;
       if (params) {
-        if (params.actor_id) setActorId(params.actor_id as string);
-        if (params.actor_snapshot) setActorSnapshot(params.actor_snapshot as typeof actorSnapshot);
-        if (params.first_frame_url) setFirstFrameUrl(params.first_frame_url as string);
-        if (params.last_frame_url) setLastFrameUrl(params.last_frame_url as string);
-        if (Array.isArray(params.reference_images))
-          setReferenceImages(params.reference_images as string[]);
-        if (Array.isArray(params.reference_videos))
-          setReferenceVideos(params.reference_videos as UploadedVideo[]);
-        if (Array.isArray(params.reference_audios))
-          setReferenceAudios(params.reference_audios as UploadedAudio[]);
-        if (params.aspect_ratio) setAspectRatio(params.aspect_ratio as typeof aspectRatio);
-        if (params.duration === 15 || params.duration === 10)
-          setDuration(params.duration as 10 | 15);
-        if (params.prompt) setPrompt(params.prompt as string);
+        setActorId((params.actor_id as string) || null);
+        setActorSnapshot((params.actor_snapshot as typeof actorSnapshot) || null);
+        setFirstFrameUrl((params.first_frame_url as string) || undefined);
+        setLastFrameUrl((params.last_frame_url as string) || undefined);
+        setReferenceImages(Array.isArray(params.reference_images) ? (params.reference_images as string[]) : []);
+        setReferenceVideos(Array.isArray(params.reference_videos) ? (params.reference_videos as UploadedVideo[]) : []);
+        setReferenceAudios(Array.isArray(params.reference_audios) ? (params.reference_audios as UploadedAudio[]) : []);
+        setAspectRatio((params.aspect_ratio as typeof aspectRatio) || '9:16');
+        setDuration(params.duration === 15 ? 15 : 10);
+        setPrompt((params.prompt as string) || '');
+      } else {
+        setActorId(null);
+        setActorSnapshot(null);
+        setFirstFrameUrl(undefined);
+        setLastFrameUrl(undefined);
+        setReferenceImages([]);
+        setReferenceVideos([]);
+        setReferenceAudios([]);
+        setAspectRatio('9:16');
+        setDuration(10);
+        setPrompt('');
       }
 
       if (file.generation_status === 'processing') {
@@ -308,39 +315,34 @@ export default function SeedanceModal({
     ],
   );
 
-  // Auto-save
-  const triggerAutoSave = useCallback(() => {
-    if (!fileId || !hasUnsavedChanges) return;
+  const syncDraftToCache = useCallback(() => {
+    if (!fileId || !fileLoadedRef.current) return;
 
-    if (autoSaveTimeoutRef.current) clearTimeout(autoSaveTimeoutRef.current);
+    const draftData = {
+      name,
+      status: displayStatus,
+      tags: selectedTags,
+      project_id: currentProjectId,
+      folder_id: currentFolderId || null,
+      generation_params: buildParams(),
+    };
 
-    autoSaveTimeoutRef.current = setTimeout(async () => {
-      try {
-        setSaveStatus('saving');
-        await supabase
-          .from('files')
-          .update({
-            name,
-            status: displayStatus,
-            tags: selectedTags,
-            project_id: currentProjectId,
-            folder_id: currentFolderId || null,
-            generation_params: buildParams() as never,
-          })
-          .eq('id', fileId);
+    queryClient.setQueryData(['file', fileId], (current: any) =>
+      current ? { ...current, ...draftData } : current,
+    );
 
-        setHasUnsavedChanges(false);
-        setSaveStatus('saved');
-        setTimeout(() => setSaveStatus('idle'), 2000);
-        queryClient.invalidateQueries({ queryKey: ['files', currentProjectId] });
-      } catch (error) {
-        console.error('Auto-save error:', error);
-        setSaveStatus('idle');
-      }
-    }, 2000);
+    const cachedFileLists = queryClient.getQueriesData<any[]>({ queryKey: ['files'] });
+    for (const [queryKey, cachedList] of cachedFileLists) {
+      if (!Array.isArray(cachedList)) continue;
+      if (!cachedList.some((item) => item?.id === fileId)) continue;
+
+      queryClient.setQueryData(
+        queryKey,
+        cachedList.map((item) => (item?.id === fileId ? { ...item, ...draftData } : item)),
+      );
+    }
   }, [
     fileId,
-    hasUnsavedChanges,
     name,
     displayStatus,
     selectedTags,
@@ -350,10 +352,80 @@ export default function SeedanceModal({
     queryClient,
   ]);
 
+  const persistDraft = useCallback(
+    async (options?: { silent?: boolean }) => {
+      if (!fileId || !fileLoadedRef.current) return;
+
+      if (autoSaveTimeoutRef.current) {
+        clearTimeout(autoSaveTimeoutRef.current);
+        autoSaveTimeoutRef.current = null;
+      }
+
+      syncDraftToCache();
+
+      if (!options?.silent) {
+        setSaveStatus('saving');
+      }
+
+      const { error } = await supabase
+        .from('files')
+        .update({
+          name,
+          status: displayStatus,
+          tags: selectedTags,
+          project_id: currentProjectId,
+          folder_id: currentFolderId || null,
+          generation_params: buildParams() as never,
+        })
+        .eq('id', fileId);
+
+      if (error) throw error;
+
+      if (!options?.silent) {
+        setSaveStatus('saved');
+        setTimeout(() => setSaveStatus('idle'), 2000);
+      }
+
+      setHasUnsavedChanges(false);
+      queryClient.invalidateQueries({ queryKey: ['files', currentProjectId] });
+      queryClient.invalidateQueries({ queryKey: ['file', fileId] });
+    },
+    [
+      fileId,
+      name,
+      displayStatus,
+      selectedTags,
+      currentProjectId,
+      currentFolderId,
+      buildParams,
+      queryClient,
+      syncDraftToCache,
+    ],
+  );
+
+  // Keep local query cache in sync for instant reopen
+  useEffect(() => {
+    syncDraftToCache();
+  }, [syncDraftToCache]);
+
+  // Auto-save
+  const triggerAutoSave = useCallback(() => {
+    if (!fileId || !hasUnsavedChanges || !fileLoadedRef.current) return;
+
+    if (autoSaveTimeoutRef.current) clearTimeout(autoSaveTimeoutRef.current);
+
+    autoSaveTimeoutRef.current = setTimeout(() => {
+      void persistDraft();
+    }, 800);
+  }, [fileId, hasUnsavedChanges, persistDraft]);
+
   useEffect(() => {
     if (hasUnsavedChanges && fileLoadedRef.current) triggerAutoSave();
     return () => {
-      if (autoSaveTimeoutRef.current) clearTimeout(autoSaveTimeoutRef.current);
+      if (autoSaveTimeoutRef.current) {
+        clearTimeout(autoSaveTimeoutRef.current);
+        autoSaveTimeoutRef.current = null;
+      }
     };
   }, [hasUnsavedChanges, triggerAutoSave]);
 
@@ -587,30 +659,25 @@ export default function SeedanceModal({
     markDirty();
   };
 
-  const handleClose = () => {
-    if (hasUnsavedChanges) setShowUnsavedWarning(true);
-    else onClose();
+  const handleClose = async () => {
+    try {
+      if (hasUnsavedChanges) {
+        await persistDraft();
+      }
+    } catch (error) {
+      console.error('Close save error:', error);
+    } finally {
+      setShowUnsavedWarning(false);
+      onClose();
+    }
   };
 
   const handleSaveAndClose = async () => {
     try {
-      setSaveStatus('saving');
-      await supabase
-        .from('files')
-        .update({
-          name,
-          status: displayStatus,
-          tags: selectedTags,
-          project_id: currentProjectId,
-          folder_id: currentFolderId || null,
-          generation_params: buildParams() as never,
-        })
-        .eq('id', fileId);
-      queryClient.invalidateQueries({ queryKey: ['files', currentProjectId] });
+      await persistDraft();
     } catch {
       // ignore
     } finally {
-      setHasUnsavedChanges(false);
       setShowUnsavedWarning(false);
       onClose();
     }
