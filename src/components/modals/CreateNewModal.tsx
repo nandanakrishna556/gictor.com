@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react';
-import { FolderPlus, X, Loader2, CircleUser, Clapperboard } from 'lucide-react';
+import { FolderPlus, X, Loader2, CircleUser, Clapperboard, Wand2 } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
 import { v4 as uuidv4 } from 'uuid';
 import {
@@ -16,6 +16,7 @@ import SpeechModal from '@/components/modals/SpeechModal';
 import AnimateModal from '@/components/modals/AnimateModal';
 import FrameModal from '@/components/modals/FrameModal';
 import ScriptModal from '@/components/modals/ScriptModal';
+import SeedanceModal from '@/components/modals/SeedanceModal';
 import { usePipeline } from '@/hooks/usePipeline';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -49,6 +50,13 @@ const createItems = [
     icon: FolderPlus,
     title: 'Folder',
     description: 'Organize your content',
+  },
+  {
+    id: 'seedance' as const,
+    type: 'element' as const,
+    icon: Wand2,
+    title: 'Seedance 2.0',
+    description: 'AI video with references',
   },
   {
     id: 'talking_head' as const,
