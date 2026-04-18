@@ -186,7 +186,7 @@ export default function SeedanceModal({
   // Generation state
   const [isGenerating, setIsGenerating] = useState(false);
 
-  // Fetch file data
+  // Fetch file data — seed initialData from any cached files list for instant hydration
   const { data: file } = useQuery({
     queryKey: ['file', fileId],
     queryFn: async () => {
@@ -200,6 +200,17 @@ export default function SeedanceModal({
     },
     enabled: !!fileId,
     refetchInterval: isGenerating ? 2000 : false,
+    staleTime: 30_000,
+    initialData: () => {
+      const caches = queryClient.getQueriesData<any[]>({ queryKey: ['files', projectId] });
+      for (const [, list] of caches) {
+        if (Array.isArray(list)) {
+          const match = list.find((f) => f?.id === fileId);
+          if (match) return match;
+        }
+      }
+      return undefined;
+    },
   });
 
   const currentStatusOption =
