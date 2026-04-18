@@ -103,6 +103,7 @@ export default function CreateNewModal({
   const [animateModalOpen, setAnimateModalOpen] = useState(false);
   const [frameModalOpen, setFrameModalOpen] = useState(false);
   const [scriptModalOpen, setScriptModalOpen] = useState(false);
+  const [seedanceModalOpen, setSeedanceModalOpen] = useState(false);
   const [createdPipelineId, setCreatedPipelineId] = useState<string | null>(null);
   const [createdFileId, setCreatedFileId] = useState<string | null>(null);
   const [isCreating, setIsCreating] = useState(false);
