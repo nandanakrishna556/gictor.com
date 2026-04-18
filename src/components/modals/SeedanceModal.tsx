@@ -307,7 +307,7 @@ export default function SeedanceModal({
             tags: selectedTags,
             project_id: currentProjectId,
             folder_id: currentFolderId || null,
-            generation_params: buildParams(),
+            generation_params: buildParams() as never,
           })
           .eq('id', fileId);
 
@@ -486,7 +486,7 @@ export default function SeedanceModal({
           generation_status: 'processing',
           generation_started_at: new Date().toISOString(),
           progress: 0,
-          generation_params: params,
+          generation_params: params as never,
         })
         .eq('id', fileId);
 
@@ -585,7 +585,7 @@ export default function SeedanceModal({
           tags: selectedTags,
           project_id: currentProjectId,
           folder_id: currentFolderId || null,
-          generation_params: buildParams(),
+          generation_params: buildParams() as never,
         })
         .eq('id', fileId);
       queryClient.invalidateQueries({ queryKey: ['files', currentProjectId] });
