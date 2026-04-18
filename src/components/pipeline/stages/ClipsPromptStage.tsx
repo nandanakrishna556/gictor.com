@@ -148,8 +148,12 @@ export default function BRollPromptStage({ pipelineId, onContinue, stageNavigati
         <Textarea
           value={motionPrompt}
           onChange={(e) => setMotionPrompt(e.target.value)}
-          className="min-h-48 rounded-xl resize-none"
+          placeholder="Describe how the scene should animate. E.g., 'Gentle waves rolling onto the beach, birds flying in the distance, clouds slowly drifting across the sky'"
+          className="min-h-32 rounded-xl resize-none"
         />
+        <p className="text-xs text-muted-foreground">
+          Describe the motion and animation you want in your B-Roll video
+        </p>
       </div>
 
       {/* Duration */}

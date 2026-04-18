@@ -509,7 +509,15 @@ export default function FirstFrameStage({ pipelineId, onContinue }: FirstFrameSt
                 <Textarea
                   value={prompt}
                   onChange={(e) => setPrompt(e.target.value)}
-                  className="min-h-48 resize-none"
+                  placeholder={
+                    frameStyle === 'talking_head' 
+                      ? "Describe the person, their expression, clothing, and setting (looking at camera)..."
+                      : frameStyle === 'broll'
+                        ? "Describe the scene, environment, and visual elements..."
+                        : "Describe the background: colors, gradients, patterns, abstract shapes..."
+                  }
+                  rows={3}
+                  className="resize-none"
                 />
                 {hasOutput && !isGenerating && (
                   <p className="text-xs text-muted-foreground">Describe what you'd like to change</p>

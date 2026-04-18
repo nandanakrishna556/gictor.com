@@ -623,7 +623,12 @@ export default function BRollLastFrameStage({ pipelineId, onComplete }: BRollLas
                 markUserInteracted();
                 setPrompt(e.target.value);
               }}
-              className="min-h-48 rounded-xl resize-none"
+              placeholder={
+                style === 'broll'
+                  ? "Describe the action, scene, and environment (person will be captured mid-action)..."
+                  : "Describe the person, their expression, clothing, and setting (looking at camera)..."
+              }
+              className="min-h-24 rounded-xl resize-none"
             />
           </div>
     </div>
