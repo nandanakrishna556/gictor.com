@@ -20,6 +20,7 @@ import SpeechModal from '@/components/modals/SpeechModal';
 import AnimateModal from '@/components/modals/AnimateModal';
 import FrameModal from '@/components/modals/FrameModal';
 import ScriptModal from '@/components/modals/ScriptModal';
+import SeedanceModal from '@/components/modals/SeedanceModal';
 import { useFiles, Folder, File } from '@/hooks/useFiles';
 import { useFileRealtime } from '@/hooks/useFileRealtime';
 import { usePipelines, Pipeline, PipelineStage, DEFAULT_STAGES } from '@/hooks/usePipelines';
@@ -81,6 +82,10 @@ export default function ProjectDetail() {
   // Script modal state
   const [scriptModalOpen, setScriptModalOpen] = useState(false);
   const [openScriptFileId, setOpenScriptFileId] = useState<string | null>(null);
+
+  // Seedance modal state
+  const [seedanceModalOpen, setSeedanceModalOpen] = useState(false);
+  const [openSeedanceFileId, setOpenSeedanceFileId] = useState<string | null>(null);
 
   // Fetch project details
   const { data: project } = useQuery({
@@ -361,6 +366,10 @@ export default function ProjectDetail() {
       // Open Script modal
       setOpenScriptFileId(file.id);
       setScriptModalOpen(true);
+    } else if (file.file_type === 'seedance') {
+      // Open Seedance modal
+      setOpenSeedanceFileId(file.id);
+      setSeedanceModalOpen(true);
     } else if (file.file_type === 'clips' || file.file_type === 'b_roll') {
       // Extract pipeline_id from generation_params for Clips
       const params = file.generation_params as { pipeline_id?: string } | null;
@@ -747,6 +756,24 @@ export default function ProjectDetail() {
             setOpenScriptFileId(null);
           }}
           fileId={openScriptFileId}
+          projectId={projectId}
+          folderId={folderId}
+          onSuccess={() => {
+            // Refresh files after save
+          }}
+          statusOptions={currentStatusOptions}
+        />
+      )}
+
+      {/* Seedance Modal */}
+      {openSeedanceFileId && (
+        <SeedanceModal
+          open={seedanceModalOpen}
+          onClose={() => {
+            setSeedanceModalOpen(false);
+            setOpenSeedanceFileId(null);
+          }}
+          fileId={openSeedanceFileId}
           projectId={projectId}
           folderId={folderId}
           onSuccess={() => {
