@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react';
-import { FolderPlus, X, Loader2, CircleUser, Clapperboard } from 'lucide-react';
+import { FolderPlus, X, Loader2, CircleUser, Clapperboard, Wand2 } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
 import { v4 as uuidv4 } from 'uuid';
 import {
@@ -16,6 +16,7 @@ import SpeechModal from '@/components/modals/SpeechModal';
 import AnimateModal from '@/components/modals/AnimateModal';
 import FrameModal from '@/components/modals/FrameModal';
 import ScriptModal from '@/components/modals/ScriptModal';
+import SeedanceModal from '@/components/modals/SeedanceModal';
 import { usePipeline } from '@/hooks/usePipeline';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -49,6 +50,13 @@ const createItems = [
     icon: FolderPlus,
     title: 'Folder',
     description: 'Organize your content',
+  },
+  {
+    id: 'seedance' as const,
+    type: 'element' as const,
+    icon: Wand2,
+    title: 'Seedance 2.0',
+    description: 'AI video with references',
   },
   {
     id: 'talking_head' as const,
@@ -95,6 +103,7 @@ export default function CreateNewModal({
   const [animateModalOpen, setAnimateModalOpen] = useState(false);
   const [frameModalOpen, setFrameModalOpen] = useState(false);
   const [scriptModalOpen, setScriptModalOpen] = useState(false);
+  const [seedanceModalOpen, setSeedanceModalOpen] = useState(false);
   const [createdPipelineId, setCreatedPipelineId] = useState<string | null>(null);
   const [createdFileId, setCreatedFileId] = useState<string | null>(null);
   const [isCreating, setIsCreating] = useState(false);
@@ -256,15 +265,57 @@ export default function CreateNewModal({
     }
   };
 
+  const handleSeedanceSelect = async () => {
+    setIsCreating(true);
+    setCreatingType('seedance');
+    initialStatusRef.current = initialStatus;
+
+    try {
+      const newFileId = uuidv4();
+      const { error: fileError } = await supabase.from('files').insert({
+        id: newFileId,
+        project_id: projectId,
+        folder_id: folderId || null,
+        name: 'Untitled',
+        file_type: 'seedance',
+        status: initialStatus || 'draft',
+        metadata: { source_type: 'seedance' },
+        generation_params: {
+          aspect_ratio: '9:16',
+          duration: 10,
+          reference_images: [],
+          reference_videos: [],
+          reference_audios: [],
+        },
+      });
+
+      if (fileError) throw fileError;
+
+      setCreatedFileId(newFileId);
+      onOpenChange(false);
+      setIsCreating(false);
+      setCreatingType(null);
+      setSeedanceModalOpen(true);
+
+      queryClient.invalidateQueries({ queryKey: ['files', projectId] });
+    } catch (error) {
+      console.error('Failed to create Seedance file:', error);
+      toast.error('Failed to create Seedance');
+      setIsCreating(false);
+      setCreatingType(null);
+    }
+  };
+
   const handleModalClose = () => {
     setTalkingHeadWorkflowOpen(false);
     setBRollWorkflowOpen(false);
-    
+
     setLipSyncModalOpen(false);
     setSpeechModalOpen(false);
     setAnimateModalOpen(false);
     setFrameModalOpen(false);
     setScriptModalOpen(false);
+    setSeedanceModalOpen(false);
     setCreatedPipelineId(null);
     setCreatedFileId(null);
     initialStatusRef.current = undefined;
@@ -302,6 +353,8 @@ export default function CreateNewModal({
                     if (item.id === 'folder') {
                       onOpenChange(false);
                       onCreateFolder?.(initialStatus);
+                    } else if (item.id === 'seedance') {
+                      handleSeedanceSelect();
                     } else {
                       handleWorkflowSelect(item);
                     }
@@ -419,6 +472,20 @@ export default function CreateNewModal({
       {createdFileId && scriptModalOpen && (
         <ScriptModal
           open={scriptModalOpen}
+          onClose={handleModalClose}
+          fileId={createdFileId}
+          projectId={projectId}
+          folderId={folderId}
+          initialStatus={initialStatusRef.current}
+          onSuccess={handleSuccess}
+          statusOptions={statusOptions}
+        />
+      )}
+
+      {/* Seedance 2.0 Modal */}
+      {createdFileId && seedanceModalOpen && (
+        <SeedanceModal
+          open={seedanceModalOpen}
           onClose={handleModalClose}
           fileId={createdFileId}
           projectId={projectId}

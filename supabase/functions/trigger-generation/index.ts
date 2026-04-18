@@ -111,6 +111,10 @@ function calculateServerSideCost(type: string, payload: Record<string, unknown>)
     case 'b_roll':
       const thDuration = (payload.audio_duration as number) || 5;
       return thDuration * CREDIT_COSTS.video_per_second;
+
+    case 'seedance':
+      const seedanceDuration = (payload.duration as number) || 10;
+      return seedanceDuration * CREDIT_COSTS.video_per_second;
     
     case 'audio':
       const audioScriptLength = (payload.script as string)?.length || 0;
@@ -190,7 +194,7 @@ const ActorPayloadSchema = z.object({
 });
 
 const FilePayloadSchema = z.object({
-  type: z.enum(['first_frame', 'lip_sync', 'talking_head', 'script', 'speech', 'audio', 'b_roll', 'animate', 'frame', 'humanize']),
+  type: z.enum(['first_frame', 'lip_sync', 'talking_head', 'script', 'speech', 'audio', 'b_roll', 'animate', 'frame', 'humanize', 'seedance']),
   payload: z.object({
     file_id: z.string().uuid(),
     pipeline_id: z.string().uuid().optional(),
@@ -231,6 +235,18 @@ const FilePayloadSchema = z.object({
     output_image_url: z.string().url().nullable().optional(),
     camera_perspective: z.enum(['1st_person', '3rd_person']).nullable().optional(),
     frame_resolution: z.enum(['1K', '2K', '4K']).optional(),
+    // Seedance 2.0 specific
+    actor_snapshot: z.any().optional(),
+    reference_videos: z.array(z.object({
+      url: z.string().url(),
+      duration: z.number(),
+      name: z.string(),
+    })).max(10).optional(),
+    reference_audios: z.array(z.object({
+      url: z.string().url(),
+      duration: z.number(),
+      name: z.string(),
+    })).max(2).optional(),
   }),
 });
 
