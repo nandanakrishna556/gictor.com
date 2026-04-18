@@ -2,7 +2,7 @@ import React from 'react';
 import { FileText, Image as ImageIcon, Folder, Mic, Sparkles, LucideIcon, CircleUser, Wand2, Clapperboard, PlayCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-export type FileType = 'first_frame' | 'lip_sync' | 'talking_head' | 'script' | 'clips' | 'b_roll' | 'folder' | 'speech' | 'audio' | 'voice' | 'veo3' | 'animate' | 'frame';
+export type FileType = 'first_frame' | 'lip_sync' | 'talking_head' | 'script' | 'clips' | 'b_roll' | 'folder' | 'speech' | 'audio' | 'voice' | 'veo3' | 'animate' | 'frame' | 'seedance';
 
 interface FileTypeIconProps {
   fileType: FileType;
@@ -72,6 +72,11 @@ const FILE_TYPE_CONFIG: Record<FileType, { icon: LucideIcon; label: string; colo
     icon: PlayCircle,
     label: 'Animate',
     color: 'text-blue-500',
+  },
+  seedance: {
+    icon: Wand2,
+    label: 'Seedance 2.0',
+    color: 'text-primary',
   },
   folder: {
     icon: Folder,
