@@ -735,32 +735,67 @@ function BulkActionsBar({
   tags,
   onSelectAll,
   onClear,
+  onExitSelectMode,
   onDeleteRequest,
   onStatusChange,
   onTagToggle,
+  onMoveRequest,
 }: {
   selectedCount: number;
   stages: PipelineStage[];
   tags: TagType[];
   onSelectAll: () => void;
   onClear: () => void;
+  onExitSelectMode: () => void;
   onDeleteRequest: () => void;
   onStatusChange: (status: string) => void;
   onTagToggle: (tagId: string, add: boolean) => void;
+  onMoveRequest: (allowProjectSwitch: boolean) => void;
 }) {
+  const disabled = selectedCount === 0;
   return (
-    <div className="flex items-center gap-3 rounded-xl bg-secondary/50 p-3">
-      <span className="text-sm font-medium">{selectedCount} selected</span>
+    <div className="sticky top-0 z-30 flex flex-wrap items-center gap-2 rounded-xl border bg-card/95 backdrop-blur-sm p-3 shadow-sm">
+      <span className="text-sm font-medium">
+        {selectedCount === 0 ? 'Select items' : `${selectedCount} selected`}
+      </span>
       <div className="flex-1" />
-      
+
       <Button variant="outline" size="sm" onClick={onSelectAll}>
         Select All
+      </Button>
+
+      {selectedCount > 0 && (
+        <Button variant="ghost" size="sm" onClick={onClear}>
+          Clear
+        </Button>
+      )}
+
+      {/* Move to folder (this project) */}
+      <Button
+        variant="outline"
+        size="sm"
+        disabled={disabled}
+        onClick={() => onMoveRequest(false)}
+      >
+        <FolderInput className="mr-1.5 h-4 w-4" />
+        Move
+      </Button>
+
+      {/* Move to another project */}
+      <Button
+        variant="outline"
+        size="sm"
+        disabled={disabled}
+        onClick={() => onMoveRequest(true)}
+      >
+        <FolderTree className="mr-1.5 h-4 w-4" />
+        Move to project
       </Button>
 
       {/* Status Change */}
       <Popover>
         <PopoverTrigger asChild>
-          <Button variant="outline" size="sm" disabled={selectedCount === 0}>
+          <Button variant="outline" size="sm" disabled={disabled}>
             Change Status
           </Button>
         </PopoverTrigger>
@@ -783,8 +818,8 @@ function BulkActionsBar({
       {/* Tag Assignment */}
       <Popover>
         <PopoverTrigger asChild>
-          <Button variant="outline" size="sm" disabled={selectedCount === 0}>
-            <Tag className="mr-2 h-4 w-4" />
+          <Button variant="outline" size="sm" disabled={disabled}>
+            <Tag className="mr-1.5 h-4 w-4" />
             Tags
           </Button>
         </PopoverTrigger>
@@ -824,14 +859,14 @@ function BulkActionsBar({
         variant="destructive"
         size="sm"
         onClick={onDeleteRequest}
-        disabled={selectedCount === 0}
+        disabled={disabled}
       >
-        <Trash2 className="mr-2 h-4 w-4" />
+        <Trash2 className="mr-1.5 h-4 w-4" />
         Delete
       </Button>
 
-      <Button variant="ghost" size="sm" onClick={onClear}>
-        Cancel
+      <Button variant="ghost" size="sm" onClick={onExitSelectMode}>
+        Done
       </Button>
     </div>
   );
