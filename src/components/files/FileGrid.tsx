@@ -1725,6 +1725,7 @@ function KanbanCard({
   projectId,
   pipelineThumbnails,
   isDragging,
+  isNativeDragOver,
   isSelected,
   bulkMode,
   isRenaming,
@@ -1744,6 +1745,7 @@ function KanbanCard({
   projectId: string;
   pipelineThumbnails?: Map<string, { firstFrameUrl?: string; lastFrameUrl?: string }>;
   isDragging: boolean;
+  isNativeDragOver?: boolean;
   isSelected: boolean;
   bulkMode: boolean;
   isRenaming: boolean;
@@ -1816,6 +1818,7 @@ function KanbanCard({
         'group relative flex flex-col rounded-2xl border bg-card overflow-hidden transition-all duration-200 hover:border-primary cursor-pointer',
         isDragging && 'rotate-2 scale-105 shadow-lg',
         isFolder && 'bg-amber-50/50 dark:bg-card dark:border-border/50',
+        isNativeDragOver && 'ring-2 ring-primary ring-offset-2',
         isSelected && 'border-primary ring-2 ring-primary/20'
       )}
     >
