@@ -11,6 +11,10 @@ import { toast } from 'sonner';
 import { useQueryClient } from '@tanstack/react-query';
 import { InputModeToggle, InputMode } from '@/components/ui/input-mode-toggle';
 import { uploadToR2 } from '@/lib/cloudflare-upload';
+import { Slider } from '@/components/ui/slider';
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
+import ActorSelectorPopover from '@/components/modals/ActorSelectorPopover';
+import { useActors, Actor } from '@/hooks/useActors';
 
 interface BRollAnimateStageProps {
   pipelineId: string;
@@ -24,17 +28,20 @@ export default function BRollAnimateStage({ pipelineId, onComplete }: BRollAnima
   const { pipeline, updateVoice, updateFinalVideo, isUpdating } = usePipeline(pipelineId);
   const { profile } = useProfile();
   const queryClient = useQueryClient();
+  const { actors } = useActors();
   
   // Input mode
   const [inputMode, setInputMode] = useState<InputMode>('generate');
   
   // Input state
   const [animationType, setAnimationType] = useState<'broll' | 'motion_graphics'>('broll');
-  const [aspectRatio, setAspectRatio] = useState<'16:9' | '9:16'>('9:16');
+  const [aspectRatio, setAspectRatio] = useState<'16:9' | '9:16' | '1:1'>('9:16');
   const [duration, setDuration] = useState(8);
   const [audioEnabled, setAudioEnabled] = useState(false);
   const [cameraFixed, setCameraFixed] = useState(false);
   const [prompt, setPrompt] = useState('');
+  const [selectedActorId, setSelectedActorId] = useState<string | null>(null);
+  const [selectedActor, setSelectedActor] = useState<Actor | null>(null);
   
   // Custom frame uploads (override the generated ones)
   const [firstFrameUrl, setFirstFrameUrl] = useState('');
@@ -100,8 +107,16 @@ export default function BRollAnimateStage({ pipelineId, onComplete }: BRollAnima
     if (!pipeline || hasUserInteractedRef.current) return;
 
     const input = pipeline.voice_input as any;
+    const firstFrameInput = pipeline.first_frame_input as any;
+    const lastFrameInput = pipeline.script_input as any;
     const resolvedFirstFrameUrl = (input?.first_frame_url as string) || pipeline.first_frame_output?.url || '';
     const resolvedLastFrameUrl = (input?.last_frame_url as string) || pipeline.last_frame_output?.url || '';
+    // Pre-fill actor from animate input, or fall back to first/last frame stages
+    const resolvedActorId =
+      (input?.actor_id as string) ||
+      (lastFrameInput?.actor_id as string) ||
+      (firstFrameInput?.actor_id as string) ||
+      null;
     const nextHydrationKey = JSON.stringify({
       animationType: input?.animation_type ?? 'broll',
       prompt: input?.prompt ?? '',
@@ -109,6 +124,7 @@ export default function BRollAnimateStage({ pipelineId, onComplete }: BRollAnima
       cameraFixed: input?.camera_fixed ?? false,
       aspectRatio: input?.aspect_ratio ?? '9:16',
       audioEnabled: input?.audio_enabled ?? false,
+      actorId: resolvedActorId,
       firstFrameUrl: resolvedFirstFrameUrl,
       lastFrameUrl: resolvedLastFrameUrl,
     });
@@ -122,8 +138,9 @@ export default function BRollAnimateStage({ pipelineId, onComplete }: BRollAnima
     setPrompt((input?.prompt as string) || '');
     setDuration((input?.duration as number) || 8);
     setCameraFixed(Boolean(input?.camera_fixed));
-    setAspectRatio((input?.aspect_ratio as '16:9' | '9:16') || '9:16');
+    setAspectRatio((input?.aspect_ratio as '16:9' | '9:16' | '1:1') || '9:16');
     setAudioEnabled(Boolean(input?.audio_enabled));
+    setSelectedActorId(resolvedActorId);
     setFirstFrameUrl(resolvedFirstFrameUrl);
     setLastFrameUrl(resolvedLastFrameUrl);
 
@@ -135,6 +152,8 @@ export default function BRollAnimateStage({ pipelineId, onComplete }: BRollAnima
     }
   }, [
     pipeline?.voice_input,
+    pipeline?.first_frame_input,
+    pipeline?.script_input,
     pipeline?.first_frame_output?.url,
     pipeline?.last_frame_output?.url,
     pipeline?.status,
@@ -151,6 +170,7 @@ export default function BRollAnimateStage({ pipelineId, onComplete }: BRollAnima
       camera_fixed: cameraFixed,
       aspect_ratio: aspectRatio,
       audio_enabled: audioEnabled,
+      actor_id: selectedActorId,
       first_frame_url: effectiveFirstFrame,
       last_frame_url: effectiveLastFrame,
     };
@@ -181,9 +201,22 @@ export default function BRollAnimateStage({ pipelineId, onComplete }: BRollAnima
     cameraFixed,
     aspectRatio,
     audioEnabled,
+    selectedActorId,
     effectiveFirstFrame,
     effectiveLastFrame,
   ]);
+
+  // Sync selectedActor object when we have an ID but no actor object (e.g., restored from DB)
+  useEffect(() => {
+    if (selectedActorId && actors?.length) {
+      const actor = actors.find((a) => a.id === selectedActorId);
+      if (actor && actor.id !== selectedActor?.id) {
+        setSelectedActor(actor);
+      }
+    } else if (!selectedActorId && selectedActor) {
+      setSelectedActor(null);
+    }
+  }, [selectedActorId, actors, selectedActor]);
 
   const persistInputs = useCallback(async () => {
     if (!pipelineId || !latestInputRef.current) return;
@@ -217,6 +250,7 @@ export default function BRollAnimateStage({ pipelineId, onComplete }: BRollAnima
     cameraFixed,
     aspectRatio,
     audioEnabled,
+    selectedActorId,
     effectiveFirstFrame,
     effectiveLastFrame,
     persistInputs,
@@ -415,6 +449,8 @@ export default function BRollAnimateStage({ pipelineId, onComplete }: BRollAnima
             animation_type: animationType,
             aspect_ratio: aspectRatio,
             audio_enabled: audioEnabled,
+            actor_id: selectedActorId || null,
+            actor_audio_url: selectedActor?.voice_url || selectedActor?.custom_audio_url || null,
             credits_cost: creditCost,
             supabase_url: import.meta.env.VITE_SUPABASE_URL,
           },
@@ -484,6 +520,19 @@ export default function BRollAnimateStage({ pipelineId, onComplete }: BRollAnima
           <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">Input</h3>
           
           {/* Generate Mode UI */}
+              {/* Actor Selector */}
+              <div className="space-y-2">
+                <Label>Actor (reference audio)</Label>
+                <ActorSelectorPopover
+                  selectedActorId={selectedActorId}
+                  onSelect={(actorId, actor) => {
+                    markUserInteracted();
+                    setSelectedActorId(actorId);
+                    setSelectedActor(actor || null);
+                  }}
+                />
+              </div>
+
               {/* First Frame Upload */}
               <div className="space-y-2">
                 <Label>First Frame</Label>
@@ -566,6 +615,47 @@ export default function BRollAnimateStage({ pipelineId, onComplete }: BRollAnima
                 )}
               </div>
               
+              {/* Duration Slider */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Label>Duration</Label>
+                  <span className="text-sm font-medium tabular-nums">{duration}s</span>
+                </div>
+                <Slider
+                  min={4}
+                  max={15}
+                  step={1}
+                  value={[duration]}
+                  onValueChange={(v) => {
+                    markUserInteracted();
+                    setDuration(v[0] ?? 8);
+                  }}
+                />
+                <div className="flex justify-between text-xs text-muted-foreground">
+                  <span>4s</span>
+                  <span>15s</span>
+                </div>
+              </div>
+
+              {/* Aspect Ratio Toggle */}
+              <div className="space-y-2">
+                <Label>Aspect Ratio</Label>
+                <ToggleGroup
+                  type="single"
+                  value={aspectRatio}
+                  onValueChange={(v) => {
+                    if (!v) return;
+                    markUserInteracted();
+                    setAspectRatio(v as '16:9' | '9:16' | '1:1');
+                  }}
+                  className="justify-start gap-2"
+                >
+                  <ToggleGroupItem value="9:16" variant="outline" className="px-4">9:16</ToggleGroupItem>
+                  <ToggleGroupItem value="16:9" variant="outline" className="px-4">16:9</ToggleGroupItem>
+                  <ToggleGroupItem value="1:1" variant="outline" className="px-4">1:1</ToggleGroupItem>
+                </ToggleGroup>
+              </div>
+
               {/* Prompt */}
               <div className="space-y-2">
                 <Label>Prompt</Label>
@@ -578,9 +668,6 @@ export default function BRollAnimateStage({ pipelineId, onComplete }: BRollAnima
                   placeholder="Describe the motion you want (e.g., 'gentle camera pan across the scene')"
                   rows={3}
                 />
-                <p className="text-xs text-muted-foreground">
-                  AI will enhance your prompt or analyze the images if left empty
-                </p>
               </div>
 
         </div>
