@@ -7,44 +7,24 @@ const corsHeaders = {
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
 };
 
-serve(async (req) => {
-  if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
-  }
+// Always return 200 with structured payload so n8n never sees a 502/non-2xx
+function ok(body: Record<string, unknown> = { success: true }) {
+  return new Response(JSON.stringify(body), {
+    status: 200,
+    headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+  });
+}
 
+async function processUpdate(body: Record<string, any>) {
   try {
-    const apiKey = req.headers.get('x-api-key');
-    const expectedKey = Deno.env.get('N8N_WEBHOOK_SECRET');
-    
-    if (!expectedKey) {
-      console.error('N8N_WEBHOOK_SECRET not configured');
-      return new Response(
-        JSON.stringify({ success: false, error: 'Server configuration error' }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-    
-    if (!apiKey || apiKey !== expectedKey) {
-      console.error('Invalid API key');
-      return new Response(
-        JSON.stringify({ success: false, error: 'Unauthorized' }),
-        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
-    const body = await req.json();
     const { file_id, status, video_url, progress, error_message, user_id, credits_cost, metadata } = body;
-    
-    // Get pipeline_id from metadata or use file_id as fallback
     const pipeline_id = metadata?.pipeline_id || body.pipeline_id || file_id;
 
     console.log('Animate status update:', { file_id, pipeline_id, status, video_url });
 
     if (!file_id || !status) {
-      return new Response(
-        JSON.stringify({ success: false, error: 'Missing file_id or status' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+      console.error('Missing file_id or status');
+      return;
     }
 
     const supabase = createClient(
@@ -53,7 +33,6 @@ serve(async (req) => {
     );
 
     if (status === 'completed') {
-      // Update files table
       await supabase
         .from('files')
         .update({
@@ -65,7 +44,6 @@ serve(async (req) => {
         })
         .eq('id', file_id);
 
-      // CRITICAL: Update pipelines table so frontend shows output
       const { error: pipelineError } = await supabase
         .from('pipelines')
         .update({
@@ -91,7 +69,6 @@ serve(async (req) => {
         })
         .eq('id', file_id);
 
-      // Update pipeline status
       await supabase
         .from('pipelines')
         .update({ status: 'failed', updated_at: new Date().toISOString() })
@@ -107,25 +84,52 @@ serve(async (req) => {
     } else if (status === 'processing') {
       const updateData: Record<string, unknown> = { generation_status: 'processing' };
       if (typeof progress === 'number') updateData.progress = progress;
-      
+
       await supabase.from('files').update(updateData).eq('id', file_id);
-      
-      // Update pipeline progress
+
       await supabase
         .from('pipelines')
         .update({ progress: progress || 50, status: 'processing', updated_at: new Date().toISOString() })
         .eq('id', pipeline_id);
     }
+  } catch (err) {
+    console.error('processUpdate error:', err);
+  }
+}
 
-    return new Response(
-      JSON.stringify({ success: true }),
-      { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
+serve(async (req) => {
+  if (req.method === 'OPTIONS') {
+    return new Response(null, { headers: corsHeaders });
+  }
+
+  try {
+    const apiKey = req.headers.get('x-api-key');
+    const expectedKey = Deno.env.get('N8N_WEBHOOK_SECRET');
+
+    if (!expectedKey) {
+      console.error('N8N_WEBHOOK_SECRET not configured');
+      return ok({ success: false, error: 'Server configuration error' });
+    }
+
+    if (!apiKey || apiKey !== expectedKey) {
+      console.error('Invalid API key');
+      return ok({ success: false, error: 'Unauthorized' });
+    }
+
+    const body = await req.json();
+
+    // Run DB updates in background; respond to n8n immediately to avoid 502s
+    // @ts-ignore - EdgeRuntime is provided by Supabase Deno runtime
+    if (typeof EdgeRuntime !== 'undefined' && EdgeRuntime.waitUntil) {
+      // @ts-ignore
+      EdgeRuntime.waitUntil(processUpdate(body));
+    } else {
+      processUpdate(body);
+    }
+
+    return ok({ success: true, queued: true });
   } catch (error) {
     console.error('Error:', error);
-    return new Response(
-      JSON.stringify({ success: false, error: 'Internal error' }),
-      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
+    return ok({ success: false, error: 'Internal error' });
   }
 });
