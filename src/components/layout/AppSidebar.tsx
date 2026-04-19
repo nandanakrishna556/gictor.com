@@ -46,14 +46,40 @@ export default function AppSidebar() {
   const [dragPayload, setDragPayload] = useState<CardDragPayload | null>(null);
   const [dragOverProjectId, setDragOverProjectId] = useState<string | null>(null);
   const isDroppingRef = useRef(false);
+  const dragLeaveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     setDragPayload(cardDragState.get());
     const unsub = cardDragState.subscribe(setDragPayload);
     return () => {
+      if (dragLeaveTimeoutRef.current) {
+        clearTimeout(dragLeaveTimeoutRef.current);
+      }
       unsub();
     };
   }, []);
+
+  const setProjectDragHover = (projectId: string) => {
+    if (dragLeaveTimeoutRef.current) {
+      clearTimeout(dragLeaveTimeoutRef.current);
+      dragLeaveTimeoutRef.current = null;
+    }
+
+    if (dragOverProjectId !== projectId) {
+      setDragOverProjectId(projectId);
+    }
+  };
+
+  const scheduleProjectDragClear = (projectId?: string) => {
+    if (dragLeaveTimeoutRef.current) {
+      clearTimeout(dragLeaveTimeoutRef.current);
+    }
+
+    dragLeaveTimeoutRef.current = window.setTimeout(() => {
+      setDragOverProjectId((current) => (projectId && current !== projectId ? current : null));
+      dragLeaveTimeoutRef.current = null;
+    }, 80);
+  };
 
   const getDragPayloadFromEvent = (event?: { dataTransfer?: DataTransfer | null } | null) => {
     const statePayload = cardDragState.get();
@@ -86,6 +112,10 @@ export default function AppSidebar() {
       console.error('Failed to move items to project', err);
       toast.error('Failed to move items.');
     } finally {
+      if (dragLeaveTimeoutRef.current) {
+        clearTimeout(dragLeaveTimeoutRef.current);
+        dragLeaveTimeoutRef.current = null;
+      }
       setDragOverProjectId(null);
       setDragPayload(null);
       cardDragState.set(null);
@@ -182,8 +212,9 @@ export default function AppSidebar() {
                 onDragEnter={(e) => {
                   const payload = getDragPayloadFromEvent(e);
                   if (!payload || payload.sourceProjectId === project.id) return;
+                  e.preventDefault();
                   cardDragState.set(payload);
-                  setDragOverProjectId(project.id);
+                  setProjectDragHover(project.id);
                 }}
                 onDragOver={(e) => {
                   const payload = getDragPayloadFromEvent(e);
@@ -191,16 +222,22 @@ export default function AppSidebar() {
                   e.preventDefault();
                   e.dataTransfer.dropEffect = 'move';
                   if (!dragPayload) setDragPayload(payload);
-                  if (dragOverProjectId !== project.id) setDragOverProjectId(project.id);
+                  setProjectDragHover(project.id);
                 }}
-                onDragLeave={() => {
-                  if (dragOverProjectId === project.id) setDragOverProjectId(null);
+                onDragLeave={(e) => {
+                  const nextTarget = e.relatedTarget;
+                  if (nextTarget instanceof Node && e.currentTarget.contains(nextTarget)) return;
+                  scheduleProjectDragClear(project.id);
                 }}
                 onDrop={(e) => {
                   const payload = getDragPayloadFromEvent(e);
                   if (!payload || payload.sourceProjectId === project.id) return;
                   e.preventDefault();
                   e.stopPropagation();
+                  if (dragLeaveTimeoutRef.current) {
+                    clearTimeout(dragLeaveTimeoutRef.current);
+                    dragLeaveTimeoutRef.current = null;
+                  }
                   isDroppingRef.current = true;
                   void handleProjectDrop(project.id, payload).finally(() => {
                     window.setTimeout(() => {

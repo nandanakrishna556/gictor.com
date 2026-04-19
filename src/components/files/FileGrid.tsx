@@ -193,8 +193,10 @@ export default function FileGrid({
   const [fileToMove, setFileToMove] = useState<File | null>(null);
   const [bulkMoveDialogOpen, setBulkMoveDialogOpen] = useState(false);
   const [bulkMoveAllowProjectSwitch, setBulkMoveAllowProjectSwitch] = useState(false);
-  const [kanbanDragOverFolderId, setKanbanDragOverFolderId] = useState<string | null>(null);
+  const [dragOverFolderId, setDragOverFolderId] = useState<string | null>(null);
+  const [activeDragPayload, setActiveDragPayload] = useState<{ ids: string[]; sourceProjectId: string } | null>(null);
   const nativeDropHandledRef = useRef(false);
+  const folderDragLeaveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Clear selection when select mode is turned off externally
   useEffect(() => {
@@ -202,6 +204,18 @@ export default function FileGrid({
       setSelectedItems(new Set());
     }
   }, [selectMode]);
+
+  useEffect(() => {
+    setActiveDragPayload(cardDragState.get());
+    const unsubscribe = cardDragState.subscribe(setActiveDragPayload);
+
+    return () => {
+      if (folderDragLeaveTimeoutRef.current) {
+        clearTimeout(folderDragLeaveTimeoutRef.current);
+      }
+      unsubscribe();
+    };
+  }, []);
 
   // Keyboard shortcuts
   const handleKeyDown = useCallback((e: KeyboardEvent) => {
@@ -278,8 +292,46 @@ export default function FileGrid({
       ? Array.from(selectedItems)
       : [itemId];
 
-  const handleNativeFolderDrop = (targetFolderId: string) => {
-    const payload = cardDragState.get();
+  const getDragPayloadFromEvent = (event?: React.DragEvent | DragEvent | null) => {
+    const statePayload = cardDragState.get();
+    if (statePayload) return statePayload;
+
+    const rawPayload = event?.dataTransfer?.getData(CARD_DRAG_MIME);
+    if (!rawPayload) return null;
+
+    try {
+      const parsed = JSON.parse(rawPayload) as { ids: string[]; sourceProjectId: string };
+      if (!Array.isArray(parsed.ids) || typeof parsed.sourceProjectId !== 'string') return null;
+      return parsed;
+    } catch {
+      return null;
+    }
+  };
+
+  const setFolderDragHover = (folderId: string) => {
+    if (folderDragLeaveTimeoutRef.current) {
+      clearTimeout(folderDragLeaveTimeoutRef.current);
+      folderDragLeaveTimeoutRef.current = null;
+    }
+
+    if (dragOverFolderId !== folderId) {
+      setDragOverFolderId(folderId);
+    }
+  };
+
+  const scheduleFolderDragClear = (folderId?: string) => {
+    if (folderDragLeaveTimeoutRef.current) {
+      clearTimeout(folderDragLeaveTimeoutRef.current);
+    }
+
+    folderDragLeaveTimeoutRef.current = window.setTimeout(() => {
+      setDragOverFolderId((current) => (folderId && current !== folderId ? current : null));
+      folderDragLeaveTimeoutRef.current = null;
+    }, 80);
+  };
+
+  const handleNativeFolderDrop = (targetFolderId: string, incomingPayload?: { ids: string[]; sourceProjectId: string } | null) => {
+    const payload = incomingPayload ?? cardDragState.get();
     if (!payload) return;
 
     const validIds = payload.ids.filter((id) => id !== targetFolderId);
@@ -299,7 +351,7 @@ export default function FileGrid({
 
     clearSelection();
     cardDragState.set(null);
-    setKanbanDragOverFolderId(null);
+    setDragOverFolderId(null);
   };
 
   const handleNativeDragEnd = () => {
@@ -307,6 +359,7 @@ export default function FileGrid({
       if (!nativeDropHandledRef.current) {
         cardDragState.set(null);
       }
+      setDragOverFolderId(null);
     }, 0);
   };
 
@@ -363,7 +416,7 @@ export default function FileGrid({
     if (nativeDropHandledRef.current) {
       nativeDropHandledRef.current = false;
       cardDragState.set(null);
-      setKanbanDragOverFolderId(null);
+      setDragOverFolderId(null);
       return;
     }
 
