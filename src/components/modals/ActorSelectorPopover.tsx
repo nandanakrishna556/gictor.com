@@ -218,7 +218,7 @@ export default function ActorSelectorPopover({
           )}
         </div>
         {/* Create New Actor button */}
-        <div className="border-t border-border p-2">
+        <div className="border-t border-border p-2 shrink-0">
           <Button
             variant="ghost"
             className="w-full justify-start gap-2 text-sm text-muted-foreground hover:text-foreground"
