@@ -107,8 +107,16 @@ export default function BRollAnimateStage({ pipelineId, onComplete }: BRollAnima
     if (!pipeline || hasUserInteractedRef.current) return;
 
     const input = pipeline.voice_input as any;
+    const firstFrameInput = pipeline.first_frame_input as any;
+    const lastFrameInput = pipeline.script_input as any;
     const resolvedFirstFrameUrl = (input?.first_frame_url as string) || pipeline.first_frame_output?.url || '';
     const resolvedLastFrameUrl = (input?.last_frame_url as string) || pipeline.last_frame_output?.url || '';
+    // Pre-fill actor from animate input, or fall back to first/last frame stages
+    const resolvedActorId =
+      (input?.actor_id as string) ||
+      (lastFrameInput?.actor_id as string) ||
+      (firstFrameInput?.actor_id as string) ||
+      null;
     const nextHydrationKey = JSON.stringify({
       animationType: input?.animation_type ?? 'broll',
       prompt: input?.prompt ?? '',
@@ -116,6 +124,7 @@ export default function BRollAnimateStage({ pipelineId, onComplete }: BRollAnima
       cameraFixed: input?.camera_fixed ?? false,
       aspectRatio: input?.aspect_ratio ?? '9:16',
       audioEnabled: input?.audio_enabled ?? false,
+      actorId: resolvedActorId,
       firstFrameUrl: resolvedFirstFrameUrl,
       lastFrameUrl: resolvedLastFrameUrl,
     });
@@ -129,8 +138,9 @@ export default function BRollAnimateStage({ pipelineId, onComplete }: BRollAnima
     setPrompt((input?.prompt as string) || '');
     setDuration((input?.duration as number) || 8);
     setCameraFixed(Boolean(input?.camera_fixed));
-    setAspectRatio((input?.aspect_ratio as '16:9' | '9:16') || '9:16');
+    setAspectRatio((input?.aspect_ratio as '16:9' | '9:16' | '1:1') || '9:16');
     setAudioEnabled(Boolean(input?.audio_enabled));
+    setSelectedActorId(resolvedActorId);
     setFirstFrameUrl(resolvedFirstFrameUrl);
     setLastFrameUrl(resolvedLastFrameUrl);
 
@@ -142,6 +152,8 @@ export default function BRollAnimateStage({ pipelineId, onComplete }: BRollAnima
     }
   }, [
     pipeline?.voice_input,
+    pipeline?.first_frame_input,
+    pipeline?.script_input,
     pipeline?.first_frame_output?.url,
     pipeline?.last_frame_output?.url,
     pipeline?.status,
@@ -158,6 +170,7 @@ export default function BRollAnimateStage({ pipelineId, onComplete }: BRollAnima
       camera_fixed: cameraFixed,
       aspect_ratio: aspectRatio,
       audio_enabled: audioEnabled,
+      actor_id: selectedActorId,
       first_frame_url: effectiveFirstFrame,
       last_frame_url: effectiveLastFrame,
     };
