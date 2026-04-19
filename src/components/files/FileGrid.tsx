@@ -554,11 +554,25 @@ export default function FileGrid({
                                 {...provided.draggableProps}
                                 {...provided.dragHandleProps}
                                 draggable
+                                onDragOver={(e) => {
+                                  if (item.itemType !== 'folder') return;
+                                  const payload = cardDragState.get();
+                                  if (!payload || payload.ids.includes(item.id)) return;
+                                  e.preventDefault();
+                                  e.dataTransfer.dropEffect = 'move';
+                                  if (kanbanDragOverFolderId !== item.id) setKanbanDragOverFolderId(item.id);
+                                }}
+                                onDragLeave={() => {
+                                  if (kanbanDragOverFolderId === item.id) setKanbanDragOverFolderId(null);
+                                }}
+                                onDrop={(e) => {
+                                  if (item.itemType !== 'folder') return;
+                                  e.preventDefault();
+                                  e.stopPropagation();
+                                  handleNativeFolderDrop(item.id);
+                                }}
                                 onDragStart={(e) => {
-                                  const ids =
-                                    bulkMode && selectedItems.has(item.id) && selectedItems.size > 1
-                                      ? Array.from(selectedItems)
-                                      : [item.id];
+                                  const ids = getDraggedIds(item.id);
                                   const payload = { ids, sourceProjectId: projectId };
                                   cardDragState.set(payload);
                                   try {
@@ -578,6 +592,7 @@ export default function FileGrid({
                                   isDragging={snapshot.isDragging}
                                   isSelected={selectedItems.has(item.id)}
                                   bulkMode={bulkMode}
+                                  isNativeDragOver={kanbanDragOverFolderId === item.id}
                                   isRenaming={renamingItemId === item.id}
                                   onStartRename={() => setRenamingItemId(item.id)}
                                   onCancelRename={() => setRenamingItemId(null)}
