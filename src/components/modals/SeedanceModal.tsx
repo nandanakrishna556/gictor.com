@@ -174,7 +174,7 @@ export default function SeedanceModal({
   const [referenceVideos, setReferenceVideos] = useState<UploadedVideo[]>([]);
   const [referenceAudios, setReferenceAudios] = useState<UploadedAudio[]>([]);
   const [aspectRatio, setAspectRatio] = useState<'1:1' | '9:16' | '16:9'>('9:16');
-  const [duration, setDuration] = useState<10 | 15>(10);
+  const [duration, setDuration] = useState<number>(8);
   const [prompt, setPrompt] = useState('');
 
   // Upload state
@@ -252,7 +252,7 @@ export default function SeedanceModal({
         setReferenceVideos(Array.isArray(params.reference_videos) ? (params.reference_videos as UploadedVideo[]) : []);
         setReferenceAudios(Array.isArray(params.reference_audios) ? (params.reference_audios as UploadedAudio[]) : []);
         setAspectRatio((params.aspect_ratio as typeof aspectRatio) || '9:16');
-        setDuration(params.duration === 15 ? 15 : 10);
+        setDuration(typeof params.duration === 'number' ? Math.min(15, Math.max(4, params.duration as number)) : 8);
         setPrompt((params.prompt as string) || '');
       } else {
         setActorId(null);
@@ -263,7 +263,7 @@ export default function SeedanceModal({
         setReferenceVideos([]);
         setReferenceAudios([]);
         setAspectRatio('9:16');
-        setDuration(10);
+        setDuration(8);
         setPrompt('');
       }
 
