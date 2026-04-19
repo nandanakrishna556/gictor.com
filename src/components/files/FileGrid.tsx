@@ -375,6 +375,17 @@ export default function FileGrid({
           description={`Are you sure you want to delete ${selectedItems.size} selected item${selectedItems.size === 1 ? '' : 's'}? This action cannot be undone.`}
         />
 
+        {/* Bulk Move Dialog */}
+        <MoveToFolderDialog
+          open={bulkMoveDialogOpen}
+          onOpenChange={setBulkMoveDialogOpen}
+          projectId={projectId}
+          currentFolderId={currentFolderId}
+          onMove={handleBulkMove}
+          itemName={`${selectedItems.size} selected item${selectedItems.size === 1 ? '' : 's'}`}
+          allowProjectSwitch={bulkMoveAllowProjectSwitch}
+        />
+
         {/* Bulk Actions Bar */}
         {bulkMode && (
           <BulkActionsBar
@@ -383,9 +394,17 @@ export default function FileGrid({
             tags={tags}
             onSelectAll={selectAll}
             onClear={clearSelection}
+            onExitSelectMode={() => {
+              clearSelection();
+              onSelectModeChange?.(false);
+            }}
             onDeleteRequest={() => setShowBulkDeleteDialog(true)}
             onStatusChange={handleBulkStatusChange}
             onTagToggle={handleBulkTagToggle}
+            onMoveRequest={(allowProject) => {
+              setBulkMoveAllowProjectSwitch(allowProject);
+              setBulkMoveDialogOpen(true);
+            }}
           />
         )}
 
