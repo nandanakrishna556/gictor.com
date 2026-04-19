@@ -201,9 +201,22 @@ export default function BRollAnimateStage({ pipelineId, onComplete }: BRollAnima
     cameraFixed,
     aspectRatio,
     audioEnabled,
+    selectedActorId,
     effectiveFirstFrame,
     effectiveLastFrame,
   ]);
+
+  // Sync selectedActor object when we have an ID but no actor object (e.g., restored from DB)
+  useEffect(() => {
+    if (selectedActorId && actors?.length) {
+      const actor = actors.find((a) => a.id === selectedActorId);
+      if (actor && actor.id !== selectedActor?.id) {
+        setSelectedActor(actor);
+      }
+    } else if (!selectedActorId && selectedActor) {
+      setSelectedActor(null);
+    }
+  }, [selectedActorId, actors, selectedActor]);
 
   const persistInputs = useCallback(async () => {
     if (!pipelineId || !latestInputRef.current) return;
@@ -237,6 +250,7 @@ export default function BRollAnimateStage({ pipelineId, onComplete }: BRollAnima
     cameraFixed,
     aspectRatio,
     audioEnabled,
+    selectedActorId,
     effectiveFirstFrame,
     effectiveLastFrame,
     persistInputs,
