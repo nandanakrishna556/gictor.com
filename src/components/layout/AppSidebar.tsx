@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams, useLocation } from 'react-router-dom';
-import { ChevronDown, Plus, Sparkles, Layers, MoreHorizontal, Trash2, Pencil, Check, X, Coins, Sun, Moon, LayoutDashboard, Settings, UserCircle } from 'lucide-react';
+import { ChevronDown, Plus, Layers, MoreHorizontal, Trash2, Pencil, Check, X, Coins, Sun, Moon, LayoutDashboard, Settings, UserCircle } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -167,7 +167,10 @@ export default function AppSidebar() {
               return (
               <div
                 key={project.id}
-                onClick={() => navigate(`/projects/${project.id}`)}
+                onClick={() => {
+                  if (dragPayload) return;
+                  navigate(`/projects/${project.id}`);
+                }}
                 onDragOver={(e) => {
                   if (!isDropTarget) return;
                   e.preventDefault();
@@ -180,7 +183,8 @@ export default function AppSidebar() {
                 onDrop={(e) => {
                   if (!isDropTarget) return;
                   e.preventDefault();
-                  handleProjectDrop(project.id);
+                  e.stopPropagation();
+                  void handleProjectDrop(project.id);
                 }}
                 className={cn(
                   'group flex w-full items-center gap-2 rounded-sm px-3 py-1.5 text-sm transition-fast cursor-pointer',

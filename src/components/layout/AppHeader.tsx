@@ -1,5 +1,5 @@
 import { Link, useNavigate } from 'react-router-dom';
-import { ChevronRight, Grid3X3, Kanban, Plus, LogOut, Settings, Search, Zap, CheckSquare, X } from 'lucide-react';
+import { ChevronRight, Grid3X3, Kanban, Plus, LogOut, Settings, Search, Zap, CheckSquare } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -161,25 +161,16 @@ export default function AppHeader({
         )}
 
         {/* Select toggle for bulk actions */}
-        {showCreateButtons && onSelectModeChange && (
+        {showCreateButtons && onSelectModeChange && !selectMode && (
           <Button
             size="sm"
-            variant={selectMode ? 'default' : 'outline'}
-            onClick={() => onSelectModeChange(!selectMode)}
+            variant="outline"
+            onClick={() => onSelectModeChange(true)}
             className="gap-1.5"
-            title={selectMode ? 'Exit select mode' : 'Select multiple items'}
+            title="Select multiple items"
           >
-            {selectMode ? (
-              <>
-                <X className="h-4 w-4" strokeWidth={1.5} />
-                <span className="hidden sm:inline">Done</span>
-              </>
-            ) : (
-              <>
-                <CheckSquare className="h-4 w-4" strokeWidth={1.5} />
-                <span className="hidden sm:inline">Select</span>
-              </>
-            )}
+            <CheckSquare className="h-4 w-4" strokeWidth={1.5} />
+            <span className="hidden sm:inline">Select</span>
           </Button>
         )}
 
