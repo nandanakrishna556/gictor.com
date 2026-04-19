@@ -48,7 +48,7 @@ import ConfirmDeleteDialog from '@/components/modals/ConfirmDeleteDialog';
 import MoveToFolderDialog from '@/components/modals/MoveToFolderDialog';
 import { FileTypeIcon, FileType } from '@/components/ui/file-type-icon';
 import { useProjectPipelineThumbnails } from '@/hooks/useProjectPipelineThumbnails';
-import { getFileThumbnailUrl } from '@/lib/file-thumbnails';
+import { getFileThumbnailUrl, getFileVideoUrl } from '@/lib/file-thumbnails';
 
 interface FileGridProps {
   files: File[];
