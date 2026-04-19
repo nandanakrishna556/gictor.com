@@ -77,8 +77,8 @@ export default function ActorSelectorPopover({
           <Search className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-[380px] p-0" align="start">
-        <div className="p-3 border-b border-border">
+      <PopoverContent className="w-[380px] p-0 flex flex-col max-h-[min(480px,calc(100vh-100px))]" align="start" onWheel={(e) => e.stopPropagation()}>
+        <div className="p-3 border-b border-border shrink-0">
           <Input
             placeholder="Search actors..."
             value={searchQuery}
@@ -86,7 +86,7 @@ export default function ActorSelectorPopover({
             className="h-9"
           />
         </div>
-        <div className="max-h-[320px] overflow-y-auto p-2">
+        <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain p-2">
           <div className="grid grid-cols-3 gap-2">
             {/* No Actor Card */}
             <button
@@ -218,7 +218,7 @@ export default function ActorSelectorPopover({
           )}
         </div>
         {/* Create New Actor button */}
-        <div className="border-t border-border p-2">
+        <div className="border-t border-border p-2 shrink-0">
           <Button
             variant="ghost"
             className="w-full justify-start gap-2 text-sm text-muted-foreground hover:text-foreground"
