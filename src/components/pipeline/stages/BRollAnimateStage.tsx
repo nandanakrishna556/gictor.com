@@ -520,6 +520,19 @@ export default function BRollAnimateStage({ pipelineId, onComplete }: BRollAnima
           <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">Input</h3>
           
           {/* Generate Mode UI */}
+              {/* Actor Selector */}
+              <div className="space-y-2">
+                <Label>Actor (reference audio)</Label>
+                <ActorSelectorPopover
+                  selectedActorId={selectedActorId}
+                  onSelect={(actorId, actor) => {
+                    markUserInteracted();
+                    setSelectedActorId(actorId);
+                    setSelectedActor(actor || null);
+                  }}
+                />
+              </div>
+
               {/* First Frame Upload */}
               <div className="space-y-2">
                 <Label>First Frame</Label>
@@ -602,6 +615,47 @@ export default function BRollAnimateStage({ pipelineId, onComplete }: BRollAnima
                 )}
               </div>
               
+              {/* Duration Slider */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Label>Duration</Label>
+                  <span className="text-sm font-medium tabular-nums">{duration}s</span>
+                </div>
+                <Slider
+                  min={4}
+                  max={15}
+                  step={1}
+                  value={[duration]}
+                  onValueChange={(v) => {
+                    markUserInteracted();
+                    setDuration(v[0] ?? 8);
+                  }}
+                />
+                <div className="flex justify-between text-xs text-muted-foreground">
+                  <span>4s</span>
+                  <span>15s</span>
+                </div>
+              </div>
+
+              {/* Aspect Ratio Toggle */}
+              <div className="space-y-2">
+                <Label>Aspect Ratio</Label>
+                <ToggleGroup
+                  type="single"
+                  value={aspectRatio}
+                  onValueChange={(v) => {
+                    if (!v) return;
+                    markUserInteracted();
+                    setAspectRatio(v as '16:9' | '9:16' | '1:1');
+                  }}
+                  className="justify-start gap-2"
+                >
+                  <ToggleGroupItem value="9:16" variant="outline" className="px-4">9:16</ToggleGroupItem>
+                  <ToggleGroupItem value="16:9" variant="outline" className="px-4">16:9</ToggleGroupItem>
+                  <ToggleGroupItem value="1:1" variant="outline" className="px-4">1:1</ToggleGroupItem>
+                </ToggleGroup>
+              </div>
+
               {/* Prompt */}
               <div className="space-y-2">
                 <Label>Prompt</Label>
@@ -614,9 +668,6 @@ export default function BRollAnimateStage({ pipelineId, onComplete }: BRollAnima
                   placeholder="Describe the motion you want (e.g., 'gentle camera pan across the scene')"
                   rows={3}
                 />
-                <p className="text-xs text-muted-foreground">
-                  AI will enhance your prompt or analyze the images if left empty
-                </p>
               </div>
 
         </div>
