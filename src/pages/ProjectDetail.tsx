@@ -131,7 +131,7 @@ export default function ProjectDetail() {
 
   const currentFolder = folderAncestry?.[folderAncestry.length - 1];
 
-  const { files, folders, isLoading, createFile, createFolder, updateFile, updateFolder, deleteFile, deleteFolder, bulkDeleteFiles, bulkUpdateFiles } = useFiles(projectId!, folderId);
+  const { files, folders, isLoading, createFile, createFolder, updateFile, updateFolder, deleteFile, deleteFolder, bulkDeleteFiles, bulkUpdateFiles, bulkMoveFiles } = useFiles(projectId!, folderId);
   const { pipelines, createPipeline, updatePipeline, deletePipeline, updateDefaultStages, defaultStages } = usePipelines();
   const { tags, createTag, deleteTag } = useTags();
   
@@ -303,6 +303,10 @@ export default function ProjectDetail() {
 
   const handleMoveFile = async (id: string, folderId: string | null) => {
     await updateFile({ id, updates: { folder_id: folderId } });
+  };
+
+  const handleBulkMove = async (ids: string[], folderId: string | null, targetProjectId?: string) => {
+    await bulkMoveFiles({ ids, folderId, targetProjectId });
   };
 
   const handleClearFilters = () => {
