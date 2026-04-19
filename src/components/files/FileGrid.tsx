@@ -2022,6 +2022,24 @@ function KanbanCard({
               />
             );
           }
+
+          // Fall back to first frame of the generated video for video file types
+          const videoUrl = file ? getFileVideoUrl(file) : null;
+          if (videoUrl) {
+            return (
+              <video
+                src={`${videoUrl}#t=0.1`}
+                className="absolute inset-0 w-full h-full object-contain opacity-0"
+                muted
+                playsInline
+                preload="metadata"
+                onLoadedData={(e) => {
+                  e.currentTarget.classList.remove('opacity-0');
+                  e.currentTarget.classList.add('animate-image-fade-in');
+                }}
+              />
+            );
+          }
           
           // Flat icon fallbacks
           if (file?.file_type === 'speech') {
