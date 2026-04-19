@@ -426,10 +426,6 @@ export default function FileGrid({
             onDeleteRequest={() => setShowBulkDeleteDialog(true)}
             onStatusChange={handleBulkStatusChange}
             onTagToggle={handleBulkTagToggle}
-            onMoveRequest={(allowProject) => {
-              setBulkMoveAllowProjectSwitch(allowProject);
-              setBulkMoveDialogOpen(true);
-            }}
           />
         )}
 
@@ -633,10 +629,6 @@ export default function FileGrid({
           onDeleteRequest={() => setShowBulkDeleteDialog(true)}
           onStatusChange={handleBulkStatusChange}
           onTagToggle={handleBulkTagToggle}
-          onMoveRequest={(allowProject) => {
-            setBulkMoveAllowProjectSwitch(allowProject);
-            setBulkMoveDialogOpen(true);
-          }}
         />
       )}
 
@@ -764,7 +756,6 @@ function BulkActionsBar({
   onDeleteRequest,
   onStatusChange,
   onTagToggle,
-  onMoveRequest,
 }: {
   selectedCount: number;
   stages: PipelineStage[];
@@ -775,7 +766,6 @@ function BulkActionsBar({
   onDeleteRequest: () => void;
   onStatusChange: (status: string) => void;
   onTagToggle: (tagId: string, add: boolean) => void;
-  onMoveRequest: (allowProjectSwitch: boolean) => void;
 }) {
   const disabled = selectedCount === 0;
   return (
