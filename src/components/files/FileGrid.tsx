@@ -515,6 +515,22 @@ export default function FileGrid({
                                 ref={provided.innerRef}
                                 {...provided.draggableProps}
                                 {...provided.dragHandleProps}
+                                draggable
+                                onDragStart={(e) => {
+                                  const ids =
+                                    bulkMode && selectedItems.has(item.id) && selectedItems.size > 1
+                                      ? Array.from(selectedItems)
+                                      : [item.id];
+                                  const payload = { ids, sourceProjectId: projectId };
+                                  cardDragState.set(payload);
+                                  try {
+                                    e.dataTransfer.setData(CARD_DRAG_MIME, JSON.stringify(payload));
+                                    e.dataTransfer.effectAllowed = 'move';
+                                  } catch {
+                                    // ignore
+                                  }
+                                }}
+                                onDragEnd={() => cardDragState.set(null)}
                               >
                                 <KanbanCard
                                   item={item}
