@@ -168,37 +168,53 @@ export default function AppSidebar() {
 
           <CollapsibleContent className="mt-0.5 space-y-0.5 ml-[26px]">
             {projects?.map((project) => {
-              const isDropTarget = !!dragPayload && dragPayload.sourceProjectId !== project.id;
+              const activePayload = dragPayload ?? cardDragState.get();
+              const isDropTarget = !!activePayload && activePayload.sourceProjectId !== project.id;
               const isDragOver = dragOverProjectId === project.id;
+              const draggedCount = activePayload?.ids.length ?? 0;
               return (
               <div
                 key={project.id}
                 onClick={() => {
-                  if (dragPayload) return;
+                  if (dragPayload || isDroppingRef.current) return;
                   navigate(`/projects/${project.id}`);
                 }}
+                onDragEnter={(e) => {
+                  const payload = getDragPayloadFromEvent(e);
+                  if (!payload || payload.sourceProjectId === project.id) return;
+                  cardDragState.set(payload);
+                  setDragOverProjectId(project.id);
+                }}
                 onDragOver={(e) => {
-                  if (!isDropTarget) return;
+                  const payload = getDragPayloadFromEvent(e);
+                  if (!payload || payload.sourceProjectId === project.id) return;
                   e.preventDefault();
                   e.dataTransfer.dropEffect = 'move';
+                  if (!dragPayload) setDragPayload(payload);
                   if (dragOverProjectId !== project.id) setDragOverProjectId(project.id);
                 }}
                 onDragLeave={() => {
                   if (dragOverProjectId === project.id) setDragOverProjectId(null);
                 }}
                 onDrop={(e) => {
-                  if (!isDropTarget) return;
+                  const payload = getDragPayloadFromEvent(e);
+                  if (!payload || payload.sourceProjectId === project.id) return;
                   e.preventDefault();
                   e.stopPropagation();
-                  void handleProjectDrop(project.id);
+                  isDroppingRef.current = true;
+                  void handleProjectDrop(project.id, payload).finally(() => {
+                    window.setTimeout(() => {
+                      isDroppingRef.current = false;
+                    }, 0);
+                  });
                 }}
                 className={cn(
-                  'group flex w-full items-center gap-2 rounded-sm px-3 py-1.5 text-sm transition-fast cursor-pointer',
+                  'group flex w-full items-center gap-2 rounded-sm border border-transparent px-3 py-1.5 text-sm transition-fast cursor-pointer',
                   projectId === project.id
                     ? 'bg-primary/15 font-medium text-primary'
                     : 'text-sidebar-muted hover:bg-sidebar-border/50 hover:text-sidebar-foreground',
-                  isDropTarget && 'ring-1 ring-primary/40',
-                  isDragOver && 'bg-primary/20 ring-2 ring-primary'
+                  isDropTarget && 'border-primary/30',
+                  isDragOver && 'bg-primary/20 border-primary shadow-sm'
                 )}
               >
                 {renamingProjectId === project.id ? (
@@ -238,6 +254,11 @@ export default function AppSidebar() {
                 ) : (
                   <>
                     <span className="flex-1 truncate text-left">{project.name}</span>
+                    {isDragOver && draggedCount > 0 && (
+                      <Badge variant="secondary" className="shrink-0">
+                        {draggedCount}
+                      </Badge>
+                    )}
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <button
