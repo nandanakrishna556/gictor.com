@@ -13,6 +13,8 @@ import {
   FileText,
   Mic,
   Copy,
+  FolderInput,
+  FolderTree,
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { GeneratingOverlay } from '@/components/ui/GeneratingOverlay';
@@ -79,6 +81,7 @@ interface FileGridProps {
   onBulkDelete?: (ids: string[]) => void;
   onBulkUpdateStatus?: (ids: string[], status: string) => void;
   onBulkUpdateTags?: (ids: string[], tags: string[]) => void;
+  onBulkMove?: (ids: string[], folderId: string | null, targetProjectId?: string) => void;
   defaultStages?: PipelineStage[];
   selectMode?: boolean;
   onSelectModeChange?: (mode: boolean) => void;
@@ -176,6 +179,7 @@ export default function FileGrid({
   onBulkDelete,
   onBulkUpdateStatus,
   onBulkUpdateTags,
+  onBulkMove,
   defaultStages,
   selectMode = false,
   onSelectModeChange,
@@ -188,6 +192,15 @@ export default function FileGrid({
   const [showBulkDeleteDialog, setShowBulkDeleteDialog] = useState(false);
   const [moveDialogOpen, setMoveDialogOpen] = useState(false);
   const [fileToMove, setFileToMove] = useState<File | null>(null);
+  const [bulkMoveDialogOpen, setBulkMoveDialogOpen] = useState(false);
+  const [bulkMoveAllowProjectSwitch, setBulkMoveAllowProjectSwitch] = useState(false);
+
+  // Clear selection when select mode is turned off externally
+  useEffect(() => {
+    if (!selectMode) {
+      setSelectedItems(new Set());
+    }
+  }, [selectMode]);
 
   // Keyboard shortcuts
   const handleKeyDown = useCallback((e: KeyboardEvent) => {
@@ -250,7 +263,13 @@ export default function FileGrid({
 
   const clearSelection = () => {
     setSelectedItems(new Set());
-    onSelectModeChange?.(false);
+  };
+
+  const handleBulkMove = (folderId: string | null, targetProjectId?: string) => {
+    const ids = Array.from(selectedItems);
+    if (ids.length === 0 || !onBulkMove) return;
+    onBulkMove(ids, folderId, targetProjectId);
+    clearSelection();
   };
 
   const handleBulkDelete = () => {
@@ -304,31 +323,57 @@ export default function FileGrid({
 
   const handleDragEnd = (result: DropResult) => {
     if (!result.destination) return;
-    
-    const { draggableId, source, destination } = result;
-    
+
+    const { draggableId, destination } = result;
+
+    // If dragging an item that is part of a multi-selection, apply to whole selection
+    const dragIds: string[] =
+      bulkMode && selectedItems.has(draggableId) && selectedItems.size > 1
+        ? Array.from(selectedItems)
+        : [draggableId];
+
     // In kanban view, droppable is the status column
     if (viewMode === 'kanban') {
       const newStatus = destination.droppableId;
-      const file = files.find((f) => f.id === draggableId);
-      const folder = folders.find((f) => f.id === draggableId);
-      
-      if (file) {
-        onUpdateFileStatus?.(draggableId, newStatus);
-      } else if (folder) {
-        onUpdateFolderStatus?.(draggableId, newStatus);
+      const fileIds = dragIds.filter((id) => files.some((f) => f.id === id));
+      const folderIds = dragIds.filter((id) => folders.some((f) => f.id === id));
+
+      if (fileIds.length > 0) {
+        if (fileIds.length > 1 && onBulkUpdateStatus) {
+          onBulkUpdateStatus(fileIds, newStatus);
+        } else {
+          fileIds.forEach((id) => onUpdateFileStatus?.(id, newStatus));
+        }
+      }
+      folderIds.forEach((id) => onUpdateFolderStatus?.(id, newStatus));
+
+      if (dragIds.length > 1) {
+        toast.success(`Moved ${dragIds.length} items`);
+        clearSelection();
       }
       return;
     }
-    
+
     // In grid view, check if dropped on a folder
     if (destination.droppableId.startsWith('folder-')) {
       const targetFolderId = destination.droppableId.replace('folder-', '');
-      const file = files.find((f) => f.id === draggableId);
-      
-      if (file && file.id !== targetFolderId) {
-        onMoveFile?.(draggableId, targetFolderId);
-        toast.success(`Moved "${file.name}" to folder`);
+      // Don't allow dropping a folder onto itself
+      const validIds = dragIds.filter((id) => id !== targetFolderId);
+      if (validIds.length === 0) return;
+
+      if (validIds.length > 1 && onBulkMove) {
+        onBulkMove(validIds, targetFolderId);
+        toast.success(`Moved ${validIds.length} items to folder`);
+        clearSelection();
+      } else {
+        validIds.forEach((id) => {
+          const file = files.find((f) => f.id === id);
+          if (file) {
+            onMoveFile?.(id, targetFolderId);
+          }
+        });
+        const file = files.find((f) => f.id === validIds[0]);
+        if (file) toast.success(`Moved "${file.name}" to folder`);
       }
     }
   };
@@ -356,6 +401,17 @@ export default function FileGrid({
           description={`Are you sure you want to delete ${selectedItems.size} selected item${selectedItems.size === 1 ? '' : 's'}? This action cannot be undone.`}
         />
 
+        {/* Bulk Move Dialog */}
+        <MoveToFolderDialog
+          open={bulkMoveDialogOpen}
+          onOpenChange={setBulkMoveDialogOpen}
+          projectId={projectId}
+          currentFolderId={currentFolderId}
+          onMove={handleBulkMove}
+          itemName={`${selectedItems.size} selected item${selectedItems.size === 1 ? '' : 's'}`}
+          allowProjectSwitch={bulkMoveAllowProjectSwitch}
+        />
+
         {/* Bulk Actions Bar */}
         {bulkMode && (
           <BulkActionsBar
@@ -364,9 +420,17 @@ export default function FileGrid({
             tags={tags}
             onSelectAll={selectAll}
             onClear={clearSelection}
+            onExitSelectMode={() => {
+              clearSelection();
+              onSelectModeChange?.(false);
+            }}
             onDeleteRequest={() => setShowBulkDeleteDialog(true)}
             onStatusChange={handleBulkStatusChange}
             onTagToggle={handleBulkTagToggle}
+            onMoveRequest={(allowProject) => {
+              setBulkMoveAllowProjectSwitch(allowProject);
+              setBulkMoveDialogOpen(true);
+            }}
           />
         )}
 
@@ -534,7 +598,7 @@ export default function FileGrid({
         description={`Are you sure you want to delete ${selectedItems.size} selected item${selectedItems.size === 1 ? '' : 's'}? This action cannot be undone.`}
       />
 
-      {/* Move to Folder Dialog */}
+      {/* Move to Folder Dialog (single file) */}
       <MoveToFolderDialog
         open={moveDialogOpen}
         onOpenChange={setMoveDialogOpen}
@@ -542,6 +606,17 @@ export default function FileGrid({
         currentFolderId={currentFolderId}
         onMove={handleMoveToFolder}
         itemName={fileToMove?.name || ''}
+      />
+
+      {/* Bulk Move Dialog */}
+      <MoveToFolderDialog
+        open={bulkMoveDialogOpen}
+        onOpenChange={setBulkMoveDialogOpen}
+        projectId={projectId}
+        currentFolderId={currentFolderId}
+        onMove={handleBulkMove}
+        itemName={`${selectedItems.size} selected item${selectedItems.size === 1 ? '' : 's'}`}
+        allowProjectSwitch={bulkMoveAllowProjectSwitch}
       />
 
       {/* Bulk Actions Bar */}
@@ -552,9 +627,17 @@ export default function FileGrid({
           tags={tags}
           onSelectAll={selectAll}
           onClear={clearSelection}
+          onExitSelectMode={() => {
+            clearSelection();
+            onSelectModeChange?.(false);
+          }}
           onDeleteRequest={() => setShowBulkDeleteDialog(true)}
           onStatusChange={handleBulkStatusChange}
           onTagToggle={handleBulkTagToggle}
+          onMoveRequest={(allowProject) => {
+            setBulkMoveAllowProjectSwitch(allowProject);
+            setBulkMoveDialogOpen(true);
+          }}
         />
       )}
 
@@ -678,32 +761,67 @@ function BulkActionsBar({
   tags,
   onSelectAll,
   onClear,
+  onExitSelectMode,
   onDeleteRequest,
   onStatusChange,
   onTagToggle,
+  onMoveRequest,
 }: {
   selectedCount: number;
   stages: PipelineStage[];
   tags: TagType[];
   onSelectAll: () => void;
   onClear: () => void;
+  onExitSelectMode: () => void;
   onDeleteRequest: () => void;
   onStatusChange: (status: string) => void;
   onTagToggle: (tagId: string, add: boolean) => void;
+  onMoveRequest: (allowProjectSwitch: boolean) => void;
 }) {
+  const disabled = selectedCount === 0;
   return (
-    <div className="flex items-center gap-3 rounded-xl bg-secondary/50 p-3">
-      <span className="text-sm font-medium">{selectedCount} selected</span>
+    <div className="sticky top-0 z-30 flex flex-wrap items-center gap-2 rounded-xl border bg-card/95 backdrop-blur-sm p-3 shadow-sm">
+      <span className="text-sm font-medium">
+        {selectedCount === 0 ? 'Select items' : `${selectedCount} selected`}
+      </span>
       <div className="flex-1" />
-      
+
       <Button variant="outline" size="sm" onClick={onSelectAll}>
         Select All
+      </Button>
+
+      {selectedCount > 0 && (
+        <Button variant="ghost" size="sm" onClick={onClear}>
+          Clear
+        </Button>
+      )}
+
+      {/* Move to folder (this project) */}
+      <Button
+        variant="outline"
+        size="sm"
+        disabled={disabled}
+        onClick={() => onMoveRequest(false)}
+      >
+        <FolderInput className="mr-1.5 h-4 w-4" />
+        Move
+      </Button>
+
+      {/* Move to another project */}
+      <Button
+        variant="outline"
+        size="sm"
+        disabled={disabled}
+        onClick={() => onMoveRequest(true)}
+      >
+        <FolderTree className="mr-1.5 h-4 w-4" />
+        Move to project
       </Button>
 
       {/* Status Change */}
       <Popover>
         <PopoverTrigger asChild>
-          <Button variant="outline" size="sm" disabled={selectedCount === 0}>
+          <Button variant="outline" size="sm" disabled={disabled}>
             Change Status
           </Button>
         </PopoverTrigger>
@@ -726,8 +844,8 @@ function BulkActionsBar({
       {/* Tag Assignment */}
       <Popover>
         <PopoverTrigger asChild>
-          <Button variant="outline" size="sm" disabled={selectedCount === 0}>
-            <Tag className="mr-2 h-4 w-4" />
+          <Button variant="outline" size="sm" disabled={disabled}>
+            <Tag className="mr-1.5 h-4 w-4" />
             Tags
           </Button>
         </PopoverTrigger>
@@ -767,14 +885,14 @@ function BulkActionsBar({
         variant="destructive"
         size="sm"
         onClick={onDeleteRequest}
-        disabled={selectedCount === 0}
+        disabled={disabled}
       >
-        <Trash2 className="mr-2 h-4 w-4" />
+        <Trash2 className="mr-1.5 h-4 w-4" />
         Delete
       </Button>
 
-      <Button variant="ghost" size="sm" onClick={onClear}>
-        Cancel
+      <Button variant="ghost" size="sm" onClick={onExitSelectMode}>
+        Done
       </Button>
     </div>
   );
