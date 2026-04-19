@@ -117,12 +117,18 @@ export default function BRollAnimateStage({ pipelineId, onComplete }: BRollAnima
       (lastFrameInput?.actor_id as string) ||
       (firstFrameInput?.actor_id as string) ||
       null;
+    // Inherit aspect ratio from animate input, then last frame, then first frame
+    const resolvedAspectRatio =
+      (input?.aspect_ratio as string) ||
+      (lastFrameInput?.aspect_ratio as string) ||
+      (firstFrameInput?.aspect_ratio as string) ||
+      '9:16';
     const nextHydrationKey = JSON.stringify({
       animationType: input?.animation_type ?? 'broll',
       prompt: input?.prompt ?? '',
       duration: input?.duration ?? 8,
       cameraFixed: input?.camera_fixed ?? false,
-      aspectRatio: input?.aspect_ratio ?? '9:16',
+      aspectRatio: resolvedAspectRatio,
       audioEnabled: input?.audio_enabled ?? false,
       actorId: resolvedActorId,
       firstFrameUrl: resolvedFirstFrameUrl,
@@ -138,7 +144,7 @@ export default function BRollAnimateStage({ pipelineId, onComplete }: BRollAnima
     setPrompt((input?.prompt as string) || '');
     setDuration((input?.duration as number) || 8);
     setCameraFixed(Boolean(input?.camera_fixed));
-    setAspectRatio((input?.aspect_ratio as '16:9' | '9:16' | '1:1') || '9:16');
+    setAspectRatio(resolvedAspectRatio as '16:9' | '9:16' | '1:1');
     setAudioEnabled(Boolean(input?.audio_enabled));
     setSelectedActorId(resolvedActorId);
     setFirstFrameUrl(resolvedFirstFrameUrl);
