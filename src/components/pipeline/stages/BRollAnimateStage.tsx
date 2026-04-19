@@ -449,6 +449,8 @@ export default function BRollAnimateStage({ pipelineId, onComplete }: BRollAnima
             animation_type: animationType,
             aspect_ratio: aspectRatio,
             audio_enabled: audioEnabled,
+            actor_id: selectedActorId || null,
+            actor_audio_url: selectedActor?.voice_url || selectedActor?.custom_audio_url || null,
             credits_cost: creditCost,
             supabase_url: import.meta.env.VITE_SUPABASE_URL,
           },
