@@ -34,6 +34,7 @@ import {
 } from '@/components/ui/select';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { TagList, TagSelector, TagData } from '@/components/ui/tag-badge';
+import { Slider } from '@/components/ui/slider';
 import {
   ArrowLeft,
   X,
@@ -174,7 +175,7 @@ export default function SeedanceModal({
   const [referenceVideos, setReferenceVideos] = useState<UploadedVideo[]>([]);
   const [referenceAudios, setReferenceAudios] = useState<UploadedAudio[]>([]);
   const [aspectRatio, setAspectRatio] = useState<'1:1' | '9:16' | '16:9'>('9:16');
-  const [duration, setDuration] = useState<10 | 15>(10);
+  const [duration, setDuration] = useState<number>(8);
   const [prompt, setPrompt] = useState('');
 
   // Upload state
@@ -252,7 +253,7 @@ export default function SeedanceModal({
         setReferenceVideos(Array.isArray(params.reference_videos) ? (params.reference_videos as UploadedVideo[]) : []);
         setReferenceAudios(Array.isArray(params.reference_audios) ? (params.reference_audios as UploadedAudio[]) : []);
         setAspectRatio((params.aspect_ratio as typeof aspectRatio) || '9:16');
-        setDuration(params.duration === 15 ? 15 : 10);
+        setDuration(typeof params.duration === 'number' ? Math.min(15, Math.max(4, params.duration as number)) : 8);
         setPrompt((params.prompt as string) || '');
       } else {
         setActorId(null);
@@ -263,7 +264,7 @@ export default function SeedanceModal({
         setReferenceVideos([]);
         setReferenceAudios([]);
         setAspectRatio('9:16');
-        setDuration(10);
+        setDuration(8);
         setPrompt('');
       }
 
@@ -1029,47 +1030,47 @@ export default function SeedanceModal({
                   )}
                 </div>
 
-                {/* Aspect ratio + Video duration in same row */}
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="space-y-2">
-                    <Label className="text-sm font-medium">Aspect Ratio</Label>
-                    <Select
-                      value={aspectRatio}
-                      onValueChange={(v) => {
-                        setAspectRatio(v as typeof aspectRatio);
-                        markDirty();
-                      }}
-                    >
-                      <SelectTrigger className="w-full h-9">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="9:16">9:16 (Vertical)</SelectItem>
-                        <SelectItem value="16:9">16:9 (Horizontal)</SelectItem>
-                        <SelectItem value="1:1">1:1 (Square)</SelectItem>
-                      </SelectContent>
-                    </Select>
+                {/* Aspect Ratio (matches Sub-Style button toggle) */}
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium">Aspect Ratio</Label>
+                  <div className="flex gap-1">
+                    {(['9:16', '16:9', '1:1'] as const).map((ratio) => (
+                      <Button
+                        key={ratio}
+                        type="button"
+                        variant={aspectRatio === ratio ? 'default' : 'outline'}
+                        size="sm"
+                        className="flex-1 h-9"
+                        onClick={() => {
+                          setAspectRatio(ratio);
+                          markDirty();
+                        }}
+                      >
+                        {ratio}
+                      </Button>
+                    ))}
                   </div>
+                </div>
 
-                  <div className="space-y-2">
-                    <Label className="text-sm font-medium">Video Duration</Label>
-                    <div className="flex gap-1">
-                      {([10, 15] as const).map((opt) => (
-                        <Button
-                          key={opt}
-                          type="button"
-                          variant={duration === opt ? 'default' : 'outline'}
-                          size="sm"
-                          className="flex-1 h-9"
-                          onClick={() => {
-                            setDuration(opt);
-                            markDirty();
-                          }}
-                        >
-                          {opt}s
-                        </Button>
-                      ))}
-                    </div>
+                {/* Duration Slider 4s–15s */}
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <Label className="text-sm font-medium">Duration</Label>
+                    <span className="text-sm font-medium tabular-nums">{duration}s</span>
+                  </div>
+                  <Slider
+                    min={4}
+                    max={15}
+                    step={1}
+                    value={[duration]}
+                    onValueChange={(v) => {
+                      setDuration(v[0] ?? 8);
+                      markDirty();
+                    }}
+                  />
+                  <div className="flex justify-between text-xs text-muted-foreground">
+                    <span>4s</span>
+                    <span>15s</span>
                   </div>
                 </div>
 
