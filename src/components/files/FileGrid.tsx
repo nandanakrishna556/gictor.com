@@ -13,6 +13,8 @@ import {
   FileText,
   Mic,
   Copy,
+  FolderInput,
+  FolderTree,
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { GeneratingOverlay } from '@/components/ui/GeneratingOverlay';
@@ -79,6 +81,7 @@ interface FileGridProps {
   onBulkDelete?: (ids: string[]) => void;
   onBulkUpdateStatus?: (ids: string[], status: string) => void;
   onBulkUpdateTags?: (ids: string[], tags: string[]) => void;
+  onBulkMove?: (ids: string[], folderId: string | null, targetProjectId?: string) => void;
   defaultStages?: PipelineStage[];
   selectMode?: boolean;
   onSelectModeChange?: (mode: boolean) => void;
@@ -176,6 +179,7 @@ export default function FileGrid({
   onBulkDelete,
   onBulkUpdateStatus,
   onBulkUpdateTags,
+  onBulkMove,
   defaultStages,
   selectMode = false,
   onSelectModeChange,
