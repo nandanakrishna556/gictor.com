@@ -13,9 +13,8 @@ import {
   FileText,
   Mic,
   Copy,
-  FolderInput,
-  FolderTree,
 } from 'lucide-react';
+import { cardDragState, CARD_DRAG_MIME } from '@/lib/drag-state';
 import { Input } from '@/components/ui/input';
 import { GeneratingOverlay } from '@/components/ui/GeneratingOverlay';
 import { cn } from '@/lib/utils';
@@ -427,10 +426,6 @@ export default function FileGrid({
             onDeleteRequest={() => setShowBulkDeleteDialog(true)}
             onStatusChange={handleBulkStatusChange}
             onTagToggle={handleBulkTagToggle}
-            onMoveRequest={(allowProject) => {
-              setBulkMoveAllowProjectSwitch(allowProject);
-              setBulkMoveDialogOpen(true);
-            }}
           />
         )}
 
@@ -520,6 +515,22 @@ export default function FileGrid({
                                 ref={provided.innerRef}
                                 {...provided.draggableProps}
                                 {...provided.dragHandleProps}
+                                draggable
+                                onDragStart={(e) => {
+                                  const ids =
+                                    bulkMode && selectedItems.has(item.id) && selectedItems.size > 1
+                                      ? Array.from(selectedItems)
+                                      : [item.id];
+                                  const payload = { ids, sourceProjectId: projectId };
+                                  cardDragState.set(payload);
+                                  try {
+                                    e.dataTransfer.setData(CARD_DRAG_MIME, JSON.stringify(payload));
+                                    e.dataTransfer.effectAllowed = 'move';
+                                  } catch {
+                                    // ignore
+                                  }
+                                }}
+                                onDragEnd={() => cardDragState.set(null)}
                               >
                                 <KanbanCard
                                   item={item}
@@ -634,10 +645,6 @@ export default function FileGrid({
           onDeleteRequest={() => setShowBulkDeleteDialog(true)}
           onStatusChange={handleBulkStatusChange}
           onTagToggle={handleBulkTagToggle}
-          onMoveRequest={(allowProject) => {
-            setBulkMoveAllowProjectSwitch(allowProject);
-            setBulkMoveDialogOpen(true);
-          }}
         />
       )}
 
@@ -665,41 +672,93 @@ export default function FileGrid({
               )}
 
               {/* All Items (Folders first, then Files) */}
-              {allItems.map((item, index) =>
-                item.itemType === 'folder' ? (
+              {allItems.map((item, index) => {
+                // Helpers for native HTML5 drag (cross-context, e.g., onto sidebar projects)
+                const nativeDragStart = (e: React.DragEvent) => {
+                  const ids =
+                    bulkMode && selectedItems.has(item.id) && selectedItems.size > 1
+                      ? Array.from(selectedItems)
+                      : [item.id];
+                  const payload = { ids, sourceProjectId: projectId };
+                  cardDragState.set(payload);
+                  try {
+                    e.dataTransfer.setData(CARD_DRAG_MIME, JSON.stringify(payload));
+                    e.dataTransfer.effectAllowed = 'move';
+                  } catch {
+                    // ignore
+                  }
+                };
+                const nativeDragEnd = () => {
+                  cardDragState.set(null);
+                };
+                const folderDragOver = (e: React.DragEvent, targetFolderId: string) => {
+                  const payload = cardDragState.get();
+                  if (!payload) return;
+                  // Don't allow dropping a folder onto itself
+                  if (payload.ids.includes(targetFolderId)) return;
+                  e.preventDefault();
+                  e.dataTransfer.dropEffect = 'move';
+                };
+                const folderDrop = (e: React.DragEvent, targetFolderId: string) => {
+                  const payload = cardDragState.get();
+                  if (!payload) return;
+                  const validIds = payload.ids.filter((id) => id !== targetFolderId);
+                  if (validIds.length === 0) return;
+                  e.preventDefault();
+                  if (onBulkMove) {
+                    onBulkMove(validIds, targetFolderId);
+                  } else {
+                    validIds.forEach((id) => onMoveFile?.(id, targetFolderId));
+                  }
+                  if (validIds.length > 1) {
+                    toast.success(`Moved ${validIds.length} items to folder`);
+                  }
+                  clearSelection();
+                  cardDragState.set(null);
+                };
+
+                return item.itemType === 'folder' ? (
                   <Droppable key={item.id} droppableId={`folder-${item.id}`}>
                     {(provided, snapshot) => (
                       <div
                         ref={provided.innerRef}
                         {...provided.droppableProps}
+                        onDragOver={(e) => folderDragOver(e, item.id)}
+                        onDrop={(e) => folderDrop(e, item.id)}
                         className={cn(
                           'transition-all duration-200',
                           snapshot.isDraggingOver && 'ring-2 ring-primary ring-offset-2 rounded-2xl'
                         )}
                       >
-                        <FolderCard
-                          folder={item}
-                          projectId={projectId}
-                          stages={stages}
-                          tags={tags}
-                          isSelected={selectedItems.has(item.id)}
-                          bulkMode={bulkMode}
-                          isRenaming={renamingItemId === item.id}
-                          onStartRename={() => setRenamingItemId(item.id)}
-                          onCancelRename={() => setRenamingItemId(null)}
-                          onSaveRename={(newName) => {
-                            onUpdateFolderName?.(item.id, newName);
-                            setRenamingItemId(null);
-                          }}
-                          onSelect={() => toggleSelection(item.id)}
-                          onDelete={onDeleteFolder}
-                          onStatusChange={onUpdateFolderStatus}
-                          onTagsChange={onUpdateFolderTags}
-                          onCreateTag={onCreateTag}
-                          onDeleteTag={onDeleteTag}
-                          onCreateNew={onCreateNew}
-                          isDragOver={snapshot.isDraggingOver}
-                        />
+                        <div
+                          draggable
+                          onDragStart={nativeDragStart}
+                          onDragEnd={nativeDragEnd}
+                        >
+                          <FolderCard
+                            folder={item}
+                            projectId={projectId}
+                            stages={stages}
+                            tags={tags}
+                            isSelected={selectedItems.has(item.id)}
+                            bulkMode={bulkMode}
+                            isRenaming={renamingItemId === item.id}
+                            onStartRename={() => setRenamingItemId(item.id)}
+                            onCancelRename={() => setRenamingItemId(null)}
+                            onSaveRename={(newName) => {
+                              onUpdateFolderName?.(item.id, newName);
+                              setRenamingItemId(null);
+                            }}
+                            onSelect={() => toggleSelection(item.id)}
+                            onDelete={onDeleteFolder}
+                            onStatusChange={onUpdateFolderStatus}
+                            onTagsChange={onUpdateFolderTags}
+                            onCreateTag={onCreateTag}
+                            onDeleteTag={onDeleteTag}
+                            onCreateNew={onCreateNew}
+                            isDragOver={snapshot.isDraggingOver}
+                          />
+                        </div>
                         <div className="hidden">{provided.placeholder}</div>
                       </div>
                     )}
@@ -711,6 +770,9 @@ export default function FileGrid({
                         ref={provided.innerRef}
                         {...provided.draggableProps}
                         {...provided.dragHandleProps}
+                        draggable
+                        onDragStart={nativeDragStart}
+                        onDragEnd={nativeDragEnd}
                         className={cn(snapshot.isDragging && 'opacity-80 z-50')}
                       >
                         <FileCard
@@ -744,8 +806,8 @@ export default function FileGrid({
                       </div>
                     )}
                   </Draggable>
-                )
-              )}
+                );
+              })}
               {rootProvided.placeholder}
             </div>
           )}
@@ -765,7 +827,6 @@ function BulkActionsBar({
   onDeleteRequest,
   onStatusChange,
   onTagToggle,
-  onMoveRequest,
 }: {
   selectedCount: number;
   stages: PipelineStage[];
@@ -776,7 +837,6 @@ function BulkActionsBar({
   onDeleteRequest: () => void;
   onStatusChange: (status: string) => void;
   onTagToggle: (tagId: string, add: boolean) => void;
-  onMoveRequest: (allowProjectSwitch: boolean) => void;
 }) {
   const disabled = selectedCount === 0;
   return (
@@ -795,28 +855,6 @@ function BulkActionsBar({
           Clear
         </Button>
       )}
-
-      {/* Move to folder (this project) */}
-      <Button
-        variant="outline"
-        size="sm"
-        disabled={disabled}
-        onClick={() => onMoveRequest(false)}
-      >
-        <FolderInput className="mr-1.5 h-4 w-4" />
-        Move
-      </Button>
-
-      {/* Move to another project */}
-      <Button
-        variant="outline"
-        size="sm"
-        disabled={disabled}
-        onClick={() => onMoveRequest(true)}
-      >
-        <FolderTree className="mr-1.5 h-4 w-4" />
-        Move to project
-      </Button>
 
       {/* Status Change */}
       <Popover>
@@ -892,7 +930,7 @@ function BulkActionsBar({
       </Button>
 
       <Button variant="ghost" size="sm" onClick={onExitSelectMode}>
-        Done
+        Cancel
       </Button>
     </div>
   );
@@ -995,13 +1033,7 @@ function FolderCard({
       )}
     >
       {/* Selection Checkbox */}
-      {bulkMode && (
-        <div className="absolute left-3 top-3 z-10">
-          <Checkbox checked={isSelected} />
-        </div>
-      )}
-
-      {/* Card Name at Top */}
+      {/* Card Name at Top (with inline checkbox in bulk mode) */}
       <div className="p-3 sm:p-4 pb-0" onClick={(e) => e.stopPropagation()}>
         {isRenaming ? (
           <Input
@@ -1013,7 +1045,17 @@ function FolderCard({
             autoFocus
           />
         ) : (
-          <h3 className="truncate text-sm sm:text-base font-semibold text-card-foreground">{folder.name}</h3>
+          <div className="flex items-center gap-2 min-w-0">
+            {bulkMode && (
+              <Checkbox
+                checked={isSelected}
+                onClick={(e) => e.stopPropagation()}
+                onCheckedChange={() => onSelect()}
+                className="flex-shrink-0"
+              />
+            )}
+            <h3 className="truncate text-sm sm:text-base font-semibold text-card-foreground">{folder.name}</h3>
+          </div>
         )}
       </div>
 
@@ -1307,14 +1349,7 @@ function FileCard({
         isSelected && 'border-primary ring-2 ring-primary/20'
       )}
     >
-      {/* Selection Checkbox */}
-      {bulkMode && (
-        <div className="absolute left-3 top-3 z-10">
-          <Checkbox checked={isSelected} />
-        </div>
-      )}
-
-      {/* Card Name at Top with Icon */}
+      {/* Card Name at Top with Icon (and inline checkbox in bulk mode) */}
       <div className="p-3 sm:p-4 pb-2">
         {isRenaming ? (
           <Input
@@ -1328,6 +1363,14 @@ function FileCard({
           />
         ) : (
           <div className="flex items-center gap-2 min-w-0">
+            {bulkMode && (
+              <Checkbox
+                checked={isSelected}
+                onClick={(e) => e.stopPropagation()}
+                onCheckedChange={() => onSelect()}
+                className="flex-shrink-0"
+              />
+            )}
             <FileTypeIcon fileType={getEffectiveIconType(file)} className="flex-shrink-0" />
             <h3 className="truncate text-sm sm:text-base font-medium text-card-foreground">{file.name}</h3>
           </div>
@@ -1737,14 +1780,7 @@ function KanbanCard({
         isSelected && 'border-primary ring-2 ring-primary/20'
       )}
     >
-      {/* Selection Checkbox */}
-      {bulkMode && (
-        <div className="absolute left-3 top-3 z-10">
-          <Checkbox checked={isSelected} onClick={(e) => e.stopPropagation()} />
-        </div>
-      )}
-
-      {/* Card Name at Top with Icon */}
+      {/* Card Name at Top with Icon (and inline checkbox in bulk mode) */}
       <div className="p-3 pb-2">
         {isRenaming ? (
           <Input
@@ -1758,6 +1794,14 @@ function KanbanCard({
           />
         ) : (
           <div className="flex items-center gap-2 min-w-0">
+            {bulkMode && (
+              <Checkbox
+                checked={isSelected}
+                onClick={(e) => e.stopPropagation()}
+                onCheckedChange={() => onSelect()}
+                className="flex-shrink-0"
+              />
+            )}
             {isFolder ? (
               <svg
                 width="16"
