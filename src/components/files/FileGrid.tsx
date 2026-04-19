@@ -962,13 +962,7 @@ function FolderCard({
       )}
     >
       {/* Selection Checkbox */}
-      {bulkMode && (
-        <div className="absolute left-3 top-3 z-10">
-          <Checkbox checked={isSelected} />
-        </div>
-      )}
-
-      {/* Card Name at Top */}
+      {/* Card Name at Top (with inline checkbox in bulk mode) */}
       <div className="p-3 sm:p-4 pb-0" onClick={(e) => e.stopPropagation()}>
         {isRenaming ? (
           <Input
@@ -980,7 +974,17 @@ function FolderCard({
             autoFocus
           />
         ) : (
-          <h3 className="truncate text-sm sm:text-base font-semibold text-card-foreground">{folder.name}</h3>
+          <div className="flex items-center gap-2 min-w-0">
+            {bulkMode && (
+              <Checkbox
+                checked={isSelected}
+                onClick={(e) => e.stopPropagation()}
+                onCheckedChange={() => onSelect()}
+                className="flex-shrink-0"
+              />
+            )}
+            <h3 className="truncate text-sm sm:text-base font-semibold text-card-foreground">{folder.name}</h3>
+          </div>
         )}
       </div>
 
@@ -1705,14 +1709,7 @@ function KanbanCard({
         isSelected && 'border-primary ring-2 ring-primary/20'
       )}
     >
-      {/* Selection Checkbox */}
-      {bulkMode && (
-        <div className="absolute left-3 top-3 z-10">
-          <Checkbox checked={isSelected} onClick={(e) => e.stopPropagation()} />
-        </div>
-      )}
-
-      {/* Card Name at Top with Icon */}
+      {/* Card Name at Top with Icon (and inline checkbox in bulk mode) */}
       <div className="p-3 pb-2">
         {isRenaming ? (
           <Input
@@ -1726,6 +1723,14 @@ function KanbanCard({
           />
         ) : (
           <div className="flex items-center gap-2 min-w-0">
+            {bulkMode && (
+              <Checkbox
+                checked={isSelected}
+                onClick={(e) => e.stopPropagation()}
+                onCheckedChange={() => onSelect()}
+                className="flex-shrink-0"
+              />
+            )}
             {isFolder ? (
               <svg
                 width="16"
