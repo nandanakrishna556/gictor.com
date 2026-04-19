@@ -1062,6 +1062,7 @@ function FolderCard({
   onDeleteTag,
   onCreateNew,
   isDragOver = false,
+  draggedCount = 0,
 }: {
   folder: FolderType;
   projectId: string;
@@ -1081,6 +1082,7 @@ function FolderCard({
   onDeleteTag?: (id: string) => void;
   onCreateNew?: () => void;
   isDragOver?: boolean;
+  draggedCount?: number;
 }) {
   const navigate = useNavigate();
   const [renameValue, setRenameValue] = useState(folder.name);
@@ -1136,6 +1138,7 @@ function FolderCard({
       onClick={handleCardClick}
       className={cn(
         'group relative flex aspect-[2/3] cursor-pointer flex-col rounded-2xl border bg-amber-50/50 transition-colors duration-200 hover:border-primary dark:bg-card dark:border-border/50 overflow-hidden',
+        isDragOver && 'border-primary ring-2 ring-primary/30 shadow-sm',
         isSelected && 'border-primary ring-2 ring-primary/20'
       )}
     >
@@ -1193,6 +1196,17 @@ function FolderCard({
           </svg>
         </div>
       </div>
+
+      {isDragOver && (
+        <div className="pointer-events-none absolute inset-x-3 top-16 z-10 rounded-xl border border-primary/30 bg-background/90 px-3 py-2 text-center shadow-sm backdrop-blur-sm">
+          <div className="text-sm font-medium text-primary">Drop into folder</div>
+          {draggedCount > 0 && (
+            <div className="text-xs text-muted-foreground">
+              {draggedCount} item{draggedCount === 1 ? '' : 's'}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Info Section */}
       <div className="flex flex-col gap-1.5 sm:gap-2 p-3 sm:p-4 min-w-0">
@@ -1794,6 +1808,7 @@ function KanbanCard({
   pipelineThumbnails,
   isDragging,
   isNativeDragOver,
+  draggedCount = 0,
   isSelected,
   bulkMode,
   isRenaming,
@@ -1814,6 +1829,7 @@ function KanbanCard({
   pipelineThumbnails?: Map<string, { firstFrameUrl?: string; lastFrameUrl?: string }>;
   isDragging: boolean;
   isNativeDragOver?: boolean;
+  draggedCount?: number;
   isSelected: boolean;
   bulkMode: boolean;
   isRenaming: boolean;
@@ -2079,6 +2095,17 @@ function KanbanCard({
             </div>
           );
         })()}
+
+        {isFolder && isNativeDragOver && (
+          <div className="pointer-events-none absolute inset-3 z-10 flex flex-col items-center justify-center rounded-xl border border-primary/30 bg-background/90 text-center shadow-sm backdrop-blur-sm">
+            <div className="text-sm font-medium text-primary">Drop into folder</div>
+            {draggedCount > 0 && (
+              <div className="text-xs text-muted-foreground">
+                {draggedCount} item{draggedCount === 1 ? '' : 's'}
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Info Section - Tags only (status is implicit via kanban column) */}
