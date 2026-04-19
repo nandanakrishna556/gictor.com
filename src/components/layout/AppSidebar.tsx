@@ -265,7 +265,8 @@ export default function AppSidebar() {
                   </>
                 )}
               </div>
-            ))}
+              );
+            })}
 
             {/* New Project Button */}
             <button
