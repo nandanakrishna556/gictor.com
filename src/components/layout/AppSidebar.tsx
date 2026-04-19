@@ -209,12 +209,12 @@ export default function AppSidebar() {
                   });
                 }}
                 className={cn(
-                  'group flex w-full items-center gap-2 rounded-sm border border-transparent px-3 py-1.5 text-sm transition-fast cursor-pointer',
+                  'group relative flex w-full items-center gap-2 rounded-sm border border-transparent px-3 py-1.5 text-sm transition-fast cursor-pointer',
                   projectId === project.id
                     ? 'bg-primary/15 font-medium text-primary'
                     : 'text-sidebar-muted hover:bg-sidebar-border/50 hover:text-sidebar-foreground',
                   isDropTarget && 'border-primary/30',
-                  isDragOver && 'bg-primary/20 border-primary shadow-sm'
+                  isDragOver && 'bg-primary/20 border-primary ring-2 ring-primary/30 ring-offset-1 ring-offset-sidebar shadow-sm'
                 )}
               >
                 {renamingProjectId === project.id ? (
@@ -253,9 +253,14 @@ export default function AppSidebar() {
                   </div>
                 ) : (
                   <>
-                    <span className="flex-1 truncate text-left">{project.name}</span>
+                    <div className="flex min-w-0 flex-1 items-center gap-2">
+                      <span className="truncate text-left">{project.name}</span>
+                      {isDragOver && draggedCount > 0 && (
+                        <span className="truncate text-xs text-primary">Drop here</span>
+                      )}
+                    </div>
                     {isDragOver && draggedCount > 0 && (
-                      <Badge variant="secondary" className="shrink-0">
+                      <Badge variant="secondary" className="shrink-0 border-primary/30 bg-primary/10 text-primary">
                         {draggedCount}
                       </Badge>
                     )}

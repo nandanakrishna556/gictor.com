@@ -811,48 +811,42 @@ export default function FileGrid({
                     )}
                   </Droppable>
                 ) : (
-                  <Draggable key={item.id} draggableId={item.id} index={index}>
-                    {(provided, snapshot) => (
-                      <div
-                        ref={provided.innerRef}
-                        {...provided.draggableProps}
-                        {...provided.dragHandleProps}
-                        draggable
-                        onDragStart={nativeDragStart}
-                        onDragEnd={nativeDragEnd}
-                        className={cn(snapshot.isDragging && 'opacity-80 z-50')}
-                      >
-                        <FileCard
-                          file={item}
-                          stages={stages}
-                          tags={tags}
-                          pipelineThumbnails={pipelineThumbnails}
-                          isSelected={selectedItems.has(item.id)}
-                          bulkMode={bulkMode}
-                          isRenaming={renamingItemId === item.id}
-                          onStartRename={() => setRenamingItemId(item.id)}
-                          onCancelRename={() => setRenamingItemId(null)}
-                          onSaveRename={(newName) => {
-                            onUpdateFileName?.(item.id, newName);
-                            setRenamingItemId(null);
-                          }}
-                          onSelect={() => toggleSelection(item.id)}
-                          onDelete={onDeleteFile}
-                          onDuplicate={onDuplicateFile}
-                          onStatusChange={onUpdateFileStatus}
-                          onTagsChange={onUpdateFileTags}
-                          onCreateTag={onCreateTag}
-                          onDeleteTag={onDeleteTag}
-                          onCreateNew={onCreateNew}
-                          onFileClick={onFileClick}
-                          onMove={() => {
-                            setFileToMove(item);
-                            setMoveDialogOpen(true);
-                          }}
-                        />
-                      </div>
-                    )}
-                  </Draggable>
+                  <div
+                    key={item.id}
+                    draggable
+                    onDragStart={nativeDragStart}
+                    onDragEnd={nativeDragEnd}
+                    className="transition-opacity duration-200 active:opacity-80"
+                  >
+                    <FileCard
+                      file={item}
+                      stages={stages}
+                      tags={tags}
+                      pipelineThumbnails={pipelineThumbnails}
+                      isSelected={selectedItems.has(item.id)}
+                      bulkMode={bulkMode}
+                      isRenaming={renamingItemId === item.id}
+                      onStartRename={() => setRenamingItemId(item.id)}
+                      onCancelRename={() => setRenamingItemId(null)}
+                      onSaveRename={(newName) => {
+                        onUpdateFileName?.(item.id, newName);
+                        setRenamingItemId(null);
+                      }}
+                      onSelect={() => toggleSelection(item.id)}
+                      onDelete={onDeleteFile}
+                      onDuplicate={onDuplicateFile}
+                      onStatusChange={onUpdateFileStatus}
+                      onTagsChange={onUpdateFileTags}
+                      onCreateTag={onCreateTag}
+                      onDeleteTag={onDeleteTag}
+                      onCreateNew={onCreateNew}
+                      onFileClick={onFileClick}
+                      onMove={() => {
+                        setFileToMove(item);
+                        setMoveDialogOpen(true);
+                      }}
+                    />
+                  </div>
                 );
               })}
               {rootProvided.placeholder}
