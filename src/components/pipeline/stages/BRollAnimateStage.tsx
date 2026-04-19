@@ -12,7 +12,6 @@ import { useQueryClient } from '@tanstack/react-query';
 import { InputModeToggle, InputMode } from '@/components/ui/input-mode-toggle';
 import { uploadToR2 } from '@/lib/cloudflare-upload';
 import { Slider } from '@/components/ui/slider';
-import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import ActorSelectorPopover from '@/components/modals/ActorSelectorPopover';
 import { useActors, Actor } from '@/hooks/useActors';
 
