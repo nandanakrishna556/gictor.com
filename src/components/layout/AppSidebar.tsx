@@ -10,9 +10,9 @@ import { useProjects } from '@/hooks/useProjects';
 import { useProfile } from '@/hooks/useProfile';
 import { useTheme } from 'next-themes';
 import { useQueryClient } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { cardDragState, type CardDragPayload } from '@/lib/drag-state';
+import { moveItems } from '@/lib/item-move';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -60,21 +60,7 @@ export default function AppSidebar() {
     if (!payload || payload.sourceProjectId === targetProjectId || payload.ids.length === 0) return;
 
     try {
-      await supabase.from('files').update({ project_id: targetProjectId, folder_id: null }).in('id', payload.ids);
-      const { data: filesData } = await supabase.from('files').select('id, generation_params').in('id', payload.ids);
-      const pipelineIds = (filesData || [])
-        .map((f) => (f.generation_params as { pipeline_id?: string } | null)?.pipeline_id)
-        .filter((pid): pid is string => !!pid);
-      if (pipelineIds.length > 0) {
-        await supabase.from('pipelines').update({ project_id: targetProjectId, folder_id: null }).in('id', pipelineIds);
-      }
-      const { data: foldersData } = await supabase.from('folders').select('id').in('id', payload.ids);
-      if ((foldersData || []).length > 0) {
-        await supabase
-          .from('folders')
-          .update({ project_id: targetProjectId, parent_folder_id: null })
-          .in('id', foldersData!.map((f) => f.id));
-      }
+      await moveItems({ ids: payload.ids, folderId: null, targetProjectId });
       queryClient.invalidateQueries({ queryKey: ['files'] });
       queryClient.invalidateQueries({ queryKey: ['folders'] });
       queryClient.invalidateQueries({ queryKey: ['pipelines'] });
