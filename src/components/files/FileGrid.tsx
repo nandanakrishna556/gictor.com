@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
 import {
@@ -193,6 +193,8 @@ export default function FileGrid({
   const [fileToMove, setFileToMove] = useState<File | null>(null);
   const [bulkMoveDialogOpen, setBulkMoveDialogOpen] = useState(false);
   const [bulkMoveAllowProjectSwitch, setBulkMoveAllowProjectSwitch] = useState(false);
+  const [kanbanDragOverFolderId, setKanbanDragOverFolderId] = useState<string | null>(null);
+  const nativeDropHandledRef = useRef(false);
 
   // Clear selection when select mode is turned off externally
   useEffect(() => {
@@ -321,6 +323,13 @@ export default function FileGrid({
   };
 
   const handleDragEnd = (result: DropResult) => {
+    if (nativeDropHandledRef.current) {
+      nativeDropHandledRef.current = false;
+      cardDragState.set(null);
+      setKanbanDragOverFolderId(null);
+      return;
+    }
+
     if (!result.destination) return;
 
     const { draggableId, destination } = result;
