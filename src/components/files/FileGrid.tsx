@@ -273,6 +273,35 @@ export default function FileGrid({
     clearSelection();
   };
 
+  const getDraggedIds = (itemId: string) =>
+    bulkMode && selectedItems.has(itemId) && selectedItems.size > 1
+      ? Array.from(selectedItems)
+      : [itemId];
+
+  const handleNativeFolderDrop = (targetFolderId: string) => {
+    const payload = cardDragState.get();
+    if (!payload) return;
+
+    const validIds = payload.ids.filter((id) => id !== targetFolderId);
+    if (validIds.length === 0) return;
+
+    nativeDropHandledRef.current = true;
+
+    if (onBulkMove) {
+      onBulkMove(validIds, targetFolderId);
+    } else {
+      validIds.forEach((id) => onMoveFile?.(id, targetFolderId));
+    }
+
+    if (validIds.length > 1) {
+      toast.success(`Moved ${validIds.length} items to folder`);
+    }
+
+    clearSelection();
+    cardDragState.set(null);
+    setKanbanDragOverFolderId(null);
+  };
+
   const handleBulkDelete = () => {
     const fileIds = Array.from(selectedItems).filter((id) =>
       files.some((f) => f.id === id)
@@ -684,10 +713,7 @@ export default function FileGrid({
               {allItems.map((item, index) => {
                 // Helpers for native HTML5 drag (cross-context, e.g., onto sidebar projects)
                 const nativeDragStart = (e: React.DragEvent) => {
-                  const ids =
-                    bulkMode && selectedItems.has(item.id) && selectedItems.size > 1
-                      ? Array.from(selectedItems)
-                      : [item.id];
+                  const ids = getDraggedIds(item.id);
                   const payload = { ids, sourceProjectId: projectId };
                   cardDragState.set(payload);
                   try {
@@ -711,19 +737,8 @@ export default function FileGrid({
                 const folderDrop = (e: React.DragEvent, targetFolderId: string) => {
                   const payload = cardDragState.get();
                   if (!payload) return;
-                  const validIds = payload.ids.filter((id) => id !== targetFolderId);
-                  if (validIds.length === 0) return;
                   e.preventDefault();
-                  if (onBulkMove) {
-                    onBulkMove(validIds, targetFolderId);
-                  } else {
-                    validIds.forEach((id) => onMoveFile?.(id, targetFolderId));
-                  }
-                  if (validIds.length > 1) {
-                    toast.success(`Moved ${validIds.length} items to folder`);
-                  }
-                  clearSelection();
-                  cardDragState.set(null);
+                  handleNativeFolderDrop(targetFolderId);
                 };
 
                 return item.itemType === 'folder' ? (
