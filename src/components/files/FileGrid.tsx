@@ -1274,14 +1274,7 @@ function FileCard({
         isSelected && 'border-primary ring-2 ring-primary/20'
       )}
     >
-      {/* Selection Checkbox */}
-      {bulkMode && (
-        <div className="absolute left-3 top-3 z-10">
-          <Checkbox checked={isSelected} />
-        </div>
-      )}
-
-      {/* Card Name at Top with Icon */}
+      {/* Card Name at Top with Icon (and inline checkbox in bulk mode) */}
       <div className="p-3 sm:p-4 pb-2">
         {isRenaming ? (
           <Input
@@ -1295,6 +1288,14 @@ function FileCard({
           />
         ) : (
           <div className="flex items-center gap-2 min-w-0">
+            {bulkMode && (
+              <Checkbox
+                checked={isSelected}
+                onClick={(e) => e.stopPropagation()}
+                onCheckedChange={() => onSelect()}
+                className="flex-shrink-0"
+              />
+            )}
             <FileTypeIcon fileType={getEffectiveIconType(file)} className="flex-shrink-0" />
             <h3 className="truncate text-sm sm:text-base font-medium text-card-foreground">{file.name}</h3>
           </div>
