@@ -28,17 +28,20 @@ export default function BRollAnimateStage({ pipelineId, onComplete }: BRollAnima
   const { pipeline, updateVoice, updateFinalVideo, isUpdating } = usePipeline(pipelineId);
   const { profile } = useProfile();
   const queryClient = useQueryClient();
+  const { actors } = useActors();
   
   // Input mode
   const [inputMode, setInputMode] = useState<InputMode>('generate');
   
   // Input state
   const [animationType, setAnimationType] = useState<'broll' | 'motion_graphics'>('broll');
-  const [aspectRatio, setAspectRatio] = useState<'16:9' | '9:16'>('9:16');
+  const [aspectRatio, setAspectRatio] = useState<'16:9' | '9:16' | '1:1'>('9:16');
   const [duration, setDuration] = useState(8);
   const [audioEnabled, setAudioEnabled] = useState(false);
   const [cameraFixed, setCameraFixed] = useState(false);
   const [prompt, setPrompt] = useState('');
+  const [selectedActorId, setSelectedActorId] = useState<string | null>(null);
+  const [selectedActor, setSelectedActor] = useState<Actor | null>(null);
   
   // Custom frame uploads (override the generated ones)
   const [firstFrameUrl, setFirstFrameUrl] = useState('');
