@@ -192,6 +192,15 @@ export default function FileGrid({
   const [showBulkDeleteDialog, setShowBulkDeleteDialog] = useState(false);
   const [moveDialogOpen, setMoveDialogOpen] = useState(false);
   const [fileToMove, setFileToMove] = useState<File | null>(null);
+  const [bulkMoveDialogOpen, setBulkMoveDialogOpen] = useState(false);
+  const [bulkMoveAllowProjectSwitch, setBulkMoveAllowProjectSwitch] = useState(false);
+
+  // Clear selection when select mode is turned off externally
+  useEffect(() => {
+    if (!selectMode) {
+      setSelectedItems(new Set());
+    }
+  }, [selectMode]);
 
   // Keyboard shortcuts
   const handleKeyDown = useCallback((e: KeyboardEvent) => {
