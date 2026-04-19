@@ -47,7 +47,10 @@ export default function AppSidebar() {
 
   useEffect(() => {
     setDragPayload(cardDragState.get());
-    return cardDragState.subscribe(setDragPayload);
+    const unsub = cardDragState.subscribe(setDragPayload);
+    return () => {
+      unsub();
+    };
   }, []);
 
   const handleProjectDrop = async (targetProjectId: string) => {
