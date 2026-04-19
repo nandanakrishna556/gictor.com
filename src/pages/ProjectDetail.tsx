@@ -482,6 +482,7 @@ export default function ProjectDetail() {
               onMoveFile={handleMoveFile}
               onBulkDelete={handleBulkDelete}
               onBulkUpdateStatus={handleBulkUpdateStatus}
+              onBulkMove={handleBulkMove}
               defaultStages={defaultStages}
               selectMode={selectMode}
               onSelectModeChange={setSelectMode}
