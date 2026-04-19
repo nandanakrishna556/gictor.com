@@ -302,6 +302,14 @@ export default function FileGrid({
     setKanbanDragOverFolderId(null);
   };
 
+  const handleNativeDragEnd = () => {
+    window.setTimeout(() => {
+      if (!nativeDropHandledRef.current) {
+        cardDragState.set(null);
+      }
+    }, 0);
+  };
+
   const handleBulkDelete = () => {
     const fileIds = Array.from(selectedItems).filter((id) =>
       files.some((f) => f.id === id)
@@ -582,7 +590,7 @@ export default function FileGrid({
                                     // ignore
                                   }
                                 }}
-                                onDragEnd={() => cardDragState.set(null)}
+                                onDragEnd={handleNativeDragEnd}
                               >
                                 <KanbanCard
                                   item={item}
@@ -739,7 +747,7 @@ export default function FileGrid({
                   }
                 };
                 const nativeDragEnd = () => {
-                  cardDragState.set(null);
+                  handleNativeDragEnd();
                 };
                 const folderDragOver = (e: React.DragEvent, targetFolderId: string) => {
                   const payload = cardDragState.get();
