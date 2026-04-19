@@ -263,7 +263,13 @@ export default function FileGrid({
 
   const clearSelection = () => {
     setSelectedItems(new Set());
-    onSelectModeChange?.(false);
+  };
+
+  const handleBulkMove = (folderId: string | null, targetProjectId?: string) => {
+    const ids = Array.from(selectedItems);
+    if (ids.length === 0 || !onBulkMove) return;
+    onBulkMove(ids, folderId, targetProjectId);
+    clearSelection();
   };
 
   const handleBulkDelete = () => {
