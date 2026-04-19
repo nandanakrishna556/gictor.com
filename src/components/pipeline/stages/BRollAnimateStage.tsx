@@ -620,28 +620,6 @@ export default function BRollAnimateStage({ pipelineId, onComplete }: BRollAnima
                 )}
               </div>
               
-              {/* Duration Slider */}
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <Label>Duration</Label>
-                  <span className="text-sm font-medium tabular-nums">{duration}s</span>
-                </div>
-                <Slider
-                  min={4}
-                  max={15}
-                  step={1}
-                  value={[duration]}
-                  onValueChange={(v) => {
-                    markUserInteracted();
-                    setDuration(v[0] ?? 8);
-                  }}
-                />
-                <div className="flex justify-between text-xs text-muted-foreground">
-                  <span>4s</span>
-                  <span>15s</span>
-                </div>
-              </div>
-
               {/* Aspect Ratio */}
               <div className="space-y-2">
                 <Label>Aspect Ratio</Label>
@@ -661,6 +639,28 @@ export default function BRollAnimateStage({ pipelineId, onComplete }: BRollAnima
                       {ratio}
                     </Button>
                   ))}
+                </div>
+              </div>
+
+              {/* Duration Slider */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Label>Duration</Label>
+                  <span className="text-sm font-medium tabular-nums">{duration}s</span>
+                </div>
+                <Slider
+                  min={4}
+                  max={15}
+                  step={1}
+                  value={[duration]}
+                  onValueChange={(v) => {
+                    markUserInteracted();
+                    setDuration(v[0] ?? 8);
+                  }}
+                />
+                <div className="flex justify-between text-xs text-muted-foreground">
+                  <span>4s</span>
+                  <span>15s</span>
                 </div>
               </div>
 
