@@ -48,7 +48,7 @@ import ConfirmDeleteDialog from '@/components/modals/ConfirmDeleteDialog';
 import MoveToFolderDialog from '@/components/modals/MoveToFolderDialog';
 import { FileTypeIcon, FileType } from '@/components/ui/file-type-icon';
 import { useProjectPipelineThumbnails } from '@/hooks/useProjectPipelineThumbnails';
-import { getFileThumbnailUrl } from '@/lib/file-thumbnails';
+import { getFileThumbnailUrl, getFileVideoUrl } from '@/lib/file-thumbnails';
 
 interface FileGridProps {
   files: File[];
@@ -1528,7 +1528,25 @@ function FileCard({
               />
             );
           }
-          
+
+          // Fall back to first frame of the generated video for video file types
+          const videoUrl = getFileVideoUrl(file);
+          if (videoUrl) {
+            return (
+              <video
+                src={`${videoUrl}#t=0.1`}
+                className="absolute inset-0 w-full h-full object-contain opacity-0"
+                muted
+                playsInline
+                preload="metadata"
+                onLoadedData={(e) => {
+                  e.currentTarget.classList.remove('opacity-0');
+                  e.currentTarget.classList.add('animate-image-fade-in');
+                }}
+              />
+            );
+          }
+
           // Flat icon fallbacks
           if (file.file_type === 'speech') {
             return (
@@ -1998,6 +2016,24 @@ function KanbanCard({
                 alt={item.name}
                 className="absolute inset-0 w-full h-full object-contain opacity-0"
                 onLoad={(e) => {
+                  e.currentTarget.classList.remove('opacity-0');
+                  e.currentTarget.classList.add('animate-image-fade-in');
+                }}
+              />
+            );
+          }
+
+          // Fall back to first frame of the generated video for video file types
+          const videoUrl = file ? getFileVideoUrl(file) : null;
+          if (videoUrl) {
+            return (
+              <video
+                src={`${videoUrl}#t=0.1`}
+                className="absolute inset-0 w-full h-full object-contain opacity-0"
+                muted
+                playsInline
+                preload="metadata"
+                onLoadedData={(e) => {
                   e.currentTarget.classList.remove('opacity-0');
                   e.currentTarget.classList.add('animate-image-fade-in');
                 }}

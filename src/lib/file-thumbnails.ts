@@ -5,6 +5,27 @@ export interface PipelineThumbnailData {
   lastFrameUrl?: string;
 }
 
+// File types whose preview/download_url is a video and can serve as a thumbnail
+const VIDEO_FILE_TYPES = new Set([
+  'lip_sync',
+  'talking_head',
+  'clips',
+  'b_roll',
+  'animate',
+  'seedance',
+  'veo3',
+  'motion_graphics',
+]);
+
+/**
+ * Returns the playable video URL for a completed file, if applicable.
+ * Used to render a <video> element as a thumbnail (frame at t=0.1).
+ */
+export function getFileVideoUrl(file: File): string | null {
+  if (!VIDEO_FILE_TYPES.has(file.file_type)) return null;
+  return file.download_url || file.preview_url || null;
+}
+
 /**
  * Compute the thumbnail image URL for a file card based on file type.
  * 
