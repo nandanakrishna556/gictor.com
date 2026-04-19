@@ -122,10 +122,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       lastSubscriptionSync.current = { token: accessToken, timestamp: now };
 
       try {
-        const { error } = await syncSubscription(accessToken);
+        // Refresh session to avoid sending an expired JWT to the edge function
+        const { data: refreshed } = await supabase.auth.refreshSession();
+        const tokenToUse = refreshed?.session?.access_token ?? accessToken;
+
+        const { data, error } = await syncSubscription(tokenToUse);
 
         if (error) {
           console.error('check-subscription error:', error);
+          return;
+        }
+
+        if (data?.error === 'SESSION_EXPIRED') {
+          console.warn('Session expired during subscription sync');
           return;
         }
 

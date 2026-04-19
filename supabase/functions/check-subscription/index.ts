@@ -55,11 +55,16 @@ serve(async (req) => {
     const token = authHeader.replace("Bearer ", "");
     const { data: claimsData, error: claimsError } = await supabaseAuth.auth.getClaims(token);
     if (claimsError || !claimsData?.claims) {
-      logStep("Authentication failed", { message: claimsError?.message || "invalid claims" });
-      return new Response(JSON.stringify({ error: "Unauthorized" }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status: 401,
-      });
+      const message = claimsError?.message || "invalid claims";
+      const isExpired = /expired/i.test(message);
+      logStep("Authentication failed", { message, isExpired });
+      return new Response(
+        JSON.stringify({ error: isExpired ? "SESSION_EXPIRED" : "Unauthorized" }),
+        {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 401,
+        }
+      );
     }
     
     const userId = claimsData.claims.sub as string;
