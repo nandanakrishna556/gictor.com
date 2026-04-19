@@ -643,23 +643,26 @@ export default function BRollAnimateStage({ pipelineId, onComplete }: BRollAnima
                 </div>
               </div>
 
-              {/* Aspect Ratio Toggle */}
+              {/* Aspect Ratio */}
               <div className="space-y-2">
                 <Label>Aspect Ratio</Label>
-                <ToggleGroup
-                  type="single"
-                  value={aspectRatio}
-                  onValueChange={(v) => {
-                    if (!v) return;
-                    markUserInteracted();
-                    setAspectRatio(v as '16:9' | '9:16' | '1:1');
-                  }}
-                  className="justify-start gap-2"
-                >
-                  <ToggleGroupItem value="9:16" variant="outline" className="px-4">9:16</ToggleGroupItem>
-                  <ToggleGroupItem value="16:9" variant="outline" className="px-4">16:9</ToggleGroupItem>
-                  <ToggleGroupItem value="1:1" variant="outline" className="px-4">1:1</ToggleGroupItem>
-                </ToggleGroup>
+                <div className="flex gap-1">
+                  {(['9:16', '16:9', '1:1'] as const).map((ratio) => (
+                    <Button
+                      key={ratio}
+                      type="button"
+                      variant={aspectRatio === ratio ? 'default' : 'outline'}
+                      size="sm"
+                      className="flex-1 h-9"
+                      onClick={() => {
+                        markUserInteracted();
+                        setAspectRatio(ratio);
+                      }}
+                    >
+                      {ratio}
+                    </Button>
+                  ))}
+                </div>
               </div>
 
               {/* Prompt */}
