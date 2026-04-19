@@ -3,6 +3,7 @@ import { useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import type { Json } from '@/integrations/supabase/types';
+import { moveItems } from '@/lib/item-move';
 
 export interface File {
   id: string;
@@ -304,47 +305,7 @@ export function useFiles(projectId: string, folderId?: string) {
       folderId: string | null;
       targetProjectId?: string;
     }) => {
-      const updates: { folder_id: string | null; project_id?: string } = { folder_id: folderId };
-      if (targetProjectId) updates.project_id = targetProjectId;
-
-      // Update files
-      const { error: filesError } = await supabase.from('files').update(updates).in('id', ids);
-      if (filesError) throw filesError;
-
-      // Also move associated pipelines (talking_head/clips files reference pipelines)
-      // Fetch files to find pipeline_ids
-      const { data: filesData } = await supabase
-        .from('files')
-        .select('id, generation_params')
-        .in('id', ids);
-
-      const pipelineIds = (filesData || [])
-        .map((f) => {
-          const params = f.generation_params as { pipeline_id?: string } | null;
-          return params?.pipeline_id;
-        })
-        .filter((pid): pid is string => !!pid);
-
-      if (pipelineIds.length > 0) {
-        const pipelineUpdates: { folder_id: string | null; project_id?: string } = { folder_id: folderId };
-        if (targetProjectId) pipelineUpdates.project_id = targetProjectId;
-        await supabase.from('pipelines').update(pipelineUpdates).in('id', pipelineIds);
-      }
-
-      // Move folders too if any folder ids were passed
-      const { data: foldersData } = await supabase
-        .from('folders')
-        .select('id')
-        .in('id', ids);
-
-      if ((foldersData || []).length > 0) {
-        const folderIds = foldersData!.map((f) => f.id);
-        const folderUpdates: { parent_folder_id: string | null; project_id?: string } = {
-          parent_folder_id: folderId,
-        };
-        if (targetProjectId) folderUpdates.project_id = targetProjectId;
-        await supabase.from('folders').update(folderUpdates).in('id', folderIds);
-      }
+      await moveItems({ ids, folderId, targetProjectId });
     },
     onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: ['files'] });
