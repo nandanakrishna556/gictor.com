@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams, useLocation } from 'react-router-dom';
 import { ChevronDown, Plus, Sparkles, Layers, MoreHorizontal, Trash2, Pencil, Check, X, Coins, Sun, Moon, LayoutDashboard, Settings, UserCircle } from 'lucide-react';
 import { Input } from '@/components/ui/input';
@@ -9,6 +9,10 @@ import { Switch } from '@/components/ui/switch';
 import { useProjects } from '@/hooks/useProjects';
 import { useProfile } from '@/hooks/useProfile';
 import { useTheme } from 'next-themes';
+import { useQueryClient } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
+import { cardDragState, type CardDragPayload } from '@/lib/drag-state';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -32,11 +36,52 @@ export default function AppSidebar() {
   const { projects, createProject, deleteProject, updateProject } = useProjects();
   const { profile } = useProfile();
   const { theme, setTheme } = useTheme();
+  const queryClient = useQueryClient();
   const [projectsOpen, setProjectsOpen] = useState(true);
   const [renamingProjectId, setRenamingProjectId] = useState<string | null>(null);
   const [renameValue, setRenameValue] = useState('');
   const [newProjectDialogOpen, setNewProjectDialogOpen] = useState(false);
   const [newProjectName, setNewProjectName] = useState('');
+  const [dragPayload, setDragPayload] = useState<CardDragPayload | null>(null);
+  const [dragOverProjectId, setDragOverProjectId] = useState<string | null>(null);
+
+  useEffect(() => {
+    setDragPayload(cardDragState.get());
+    return cardDragState.subscribe(setDragPayload);
+  }, []);
+
+  const handleProjectDrop = async (targetProjectId: string) => {
+    const payload = cardDragState.get();
+    setDragOverProjectId(null);
+    cardDragState.set(null);
+    if (!payload || payload.sourceProjectId === targetProjectId || payload.ids.length === 0) return;
+
+    try {
+      await supabase.from('files').update({ project_id: targetProjectId, folder_id: null }).in('id', payload.ids);
+      const { data: filesData } = await supabase.from('files').select('id, generation_params').in('id', payload.ids);
+      const pipelineIds = (filesData || [])
+        .map((f) => (f.generation_params as { pipeline_id?: string } | null)?.pipeline_id)
+        .filter((pid): pid is string => !!pid);
+      if (pipelineIds.length > 0) {
+        await supabase.from('pipelines').update({ project_id: targetProjectId, folder_id: null }).in('id', pipelineIds);
+      }
+      const { data: foldersData } = await supabase.from('folders').select('id').in('id', payload.ids);
+      if ((foldersData || []).length > 0) {
+        await supabase
+          .from('folders')
+          .update({ project_id: targetProjectId, parent_folder_id: null })
+          .in('id', foldersData!.map((f) => f.id));
+      }
+      queryClient.invalidateQueries({ queryKey: ['files'] });
+      queryClient.invalidateQueries({ queryKey: ['folders'] });
+      queryClient.invalidateQueries({ queryKey: ['pipelines'] });
+      const target = projects?.find((p) => p.id === targetProjectId);
+      toast.success(`Moved ${payload.ids.length} item${payload.ids.length === 1 ? '' : 's'} to "${target?.name || 'project'}"`);
+    } catch (err) {
+      console.error('Failed to move items to project', err);
+      toast.error('Failed to move items.');
+    }
+  };
 
   const handleCreateProject = async () => {
     if (!newProjectName.trim()) return;
