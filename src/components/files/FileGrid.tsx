@@ -795,28 +795,6 @@ function BulkActionsBar({
         </Button>
       )}
 
-      {/* Move to folder (this project) */}
-      <Button
-        variant="outline"
-        size="sm"
-        disabled={disabled}
-        onClick={() => onMoveRequest(false)}
-      >
-        <FolderInput className="mr-1.5 h-4 w-4" />
-        Move
-      </Button>
-
-      {/* Move to another project */}
-      <Button
-        variant="outline"
-        size="sm"
-        disabled={disabled}
-        onClick={() => onMoveRequest(true)}
-      >
-        <FolderTree className="mr-1.5 h-4 w-4" />
-        Move to project
-      </Button>
-
       {/* Status Change */}
       <Popover>
         <PopoverTrigger asChild>
@@ -891,7 +869,7 @@ function BulkActionsBar({
       </Button>
 
       <Button variant="ghost" size="sm" onClick={onExitSelectMode}>
-        Done
+        Cancel
       </Button>
     </div>
   );
