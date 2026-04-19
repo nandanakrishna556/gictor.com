@@ -656,41 +656,93 @@ export default function FileGrid({
               )}
 
               {/* All Items (Folders first, then Files) */}
-              {allItems.map((item, index) =>
-                item.itemType === 'folder' ? (
+              {allItems.map((item, index) => {
+                // Helpers for native HTML5 drag (cross-context, e.g., onto sidebar projects)
+                const nativeDragStart = (e: React.DragEvent) => {
+                  const ids =
+                    bulkMode && selectedItems.has(item.id) && selectedItems.size > 1
+                      ? Array.from(selectedItems)
+                      : [item.id];
+                  const payload = { ids, sourceProjectId: projectId };
+                  cardDragState.set(payload);
+                  try {
+                    e.dataTransfer.setData(CARD_DRAG_MIME, JSON.stringify(payload));
+                    e.dataTransfer.effectAllowed = 'move';
+                  } catch {
+                    // ignore
+                  }
+                };
+                const nativeDragEnd = () => {
+                  cardDragState.set(null);
+                };
+                const folderDragOver = (e: React.DragEvent, targetFolderId: string) => {
+                  const payload = cardDragState.get();
+                  if (!payload) return;
+                  // Don't allow dropping a folder onto itself
+                  if (payload.ids.includes(targetFolderId)) return;
+                  e.preventDefault();
+                  e.dataTransfer.dropEffect = 'move';
+                };
+                const folderDrop = (e: React.DragEvent, targetFolderId: string) => {
+                  const payload = cardDragState.get();
+                  if (!payload) return;
+                  const validIds = payload.ids.filter((id) => id !== targetFolderId);
+                  if (validIds.length === 0) return;
+                  e.preventDefault();
+                  if (onBulkMove) {
+                    onBulkMove(validIds, targetFolderId);
+                  } else {
+                    validIds.forEach((id) => onMoveFile?.(id, targetFolderId));
+                  }
+                  if (validIds.length > 1) {
+                    toast.success(`Moved ${validIds.length} items to folder`);
+                  }
+                  clearSelection();
+                  cardDragState.set(null);
+                };
+
+                return item.itemType === 'folder' ? (
                   <Droppable key={item.id} droppableId={`folder-${item.id}`}>
                     {(provided, snapshot) => (
                       <div
                         ref={provided.innerRef}
                         {...provided.droppableProps}
+                        onDragOver={(e) => folderDragOver(e, item.id)}
+                        onDrop={(e) => folderDrop(e, item.id)}
                         className={cn(
                           'transition-all duration-200',
                           snapshot.isDraggingOver && 'ring-2 ring-primary ring-offset-2 rounded-2xl'
                         )}
                       >
-                        <FolderCard
-                          folder={item}
-                          projectId={projectId}
-                          stages={stages}
-                          tags={tags}
-                          isSelected={selectedItems.has(item.id)}
-                          bulkMode={bulkMode}
-                          isRenaming={renamingItemId === item.id}
-                          onStartRename={() => setRenamingItemId(item.id)}
-                          onCancelRename={() => setRenamingItemId(null)}
-                          onSaveRename={(newName) => {
-                            onUpdateFolderName?.(item.id, newName);
-                            setRenamingItemId(null);
-                          }}
-                          onSelect={() => toggleSelection(item.id)}
-                          onDelete={onDeleteFolder}
-                          onStatusChange={onUpdateFolderStatus}
-                          onTagsChange={onUpdateFolderTags}
-                          onCreateTag={onCreateTag}
-                          onDeleteTag={onDeleteTag}
-                          onCreateNew={onCreateNew}
-                          isDragOver={snapshot.isDraggingOver}
-                        />
+                        <div
+                          draggable
+                          onDragStart={nativeDragStart}
+                          onDragEnd={nativeDragEnd}
+                        >
+                          <FolderCard
+                            folder={item}
+                            projectId={projectId}
+                            stages={stages}
+                            tags={tags}
+                            isSelected={selectedItems.has(item.id)}
+                            bulkMode={bulkMode}
+                            isRenaming={renamingItemId === item.id}
+                            onStartRename={() => setRenamingItemId(item.id)}
+                            onCancelRename={() => setRenamingItemId(null)}
+                            onSaveRename={(newName) => {
+                              onUpdateFolderName?.(item.id, newName);
+                              setRenamingItemId(null);
+                            }}
+                            onSelect={() => toggleSelection(item.id)}
+                            onDelete={onDeleteFolder}
+                            onStatusChange={onUpdateFolderStatus}
+                            onTagsChange={onUpdateFolderTags}
+                            onCreateTag={onCreateTag}
+                            onDeleteTag={onDeleteTag}
+                            onCreateNew={onCreateNew}
+                            isDragOver={snapshot.isDraggingOver}
+                          />
+                        </div>
                         <div className="hidden">{provided.placeholder}</div>
                       </div>
                     )}
@@ -702,6 +754,9 @@ export default function FileGrid({
                         ref={provided.innerRef}
                         {...provided.draggableProps}
                         {...provided.dragHandleProps}
+                        draggable
+                        onDragStart={nativeDragStart}
+                        onDragEnd={nativeDragEnd}
                         className={cn(snapshot.isDragging && 'opacity-80 z-50')}
                       >
                         <FileCard
@@ -735,8 +790,8 @@ export default function FileGrid({
                       </div>
                     )}
                   </Draggable>
-                )
-              )}
+                );
+              })}
               {rootProvided.placeholder}
             </div>
           )}
