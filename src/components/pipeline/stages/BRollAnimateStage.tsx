@@ -12,7 +12,6 @@ import { useQueryClient } from '@tanstack/react-query';
 import { InputModeToggle, InputMode } from '@/components/ui/input-mode-toggle';
 import { uploadToR2 } from '@/lib/cloudflare-upload';
 import { Slider } from '@/components/ui/slider';
-import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import ActorSelectorPopover from '@/components/modals/ActorSelectorPopover';
 import { useActors, Actor } from '@/hooks/useActors';
 
@@ -117,12 +116,18 @@ export default function BRollAnimateStage({ pipelineId, onComplete }: BRollAnima
       (lastFrameInput?.actor_id as string) ||
       (firstFrameInput?.actor_id as string) ||
       null;
+    // Inherit aspect ratio from animate input, then last frame, then first frame
+    const resolvedAspectRatio =
+      (input?.aspect_ratio as string) ||
+      (lastFrameInput?.aspect_ratio as string) ||
+      (firstFrameInput?.aspect_ratio as string) ||
+      '9:16';
     const nextHydrationKey = JSON.stringify({
       animationType: input?.animation_type ?? 'broll',
       prompt: input?.prompt ?? '',
       duration: input?.duration ?? 8,
       cameraFixed: input?.camera_fixed ?? false,
-      aspectRatio: input?.aspect_ratio ?? '9:16',
+      aspectRatio: resolvedAspectRatio,
       audioEnabled: input?.audio_enabled ?? false,
       actorId: resolvedActorId,
       firstFrameUrl: resolvedFirstFrameUrl,
@@ -138,7 +143,7 @@ export default function BRollAnimateStage({ pipelineId, onComplete }: BRollAnima
     setPrompt((input?.prompt as string) || '');
     setDuration((input?.duration as number) || 8);
     setCameraFixed(Boolean(input?.camera_fixed));
-    setAspectRatio((input?.aspect_ratio as '16:9' | '9:16' | '1:1') || '9:16');
+    setAspectRatio(resolvedAspectRatio as '16:9' | '9:16' | '1:1');
     setAudioEnabled(Boolean(input?.audio_enabled));
     setSelectedActorId(resolvedActorId);
     setFirstFrameUrl(resolvedFirstFrameUrl);
@@ -637,23 +642,26 @@ export default function BRollAnimateStage({ pipelineId, onComplete }: BRollAnima
                 </div>
               </div>
 
-              {/* Aspect Ratio Toggle */}
+              {/* Aspect Ratio */}
               <div className="space-y-2">
                 <Label>Aspect Ratio</Label>
-                <ToggleGroup
-                  type="single"
-                  value={aspectRatio}
-                  onValueChange={(v) => {
-                    if (!v) return;
-                    markUserInteracted();
-                    setAspectRatio(v as '16:9' | '9:16' | '1:1');
-                  }}
-                  className="justify-start gap-2"
-                >
-                  <ToggleGroupItem value="9:16" variant="outline" className="px-4">9:16</ToggleGroupItem>
-                  <ToggleGroupItem value="16:9" variant="outline" className="px-4">16:9</ToggleGroupItem>
-                  <ToggleGroupItem value="1:1" variant="outline" className="px-4">1:1</ToggleGroupItem>
-                </ToggleGroup>
+                <div className="flex gap-1">
+                  {(['9:16', '16:9', '1:1'] as const).map((ratio) => (
+                    <Button
+                      key={ratio}
+                      type="button"
+                      variant={aspectRatio === ratio ? 'default' : 'outline'}
+                      size="sm"
+                      className="flex-1 h-9"
+                      onClick={() => {
+                        markUserInteracted();
+                        setAspectRatio(ratio);
+                      }}
+                    >
+                      {ratio}
+                    </Button>
+                  ))}
+                </div>
               </div>
 
               {/* Prompt */}
