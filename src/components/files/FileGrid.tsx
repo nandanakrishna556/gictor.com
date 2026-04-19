@@ -183,7 +183,6 @@ export default function FileGrid({
   selectMode = false,
   onSelectModeChange,
 }: FileGridProps) {
-  const navigate = useNavigate();
   const { data: pipelineThumbnails } = useProjectPipelineThumbnails(projectId);
   const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
   const bulkMode = selectMode;
@@ -193,8 +192,10 @@ export default function FileGrid({
   const [fileToMove, setFileToMove] = useState<File | null>(null);
   const [bulkMoveDialogOpen, setBulkMoveDialogOpen] = useState(false);
   const [bulkMoveAllowProjectSwitch, setBulkMoveAllowProjectSwitch] = useState(false);
-  const [kanbanDragOverFolderId, setKanbanDragOverFolderId] = useState<string | null>(null);
+  const [dragOverFolderId, setDragOverFolderId] = useState<string | null>(null);
+  const [activeDragPayload, setActiveDragPayload] = useState<{ ids: string[]; sourceProjectId: string } | null>(null);
   const nativeDropHandledRef = useRef(false);
+  const folderDragLeaveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Clear selection when select mode is turned off externally
   useEffect(() => {
@@ -202,6 +203,18 @@ export default function FileGrid({
       setSelectedItems(new Set());
     }
   }, [selectMode]);
+
+  useEffect(() => {
+    setActiveDragPayload(cardDragState.get());
+    const unsubscribe = cardDragState.subscribe(setActiveDragPayload);
+
+    return () => {
+      if (folderDragLeaveTimeoutRef.current) {
+        clearTimeout(folderDragLeaveTimeoutRef.current);
+      }
+      unsubscribe();
+    };
+  }, []);
 
   // Keyboard shortcuts
   const handleKeyDown = useCallback((e: KeyboardEvent) => {
@@ -278,8 +291,46 @@ export default function FileGrid({
       ? Array.from(selectedItems)
       : [itemId];
 
-  const handleNativeFolderDrop = (targetFolderId: string) => {
-    const payload = cardDragState.get();
+  const getDragPayloadFromEvent = (event?: React.DragEvent | DragEvent | null) => {
+    const statePayload = cardDragState.get();
+    if (statePayload) return statePayload;
+
+    const rawPayload = event?.dataTransfer?.getData(CARD_DRAG_MIME);
+    if (!rawPayload) return null;
+
+    try {
+      const parsed = JSON.parse(rawPayload) as { ids: string[]; sourceProjectId: string };
+      if (!Array.isArray(parsed.ids) || typeof parsed.sourceProjectId !== 'string') return null;
+      return parsed;
+    } catch {
+      return null;
+    }
+  };
+
+  const setFolderDragHover = (folderId: string) => {
+    if (folderDragLeaveTimeoutRef.current) {
+      clearTimeout(folderDragLeaveTimeoutRef.current);
+      folderDragLeaveTimeoutRef.current = null;
+    }
+
+    if (dragOverFolderId !== folderId) {
+      setDragOverFolderId(folderId);
+    }
+  };
+
+  const scheduleFolderDragClear = (folderId?: string) => {
+    if (folderDragLeaveTimeoutRef.current) {
+      clearTimeout(folderDragLeaveTimeoutRef.current);
+    }
+
+    folderDragLeaveTimeoutRef.current = window.setTimeout(() => {
+      setDragOverFolderId((current) => (folderId && current !== folderId ? current : null));
+      folderDragLeaveTimeoutRef.current = null;
+    }, 80);
+  };
+
+  const handleNativeFolderDrop = (targetFolderId: string, incomingPayload?: { ids: string[]; sourceProjectId: string } | null) => {
+    const payload = incomingPayload ?? cardDragState.get();
     if (!payload) return;
 
     const validIds = payload.ids.filter((id) => id !== targetFolderId);
@@ -299,7 +350,7 @@ export default function FileGrid({
 
     clearSelection();
     cardDragState.set(null);
-    setKanbanDragOverFolderId(null);
+    setDragOverFolderId(null);
   };
 
   const handleNativeDragEnd = () => {
@@ -307,6 +358,7 @@ export default function FileGrid({
       if (!nativeDropHandledRef.current) {
         cardDragState.set(null);
       }
+      setDragOverFolderId(null);
     }, 0);
   };
 
@@ -363,7 +415,7 @@ export default function FileGrid({
     if (nativeDropHandledRef.current) {
       nativeDropHandledRef.current = false;
       cardDragState.set(null);
-      setKanbanDragOverFolderId(null);
+      setDragOverFolderId(null);
       return;
     }
 
@@ -564,20 +616,24 @@ export default function FileGrid({
                                 draggable
                                 onDragOver={(e) => {
                                   if (item.itemType !== 'folder') return;
-                                  const payload = cardDragState.get();
+                                  const payload = getDragPayloadFromEvent(e);
                                   if (!payload || payload.ids.includes(item.id)) return;
                                   e.preventDefault();
                                   e.dataTransfer.dropEffect = 'move';
-                                  if (kanbanDragOverFolderId !== item.id) setKanbanDragOverFolderId(item.id);
+                                  setFolderDragHover(item.id);
                                 }}
-                                onDragLeave={() => {
-                                  if (kanbanDragOverFolderId === item.id) setKanbanDragOverFolderId(null);
+                                onDragLeave={(e) => {
+                                  const nextTarget = e.relatedTarget;
+                                  if (nextTarget instanceof Node && e.currentTarget.contains(nextTarget)) return;
+                                  scheduleFolderDragClear(item.id);
                                 }}
                                 onDrop={(e) => {
                                   if (item.itemType !== 'folder') return;
+                                  const payload = getDragPayloadFromEvent(e);
+                                  if (!payload || payload.ids.includes(item.id)) return;
                                   e.preventDefault();
                                   e.stopPropagation();
-                                  handleNativeFolderDrop(item.id);
+                                  handleNativeFolderDrop(item.id, payload);
                                 }}
                                 onDragStart={(e) => {
                                   const ids = getDraggedIds(item.id);
@@ -600,7 +656,8 @@ export default function FileGrid({
                                   isDragging={snapshot.isDragging}
                                   isSelected={selectedItems.has(item.id)}
                                   bulkMode={bulkMode}
-                                  isNativeDragOver={kanbanDragOverFolderId === item.id}
+                                  isNativeDragOver={dragOverFolderId === item.id}
+                                  draggedCount={dragOverFolderId === item.id ? activeDragPayload?.ids.length ?? 0 : 0}
                                   isRenaming={renamingItemId === item.id}
                                   onStartRename={() => setRenamingItemId(item.id)}
                                   onCancelRename={() => setRenamingItemId(null)}
@@ -733,7 +790,7 @@ export default function FileGrid({
               )}
 
               {/* All Items (Folders first, then Files) */}
-              {allItems.map((item, index) => {
+              {allItems.map((item) => {
                 // Helpers for native HTML5 drag (cross-context, e.g., onto sidebar projects)
                 const nativeDragStart = (e: React.DragEvent) => {
                   const ids = getDraggedIds(item.id);
@@ -750,18 +807,24 @@ export default function FileGrid({
                   handleNativeDragEnd();
                 };
                 const folderDragOver = (e: React.DragEvent, targetFolderId: string) => {
-                  const payload = cardDragState.get();
-                  if (!payload) return;
-                  // Don't allow dropping a folder onto itself
+                  const payload = getDragPayloadFromEvent(e);
+                  if (!payload || payload.ids.includes(targetFolderId)) return;
                   if (payload.ids.includes(targetFolderId)) return;
                   e.preventDefault();
                   e.dataTransfer.dropEffect = 'move';
+                  setFolderDragHover(targetFolderId);
+                };
+                const folderDragLeave = (e: React.DragEvent, targetFolderId: string) => {
+                  const nextTarget = e.relatedTarget;
+                  if (nextTarget instanceof Node && e.currentTarget.contains(nextTarget)) return;
+                  scheduleFolderDragClear(targetFolderId);
                 };
                 const folderDrop = (e: React.DragEvent, targetFolderId: string) => {
-                  const payload = cardDragState.get();
-                  if (!payload) return;
+                  const payload = getDragPayloadFromEvent(e);
+                  if (!payload || payload.ids.includes(targetFolderId)) return;
                   e.preventDefault();
-                  handleNativeFolderDrop(targetFolderId);
+                  e.stopPropagation();
+                  handleNativeFolderDrop(targetFolderId, payload);
                 };
 
                 return item.itemType === 'folder' ? (
@@ -771,10 +834,12 @@ export default function FileGrid({
                         ref={provided.innerRef}
                         {...provided.droppableProps}
                         onDragOver={(e) => folderDragOver(e, item.id)}
+                        onDragEnter={(e) => folderDragOver(e, item.id)}
+                        onDragLeave={(e) => folderDragLeave(e, item.id)}
                         onDrop={(e) => folderDrop(e, item.id)}
                         className={cn(
                           'transition-all duration-200',
-                          snapshot.isDraggingOver && 'ring-2 ring-primary ring-offset-2 rounded-2xl'
+                          (snapshot.isDraggingOver || dragOverFolderId === item.id) && 'ring-2 ring-primary ring-offset-2 rounded-2xl'
                         )}
                       >
                         <div
@@ -803,7 +868,8 @@ export default function FileGrid({
                             onCreateTag={onCreateTag}
                             onDeleteTag={onDeleteTag}
                             onCreateNew={onCreateNew}
-                            isDragOver={snapshot.isDraggingOver}
+                            isDragOver={snapshot.isDraggingOver || dragOverFolderId === item.id}
+                            draggedCount={dragOverFolderId === item.id ? activeDragPayload?.ids.length ?? 0 : 0}
                           />
                         </div>
                         <div className="hidden">{provided.placeholder}</div>
@@ -996,6 +1062,7 @@ function FolderCard({
   onDeleteTag,
   onCreateNew,
   isDragOver = false,
+  draggedCount = 0,
 }: {
   folder: FolderType;
   projectId: string;
@@ -1015,6 +1082,7 @@ function FolderCard({
   onDeleteTag?: (id: string) => void;
   onCreateNew?: () => void;
   isDragOver?: boolean;
+  draggedCount?: number;
 }) {
   const navigate = useNavigate();
   const [renameValue, setRenameValue] = useState(folder.name);
@@ -1070,6 +1138,7 @@ function FolderCard({
       onClick={handleCardClick}
       className={cn(
         'group relative flex aspect-[2/3] cursor-pointer flex-col rounded-2xl border bg-amber-50/50 transition-colors duration-200 hover:border-primary dark:bg-card dark:border-border/50 overflow-hidden',
+        isDragOver && 'border-primary ring-2 ring-primary/30 shadow-sm',
         isSelected && 'border-primary ring-2 ring-primary/20'
       )}
     >
@@ -1127,6 +1196,17 @@ function FolderCard({
           </svg>
         </div>
       </div>
+
+      {isDragOver && (
+        <div className="pointer-events-none absolute inset-x-3 top-16 z-10 rounded-xl border border-primary/30 bg-background/90 px-3 py-2 text-center shadow-sm backdrop-blur-sm">
+          <div className="text-sm font-medium text-primary">Drop into folder</div>
+          {draggedCount > 0 && (
+            <div className="text-xs text-muted-foreground">
+              {draggedCount} item{draggedCount === 1 ? '' : 's'}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Info Section */}
       <div className="flex flex-col gap-1.5 sm:gap-2 p-3 sm:p-4 min-w-0">
@@ -1728,6 +1808,7 @@ function KanbanCard({
   pipelineThumbnails,
   isDragging,
   isNativeDragOver,
+  draggedCount = 0,
   isSelected,
   bulkMode,
   isRenaming,
@@ -1748,6 +1829,7 @@ function KanbanCard({
   pipelineThumbnails?: Map<string, { firstFrameUrl?: string; lastFrameUrl?: string }>;
   isDragging: boolean;
   isNativeDragOver?: boolean;
+  draggedCount?: number;
   isSelected: boolean;
   bulkMode: boolean;
   isRenaming: boolean;
@@ -2013,6 +2095,17 @@ function KanbanCard({
             </div>
           );
         })()}
+
+        {isFolder && isNativeDragOver && (
+          <div className="pointer-events-none absolute inset-3 z-10 flex flex-col items-center justify-center rounded-xl border border-primary/30 bg-background/90 text-center shadow-sm backdrop-blur-sm">
+            <div className="text-sm font-medium text-primary">Drop into folder</div>
+            {draggedCount > 0 && (
+              <div className="text-xs text-muted-foreground">
+                {draggedCount} item{draggedCount === 1 ? '' : 's'}
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Info Section - Tags only (status is implicit via kanban column) */}
