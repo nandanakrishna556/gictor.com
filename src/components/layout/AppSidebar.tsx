@@ -161,15 +161,34 @@ export default function AppSidebar() {
           </CollapsibleTrigger>
 
           <CollapsibleContent className="mt-0.5 space-y-0.5 ml-[26px]">
-            {projects?.map((project) => (
+            {projects?.map((project) => {
+              const isDropTarget = !!dragPayload && dragPayload.sourceProjectId !== project.id;
+              const isDragOver = dragOverProjectId === project.id;
+              return (
               <div
                 key={project.id}
                 onClick={() => navigate(`/projects/${project.id}`)}
+                onDragOver={(e) => {
+                  if (!isDropTarget) return;
+                  e.preventDefault();
+                  e.dataTransfer.dropEffect = 'move';
+                  if (dragOverProjectId !== project.id) setDragOverProjectId(project.id);
+                }}
+                onDragLeave={() => {
+                  if (dragOverProjectId === project.id) setDragOverProjectId(null);
+                }}
+                onDrop={(e) => {
+                  if (!isDropTarget) return;
+                  e.preventDefault();
+                  handleProjectDrop(project.id);
+                }}
                 className={cn(
                   'group flex w-full items-center gap-2 rounded-sm px-3 py-1.5 text-sm transition-fast cursor-pointer',
                   projectId === project.id
                     ? 'bg-primary/15 font-medium text-primary'
-                    : 'text-sidebar-muted hover:bg-sidebar-border/50 hover:text-sidebar-foreground'
+                    : 'text-sidebar-muted hover:bg-sidebar-border/50 hover:text-sidebar-foreground',
+                  isDropTarget && 'ring-1 ring-primary/40',
+                  isDragOver && 'bg-primary/20 ring-2 ring-primary'
                 )}
               >
                 {renamingProjectId === project.id ? (
