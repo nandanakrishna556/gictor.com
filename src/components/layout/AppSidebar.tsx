@@ -1,9 +1,10 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate, useParams, useLocation } from 'react-router-dom';
 import { ChevronDown, Plus, Layers, MoreHorizontal, Trash2, Pencil, Check, X, Coins, Sun, Moon, LayoutDashboard, Settings, UserCircle } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Switch } from '@/components/ui/switch';
 import { useProjects } from '@/hooks/useProjects';
@@ -11,7 +12,7 @@ import { useProfile } from '@/hooks/useProfile';
 import { useTheme } from 'next-themes';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { cardDragState, type CardDragPayload } from '@/lib/drag-state';
+import { CARD_DRAG_MIME, cardDragState, type CardDragPayload } from '@/lib/drag-state';
 import { moveItems } from '@/lib/item-move';
 import {
   DropdownMenu,
@@ -44,6 +45,7 @@ export default function AppSidebar() {
   const [newProjectName, setNewProjectName] = useState('');
   const [dragPayload, setDragPayload] = useState<CardDragPayload | null>(null);
   const [dragOverProjectId, setDragOverProjectId] = useState<string | null>(null);
+  const isDroppingRef = useRef(false);
 
   useEffect(() => {
     setDragPayload(cardDragState.get());
@@ -53,10 +55,24 @@ export default function AppSidebar() {
     };
   }, []);
 
-  const handleProjectDrop = async (targetProjectId: string) => {
-    const payload = cardDragState.get();
-    setDragOverProjectId(null);
-    cardDragState.set(null);
+  const getDragPayloadFromEvent = (event?: { dataTransfer?: DataTransfer | null } | null) => {
+    const statePayload = cardDragState.get();
+    if (statePayload) return statePayload;
+
+    const rawPayload = event?.dataTransfer?.getData(CARD_DRAG_MIME);
+    if (!rawPayload) return null;
+
+    try {
+      const parsed = JSON.parse(rawPayload) as CardDragPayload;
+      if (!Array.isArray(parsed.ids) || typeof parsed.sourceProjectId !== 'string') return null;
+      return parsed;
+    } catch {
+      return null;
+    }
+  };
+
+  const handleProjectDrop = async (targetProjectId: string, incomingPayload?: CardDragPayload | null) => {
+    const payload = incomingPayload ?? cardDragState.get();
     if (!payload || payload.sourceProjectId === targetProjectId || payload.ids.length === 0) return;
 
     try {
@@ -69,6 +85,10 @@ export default function AppSidebar() {
     } catch (err) {
       console.error('Failed to move items to project', err);
       toast.error('Failed to move items.');
+    } finally {
+      setDragOverProjectId(null);
+      setDragPayload(null);
+      cardDragState.set(null);
     }
   };
 
