@@ -1,5 +1,5 @@
 import { Link, useNavigate } from 'react-router-dom';
-import { ChevronRight, Grid3X3, Kanban, Plus, LogOut, Settings, Search, Zap } from 'lucide-react';
+import { ChevronRight, Grid3X3, Kanban, Plus, LogOut, Settings, Search, Zap, CheckSquare, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -61,6 +61,8 @@ export default function AppHeader({
   onClearFilters = () => {},
   searchQuery = '',
   onSearchChange,
+  selectMode = false,
+  onSelectModeChange,
 }: AppHeaderProps) {
   const { user, signOut } = useAuth();
   const { profile } = useProfile();
@@ -158,8 +160,31 @@ export default function AppHeader({
           </div>
         )}
 
+        {/* Select toggle for bulk actions */}
+        {showCreateButtons && onSelectModeChange && (
+          <Button
+            size="sm"
+            variant={selectMode ? 'default' : 'outline'}
+            onClick={() => onSelectModeChange(!selectMode)}
+            className="gap-1.5"
+            title={selectMode ? 'Exit select mode' : 'Select multiple items'}
+          >
+            {selectMode ? (
+              <>
+                <X className="h-4 w-4" strokeWidth={1.5} />
+                <span className="hidden sm:inline">Done</span>
+              </>
+            ) : (
+              <>
+                <CheckSquare className="h-4 w-4" strokeWidth={1.5} />
+                <span className="hidden sm:inline">Select</span>
+              </>
+            )}
+          </Button>
+        )}
+
         {/* Create Button */}
-        {showCreateButtons && onCreateNew && (
+        {showCreateButtons && onCreateNew && !selectMode && (
           <Button
             size="sm"
             onClick={onCreateNew}
