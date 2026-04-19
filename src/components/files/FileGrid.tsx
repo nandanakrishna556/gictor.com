@@ -1,5 +1,4 @@
 import { useState, useEffect, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
 import {
   Download,
@@ -323,31 +322,57 @@ export default function FileGrid({
 
   const handleDragEnd = (result: DropResult) => {
     if (!result.destination) return;
-    
-    const { draggableId, source, destination } = result;
-    
+
+    const { draggableId, destination } = result;
+
+    // If dragging an item that is part of a multi-selection, apply to whole selection
+    const dragIds: string[] =
+      bulkMode && selectedItems.has(draggableId) && selectedItems.size > 1
+        ? Array.from(selectedItems)
+        : [draggableId];
+
     // In kanban view, droppable is the status column
     if (viewMode === 'kanban') {
       const newStatus = destination.droppableId;
-      const file = files.find((f) => f.id === draggableId);
-      const folder = folders.find((f) => f.id === draggableId);
-      
-      if (file) {
-        onUpdateFileStatus?.(draggableId, newStatus);
-      } else if (folder) {
-        onUpdateFolderStatus?.(draggableId, newStatus);
+      const fileIds = dragIds.filter((id) => files.some((f) => f.id === id));
+      const folderIds = dragIds.filter((id) => folders.some((f) => f.id === id));
+
+      if (fileIds.length > 0) {
+        if (fileIds.length > 1 && onBulkUpdateStatus) {
+          onBulkUpdateStatus(fileIds, newStatus);
+        } else {
+          fileIds.forEach((id) => onUpdateFileStatus?.(id, newStatus));
+        }
+      }
+      folderIds.forEach((id) => onUpdateFolderStatus?.(id, newStatus));
+
+      if (dragIds.length > 1) {
+        toast.success(`Moved ${dragIds.length} items`);
+        clearSelection();
       }
       return;
     }
-    
+
     // In grid view, check if dropped on a folder
     if (destination.droppableId.startsWith('folder-')) {
       const targetFolderId = destination.droppableId.replace('folder-', '');
-      const file = files.find((f) => f.id === draggableId);
-      
-      if (file && file.id !== targetFolderId) {
-        onMoveFile?.(draggableId, targetFolderId);
-        toast.success(`Moved "${file.name}" to folder`);
+      // Don't allow dropping a folder onto itself
+      const validIds = dragIds.filter((id) => id !== targetFolderId);
+      if (validIds.length === 0) return;
+
+      if (validIds.length > 1 && onBulkMove) {
+        onBulkMove(validIds, targetFolderId);
+        toast.success(`Moved ${validIds.length} items to folder`);
+        clearSelection();
+      } else {
+        validIds.forEach((id) => {
+          const file = files.find((f) => f.id === id);
+          if (file) {
+            onMoveFile?.(id, targetFolderId);
+          }
+        });
+        const file = files.find((f) => f.id === validIds[0]);
+        if (file) toast.success(`Moved "${file.name}" to folder`);
       }
     }
   };
