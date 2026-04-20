@@ -3,6 +3,71 @@ import type { File } from '@/hooks/useFiles';
 export interface PipelineThumbnailData {
   firstFrameUrl?: string;
   lastFrameUrl?: string;
+  /** Live pipeline status (draft / processing / completed / failed). */
+  status?: string | null;
+  /** Stage currently being generated (first_frame / last_frame / voice / speech / final_video / ...). */
+  currentStage?: string | null;
+  /** Pipeline kind (talking_head / clips / lip_sync / ...). */
+  pipelineType?: string | null;
+  generationStartedAt?: string | null;
+  estimatedDurationSeconds?: number | null;
+}
+
+/**
+ * Human-friendly "Generating ..." label for an in-flight pipeline stage,
+ * shown on file cards in the grid / kanban view while any stage of the
+ * underlying multi-stage pipeline is running.
+ */
+export function getPipelineStageGeneratingLabel(
+  pipelineType?: string | null,
+  currentStage?: string | null
+): string {
+  switch (currentStage) {
+    case 'first_frame':
+      return 'Generating first frame...';
+    case 'last_frame':
+      return 'Generating last frame...';
+    case 'voice':
+    case 'speech':
+      return 'Generating speech...';
+    case 'script':
+      return 'Writing script...';
+    case 'animate':
+      return 'Generating animation...';
+    case 'final_video':
+      if (pipelineType === 'clips' || pipelineType === 'b_roll') return 'Generating B-Roll...';
+      if (pipelineType === 'talking_head' || pipelineType === 'lip_sync') return 'Generating lip sync...';
+      return 'Generating video...';
+    default:
+      return 'Generating...';
+  }
+}
+
+/**
+ * Resolve any in-flight pipeline info for a file via its generation_params.pipeline_id.
+ * Returns null when the file isn't linked to a pipeline or the pipeline isn't processing.
+ */
+export function getFilePipelineGenerationInfo(
+  file: File,
+  pipelineThumbnails?: Map<string, PipelineThumbnailData>
+): {
+  isProcessing: boolean;
+  label: string;
+  generationStartedAt: string | null;
+  estimatedDurationSeconds: number | null;
+} | null {
+  if (!pipelineThumbnails) return null;
+  const genParams = file.generation_params as Record<string, unknown> | null;
+  const pipelineId = (genParams?.pipeline_id as string) || null;
+  if (!pipelineId) return null;
+  const data = pipelineThumbnails.get(pipelineId);
+  if (!data || data.status !== 'processing') return null;
+  return {
+    isProcessing: true,
+    label: getPipelineStageGeneratingLabel(data.pipelineType, data.currentStage),
+    generationStartedAt: data.generationStartedAt ?? null,
+    estimatedDurationSeconds: data.estimatedDurationSeconds ?? null,
+  };
 }
 
 // File types whose preview/download_url is a video and can serve as a thumbnail
