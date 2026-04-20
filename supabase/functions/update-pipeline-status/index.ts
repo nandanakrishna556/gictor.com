@@ -139,6 +139,24 @@ serve(async (req) => {
       )
     }
 
+    // ========== REFUND CREDITS ON FAILURE ==========
+    if (status === 'failed') {
+      try {
+        const refundUserId = body.user_id as string | undefined
+        const refundAmount = body.credits_cost as number | undefined
+        if (refundUserId && typeof refundAmount === 'number' && refundAmount > 0) {
+          await supabase.rpc('refund_credits', {
+            p_user_id: refundUserId,
+            p_amount: refundAmount,
+            p_description: `Refund: pipeline ${stage || ''} failed`.trim(),
+          })
+          console.log('Refunded pipeline credits:', { user_id: refundUserId, amount: refundAmount })
+        }
+      } catch (refundErr) {
+        console.error('Pipeline refund error:', refundErr)
+      }
+    }
+
     console.log('Pipeline updated successfully:', pipeline_id)
 
     return new Response(

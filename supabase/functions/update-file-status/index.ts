@@ -231,6 +231,33 @@ async function handleFileUpdate(supabase: any, body: FileUpdateInput, corsHeader
 
   console.log('File updated:', file_id);
 
+  // ========== REFUND CREDITS ON FAILURE ==========
+  // Look up user_id and credits_cost from the file's generation_params
+  if (status === 'failed') {
+    try {
+      const { data: fileRow } = await supabase
+        .from('files')
+        .select('generation_params, name, file_type')
+        .eq('id', file_id)
+        .single();
+      const params = (fileRow?.generation_params || {}) as Record<string, unknown>;
+      const refundUserId = (body.user_id as string | undefined) || (params.user_id as string | undefined);
+      const refundAmount = (body.credits_cost as number | undefined) || (params.credits_cost as number | undefined);
+      if (refundUserId && typeof refundAmount === 'number' && refundAmount > 0) {
+        await supabase.rpc('refund_credits', {
+          p_user_id: refundUserId,
+          p_amount: refundAmount,
+          p_description: `Refund: ${fileRow?.file_type || 'generation'} failed${error_message ? ` (${error_message})` : ''}`,
+        });
+        console.log('Refunded credits:', { user_id: refundUserId, amount: refundAmount });
+      } else {
+        console.warn('No refund info found on failed file:', file_id);
+      }
+    } catch (refundErr) {
+      console.error('Refund error:', refundErr);
+    }
+  }
+
   // ========== ALSO UPDATE PIPELINE ==========
   // Pipeline ID can come from metadata OR from file_id if it's actually a pipeline ID
   // (some workflows use the pipeline_id as file_id for simplicity)
