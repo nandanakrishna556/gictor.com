@@ -34,8 +34,8 @@ const App = () => (
           <AuthProvider>
             <Routes>
               {/* Public routes */}
-              <Route path="/" element={<Landing />} />
-              <Route path="/home" element={<Landing />} />
+              <Route path="/" element={<Index />} />
+              <Route path="/home" element={<Index />} />
               <Route path="/services/youtube-videos" element={<ServiceYouTube />} />
               <Route path="/services/media-buying" element={<ServiceMediaBuying />} />
               <Route path="/services/short-form-content" element={<ServiceShortForm />} />
