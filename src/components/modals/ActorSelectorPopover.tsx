@@ -251,38 +251,98 @@ export default function ActorSelectorPopover({
     </Popover>
 
     {showAssetToggles && selectedActor && (
-      <div className="flex flex-wrap items-center gap-4 rounded-md border border-border bg-secondary/30 px-3 py-2">
-        <span className="text-xs font-medium text-muted-foreground">
-          Pass to generation:
-        </span>
-        <label
-          className={cn(
-            'flex items-center gap-2 text-sm',
-            !hasImage && 'opacity-50 cursor-not-allowed',
-          )}
-        >
-          <Checkbox
-            checked={hasImage && useImage}
+      <div className="space-y-2">
+        <p className="text-xs font-medium text-muted-foreground">
+          Choose what to send to generation
+        </p>
+        <div className="grid grid-cols-2 gap-2">
+          {/* Image toggle card */}
+          <button
+            type="button"
             disabled={!hasImage}
-            onCheckedChange={(v) => onUseImageChange?.(v === true)}
-          />
-          <ImageIcon className="h-3.5 w-3.5 text-muted-foreground" strokeWidth={1.5} />
-          <span>Actor image</span>
-        </label>
-        <label
-          className={cn(
-            'flex items-center gap-2 text-sm',
-            !hasVoice && 'opacity-50 cursor-not-allowed',
-          )}
-        >
-          <Checkbox
-            checked={hasVoice && useVoice}
+            onClick={() => onUseImageChange?.(!(hasImage && useImage))}
+            className={cn(
+              'group relative flex items-center gap-3 rounded-lg border bg-card p-2.5 text-left transition-all',
+              hasImage && useImage
+                ? 'border-primary bg-primary/5 ring-1 ring-primary/20'
+                : 'border-border hover:border-primary/40',
+              !hasImage && 'opacity-50 cursor-not-allowed hover:border-border',
+            )}
+          >
+            <div className="h-10 w-10 shrink-0 overflow-hidden rounded-md bg-muted flex items-center justify-center">
+              {hasImage && (selectedActor.profile_image_url || selectedActor.profile_360_url) ? (
+                <img
+                  src={selectedActor.profile_image_url || selectedActor.profile_360_url || ''}
+                  alt={selectedActor.name}
+                  className="h-full w-full object-cover"
+                />
+              ) : (
+                <ImageIcon className="h-4 w-4 text-muted-foreground" strokeWidth={1.5} />
+              )}
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium leading-tight">Actor image</p>
+              <p className="text-xs text-muted-foreground leading-tight mt-0.5">
+                {hasImage ? 'Visual reference' : 'Not available'}
+              </p>
+            </div>
+            <div
+              className={cn(
+                'h-4 w-4 shrink-0 rounded-full border flex items-center justify-center transition-colors',
+                hasImage && useImage
+                  ? 'border-primary bg-primary text-primary-foreground'
+                  : 'border-muted-foreground/40 bg-background',
+              )}
+            >
+              {hasImage && useImage && <Check className="h-3 w-3" strokeWidth={3} />}
+            </div>
+          </button>
+
+          {/* Voice toggle card */}
+          <button
+            type="button"
             disabled={!hasVoice}
-            onCheckedChange={(v) => onUseVoiceChange?.(v === true)}
-          />
-          <Mic className="h-3.5 w-3.5 text-muted-foreground" strokeWidth={1.5} />
-          <span>Actor voice</span>
-        </label>
+            onClick={() => onUseVoiceChange?.(!(hasVoice && useVoice))}
+            className={cn(
+              'group relative flex items-center gap-3 rounded-lg border bg-card p-2.5 text-left transition-all',
+              hasVoice && useVoice
+                ? 'border-primary bg-primary/5 ring-1 ring-primary/20'
+                : 'border-border hover:border-primary/40',
+              !hasVoice && 'opacity-50 cursor-not-allowed hover:border-border',
+            )}
+          >
+            <div
+              className={cn(
+                'h-10 w-10 shrink-0 rounded-md flex items-center justify-center',
+                hasVoice && useVoice ? 'bg-primary/10' : 'bg-muted',
+              )}
+            >
+              <Mic
+                className={cn(
+                  'h-4 w-4',
+                  hasVoice && useVoice ? 'text-primary' : 'text-muted-foreground',
+                )}
+                strokeWidth={1.5}
+              />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium leading-tight">Actor voice</p>
+              <p className="text-xs text-muted-foreground leading-tight mt-0.5">
+                {hasVoice ? 'Audio reference' : 'Not available'}
+              </p>
+            </div>
+            <div
+              className={cn(
+                'h-4 w-4 shrink-0 rounded-full border flex items-center justify-center transition-colors',
+                hasVoice && useVoice
+                  ? 'border-primary bg-primary text-primary-foreground'
+                  : 'border-muted-foreground/40 bg-background',
+              )}
+            >
+              {hasVoice && useVoice && <Check className="h-3 w-3" strokeWidth={3} />}
+            </div>
+          </button>
+        </div>
       </div>
     )}
     </div>
