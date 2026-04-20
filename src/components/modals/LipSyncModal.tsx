@@ -331,7 +331,7 @@ export default function LipSyncModal({
       return;
     }
     
-    setIsGenerating(true);
+    setLocalGenerating(true);
     setGenerationProgress(0);
     
     try {
@@ -404,7 +404,7 @@ export default function LipSyncModal({
     } catch (err) {
       console.error('Generation error:', err);
       toast.error((err as Error).message || 'Failed to start generation');
-      setIsGenerating(false);
+      setLocalGenerating(false);
       setGenerationProgress(0);
       
       // Revert file status
