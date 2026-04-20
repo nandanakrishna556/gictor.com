@@ -728,9 +728,6 @@ export default function SeedanceModal({
         <DialogContent className="max-w-[900px] h-[85vh] p-0 gap-0 overflow-hidden rounded-lg flex flex-col [&>button]:hidden">
           {/* Standardized 52px header */}
           <div className="flex items-center gap-3 border-b bg-background px-4 h-[52px] flex-nowrap shrink-0 relative z-10">
-            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={handleClose}>
-              <ArrowLeft className="h-4 w-4" strokeWidth={1.5} />
-            </Button>
             <h2 className="text-lg font-semibold">Seedance 2.0</h2>
 
             <div className="h-5 w-px bg-border" />
