@@ -249,5 +249,42 @@ export default function ActorSelectorPopover({
         </div>
       </PopoverContent>
     </Popover>
+
+    {showAssetToggles && selectedActor && (
+      <div className="flex flex-wrap items-center gap-4 rounded-md border border-border bg-secondary/30 px-3 py-2">
+        <span className="text-xs font-medium text-muted-foreground">
+          Pass to generation:
+        </span>
+        <label
+          className={cn(
+            'flex items-center gap-2 text-sm',
+            !hasImage && 'opacity-50 cursor-not-allowed',
+          )}
+        >
+          <Checkbox
+            checked={hasImage && useImage}
+            disabled={!hasImage}
+            onCheckedChange={(v) => onUseImageChange?.(v === true)}
+          />
+          <ImageIcon className="h-3.5 w-3.5 text-muted-foreground" strokeWidth={1.5} />
+          <span>Actor image</span>
+        </label>
+        <label
+          className={cn(
+            'flex items-center gap-2 text-sm',
+            !hasVoice && 'opacity-50 cursor-not-allowed',
+          )}
+        >
+          <Checkbox
+            checked={hasVoice && useVoice}
+            disabled={!hasVoice}
+            onCheckedChange={(v) => onUseVoiceChange?.(v === true)}
+          />
+          <Mic className="h-3.5 w-3.5 text-muted-foreground" strokeWidth={1.5} />
+          <span>Actor voice</span>
+        </label>
+      </div>
+    )}
+    </div>
   );
 }
