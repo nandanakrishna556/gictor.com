@@ -838,7 +838,7 @@ export default function SeedanceModal({
                 {/* First / Last frame in same row */}
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label>First frame</Label>
+                    <Label>First frame (Optional)</Label>
                     <SingleImageUpload
                       value={firstFrameUrl}
                       onChange={(url) => {
@@ -852,7 +852,7 @@ export default function SeedanceModal({
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label>Last frame</Label>
+                    <Label>Last frame (Optional)</Label>
                     <SingleImageUpload
                       value={lastFrameUrl}
                       onChange={(url) => {
