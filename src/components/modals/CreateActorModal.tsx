@@ -139,7 +139,7 @@ export default function CreateActorModal({ open, onOpenChange }: CreateActorModa
             <DialogTitle className="text-lg font-semibold">
               {step === 'choose' && 'Create Actor'}
               {step === 'generate' && 'Generate AI Actor'}
-              {step === 'upload' && 'Clone Your Actor'}
+              {step === 'upload' && 'Clone'}
             </DialogTitle>
           </div>
           
@@ -180,10 +180,10 @@ export default function CreateActorModal({ open, onOpenChange }: CreateActorModa
                 
                 {/* Text */}
                 <h3 className="font-semibold text-base sm:text-lg text-foreground mb-1">
-                  Generate AI Actor
+                  Generate
                 </h3>
                 <p className="text-xs sm:text-sm text-muted-foreground text-center">
-                  AI creates the actor for you
+                  Generate AI actor from scratch
                 </p>
                 
                 {/* Hover Glow */}
@@ -211,10 +211,10 @@ export default function CreateActorModal({ open, onOpenChange }: CreateActorModa
                 
                 {/* Text */}
                 <h3 className="font-semibold text-base sm:text-lg text-foreground mb-1">
-                  Clone Your Own
+                  Clone
                 </h3>
                 <p className="text-xs sm:text-sm text-muted-foreground text-center">
-                  Use your own media files
+                  Clone yourself or someone else
                 </p>
                 
                 {/* Hover Glow */}
