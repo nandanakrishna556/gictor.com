@@ -49,7 +49,7 @@ export function ActorCard({ actor, onDelete }: ActorCardProps) {
             <div className="flex h-full w-full flex-col items-center justify-center gap-2 p-4">
               <AlertCircle className="h-8 w-8 text-destructive" />
               <span className="text-xs text-center text-destructive line-clamp-2">
-                {actor.error_message || 'Failed'}
+                Actor generation failed
               </span>
             </div>
           )}
