@@ -49,6 +49,11 @@ export default function BRollAnimateStage({ pipelineId, onComplete }: BRollAnima
   // B-Roll only sends the actor's voice (image is never passed)
   const useActorImage = false;
   const useActorVoice = true;
+
+  // Available actors with voice
+  const availableActors = (actors || []).filter(
+    (actor) => actor.status === 'completed' && (actor.voice_url || actor.custom_audio_url)
+  );
   
   // Custom frame uploads (override the generated ones)
   const [firstFrameUrl, setFirstFrameUrl] = useState('');
