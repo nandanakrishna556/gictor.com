@@ -6,7 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ThemeProvider } from "next-themes";
 import { AuthProvider } from "@/contexts/AuthContext";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
-import Landing from "./pages/Landing";
+import Index from "./pages/Index";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import ForgotPassword from "./pages/ForgotPassword";
@@ -34,8 +34,8 @@ const App = () => (
           <AuthProvider>
             <Routes>
               {/* Public routes */}
-              <Route path="/" element={<Landing />} />
-              <Route path="/home" element={<Landing />} />
+              <Route path="/" element={<Index />} />
+              <Route path="/home" element={<Index />} />
               <Route path="/services/youtube-videos" element={<ServiceYouTube />} />
               <Route path="/services/media-buying" element={<ServiceMediaBuying />} />
               <Route path="/services/short-form-content" element={<ServiceShortForm />} />
