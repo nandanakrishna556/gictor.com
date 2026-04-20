@@ -244,10 +244,6 @@ export default function BRollFirstFrameStage({ pipelineId, onComplete }: BRollFi
       toast.error('Failed to download image');
     }
   };
-    } catch (error) {
-      toast.error('Failed to download image');
-    }
-  };
 
   const handleCopy = async () => {
     if (!outputUrl) return;

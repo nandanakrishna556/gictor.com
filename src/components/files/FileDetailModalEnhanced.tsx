@@ -95,7 +95,7 @@ export const FileDetailModalEnhanced: React.FC<FileDetailModalEnhancedProps> = (
         title: 'Copied!',
         description: 'Image copied to clipboard',
       });
-    } catch (error) {
+    } catch {
       toast({
         title: 'Copy failed',
         description: 'Could not copy image. Try Copy URL instead.',

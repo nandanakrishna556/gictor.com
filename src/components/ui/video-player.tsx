@@ -1,6 +1,5 @@
 import React, { useState, useRef } from 'react';
 import { Play, Pause, Volume2, VolumeX, Download, Maximize, Loader2 } from 'lucide-react';
-import { cn } from '@/lib/utils';
 import { buildDownloadFilename, downloadFile } from '@/lib/download-file';
 
 interface VideoPlayerProps {
