@@ -20,6 +20,7 @@ import { InputModeToggle, InputMode } from '@/components/ui/input-mode-toggle';
 import LocationSelector from '@/components/forms/LocationSelector';
 import { ArrowLeft, X, Loader2, Download, Upload, Film, Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { downloadFile } from '@/lib/download-file';
 import { uploadToR2 } from '@/lib/cloudflare-upload';
 
 interface StatusOption {

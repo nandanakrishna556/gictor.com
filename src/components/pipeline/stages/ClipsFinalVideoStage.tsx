@@ -5,6 +5,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Label } from '@/components/ui/label';
 import { Video, Image as ImageIcon, Loader2, Download, X, Upload, Sparkles } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { downloadFile } from '@/lib/download-file';
 import { usePipeline } from '@/hooks/usePipeline';
 import { toast } from 'sonner';
 import StageLayout from './StageLayout';

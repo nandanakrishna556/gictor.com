@@ -3,6 +3,7 @@ import { useQueryClient, useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
+import { downloadFile } from '@/lib/download-file';
 import { useTags } from "@/hooks/useTags";
 import { useProfile } from "@/hooks/useProfile";
 import { Actor } from "@/hooks/useActors";

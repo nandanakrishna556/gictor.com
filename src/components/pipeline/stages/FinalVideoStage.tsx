@@ -5,6 +5,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Video, Image as ImageIcon, FileAudio, Loader2, Download, Sparkles, X, Upload, ChevronDown, ChevronUp, Save } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { downloadFile } from '@/lib/download-file';
 import { usePipeline } from '@/hooks/usePipeline';
 import { generateFinalVideo } from '@/lib/pipeline-service';
 import { calculateVideoCost } from '@/types/pipeline';

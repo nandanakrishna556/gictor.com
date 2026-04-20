@@ -10,6 +10,7 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import { AudioPlayer } from '@/components/ui/AudioPlayer';
 import { Loader2, Download, Search, User, Play, Pause, Check, Mic } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { downloadFile } from '@/lib/download-file';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';

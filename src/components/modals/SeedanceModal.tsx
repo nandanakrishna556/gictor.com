@@ -47,6 +47,7 @@ import {
   Trash2,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { downloadFile } from '@/lib/download-file';
 import { uploadToR2, validateFile } from '@/lib/cloudflare-upload';
 import type { Actor } from '@/hooks/useActors';
 

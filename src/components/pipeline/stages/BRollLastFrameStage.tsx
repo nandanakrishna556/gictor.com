@@ -8,6 +8,7 @@ import { InputModeToggle, InputMode } from '@/components/ui/input-mode-toggle';
 import ActorSelectorPopover from '@/components/modals/ActorSelectorPopover';
 import { Upload, Sparkles, Download, Image as ImageIcon, Loader2, Plus, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { downloadFile } from '@/lib/download-file';
 import { usePipeline } from '@/hooks/usePipeline';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';

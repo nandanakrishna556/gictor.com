@@ -11,6 +11,7 @@ import { InputModeToggle, InputMode } from '@/components/ui/input-mode-toggle';
 import ActorSelectorPopover from '@/components/modals/ActorSelectorPopover';
 import { Loader2, Download, Image as ImageIcon, X, Plus } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { downloadFile } from '@/lib/download-file';
 import { toast } from 'sonner';
 import { useQueryClient } from '@tanstack/react-query';
 import { Actor, useActors } from '@/hooks/useActors';
