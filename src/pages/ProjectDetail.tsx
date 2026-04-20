@@ -167,6 +167,23 @@ export default function ProjectDetail() {
     return true;
   });
 
+  // Derive the actual statuses / file types present on this page so the
+  // Filters popover only offers options that exist in the current view.
+  // We use the full (unfiltered) lists so that selecting a filter doesn't
+  // make the corresponding option disappear from the popover.
+  const availableStatuses = Array.from(
+    new Set([
+      ...(files || []).map((f) => f.status).filter((s): s is string => !!s),
+      ...(folders || []).map((f) => f.status).filter((s): s is string => !!s),
+    ])
+  );
+  const availableFileTypes = Array.from(
+    new Set([
+      ...(files || []).map((f) => f.file_type).filter(Boolean),
+      ...((folders || []).length > 0 ? ['folder'] : []),
+    ])
+  );
+
   // Build breadcrumbs with full folder path (starting with project, not "Projects" page)
   const buildBreadcrumbs = (): { label: string; href?: string }[] => {
     const crumbs: { label: string; href?: string }[] = [];
