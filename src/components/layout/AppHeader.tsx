@@ -41,6 +41,8 @@ interface AppHeaderProps {
   onSearchChange?: (query: string) => void;
   selectMode?: boolean;
   onSelectModeChange?: (mode: boolean) => void;
+  availableStatuses?: string[];
+  availableFileTypes?: string[];
 }
 
 export default function AppHeader({
@@ -63,6 +65,8 @@ export default function AppHeader({
   onSearchChange,
   selectMode = false,
   onSelectModeChange,
+  availableStatuses,
+  availableFileTypes,
 }: AppHeaderProps) {
   const { user, signOut } = useAuth();
   const { profile } = useProfile();
@@ -130,6 +134,8 @@ export default function AppHeader({
               onCreateTag={onCreateTag}
               onDeleteTag={onDeleteTag}
               onClearAll={onClearFilters}
+              availableStatuses={availableStatuses}
+              availableFileTypes={availableFileTypes}
             />
           </>
         )}

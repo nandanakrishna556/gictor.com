@@ -528,7 +528,7 @@ export default function BRollAnimateStage({ pipelineId, onComplete }: BRollAnima
           {/* Generate Mode UI */}
               {/* Actor Selector */}
               <div className="space-y-2">
-                <Label>Actor (reference audio)</Label>
+                <Label>Actor</Label>
                 <ActorSelectorPopover
                   selectedActorId={selectedActorId}
                   onSelect={(actorId, actor) => {
@@ -674,7 +674,7 @@ export default function BRollAnimateStage({ pipelineId, onComplete }: BRollAnima
                     markUserInteracted();
                     setPrompt(e.target.value);
                   }}
-                  placeholder="Describe the motion you want (e.g., 'gentle camera pan across the scene')"
+                  placeholder="Describe the scene and any actions or camera movement (e.g., 'a man walks through a forest at sunset, slow dolly in')"
                   rows={3}
                 />
               </div>
