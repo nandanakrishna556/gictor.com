@@ -1,12 +1,12 @@
-import { useState, useRef, useEffect } from 'react';
-import { User, Search, Check, Plus, ImageIcon, Mic, Play, Pause } from 'lucide-react';
+import { useState } from 'react';
+import { User, Search, Check, Plus, ImageIcon, Mic } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useActors, Actor } from '@/hooks/useActors';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Input } from '@/components/ui/input';
-import { Checkbox } from '@/components/ui/checkbox';
 import { cn } from '@/lib/utils';
+import { AudioPlayer } from '@/components/ui/AudioPlayer';
 
 interface ActorSelectorPopoverProps {
   selectedActorId: string | null;
