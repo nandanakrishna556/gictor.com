@@ -1132,11 +1132,13 @@ export default function SeedanceModal({
                       poster={firstFrameUrl}
                     />
                   </div>
-                  <Button variant="secondary" className="w-full" asChild>
-                    <a href={file.download_url} download={`${name}.mp4`}>
-                      <Download className="h-4 w-4 mr-2" strokeWidth={1.5} />
-                      Download Video
-                    </a>
+                  <Button
+                    variant="secondary"
+                    className="w-full"
+                    onClick={() => downloadFile(file.download_url!, `${name}.mp4`)}
+                  >
+                    <Download className="h-4 w-4 mr-2" strokeWidth={1.5} />
+                    Download Video
                   </Button>
                 </div>
               )}

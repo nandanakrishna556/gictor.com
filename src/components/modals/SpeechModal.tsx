@@ -906,11 +906,13 @@ export default function SpeechModal({
                       className="w-full"
                     />
                   </div>
-                  <Button variant="secondary" className="w-full" asChild>
-                    <a href={file.download_url} download={`${name}.mp3`}>
-                      <Download className="h-4 w-4 mr-2" strokeWidth={1.5} />
-                      Download Audio
-                    </a>
+                  <Button
+                    variant="secondary"
+                    className="w-full"
+                    onClick={() => downloadFile(file.download_url!, `${name}.mp3`)}
+                  >
+                    <Download className="h-4 w-4 mr-2" strokeWidth={1.5} />
+                    Download Audio
                   </Button>
                 </div>
               )}

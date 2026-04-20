@@ -469,11 +469,13 @@ export default function FinalVideoStage({ pipelineId, onComplete }: FinalVideoSt
   );
 
   const outputActions = hasOutput && outputVideo && (
-    <Button variant="ghost" size="sm" asChild>
-      <a href={outputVideo.url} download>
-        <Download className="h-4 w-4 mr-1.5" />
-        Download
-      </a>
+    <Button
+      variant="ghost"
+      size="sm"
+      onClick={() => downloadFile(outputVideo.url, `final-video-${Date.now()}.mp4`)}
+    >
+      <Download className="h-4 w-4 mr-1.5" />
+      Download
     </Button>
   );
 

@@ -1761,14 +1761,16 @@ function FileCard({
 
       {/* Download button */}
       {file.download_url && (
-        <a
-          href={file.download_url}
-          download
+        <button
+          type="button"
           className="absolute bottom-20 right-3 rounded-lg p-1.5 text-muted-foreground opacity-0 transition-all duration-200 hover:bg-secondary group-hover:opacity-100"
-          onClick={(e) => e.stopPropagation()}
+          onClick={(e) => {
+            e.stopPropagation();
+            downloadFile(file.download_url!, file.name || 'download');
+          }}
         >
           <Download className="h-4 w-4" />
-        </a>
+        </button>
       )}
 
       {/* Actions */}
@@ -2236,14 +2238,16 @@ function KanbanCard({
 
       {/* Download button for completed files */}
       {file?.download_url && (
-        <a
-          href={file.download_url}
-          download
+        <button
+          type="button"
           className="absolute bottom-12 right-3 rounded-lg p-1.5 text-muted-foreground opacity-0 transition-all duration-200 hover:bg-secondary group-hover:opacity-100"
-          onClick={(e) => e.stopPropagation()}
+          onClick={(e) => {
+            e.stopPropagation();
+            downloadFile(file.download_url!, file.name || 'download');
+          }}
         >
           <Download className="h-4 w-4" />
-        </a>
+        </button>
       )}
 
       {/* Actions Menu */}

@@ -1134,11 +1134,13 @@ export default function FrameModal({
                   <div className="rounded-xl border border-border overflow-hidden">
                     <img src={file.download_url} alt={name} className="w-full object-contain" />
                   </div>
-                  <Button variant="secondary" className="w-full" asChild>
-                    <a href={file.download_url} download={`${name}.png`}>
-                      <Download className="h-4 w-4 mr-2" strokeWidth={1.5} />
-                      Download Image
-                    </a>
+                  <Button
+                    variant="secondary"
+                    className="w-full"
+                    onClick={() => downloadFile(file.download_url!, `${name}.png`)}
+                  >
+                    <Download className="h-4 w-4 mr-2" strokeWidth={1.5} />
+                    Download Image
                   </Button>
                 </div>
               ) : (

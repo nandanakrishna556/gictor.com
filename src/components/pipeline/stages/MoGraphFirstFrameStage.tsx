@@ -394,11 +394,13 @@ export default function MoGraphFirstFrameStage({ pipelineId, onComplete, onConti
   ) : null;
 
   const outputActions = hasOutput && outputUrl ? (
-    <Button variant="secondary" className="w-full" asChild>
-      <a href={outputUrl} download={`mograph-first-frame-${Date.now()}.png`}>
-        <Download className="h-4 w-4 mr-2" strokeWidth={1.5} />
-        Download Image
-      </a>
+    <Button
+      variant="secondary"
+      className="w-full"
+      onClick={() => downloadFile(outputUrl, `mograph-first-frame-${Date.now()}.png`)}
+    >
+      <Download className="h-4 w-4 mr-2" strokeWidth={1.5} />
+      Download Image
     </Button>
   ) : undefined;
 

@@ -641,11 +641,13 @@ export default function BRollLastFrameStage({ pipelineId, onComplete }: BRollLas
   ) : null;
 
   const outputActions = hasOutput && outputUrl ? (
-    <Button variant="secondary" className="w-full" asChild>
-      <a href={outputUrl} download={`last-frame-${Date.now()}.png`}>
-        <Download className="h-4 w-4 mr-2" strokeWidth={1.5} />
-        Download Image
-      </a>
+    <Button
+      variant="secondary"
+      className="w-full"
+      onClick={() => downloadFile(outputUrl, `last-frame-${Date.now()}.png`)}
+    >
+      <Download className="h-4 w-4 mr-2" strokeWidth={1.5} />
+      Download Image
     </Button>
   ) : undefined;
 
