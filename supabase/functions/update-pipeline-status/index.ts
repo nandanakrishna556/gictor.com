@@ -139,6 +139,66 @@ serve(async (req) => {
       )
     }
 
+    // ========== SYNC LINKED FILE ROW ==========
+    // When a pipeline's terminal stage finishes, the file row that represents
+    // this pipeline in the project grid/kanban must also be marked completed,
+    // otherwise the card stays stuck on the "Generating..." overlay even
+    // though the modal already shows the finished output.
+    try {
+      const isTerminalStage = stage === 'lip_sync' || stage === 'final_video' || stage === 'animate'
+      if (isTerminalStage && (status === 'completed' || status === 'failed')) {
+        // Find the file linked to this pipeline (either via pipelines.output_file_id
+        // or via files.generation_params.pipeline_id).
+        let linkedFileId: string | null = (pipeline?.output_file_id as string | null) || null
+        if (!linkedFileId) {
+          const { data: linkedFile } = await supabase
+            .from('files')
+            .select('id')
+            .eq('project_id', pipeline.project_id)
+            .filter('generation_params->>pipeline_id', 'eq', pipeline_id)
+            .maybeSingle()
+          linkedFileId = linkedFile?.id ?? null
+        }
+
+        if (linkedFileId) {
+          const finalUrl = output_url || (pipeline?.final_video_output as { url?: string } | null)?.url || null
+          const fileUpdate: Record<string, any> = {
+            updated_at: new Date().toISOString(),
+          }
+          if (status === 'completed') {
+            fileUpdate.generation_status = 'completed'
+            fileUpdate.progress = 100
+            if (finalUrl) {
+              fileUpdate.download_url = finalUrl
+              fileUpdate.preview_url = finalUrl
+            }
+          } else if (status === 'failed') {
+            fileUpdate.generation_status = 'failed'
+          }
+          const { error: fileSyncErr } = await supabase
+            .from('files')
+            .update(fileUpdate)
+            .eq('id', linkedFileId)
+          if (fileSyncErr) {
+            console.error('File sync error:', fileSyncErr)
+          } else {
+            console.log('Synced linked file row:', linkedFileId, fileUpdate)
+            // Also persist output_file_id on the pipeline if missing
+            if (!pipeline?.output_file_id) {
+              await supabase
+                .from('pipelines')
+                .update({ output_file_id: linkedFileId })
+                .eq('id', pipeline_id)
+            }
+          }
+        } else {
+          console.warn('No linked file found for pipeline:', pipeline_id)
+        }
+      }
+    } catch (syncErr) {
+      console.error('File sync exception:', syncErr)
+    }
+
     // ========== REFUND CREDITS ON FAILURE ==========
     if (status === 'failed') {
       try {
