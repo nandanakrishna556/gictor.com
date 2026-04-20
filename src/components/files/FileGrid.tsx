@@ -50,7 +50,7 @@ import ConfirmDeleteDialog from '@/components/modals/ConfirmDeleteDialog';
 import MoveToFolderDialog from '@/components/modals/MoveToFolderDialog';
 import { FileTypeIcon, FileType } from '@/components/ui/file-type-icon';
 import { useProjectPipelineThumbnails } from '@/hooks/useProjectPipelineThumbnails';
-import { getFileThumbnailUrl, getFileVideoUrl } from '@/lib/file-thumbnails';
+import { getFileThumbnailUrl, getFileVideoUrl, getFilePipelineGenerationInfo } from '@/lib/file-thumbnails';
 
 interface FileGridProps {
   files: File[];
@@ -1412,8 +1412,14 @@ function FileCard({
 }) {
   const [renameValue, setRenameValue] = useState(file.name);
   const { download, isDownloading } = useDownload();
-  const isProcessing = file.generation_status === 'processing';
+  // Surface in-flight pipeline stages (e.g. First Frame / Speech / Last Frame)
+  // even before the underlying file row flips to processing.
+  const pipelineGenInfo = getFilePipelineGenerationInfo(file, pipelineThumbnails);
+  const isProcessing = file.generation_status === 'processing' || !!pipelineGenInfo;
   const isFailed = file.generation_status === 'failed';
+  const generatingLabel = pipelineGenInfo?.label ?? getFileGeneratingLabel(file.file_type);
+  const generationStartedAt = pipelineGenInfo?.generationStartedAt ?? file.generation_started_at;
+  const estimatedDurationSeconds = pipelineGenInfo?.estimatedDurationSeconds ?? file.estimated_duration_seconds;
   // Default status to first stage if not set
   const effectiveStatus = file.status || stages[0]?.id || 'processing';
   const currentStage = stages.find((s) => s.id === effectiveStatus) || stages[0];
