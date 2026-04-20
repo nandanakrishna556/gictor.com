@@ -3,6 +3,7 @@ import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Upload, Play, Pause, Download, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { buildDownloadFilename, downloadFile } from '@/lib/download-file';
 import { usePipeline } from '@/hooks/usePipeline';
 import { getAudioDuration } from '@/lib/pipeline-service';
 import { toast } from 'sonner';
@@ -208,19 +209,10 @@ export default function VoiceStage({ pipelineId, onContinue }: VoiceStageProps) 
   const handleDownloadAudio = async () => {
     const audioUrl = outputAudio?.url;
     if (!audioUrl) return;
-    try {
-      const response = await fetch(audioUrl);
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `voice-${Date.now()}.mp3`;
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
+    const success = await downloadFile(audioUrl, buildDownloadFilename(`voice-${Date.now()}`, 'mp3'));
+    if (success) {
       toast.success('Audio downloaded');
-    } catch (error) {
+    } else {
       toast.error('Failed to download audio');
     }
   };
