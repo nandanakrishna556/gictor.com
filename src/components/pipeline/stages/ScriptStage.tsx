@@ -429,6 +429,7 @@ export default function ScriptStage({ pipelineId, onContinue }: ScriptStageProps
       emptyStateIcon={<FileText className="h-10 w-10 text-muted-foreground/50" strokeWidth={1.5} />}
       emptyStateTitle="Generated script will appear here"
       emptyStateSubtitle="Configure inputs and click Generate"
+      generatingLabel="Writing script..."
     />
   );
 }

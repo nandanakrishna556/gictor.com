@@ -668,6 +668,7 @@ export default function BRollLastFrameStage({ pipelineId, onComplete }: BRollLas
       creditsCost=""
       isAIGenerated={wasAIGenerated}
       outputActions={outputActions}
+      generatingLabel="Generating last frame..."
     />
   );
 }

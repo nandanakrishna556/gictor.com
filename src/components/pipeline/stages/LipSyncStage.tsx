@@ -717,6 +717,7 @@ export default function LipSyncStage({ pipelineId, onComplete }: LipSyncStagePro
       emptyStateIcon={<Wand2 className="h-10 w-10 text-muted-foreground/50" strokeWidth={1.5} />}
       emptyStateTitle="Generated video will appear here"
       emptyStateSubtitle="Provide first frame and speech audio"
+      generatingLabel="Generating lip sync..."
     />
   );
 }

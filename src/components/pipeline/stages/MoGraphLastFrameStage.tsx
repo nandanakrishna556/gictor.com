@@ -432,6 +432,7 @@ export default function MoGraphLastFrameStage({ pipelineId, onComplete, onContin
       outputActions={outputActions}
       emptyStateTitle="Generated image will appear here"
       emptyStateSubtitle="Describe your motion graphics last frame"
+      generatingLabel="Generating last frame..."
     />
   );
 }

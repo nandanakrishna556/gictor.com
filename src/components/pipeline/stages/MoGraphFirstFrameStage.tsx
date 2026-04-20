@@ -420,6 +420,7 @@ export default function MoGraphFirstFrameStage({ pipelineId, onComplete, onConti
       outputActions={outputActions}
       emptyStateTitle="Generated image will appear here"
       emptyStateSubtitle="Describe your motion graphics background"
+      generatingLabel="Generating first frame..."
     />
   );
 }

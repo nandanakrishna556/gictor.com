@@ -419,6 +419,7 @@ export default function FinalVideoStage({ pipelineId, onComplete }: FinalVideoSt
       creditsCost=""
       creditsInfo={creditsInfo}
       outputActions={outputActions}
+      generatingLabel="Generating final video..."
     />
   );
 }
