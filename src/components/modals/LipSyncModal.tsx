@@ -20,7 +20,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { TagList, TagSelector, TagData } from '@/components/ui/tag-badge';
 import { ArrowLeft, X, Check, Loader2, Mic, Download, AlertCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { downloadFile } from '@/lib/download-file';
+import { useDownload } from '@/lib/download-file';
 import { uploadToR2, validateFile } from '@/lib/cloudflare-upload';
 
 interface StatusOption {

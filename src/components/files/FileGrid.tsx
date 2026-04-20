@@ -15,7 +15,7 @@ import {
   Copy,
 } from 'lucide-react';
 import { cardDragState, CARD_DRAG_MIME } from '@/lib/drag-state';
-import { downloadFile } from '@/lib/download-file';
+import { useDownload } from '@/lib/download-file';
 import { Input } from '@/components/ui/input';
 import { GeneratingOverlay } from '@/components/ui/GeneratingOverlay';
 import { cn } from '@/lib/utils';

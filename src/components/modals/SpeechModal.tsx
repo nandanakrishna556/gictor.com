@@ -20,7 +20,7 @@ import { TagList, TagSelector, TagData } from '@/components/ui/tag-badge';
 import { InputModeToggle, InputMode } from '@/components/ui/input-mode-toggle';
 import { ArrowLeft, X, Check, Loader2, Download, AlertCircle, User, Search, Play, Pause, Mic } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { downloadFile } from '@/lib/download-file';
+import { useDownload } from '@/lib/download-file';
 import { AudioPlayer } from '@/components/ui/AudioPlayer';
 import { uploadToR2, validateFile } from '@/lib/cloudflare-upload';
 
