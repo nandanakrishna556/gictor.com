@@ -975,10 +975,7 @@ export default function SeedanceModal({
 
                 {/* Reference audios */}
                 <div className="space-y-2">
-                  <Label>Reference audios</Label>
-                  <p className="text-xs text-muted-foreground">
-                    Up to {MAX_REFERENCE_AUDIOS} audio files
-                  </p>
+                  <Label>Reference audios (Optional, up to {MAX_REFERENCE_AUDIOS})</Label>
 
                   {referenceAudios.length > 0 && (
                     <div className="space-y-2">
