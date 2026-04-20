@@ -479,7 +479,7 @@ export default function BRollAnimateStage({ pipelineId, onComplete }: BRollAnima
             actor_image_url: selectedActorId && useActorImage
               ? (selectedActor?.profile_image_url || selectedActor?.profile_360_url || null)
               : null,
-            actor_audio_url: selectedActorId && useActorVoice
+            actor_voice_url: selectedActorId && useActorVoice
               ? (selectedActor?.voice_url || selectedActor?.custom_audio_url || null)
               : null,
             credits_cost: creditCost,
