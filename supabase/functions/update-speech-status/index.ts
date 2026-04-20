@@ -104,10 +104,14 @@ serve(async (req) => {
       if (updateError) throw updateError;
 
       if (user_id && credits_cost) {
+        const cleanError = error_message ? error_message.trim().replace(/\.$/, '').toLowerCase() : '';
+        const description = cleanError
+          ? `Refund: speech generation failed (${cleanError})`
+          : 'Refund: speech generation failed';
         await supabase.rpc('refund_credits', {
           p_user_id: user_id,
           p_amount: credits_cost,
-          p_description: `Speech generation failed: ${error_message || 'Unknown error'}`,
+          p_description: description,
         });
       }
 

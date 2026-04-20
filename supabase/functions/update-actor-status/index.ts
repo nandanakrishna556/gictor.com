@@ -92,10 +92,14 @@ serve(async (req) => {
 
       // Refund credits if user_id and credits_cost provided
       if (user_id && credits_cost) {
+        const cleanError = error_message ? error_message.trim().replace(/\.$/, '').toLowerCase() : '';
+        const description = cleanError
+          ? `Refund: actor creation failed (${cleanError})`
+          : 'Refund: actor creation failed';
         const { error: refundError } = await supabase.rpc('refund_credits', {
           p_user_id: user_id,
           p_amount: credits_cost,
-          p_description: `Actor creation failed: ${error_message || 'Unknown error'}`,
+          p_description: description,
         });
 
         if (refundError) {
