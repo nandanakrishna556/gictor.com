@@ -214,6 +214,8 @@ export default function BRollAnimateStage({ pipelineId, onComplete }: BRollAnima
     aspectRatio,
     audioEnabled,
     selectedActorId,
+    useActorImage,
+    useActorVoice,
     effectiveFirstFrame,
     effectiveLastFrame,
   ]);
@@ -263,6 +265,8 @@ export default function BRollAnimateStage({ pipelineId, onComplete }: BRollAnima
     aspectRatio,
     audioEnabled,
     selectedActorId,
+    useActorImage,
+    useActorVoice,
     effectiveFirstFrame,
     effectiveLastFrame,
     persistInputs,
@@ -539,13 +543,24 @@ export default function BRollAnimateStage({ pipelineId, onComplete }: BRollAnima
           {/* Generate Mode UI */}
               {/* Actor Selector */}
               <div className="space-y-2">
-                <Label>Actor</Label>
+                <Label>Actor (Optional)</Label>
                 <ActorSelectorPopover
                   selectedActorId={selectedActorId}
                   onSelect={(actorId, actor) => {
                     markUserInteracted();
                     setSelectedActorId(actorId);
                     setSelectedActor(actor || null);
+                  }}
+                  showAssetToggles
+                  useImage={useActorImage}
+                  useVoice={useActorVoice}
+                  onUseImageChange={(v) => {
+                    markUserInteracted();
+                    setUseActorImage(v);
+                  }}
+                  onUseVoiceChange={(v) => {
+                    markUserInteracted();
+                    setUseActorVoice(v);
                   }}
                 />
               </div>
