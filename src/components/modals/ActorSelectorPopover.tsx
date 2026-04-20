@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { User, Search, Check, Plus, ImageIcon, Mic } from 'lucide-react';
+import { useState, useRef, useEffect } from 'react';
+import { User, Search, Check, Plus, ImageIcon, Mic, Play, Pause } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useActors, Actor } from '@/hooks/useActors';
 import { Button } from '@/components/ui/button';
@@ -56,7 +56,37 @@ export default function ActorSelectorPopover({
   };
 
   const hasImage = !!(selectedActor?.profile_image_url || selectedActor?.profile_360_url);
-  const hasVoice = !!(selectedActor?.voice_url || selectedActor?.custom_audio_url);
+  const voiceUrl = selectedActor?.voice_url || selectedActor?.custom_audio_url || null;
+  const hasVoice = !!voiceUrl;
+
+  // Inline voice preview state
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const [isPlayingVoice, setIsPlayingVoice] = useState(false);
+
+  // Stop & reset playback when actor changes
+  useEffect(() => {
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current.currentTime = 0;
+    }
+    setIsPlayingVoice(false);
+  }, [voiceUrl]);
+
+  const toggleVoicePreview = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!voiceUrl) return;
+    if (!audioRef.current) {
+      audioRef.current = new Audio(voiceUrl);
+      audioRef.current.addEventListener('ended', () => setIsPlayingVoice(false));
+    }
+    if (isPlayingVoice) {
+      audioRef.current.pause();
+      setIsPlayingVoice(false);
+    } else {
+      audioRef.current.play().catch(() => setIsPlayingVoice(false));
+      setIsPlayingVoice(true);
+    }
+  };
 
   return (
     <div className="space-y-2">
@@ -311,20 +341,24 @@ export default function ActorSelectorPopover({
               !hasVoice && 'opacity-50 cursor-not-allowed hover:border-border',
             )}
           >
-            <div
+            <button
+              type="button"
+              disabled={!hasVoice}
+              onClick={toggleVoicePreview}
               className={cn(
-                'h-10 w-10 shrink-0 rounded-md flex items-center justify-center',
-                hasVoice && useVoice ? 'bg-primary/10' : 'bg-muted',
+                'h-10 w-10 shrink-0 rounded-md flex items-center justify-center transition-colors',
+                hasVoice
+                  ? 'bg-primary text-primary-foreground hover:bg-primary/90'
+                  : 'bg-muted text-muted-foreground cursor-not-allowed',
               )}
+              aria-label={isPlayingVoice ? 'Pause voice preview' : 'Play voice preview'}
             >
-              <Mic
-                className={cn(
-                  'h-4 w-4',
-                  hasVoice && useVoice ? 'text-primary' : 'text-muted-foreground',
-                )}
-                strokeWidth={1.5}
-              />
-            </div>
+              {isPlayingVoice ? (
+                <Pause className="h-4 w-4" strokeWidth={2} />
+              ) : (
+                <Play className="h-4 w-4 ml-0.5" strokeWidth={2} />
+              )}
+            </button>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium leading-tight">Actor voice</p>
               <p className="text-xs text-muted-foreground leading-tight mt-0.5">
