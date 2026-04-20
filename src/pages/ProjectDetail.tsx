@@ -460,6 +460,8 @@ export default function ProjectDetail() {
           onSearchChange={setSearchQuery}
           selectMode={selectMode}
           onSelectModeChange={setSelectMode}
+          availableStatuses={availableStatuses}
+          availableFileTypes={availableFileTypes}
         />
 
         <div className="flex-1 overflow-y-auto p-3 sm:p-4 md:p-6">
