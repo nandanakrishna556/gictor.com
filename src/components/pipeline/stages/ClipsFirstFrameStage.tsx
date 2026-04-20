@@ -7,6 +7,7 @@ import { ImageUpload } from '@/components/ui/image-upload';
 import { SingleImageUpload } from '@/components/ui/single-image-upload';
 import { Upload, Sparkles, Download, Copy, Video } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { buildDownloadFilename, downloadFile } from '@/lib/download-file';
 import { usePipeline } from '@/hooks/usePipeline';
 import { generateBRollFirstFrame } from '@/lib/pipeline-service';
 import { PIPELINE_CREDITS } from '@/types/pipeline';
@@ -236,18 +237,13 @@ export default function BRollFirstFrameStage({ pipelineId, onComplete }: BRollFi
 
   const handleDownload = async () => {
     if (!outputUrl) return;
-    try {
-      const response = await fetch(outputUrl);
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `b-roll-frame-${Date.now()}.png`;
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
+    const success = await downloadFile(outputUrl, buildDownloadFilename(`b-roll-frame-${Date.now()}`, 'png'));
+    if (success) {
       toast.success('Image downloaded');
+    } else {
+      toast.error('Failed to download image');
+    }
+  };
     } catch (error) {
       toast.error('Failed to download image');
     }

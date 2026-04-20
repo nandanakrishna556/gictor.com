@@ -1,6 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { Play, Pause, Volume2, VolumeX, Download, Maximize, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { buildDownloadFilename, downloadFile } from '@/lib/download-file';
 
 interface VideoPlayerProps {
   src: string;
@@ -45,16 +46,7 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({ src, poster, title }) 
   };
 
   const handleDownload = async () => {
-    const response = await fetch(src);
-    const blob = await response.blob();
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `${title || 'video'}.mp4`;
-    document.body.appendChild(a);
-    a.click();
-    window.URL.revokeObjectURL(url);
-    document.body.removeChild(a);
+    await downloadFile(src, buildDownloadFilename(title || 'video', 'mp4'));
   };
 
   return (

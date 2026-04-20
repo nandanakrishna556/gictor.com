@@ -7,6 +7,7 @@ import { VideoPlayer } from '@/components/ui/video-player';
 import { ScriptViewer } from '@/components/ui/script-viewer';
 import { useToast } from '@/hooks/use-toast';
 import type { Json } from '@/integrations/supabase/types';
+import { buildDownloadFilename, downloadFile } from '@/lib/download-file';
 
 interface FileDetailModalEnhancedProps {
   file: {
@@ -37,7 +38,7 @@ const fileTypeIcons: Record<string, React.ComponentType<{ className?: string }>>
 const fileTypeLabels: Record<string, string> = {
   first_frame: 'First Frame',
   lip_sync: 'Lip Sync',
-  talking_head: 'Lip Sync', // backward compatibility
+  talking_head: 'Lip Sync',
   speech: 'Speech',
   script: 'Script',
 };
@@ -62,27 +63,20 @@ export const FileDetailModalEnhanced: React.FC<FileDetailModalEnhancedProps> = (
     setIsDownloading(true);
     try {
       const url = file.download_url || file.preview_url!;
-      const response = await fetch(url);
-      const blob = await response.blob();
-      const blobUrl = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = blobUrl;
       const ext = file.file_type === 'talking_head' ? 'mp4' : file.file_type === 'script' ? 'txt' : 'jpg';
-      a.download = `${file.name}.${ext}`;
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(blobUrl);
-      document.body.removeChild(a);
-      toast({
-        title: 'Download started',
-        description: `Downloading ${file.name}`,
-      });
-    } catch (error) {
-      toast({
-        title: 'Download failed',
-        description: 'Failed to download the file',
-        variant: 'destructive',
-      });
+      const success = await downloadFile(url, buildDownloadFilename(file.name, ext));
+      if (success) {
+        toast({
+          title: 'Download started',
+          description: `Downloading ${file.name}`,
+        });
+      } else {
+        toast({
+          title: 'Download failed',
+          description: 'Failed to download the file',
+          variant: 'destructive',
+        });
+      }
     } finally {
       setIsDownloading(false);
     }

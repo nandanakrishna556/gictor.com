@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { VideoPlayer } from '@/components/ui/video-player';
 import { ScriptViewer } from '@/components/ui/script-viewer';
+import { buildDownloadFilename, downloadFile } from '@/lib/download-file';
 
 interface FileDetailModalProps {
   file: {
@@ -30,17 +31,8 @@ export const FileDetailModal: React.FC<FileDetailModalProps> = ({ file, isOpen, 
     if (!file.download_url) return;
     setIsDownloading(true);
     try {
-      const response = await fetch(file.download_url);
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
       const ext = file.file_type === 'talking_head' ? 'mp4' : file.file_type === 'script' ? 'txt' : 'jpg';
-      a.download = `${file.name}.${ext}`;
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
+      await downloadFile(file.download_url, buildDownloadFilename(file.name, ext));
     } finally {
       setIsDownloading(false);
     }
