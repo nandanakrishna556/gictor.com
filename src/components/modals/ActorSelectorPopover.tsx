@@ -56,7 +56,37 @@ export default function ActorSelectorPopover({
   };
 
   const hasImage = !!(selectedActor?.profile_image_url || selectedActor?.profile_360_url);
-  const hasVoice = !!(selectedActor?.voice_url || selectedActor?.custom_audio_url);
+  const voiceUrl = selectedActor?.voice_url || selectedActor?.custom_audio_url || null;
+  const hasVoice = !!voiceUrl;
+
+  // Inline voice preview state
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const [isPlayingVoice, setIsPlayingVoice] = useState(false);
+
+  // Stop & reset playback when actor changes
+  useEffect(() => {
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current.currentTime = 0;
+    }
+    setIsPlayingVoice(false);
+  }, [voiceUrl]);
+
+  const toggleVoicePreview = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!voiceUrl) return;
+    if (!audioRef.current) {
+      audioRef.current = new Audio(voiceUrl);
+      audioRef.current.addEventListener('ended', () => setIsPlayingVoice(false));
+    }
+    if (isPlayingVoice) {
+      audioRef.current.pause();
+      setIsPlayingVoice(false);
+    } else {
+      audioRef.current.play().catch(() => setIsPlayingVoice(false));
+      setIsPlayingVoice(true);
+    }
+  };
 
   return (
     <div className="space-y-2">
