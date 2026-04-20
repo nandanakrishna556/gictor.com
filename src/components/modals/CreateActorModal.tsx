@@ -211,10 +211,10 @@ export default function CreateActorModal({ open, onOpenChange }: CreateActorModa
                 
                 {/* Text */}
                 <h3 className="font-semibold text-base sm:text-lg text-foreground mb-1">
-                  Clone Your Own
+                  Clone
                 </h3>
                 <p className="text-xs sm:text-sm text-muted-foreground text-center">
-                  Use your own media files
+                  Clone yourself or someone else
                 </p>
                 
                 {/* Hover Glow */}
