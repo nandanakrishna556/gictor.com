@@ -36,6 +36,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { TagList, TagSelector, TagData } from '@/components/ui/tag-badge';
 import { Slider } from '@/components/ui/slider';
 import {
+  ArrowLeft,
   X,
   Check,
   Loader2,
@@ -727,6 +728,9 @@ export default function SeedanceModal({
         <DialogContent className="max-w-[900px] h-[85vh] p-0 gap-0 overflow-hidden rounded-lg flex flex-col [&>button]:hidden">
           {/* Standardized 52px header */}
           <div className="flex items-center gap-3 border-b bg-background px-4 h-[52px] flex-nowrap shrink-0 relative z-10">
+            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={handleClose}>
+              <ArrowLeft className="h-4 w-4" strokeWidth={1.5} />
+            </Button>
             <h2 className="text-lg font-semibold">Seedance 2.0</h2>
 
             <div className="h-5 w-px bg-border" />
@@ -810,14 +814,8 @@ export default function SeedanceModal({
                   <span className="invisible">Saved</span>
                 )}
               </div>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-9 w-9 rounded-full border border-border bg-secondary text-foreground hover:bg-secondary/80 hover:text-foreground"
-                onClick={handleClose}
-                aria-label="Close"
-              >
-                <X className="h-5 w-5" strokeWidth={2} />
+              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={handleClose}>
+                <X className="h-4 w-4" strokeWidth={1.5} />
               </Button>
             </div>
           </div>
@@ -840,7 +838,7 @@ export default function SeedanceModal({
                 {/* First / Last frame in same row */}
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label>First frame <span className="text-xs font-normal text-muted-foreground">(optional)</span></Label>
+                    <Label>First frame</Label>
                     <SingleImageUpload
                       value={firstFrameUrl}
                       onChange={(url) => {
@@ -854,7 +852,7 @@ export default function SeedanceModal({
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label>Last frame <span className="text-xs font-normal text-muted-foreground">(optional)</span></Label>
+                    <Label>Last frame</Label>
                     <SingleImageUpload
                       value={lastFrameUrl}
                       onChange={(url) => {
@@ -871,7 +869,7 @@ export default function SeedanceModal({
 
                 {/* Reference images */}
                 <div className="space-y-2">
-                  <Label>Reference images <span className="text-xs font-normal text-muted-foreground">(optional)</span></Label>
+                  <Label>Reference images</Label>
                   <p className="text-xs text-muted-foreground">
                     Up to {MAX_REFERENCE_IMAGES} images
                   </p>
@@ -888,7 +886,7 @@ export default function SeedanceModal({
 
                 {/* Reference videos */}
                 <div className="space-y-2">
-                  <Label>Reference videos <span className="text-xs font-normal text-muted-foreground">(optional)</span></Label>
+                  <Label>Reference videos</Label>
                   <p className="text-xs text-muted-foreground">
                     Up to {MAX_REFERENCE_VIDEOS_DURATION}s combined ·{' '}
                     <span
@@ -981,7 +979,7 @@ export default function SeedanceModal({
 
                 {/* Reference audios */}
                 <div className="space-y-2">
-                  <Label>Reference audios <span className="text-xs font-normal text-muted-foreground">(optional)</span></Label>
+                  <Label>Reference audios</Label>
                   <p className="text-xs text-muted-foreground">
                     Up to {MAX_REFERENCE_AUDIOS} audio files
                   </p>
