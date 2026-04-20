@@ -17,11 +17,37 @@ export interface PipelineThumbnailData {
  * Human-friendly "Generating ..." label for an in-flight pipeline stage,
  * shown on file cards in the grid / kanban view while any stage of the
  * underlying multi-stage pipeline is running.
+ *
+ * NOTE: For B-Roll / Clips pipelines, the stages are remapped onto shared
+ * DB columns:
+ *   - DB `script`       → UI "Last Frame"
+ *   - DB `voice`        → UI "Animate"
+ *   - DB `final_video`  → UI "Animate" (final render)
+ * Talking Head pipelines use the natural mapping.
  */
 export function getPipelineStageGeneratingLabel(
   pipelineType?: string | null,
   currentStage?: string | null
 ): string {
+  const isClips = pipelineType === 'clips' || pipelineType === 'b_roll';
+
+  if (isClips) {
+    switch (currentStage) {
+      case 'first_frame':
+        return 'Generating first frame...';
+      case 'last_frame':
+      case 'script': // DB alias for Last Frame in B-Roll
+        return 'Generating last frame...';
+      case 'animate':
+      case 'voice': // DB alias for Animate in B-Roll
+      case 'final_video':
+        return 'Generating B-Roll...';
+      default:
+        return 'Generating...';
+    }
+  }
+
+  // Talking Head / Lip Sync / generic
   switch (currentStage) {
     case 'first_frame':
       return 'Generating first frame...';
@@ -34,8 +60,8 @@ export function getPipelineStageGeneratingLabel(
       return 'Writing script...';
     case 'animate':
       return 'Generating animation...';
+    case 'lip_sync':
     case 'final_video':
-      if (pipelineType === 'clips' || pipelineType === 'b_roll') return 'Generating B-Roll...';
       if (pipelineType === 'talking_head' || pipelineType === 'lip_sync') return 'Generating lip sync...';
       return 'Generating video...';
     default:
