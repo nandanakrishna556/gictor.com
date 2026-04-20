@@ -545,22 +545,193 @@ export default function BRollAnimateStage({ pipelineId, onComplete }: BRollAnima
         <div className="flex-1 overflow-y-auto p-6 space-y-6">
           <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">Input</h3>
           
-          {/* Generate Mode UI */}
-              {/* Actor Voice Selector */}
+          {/* Actor Voice Selector (matches Talking Head Speech tab) */}
               <div className="space-y-2">
                 <Label>Actor Voice (Optional)</Label>
-                <ActorSelectorPopover
-                  selectedActorId={selectedActorId}
-                  onSelect={(actorId, actor) => {
-                    markUserInteracted();
-                    setSelectedActorId(actorId);
-                    setSelectedActor(actor || null);
-                    // B-Roll only uses actor voice (no image passthrough)
-                    setUseActorImage(false);
-                    setUseActorVoice(true);
-                  }}
-                />
+                <Popover open={actorSearchOpen} onOpenChange={setActorSearchOpen} modal={true}>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      role="combobox"
+                      aria-expanded={actorSearchOpen}
+                      className="w-full justify-between h-auto py-3"
+                    >
+                      {selectedActor ? (
+                        <div className="flex items-center gap-3">
+                          {selectedActor.profile_image_url ? (
+                            <img
+                              src={selectedActor.profile_image_url}
+                              alt={selectedActor.name}
+                              className="h-8 w-8 rounded-full object-cover"
+                            />
+                          ) : (
+                            <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center">
+                              <User className="h-4 w-4 text-muted-foreground" />
+                            </div>
+                          )}
+                          <div className="text-left">
+                            <p className="font-medium">{selectedActor.name}</p>
+                            <p className="text-xs text-muted-foreground">
+                              {[selectedActor.gender, selectedActor.age && `${selectedActor.age}y`]
+                                .filter(Boolean)
+                                .join(' • ')}
+                            </p>
+                          </div>
+                        </div>
+                      ) : (
+                        <span className="text-muted-foreground">Select an actor voice...</span>
+                      )}
+                      <Search className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-[400px] p-0 z-50" align="start" sideOffset={4}>
+                    <Command>
+                      <CommandInput placeholder="Search actors..." />
+                      <CommandList className="max-h-[240px] overflow-y-auto">
+                        <CommandEmpty>
+                          {availableActors.length === 0 ? (
+                            <div className="py-6 text-center text-sm">
+                              <p className="text-muted-foreground">No actors with voice available.</p>
+                              <p className="text-xs text-muted-foreground mt-1">
+                                Create an actor first in the Actors page.
+                              </p>
+                            </div>
+                          ) : (
+                            'No actor found.'
+                          )}
+                        </CommandEmpty>
+                        <CommandGroup>
+                          {/* None option */}
+                          <CommandItem
+                            value="__none__"
+                            onSelect={() => {
+                              markUserInteracted();
+                              setSelectedActorId(null);
+                              setSelectedActor(null);
+                              setActorSearchOpen(false);
+                            }}
+                            className="cursor-pointer py-3"
+                          >
+                            <div className="flex items-center gap-3 w-full">
+                              <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center">
+                                <X className="h-5 w-5 text-muted-foreground" />
+                              </div>
+                              <div className="flex-1">
+                                <p className="font-medium">No actor voice</p>
+                                <p className="text-xs text-muted-foreground">Generate without an actor voice</p>
+                              </div>
+                              {!selectedActorId && <Check className="ml-auto h-4 w-4" />}
+                            </div>
+                          </CommandItem>
+                          {availableActors.map((actor) => (
+                            <CommandItem
+                              key={actor.id}
+                              value={actor.name}
+                              onSelect={() => {
+                                markUserInteracted();
+                                setSelectedActorId(actor.id);
+                                setSelectedActor(actor);
+                                setActorSearchOpen(false);
+                              }}
+                              className="cursor-pointer py-3"
+                            >
+                              <div className="flex items-center gap-3 w-full">
+                                {actor.profile_image_url ? (
+                                  <img
+                                    src={actor.profile_image_url}
+                                    alt={actor.name}
+                                    className="h-10 w-10 rounded-full object-cover"
+                                  />
+                                ) : (
+                                  <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center">
+                                    <User className="h-5 w-5 text-muted-foreground" />
+                                  </div>
+                                )}
+                                <div className="flex-1">
+                                  <p className="font-medium">{actor.name}</p>
+                                  <p className="text-xs text-muted-foreground">
+                                    {[actor.gender, actor.age && `${actor.age}y`, actor.language]
+                                      .filter(Boolean)
+                                      .join(' • ')}
+                                  </p>
+                                </div>
+                                {(actor.voice_url || actor.custom_audio_url) && (
+                                  <button
+                                    type="button"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      const audio = document.getElementById(
+                                        `broll-preview-audio-${actor.id}`
+                                      ) as HTMLAudioElement;
+                                      if (audio) {
+                                        if (audio.paused) {
+                                          document
+                                            .querySelectorAll('audio[id^="broll-preview-audio-"]')
+                                            .forEach((a) => {
+                                              (a as HTMLAudioElement).pause();
+                                              (a as HTMLAudioElement).currentTime = 0;
+                                            });
+                                          setPlayingAudioId(actor.id);
+                                          audio.play();
+                                          audio.onended = () => setPlayingAudioId(null);
+                                        } else {
+                                          audio.pause();
+                                          audio.currentTime = 0;
+                                          setPlayingAudioId(null);
+                                        }
+                                      }
+                                    }}
+                                    className="h-8 w-8 rounded-full bg-primary/10 hover:bg-primary/20 flex items-center justify-center shrink-0 transition-colors"
+                                  >
+                                    {playingAudioId === actor.id ? (
+                                      <Pause className="h-4 w-4 text-primary" />
+                                    ) : (
+                                      <Play className="h-4 w-4 text-primary" />
+                                    )}
+                                  </button>
+                                )}
+                                {selectedActorId === actor.id && <Check className="ml-auto h-4 w-4" />}
+                                {(actor.voice_url || actor.custom_audio_url) && (
+                                  <audio
+                                    id={`broll-preview-audio-${actor.id}`}
+                                    src={(actor.voice_url || actor.custom_audio_url) as string}
+                                    preload="none"
+                                    className="hidden"
+                                  />
+                                )}
+                              </div>
+                            </CommandItem>
+                          ))}
+                        </CommandGroup>
+                      </CommandList>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
               </div>
+
+              {/* Selected Actor Voice Preview */}
+              {selectedActor && (selectedActor.voice_url || selectedActor.custom_audio_url) && (
+                <div className="rounded-xl border border-border bg-card p-4 space-y-3">
+                  <div className="flex items-center gap-3">
+                    {selectedActor.profile_image_url ? (
+                      <img
+                        src={selectedActor.profile_image_url}
+                        alt={selectedActor.name}
+                        className="h-10 w-10 rounded-full object-cover"
+                      />
+                    ) : (
+                      <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center">
+                        <User className="h-5 w-5 text-muted-foreground" />
+                      </div>
+                    )}
+                    <div>
+                      <p className="font-medium text-sm">{selectedActor.name}</p>
+                      <p className="text-xs text-muted-foreground">Voice Preview</p>
+                    </div>
+                  </div>
+                  <AudioPlayer src={(selectedActor.voice_url || selectedActor.custom_audio_url) as string} />
+                </div>
+              )}
 
               {/* First Frame Upload */}
               <div className="space-y-2">
