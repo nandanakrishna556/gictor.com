@@ -44,8 +44,11 @@ export default function BRollAnimateStage({ pipelineId, onComplete }: BRollAnima
   const [prompt, setPrompt] = useState('');
   const [selectedActorId, setSelectedActorId] = useState<string | null>(null);
   const [selectedActor, setSelectedActor] = useState<Actor | null>(null);
-  const [useActorImage, setUseActorImage] = useState(true);
-  const [useActorVoice, setUseActorVoice] = useState(true);
+  const [actorSearchOpen, setActorSearchOpen] = useState(false);
+  const [playingAudioId, setPlayingAudioId] = useState<string | null>(null);
+  // B-Roll only sends the actor's voice (image is never passed)
+  const useActorImage = false;
+  const useActorVoice = true;
   
   // Custom frame uploads (override the generated ones)
   const [firstFrameUrl, setFirstFrameUrl] = useState('');
