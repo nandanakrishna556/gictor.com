@@ -142,8 +142,26 @@ serve(async (req) => {
     // ========== REFUND CREDITS ON FAILURE ==========
     if (status === 'failed') {
       try {
-        const refundUserId = body.user_id as string | undefined
-        const refundAmount = body.credits_cost as number | undefined
+        // Prefer values echoed by n8n; otherwise fall back to values
+        // we persisted on the pipeline row when the stage was triggered.
+        let refundUserId = body.user_id as string | undefined
+        let refundAmount = body.credits_cost as number | undefined
+
+        if (!refundUserId || typeof refundAmount !== 'number' || refundAmount <= 0) {
+          const { data: pipelineRow } = await supabase
+            .from('pipelines')
+            .select('user_id, last_credits_cost, last_credits_stage')
+            .eq('id', pipeline_id)
+            .single()
+          if (pipelineRow) {
+            refundUserId = refundUserId || (pipelineRow.user_id as string | undefined)
+            const fallbackAmount = pipelineRow.last_credits_cost as number | null | undefined
+            if ((typeof refundAmount !== 'number' || refundAmount <= 0) && typeof fallbackAmount === 'number' && fallbackAmount > 0) {
+              refundAmount = fallbackAmount
+            }
+          }
+        }
+
         if (refundUserId && typeof refundAmount === 'number' && refundAmount > 0) {
           await supabase.rpc('refund_credits', {
             p_user_id: refundUserId,
@@ -151,6 +169,8 @@ serve(async (req) => {
             p_description: `Refund: pipeline ${stage || ''} failed`.trim(),
           })
           console.log('Refunded pipeline credits:', { user_id: refundUserId, amount: refundAmount })
+        } else {
+          console.warn('Could not refund pipeline credits: missing user_id or amount', { pipeline_id })
         }
       } catch (refundErr) {
         console.error('Pipeline refund error:', refundErr)

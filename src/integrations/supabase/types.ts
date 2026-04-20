@@ -299,6 +299,8 @@ export type Database = {
           folder_id: string | null
           generation_started_at: string | null
           id: string
+          last_credits_cost: number | null
+          last_credits_stage: string | null
           last_frame_complete: boolean | null
           last_frame_output: Json | null
           name: string
@@ -330,6 +332,8 @@ export type Database = {
           folder_id?: string | null
           generation_started_at?: string | null
           id?: string
+          last_credits_cost?: number | null
+          last_credits_stage?: string | null
           last_frame_complete?: boolean | null
           last_frame_output?: Json | null
           name?: string
@@ -361,6 +365,8 @@ export type Database = {
           folder_id?: string | null
           generation_started_at?: string | null
           id?: string
+          last_credits_cost?: number | null
+          last_credits_stage?: string | null
           last_frame_complete?: boolean | null
           last_frame_output?: Json | null
           name?: string
