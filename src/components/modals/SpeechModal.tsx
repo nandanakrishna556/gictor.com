@@ -98,8 +98,8 @@ export default function SpeechModal({
   const [isUploadingAudio, setIsUploadingAudio] = useState(false);
   const [isSavingUpload, setIsSavingUpload] = useState(false);
   
-  // Generation state
-  const [isGenerating, setIsGenerating] = useState(false);
+  // Generation state - localGenerating gives instant feedback; truth from server
+  const [localGenerating, setLocalGenerating] = useState(false);
   const [generationProgress, setGenerationProgress] = useState(0);
   
   // Fetch file data
@@ -115,8 +115,15 @@ export default function SpeechModal({
       return data;
     },
     enabled: !!fileId,
-    refetchInterval: isGenerating ? 2000 : false,
+    refetchInterval: (query) => {
+      const data = query.state.data as { generation_status?: string } | undefined;
+      const shouldPoll = localGenerating || data?.generation_status === 'processing';
+      return shouldPoll ? 2000 : false;
+    },
   });
+
+  const isFileGenerating = file?.generation_status === 'processing';
+  const isGenerating = localGenerating || isFileGenerating;
   
   // Get completed actors with voice
   const availableActors = actors?.filter(

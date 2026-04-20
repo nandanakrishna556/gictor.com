@@ -186,8 +186,9 @@ export default function SeedanceModal({
   const [videoError, setVideoError] = useState<string | null>(null);
   const [audioError, setAudioError] = useState<string | null>(null);
 
-  // Generation state
-  const [isGenerating, setIsGenerating] = useState(false);
+  // Generation state - localGenerating gives instant feedback after click;
+  // truth comes from file.generation_status so the loader survives reopens.
+  const [localGenerating, setLocalGenerating] = useState(false);
 
   // Fetch file data — seed initialData from any cached files list for instant hydration
   const { data: file } = useQuery({
@@ -202,7 +203,11 @@ export default function SeedanceModal({
       return data;
     },
     enabled: !!fileId,
-    refetchInterval: isGenerating ? 2000 : false,
+    refetchInterval: (query) => {
+      const data = query.state.data as { generation_status?: string } | undefined;
+      const shouldPoll = localGenerating || data?.generation_status === 'processing';
+      return shouldPoll ? 2000 : false;
+    },
     staleTime: 30_000,
     initialData: () => {
       const caches = queryClient.getQueriesData<any[]>({ queryKey: ['files', projectId] });
@@ -215,6 +220,9 @@ export default function SeedanceModal({
       return undefined;
     },
   });
+
+  const isFileGenerating = file?.generation_status === 'processing';
+  const isGenerating = localGenerating || isFileGenerating;
 
   const currentStatusOption =
     statusOptions.find((s) => s.value === displayStatus) || statusOptions[0];
@@ -270,25 +278,28 @@ export default function SeedanceModal({
         setPrompt('');
       }
 
-      if (file.generation_status === 'processing') {
-        setIsGenerating(true);
-      }
     }
   }, [open, file]);
 
-  // Detect generation completion
+  // Detect terminal transitions (completed/failed) — driven by server status
+  const prevFileStatusRef = useRef<string | null | undefined>(null);
   useEffect(() => {
-    if (file && isGenerating) {
-      if (file.generation_status === 'completed' && file.download_url) {
-        setIsGenerating(false);
-        toast.success('Seedance video generated!');
-        onSuccess?.();
-      } else if (file.generation_status === 'failed') {
-        setIsGenerating(false);
-        toast.error(file.error_message || 'Generation failed');
-      }
+    if (!file) return;
+    const prev = prevFileStatusRef.current;
+    const curr = file.generation_status;
+    prevFileStatusRef.current = curr;
+
+    if (prev === 'processing' && curr === 'completed' && file.download_url) {
+      setLocalGenerating(false);
+      toast.success('Seedance video generated!');
+      onSuccess?.();
+    } else if (prev === 'processing' && curr === 'failed') {
+      setLocalGenerating(false);
+      toast.error('Generation failed', {
+        description: `${file.error_message || 'Something went wrong.'} Credits have been refunded to your account.`,
+      });
     }
-  }, [file, isGenerating, onSuccess]);
+  }, [file, onSuccess]);
 
   // Build params object for persistence
   const buildParams = useCallback(
