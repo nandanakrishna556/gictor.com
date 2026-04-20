@@ -224,10 +224,34 @@ export default function ActorSelectorPopover({
                       </div>
                     )}
                     {actor.profile_360_url && (
-                      <span className="absolute top-1 right-1 text-[10px] font-medium bg-black/60 text-white px-1.5 py-0.5 rounded">
+                      <span className="absolute top-1 left-1 text-[10px] font-medium bg-black/60 text-white px-1.5 py-0.5 rounded">
                         360°
                       </span>
                     )}
+                    {(() => {
+                      const url = actor.voice_url || actor.custom_audio_url;
+                      if (!url) return null;
+                      const isPlaying = playingActorId === actor.id;
+                      return (
+                        <button
+                          type="button"
+                          onClick={(e) => toggleActorVoice(e, actor.id, url)}
+                          aria-label={isPlaying ? 'Pause voice preview' : 'Play voice preview'}
+                          className={cn(
+                            'absolute top-1 right-1 h-6 w-6 rounded-full flex items-center justify-center transition-all shadow-sm',
+                            isPlaying
+                              ? 'bg-primary text-primary-foreground'
+                              : 'bg-black/60 text-white hover:bg-black/80',
+                          )}
+                        >
+                          {isPlaying ? (
+                            <Pause className="h-3 w-3" strokeWidth={2.5} />
+                          ) : (
+                            <Play className="h-3 w-3 ml-0.5" strokeWidth={2.5} />
+                          )}
+                        </button>
+                      );
+                    })()}
                   </div>
                   {/* Info section - fixed height */}
                   <div className="h-11 px-2 py-1.5 flex items-center gap-1.5 border-t border-border">
