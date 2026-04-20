@@ -139,7 +139,7 @@ export default function CreateActorModal({ open, onOpenChange }: CreateActorModa
             <DialogTitle className="text-lg font-semibold">
               {step === 'choose' && 'Create Actor'}
               {step === 'generate' && 'Generate AI Actor'}
-              {step === 'upload' && 'Upload Your Actor'}
+              {step === 'upload' && 'Clone Your Actor'}
             </DialogTitle>
           </div>
           
@@ -211,7 +211,7 @@ export default function CreateActorModal({ open, onOpenChange }: CreateActorModa
                 
                 {/* Text */}
                 <h3 className="font-semibold text-base sm:text-lg text-foreground mb-1">
-                  Upload Your Own
+                  Clone Your Own
                 </h3>
                 <p className="text-xs sm:text-sm text-muted-foreground text-center">
                   Use your own media files
