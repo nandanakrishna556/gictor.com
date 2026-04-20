@@ -315,7 +315,7 @@ export default function SpeechModal({
       return;
     }
     
-    setIsGenerating(true);
+    setLocalGenerating(true);
     setGenerationProgress(0);
     
     try {
@@ -383,7 +383,7 @@ export default function SpeechModal({
       
     } catch (error) {
       console.error('Generation error:', error);
-      setIsGenerating(false);
+      setLocalGenerating(false);
       toast.error('Failed to start generation');
       
       // Revert file status
