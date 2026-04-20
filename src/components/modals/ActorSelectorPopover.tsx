@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { User, Search, Check, Plus, ImageIcon, Mic } from 'lucide-react';
+import { useState, useRef, useEffect } from 'react';
+import { User, Search, Check, Plus, ImageIcon, Mic, Play, Pause } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useActors, Actor } from '@/hooks/useActors';
 import { Button } from '@/components/ui/button';
