@@ -139,7 +139,7 @@ export default function CreateActorModal({ open, onOpenChange }: CreateActorModa
             <DialogTitle className="text-lg font-semibold">
               {step === 'choose' && 'Create Actor'}
               {step === 'generate' && 'Generate AI Actor'}
-              {step === 'upload' && 'Upload Your Actor'}
+              {step === 'upload' && 'Clone Your Actor'}
             </DialogTitle>
           </div>
           
