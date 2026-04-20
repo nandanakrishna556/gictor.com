@@ -59,34 +59,52 @@ export default function ActorSelectorPopover({
   const voiceUrl = selectedActor?.voice_url || selectedActor?.custom_audio_url || null;
   const hasVoice = !!voiceUrl;
 
-  // Inline voice preview state
+  // Per-card voice preview (single audio element, only one plays at a time)
   const audioRef = useRef<HTMLAudioElement | null>(null);
-  const [isPlayingVoice, setIsPlayingVoice] = useState(false);
+  const [playingActorId, setPlayingActorId] = useState<string | null>(null);
 
-  // Stop & reset playback when actor changes
+  // Stop playback when popover closes
   useEffect(() => {
-    if (audioRef.current) {
+    if (!open && audioRef.current) {
       audioRef.current.pause();
       audioRef.current.currentTime = 0;
+      setPlayingActorId(null);
     }
-    setIsPlayingVoice(false);
-  }, [voiceUrl]);
+  }, [open]);
 
-  const toggleVoicePreview = (e: React.MouseEvent) => {
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current = null;
+      }
+    };
+  }, []);
+
+  const toggleActorVoice = (e: React.MouseEvent, actorId: string, url: string | null) => {
     e.stopPropagation();
-    if (!voiceUrl) return;
-    if (!audioRef.current) {
-      audioRef.current = new Audio(voiceUrl);
-      audioRef.current.addEventListener('ended', () => setIsPlayingVoice(false));
-    }
-    if (isPlayingVoice) {
+    if (!url) return;
+
+    // If this actor is already playing -> pause
+    if (playingActorId === actorId && audioRef.current) {
       audioRef.current.pause();
-      setIsPlayingVoice(false);
-    } else {
-      audioRef.current.play().catch(() => setIsPlayingVoice(false));
-      setIsPlayingVoice(true);
+      setPlayingActorId(null);
+      return;
     }
+
+    // Stop any current audio
+    if (audioRef.current) {
+      audioRef.current.pause();
+    }
+
+    const audio = new Audio(url);
+    audio.addEventListener('ended', () => setPlayingActorId(null));
+    audioRef.current = audio;
+    audio.play().catch(() => setPlayingActorId(null));
+    setPlayingActorId(actorId);
   };
+
 
   return (
     <div className="space-y-2">
@@ -206,10 +224,34 @@ export default function ActorSelectorPopover({
                       </div>
                     )}
                     {actor.profile_360_url && (
-                      <span className="absolute top-1 right-1 text-[10px] font-medium bg-black/60 text-white px-1.5 py-0.5 rounded">
+                      <span className="absolute top-1 left-1 text-[10px] font-medium bg-black/60 text-white px-1.5 py-0.5 rounded">
                         360°
                       </span>
                     )}
+                    {(() => {
+                      const url = actor.voice_url || actor.custom_audio_url;
+                      if (!url) return null;
+                      const isPlaying = playingActorId === actor.id;
+                      return (
+                        <button
+                          type="button"
+                          onClick={(e) => toggleActorVoice(e, actor.id, url)}
+                          aria-label={isPlaying ? 'Pause voice preview' : 'Play voice preview'}
+                          className={cn(
+                            'absolute top-1 right-1 h-6 w-6 rounded-full flex items-center justify-center transition-all shadow-sm',
+                            isPlaying
+                              ? 'bg-primary text-primary-foreground'
+                              : 'bg-black/60 text-white hover:bg-black/80',
+                          )}
+                        >
+                          {isPlaying ? (
+                            <Pause className="h-3 w-3" strokeWidth={2.5} />
+                          ) : (
+                            <Play className="h-3 w-3 ml-0.5" strokeWidth={2.5} />
+                          )}
+                        </button>
+                      );
+                    })()}
                   </div>
                   {/* Info section - fixed height */}
                   <div className="h-11 px-2 py-1.5 flex items-center gap-1.5 border-t border-border">
@@ -341,24 +383,20 @@ export default function ActorSelectorPopover({
               !hasVoice && 'opacity-50 cursor-not-allowed hover:border-border',
             )}
           >
-            <button
-              type="button"
-              disabled={!hasVoice}
-              onClick={toggleVoicePreview}
+            <div
               className={cn(
-                'h-10 w-10 shrink-0 rounded-md flex items-center justify-center transition-colors',
-                hasVoice
-                  ? 'bg-primary text-primary-foreground hover:bg-primary/90'
-                  : 'bg-muted text-muted-foreground cursor-not-allowed',
+                'h-10 w-10 shrink-0 rounded-md flex items-center justify-center',
+                hasVoice && useVoice ? 'bg-primary/10' : 'bg-muted',
               )}
-              aria-label={isPlayingVoice ? 'Pause voice preview' : 'Play voice preview'}
             >
-              {isPlayingVoice ? (
-                <Pause className="h-4 w-4" strokeWidth={2} />
-              ) : (
-                <Play className="h-4 w-4 ml-0.5" strokeWidth={2} />
-              )}
-            </button>
+              <Mic
+                className={cn(
+                  'h-4 w-4',
+                  hasVoice && useVoice ? 'text-primary' : 'text-muted-foreground',
+                )}
+                strokeWidth={1.5}
+              />
+            </div>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium leading-tight">Actor voice</p>
               <p className="text-xs text-muted-foreground leading-tight mt-0.5">
