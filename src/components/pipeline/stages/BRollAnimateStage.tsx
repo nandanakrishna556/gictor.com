@@ -154,8 +154,8 @@ export default function BRollAnimateStage({ pipelineId, onComplete }: BRollAnima
     setAspectRatio(resolvedAspectRatio as '16:9' | '9:16' | '1:1');
     setAudioEnabled(Boolean(input?.audio_enabled));
     setSelectedActorId(resolvedActorId);
-    setUseActorImage(input?.use_actor_image !== false);
-    setUseActorVoice(input?.use_actor_voice !== false);
+    // useActorImage/useActorVoice are constants for B-Roll (voice only)
+
     setFirstFrameUrl(resolvedFirstFrameUrl);
     setLastFrameUrl(resolvedLastFrameUrl);
 
