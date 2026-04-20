@@ -26,6 +26,11 @@ export default function ActorSelectorPopover({
   onSelect,
   showVoicePreview = false,
   className,
+  showAssetToggles = false,
+  useImage = true,
+  useVoice = true,
+  onUseImageChange,
+  onUseVoiceChange,
 }: ActorSelectorPopoverProps) {
   const { actors } = useActors();
   const navigate = useNavigate();
