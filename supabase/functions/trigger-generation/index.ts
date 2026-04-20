@@ -412,12 +412,36 @@ serve(async (req) => {
       );
     }
 
+    // Human-readable label for the generation type (sentence case, no snake_case)
+    const formatGenerationLabel = (rawType: string): string => {
+      const t = (rawType || '').replace(/^pipeline_/, '').toLowerCase();
+      const map: Record<string, string> = {
+        script: 'Script generation',
+        voice: 'Voice generation',
+        speech: 'Speech generation',
+        actor: 'Actor creation',
+        frame: 'Frame generation',
+        first_frame: 'First frame generation',
+        last_frame: 'Last frame generation',
+        animate: 'Animation',
+        lipsync: 'Lip sync',
+        lip_sync: 'Lip sync',
+        seedance: 'Seedance generation',
+        final_video: 'Final video generation',
+      };
+      if (map[t]) return map[t];
+      // Fallback: capitalize first letter, replace underscores with spaces
+      const pretty = t.replace(/_/g, ' ').trim();
+      return pretty ? pretty.charAt(0).toUpperCase() + pretty.slice(1) : 'Generation';
+    };
+    const generationLabel = formatGenerationLabel(validatedBody.type);
+
     // Log transaction
     await supabase.from('credit_transactions').insert({
       user_id: user.id,
       amount: -actualCost,
       transaction_type: 'usage',
-      description: `${validatedBody.type} generation`
+      description: generationLabel,
     });
 
     console.log('Credits deducted server-side:', { userId: user.id, amount: actualCost });
@@ -432,7 +456,7 @@ serve(async (req) => {
       await supabase.rpc('refund_credits', {
         p_user_id: user.id,
         p_amount: actualCost,
-        p_description: 'Refund: Service configuration error'
+        p_description: `Refund: ${generationLabel.toLowerCase()} failed (service configuration error)`,
       });
       return new Response(
         JSON.stringify({ success: false, error: 'Service configuration error' }),
@@ -494,7 +518,7 @@ serve(async (req) => {
         await supabase.rpc('refund_credits', {
           p_user_id: user.id,
           p_amount: actualCost,
-          p_description: `Refund: ${validatedBody.type} generation failed (n8n error)`
+          p_description: `Refund: ${generationLabel.toLowerCase()} failed (n8n error)`,
         });
         
         return new Response(
@@ -543,7 +567,7 @@ serve(async (req) => {
       await supabase.rpc('refund_credits', {
         p_user_id: user.id,
         p_amount: actualCost,
-        p_description: `Refund: ${validatedBody.type} generation failed (network error)`
+        p_description: `Refund: ${generationLabel.toLowerCase()} failed (network error)`,
       });
       
       if (fetchError instanceof DOMException && fetchError.name === 'AbortError') {

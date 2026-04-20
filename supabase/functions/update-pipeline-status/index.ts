@@ -163,10 +163,23 @@ serve(async (req) => {
         }
 
         if (refundUserId && typeof refundAmount === 'number' && refundAmount > 0) {
+          const stageLabelMap: Record<string, string> = {
+            first_frame: 'first frame generation',
+            last_frame: 'last frame generation',
+            script: 'script generation',
+            voice: 'voice generation',
+            speech: 'speech generation',
+            animate: 'animation',
+            final_video: 'final video generation',
+            lip_sync: 'lip sync',
+            lipsync: 'lip sync',
+          };
+          const rawStage = (stage || '').toString().toLowerCase().replace(/^pipeline_/, '');
+          const stageLabel = stageLabelMap[rawStage] || (rawStage ? rawStage.replace(/_/g, ' ') : 'pipeline stage');
           await supabase.rpc('refund_credits', {
             p_user_id: refundUserId,
             p_amount: refundAmount,
-            p_description: `Refund: pipeline ${stage || ''} failed`.trim(),
+            p_description: `Refund: ${stageLabel} failed`,
           })
           console.log('Refunded pipeline credits:', { user_id: refundUserId, amount: refundAmount })
         } else {

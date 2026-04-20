@@ -244,10 +244,29 @@ async function handleFileUpdate(supabase: any, body: FileUpdateInput, corsHeader
       const refundUserId = (body.user_id as string | undefined) || (params.user_id as string | undefined);
       const refundAmount = (body.credits_cost as number | undefined) || (params.credits_cost as number | undefined);
       if (refundUserId && typeof refundAmount === 'number' && refundAmount > 0) {
+        const fileTypeMap: Record<string, string> = {
+          script: 'script generation',
+          voice: 'voice generation',
+          speech: 'speech generation',
+          frame: 'frame generation',
+          first_frame: 'first frame generation',
+          last_frame: 'last frame generation',
+          animate: 'animation',
+          video: 'video generation',
+          lip_sync: 'lip sync',
+          lipsync: 'lip sync',
+          seedance: 'seedance generation',
+        };
+        const rawType = (fileRow?.file_type || '').toLowerCase();
+        const typeLabel = fileTypeMap[rawType] || (rawType ? rawType.replace(/_/g, ' ') : 'generation');
+        const cleanError = error_message ? error_message.trim().replace(/\.$/, '') : '';
+        const description = cleanError
+          ? `Refund: ${typeLabel} failed (${cleanError.toLowerCase()})`
+          : `Refund: ${typeLabel} failed`;
         await supabase.rpc('refund_credits', {
           p_user_id: refundUserId,
           p_amount: refundAmount,
-          p_description: `Refund: ${fileRow?.file_type || 'generation'} failed${error_message ? ` (${error_message})` : ''}`,
+          p_description: description,
         });
         console.log('Refunded credits:', { user_id: refundUserId, amount: refundAmount });
       } else {

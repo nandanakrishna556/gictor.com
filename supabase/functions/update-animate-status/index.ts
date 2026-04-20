@@ -75,10 +75,14 @@ async function processUpdate(body: Record<string, any>) {
         .eq('id', pipeline_id);
 
       if (user_id && credits_cost) {
+        const cleanError = error_message ? error_message.trim().replace(/\.$/, '').toLowerCase() : '';
+        const description = cleanError
+          ? `Refund: animation failed (${cleanError})`
+          : 'Refund: animation failed';
         await supabase.rpc('refund_credits', {
           p_user_id: user_id,
           p_amount: credits_cost,
-          p_description: `Animation failed: ${error_message || 'Unknown'}`,
+          p_description: description,
         });
       }
     } else if (status === 'processing') {
