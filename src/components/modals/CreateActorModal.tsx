@@ -180,10 +180,10 @@ export default function CreateActorModal({ open, onOpenChange }: CreateActorModa
                 
                 {/* Text */}
                 <h3 className="font-semibold text-base sm:text-lg text-foreground mb-1">
-                  Generate AI Actor
+                  Generate
                 </h3>
                 <p className="text-xs sm:text-sm text-muted-foreground text-center">
-                  AI creates the actor for you
+                  Generate AI actor from scratch
                 </p>
                 
                 {/* Hover Glow */}
