@@ -838,7 +838,7 @@ export default function SeedanceModal({
                 {/* First / Last frame in same row */}
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label>First frame</Label>
+                    <Label>First frame (Optional)</Label>
                     <SingleImageUpload
                       value={firstFrameUrl}
                       onChange={(url) => {
@@ -852,7 +852,7 @@ export default function SeedanceModal({
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label>Last frame</Label>
+                    <Label>Last frame (Optional)</Label>
                     <SingleImageUpload
                       value={lastFrameUrl}
                       onChange={(url) => {
@@ -869,10 +869,7 @@ export default function SeedanceModal({
 
                 {/* Reference images */}
                 <div className="space-y-2">
-                  <Label>Reference images</Label>
-                  <p className="text-xs text-muted-foreground">
-                    Up to {MAX_REFERENCE_IMAGES} images
-                  </p>
+                  <Label>Reference images (Optional, up to {MAX_REFERENCE_IMAGES})</Label>
                   <ImageUpload
                     maxFiles={MAX_REFERENCE_IMAGES}
                     folder="seedance-reference-images"
@@ -886,9 +883,8 @@ export default function SeedanceModal({
 
                 {/* Reference videos */}
                 <div className="space-y-2">
-                  <Label>Reference videos</Label>
+                  <Label>Reference videos (Optional, up to {MAX_REFERENCE_VIDEOS_DURATION}s combined)</Label>
                   <p className="text-xs text-muted-foreground">
-                    Up to {MAX_REFERENCE_VIDEOS_DURATION}s combined ·{' '}
                     <span
                       className={cn(
                         totalVideoDuration > MAX_REFERENCE_VIDEOS_DURATION && 'text-destructive',
@@ -979,10 +975,7 @@ export default function SeedanceModal({
 
                 {/* Reference audios */}
                 <div className="space-y-2">
-                  <Label>Reference audios</Label>
-                  <p className="text-xs text-muted-foreground">
-                    Up to {MAX_REFERENCE_AUDIOS} audio files
-                  </p>
+                  <Label>Reference audios (Optional, up to {MAX_REFERENCE_AUDIOS})</Label>
 
                   {referenceAudios.length > 0 && (
                     <div className="space-y-2">
