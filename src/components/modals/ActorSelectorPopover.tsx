@@ -1,10 +1,11 @@
 import { useState } from 'react';
-import { User, Search, Check, Plus } from 'lucide-react';
+import { User, Search, Check, Plus, ImageIcon, Mic } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useActors, Actor } from '@/hooks/useActors';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Input } from '@/components/ui/input';
+import { Checkbox } from '@/components/ui/checkbox';
 import { cn } from '@/lib/utils';
 
 interface ActorSelectorPopoverProps {
@@ -12,6 +13,12 @@ interface ActorSelectorPopoverProps {
   onSelect: (actorId: string | null, actor?: Actor) => void;
   showVoicePreview?: boolean;
   className?: string;
+  /** When true, shows checkboxes to choose whether to pass image/voice. */
+  showAssetToggles?: boolean;
+  useImage?: boolean;
+  useVoice?: boolean;
+  onUseImageChange?: (value: boolean) => void;
+  onUseVoiceChange?: (value: boolean) => void;
 }
 
 export default function ActorSelectorPopover({
