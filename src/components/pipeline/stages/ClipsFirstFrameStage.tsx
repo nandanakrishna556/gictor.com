@@ -308,6 +308,7 @@ export default function BRollFirstFrameStage({ pipelineId, onComplete }: BRollFi
       creditsCost={mode === 'upload' ? 'Free' : `${PIPELINE_CREDITS.first_frame} Credits`}
       isAIGenerated={wasAIGenerated}
       outputActions={outputActions}
+      generatingLabel="Generating first frame..."
     />
   );
 }

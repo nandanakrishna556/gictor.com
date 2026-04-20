@@ -559,7 +559,7 @@ export default function FirstFrameStage({ pipelineId, onContinue }: FirstFrameSt
                 <div className="text-center space-y-4">
                   <Loader2 className="h-10 w-10 animate-spin text-primary mx-auto" strokeWidth={1.5} />
                   <div className="space-y-2">
-                    <p className="text-sm text-muted-foreground">Generating your image...</p>
+                    <p className="text-sm text-muted-foreground">Generating first frame...</p>
                   </div>
                 </div>
               </div>

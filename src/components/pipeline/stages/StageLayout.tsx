@@ -37,6 +37,9 @@ interface StageLayoutProps {
   emptyStateIcon?: React.ReactNode;
   emptyStateTitle?: string;
   emptyStateSubtitle?: string;
+
+  // Label shown in the output panel while generating (e.g. "Generating first frame...")
+  generatingLabel?: string;
 }
 
 export default function StageLayout({
@@ -58,6 +61,7 @@ export default function StageLayout({
   emptyStateIcon,
   emptyStateTitle = "Generated image will appear here",
   emptyStateSubtitle = "Configure inputs and click Generate",
+  generatingLabel = "Generating your image...",
 }: StageLayoutProps) {
   return (
     <div className="flex h-full overflow-hidden">
@@ -109,7 +113,7 @@ export default function StageLayout({
               <div className="aspect-square rounded-xl bg-secondary/50 flex items-center justify-center">
                 <div className="text-center space-y-3">
                   <Loader2 className="h-10 w-10 animate-spin text-primary mx-auto" strokeWidth={1.5} />
-                  <p className="text-sm text-muted-foreground">Generating your image...</p>
+                  <p className="text-sm text-muted-foreground">{generatingLabel}</p>
                 </div>
               </div>
             </div>

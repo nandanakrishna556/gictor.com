@@ -267,6 +267,7 @@ export default function VoiceStage({ pipelineId, onContinue }: VoiceStageProps) 
       creditsCost="Free"
       isAIGenerated={false}
       outputActions={hasOutput ? outputActions : undefined}
+      generatingLabel="Generating speech..."
     />
   );
 }

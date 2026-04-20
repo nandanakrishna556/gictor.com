@@ -304,6 +304,7 @@ export default function BRollFinalVideoStage({ pipelineId, onComplete, stageNavi
       creditsCost={`${formatCredits(estimatedCost)} Credits`}
       outputActions={outputActions}
       generateDisabled={!canGenerate}
+      generatingLabel="Generating B-Roll..."
     />
   );
 }
