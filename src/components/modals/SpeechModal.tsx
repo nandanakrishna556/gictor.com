@@ -66,6 +66,7 @@ export default function SpeechModal({
   const queryClient = useQueryClient();
   const { tags, createTag } = useTags();
   const { profile } = useProfile();
+  const { download, isDownloading } = useDownload();
   const { actors } = useActors();
   
   // Core state
@@ -910,10 +911,15 @@ export default function SpeechModal({
                   <Button
                     variant="secondary"
                     className="w-full"
-                    onClick={() => downloadFile(file.download_url!, `${name}.mp3`)}
+                    disabled={isDownloading}
+                    onClick={() => download(file.download_url!, `${name}.mp3`)}
                   >
-                    <Download className="h-4 w-4 mr-2" strokeWidth={1.5} />
-                    Download Audio
+                    {isDownloading ? (
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" strokeWidth={1.5} />
+                    ) : (
+                      <Download className="h-4 w-4 mr-2" strokeWidth={1.5} />
+                    )}
+                    {isDownloading ? 'Downloading...' : 'Download Audio'}
                   </Button>
                 </div>
               )}

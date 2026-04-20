@@ -77,6 +77,7 @@ export default function FrameModal({
   const queryClient = useQueryClient();
   const { tags, createTag } = useTags();
   const { profile } = useProfile();
+  const { download, isDownloading } = useDownload();
 
   // Core state
   const initialStatusRef = useRef(initialStatus);
@@ -1138,10 +1139,15 @@ export default function FrameModal({
                   <Button
                     variant="secondary"
                     className="w-full"
-                    onClick={() => downloadFile(file.download_url!, `${name}.png`)}
+                    disabled={isDownloading}
+                    onClick={() => download(file.download_url!, `${name}.png`)}
                   >
-                    <Download className="h-4 w-4 mr-2" strokeWidth={1.5} />
-                    Download Image
+                    {isDownloading ? (
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" strokeWidth={1.5} />
+                    ) : (
+                      <Download className="h-4 w-4 mr-2" strokeWidth={1.5} />
+                    )}
+                    {isDownloading ? 'Downloading...' : 'Download Image'}
                   </Button>
                 </div>
               ) : (

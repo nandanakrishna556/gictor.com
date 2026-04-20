@@ -63,6 +63,7 @@ export default function AnimateModal({
   const queryClient = useQueryClient();
   const { tags } = useTags();
   const { profile } = useProfile();
+  const { download, isDownloading } = useDownload();
   
   // Core state
   const initialStatusRef = useRef(initialStatus);
@@ -863,10 +864,15 @@ export default function AnimateModal({
                   <Button
                     variant="secondary"
                     className="w-full"
-                    onClick={() => downloadFile(file.download_url!, `${name}.mp4`)}
+                    disabled={isDownloading}
+                    onClick={() => download(file.download_url!, `${name}.mp4`)}
                   >
-                    <Download className="h-4 w-4 mr-2" strokeWidth={1.5} />
-                    Download Video
+                    {isDownloading ? (
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" strokeWidth={1.5} />
+                    ) : (
+                      <Download className="h-4 w-4 mr-2" strokeWidth={1.5} />
+                    )}
+                    {isDownloading ? 'Downloading...' : 'Download Video'}
                   </Button>
                 </div>
               )}
