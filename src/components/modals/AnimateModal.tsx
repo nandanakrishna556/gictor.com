@@ -102,8 +102,10 @@ export default function AnimateModal({
   const [isUploadingFirst, setIsUploadingFirst] = useState(false);
   const [isUploadingLast, setIsUploadingLast] = useState(false);
   
-  // Generation state
-  const [isGenerating, setIsGenerating] = useState(false);
+  // Generation state - localGenerating provides instant feedback after click,
+  // but the truth always comes from file.generation_status (so reopening the
+  // modal mid-generation never flashes an empty output).
+  const [localGenerating, setLocalGenerating] = useState(false);
   const [generationProgress, setGenerationProgress] = useState(0);
   
   // Fetch file data
@@ -119,8 +121,15 @@ export default function AnimateModal({
       return data;
     },
     enabled: !!fileId,
-    refetchInterval: isGenerating ? 2000 : false,
+    refetchInterval: (query) => {
+      const data = query.state.data as { generation_status?: string } | undefined;
+      const shouldPoll = localGenerating || data?.generation_status === 'processing';
+      return shouldPoll ? 2000 : false;
+    },
   });
+
+  const isFileGenerating = file?.generation_status === 'processing';
+  const isGenerating = localGenerating || isFileGenerating;
   
   // Get current status option
   const currentStatusOption = statusOptions.find(s => s.value === displayStatus) || statusOptions[0];
@@ -159,31 +168,35 @@ export default function AnimateModal({
       if (typeof params?.audio_enabled === 'boolean') setAudioEnabled(params.audio_enabled);
       if (typeof params?.camera_fixed === 'boolean') setCameraFixed(params.camera_fixed);
       
-      // Check if generation is in progress
       if (file.generation_status === 'processing') {
-        setIsGenerating(true);
         setGenerationProgress(file.progress || 0);
       }
     }
   }, [file]);
   
-  // Update progress when file updates during generation
+  // Detect terminal transitions (completed/failed) to show toasts and clear local flag
+  const prevFileStatusRef = useRef<string | null | undefined>(null);
   useEffect(() => {
-    if (file && isGenerating) {
-      if (file.generation_status === 'completed' && file.download_url) {
-        setIsGenerating(false);
-        setGenerationProgress(100);
-        toast.success('Animation video generated!');
-        onSuccess?.();
-      } else if (file.generation_status === 'failed') {
-        setIsGenerating(false);
-        setGenerationProgress(0);
-        toast.error(file.error_message || 'Generation failed');
-      } else if (file.progress) {
-        setGenerationProgress(file.progress);
-      }
+    if (!file) return;
+    const prev = prevFileStatusRef.current;
+    const curr = file.generation_status;
+    prevFileStatusRef.current = curr;
+
+    if (prev === 'processing' && curr === 'completed' && file.download_url) {
+      setLocalGenerating(false);
+      setGenerationProgress(100);
+      toast.success('Animation video generated!');
+      onSuccess?.();
+    } else if (prev === 'processing' && curr === 'failed') {
+      setLocalGenerating(false);
+      setGenerationProgress(0);
+      toast.error('Generation failed', {
+        description: `${file.error_message || 'Something went wrong.'} Credits have been refunded to your account.`,
+      });
+    } else if (curr === 'processing' && typeof file.progress === 'number') {
+      setGenerationProgress(file.progress);
     }
-  }, [file, isGenerating, onSuccess]);
+  }, [file, onSuccess]);
   
   // Auto-save functionality
   const triggerAutoSave = useCallback(() => {
@@ -289,7 +302,7 @@ export default function AnimateModal({
       return;
     }
     
-    setIsGenerating(true);
+    setLocalGenerating(true);
     setGenerationProgress(0);
     
     try {
@@ -362,7 +375,7 @@ export default function AnimateModal({
       
     } catch (error) {
       console.error('Generation error:', error);
-      setIsGenerating(false);
+      setLocalGenerating(false);
       toast.error('Failed to start generation');
       
       // Revert file status

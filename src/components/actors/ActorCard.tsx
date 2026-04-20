@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { MoreHorizontal, Trash2, AlertCircle, UserCircle, User } from 'lucide-react';
+import { MoreHorizontal, Trash2, AlertCircle, UserCircle, User, Loader2 } from 'lucide-react';
 import { Actor } from '@/hooks/useActors';
 import { cn } from '@/lib/utils';
 import {
@@ -10,7 +10,6 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { ActorDetailsModal } from '@/components/modals/ActorDetailsModal';
 import { AudioPlayer } from '@/components/ui/AudioPlayer';
-import { useGenerationProgress } from '@/hooks/useGenerationProgress';
 import { getTimeRemaining } from '@/utils/generationEstimates';
 
 interface ActorCardProps {
@@ -24,12 +23,6 @@ export function ActorCard({ actor, onDelete }: ActorCardProps) {
   const isProcessing = actor.status === 'processing';
   const isFailed = actor.status === 'failed';
   const isCompleted = actor.status === 'completed';
-  
-  const displayProgress = useGenerationProgress({
-    status: actor.status,
-    generationStartedAt: actor.generation_started_at ?? null,
-    estimatedDurationSeconds: actor.estimated_duration_seconds ?? null,
-  });
 
   const timeRemaining = isProcessing && actor.generation_started_at && actor.estimated_duration_seconds
     ? getTimeRemaining(actor.generation_started_at, actor.estimated_duration_seconds)
@@ -48,34 +41,10 @@ export function ActorCard({ actor, onDelete }: ActorCardProps) {
       >
         {/* Thumbnail - Takes most of the space */}
         <div className="relative flex-1 bg-muted/50 overflow-hidden">
-          {/* Processing State with Progress */}
+          {/* Processing State with Spinner */}
           {isProcessing && (
             <div className="flex h-full w-full flex-col items-center justify-center gap-3 p-4">
-              <div className="relative">
-                <svg className="h-16 w-16 -rotate-90" viewBox="0 0 36 36">
-                  <circle
-                    cx="18"
-                    cy="18"
-                    r="16"
-                    fill="none"
-                    className="stroke-muted"
-                    strokeWidth="2"
-                  />
-                  <circle
-                    cx="18"
-                    cy="18"
-                    r="16"
-                    fill="none"
-                    className="stroke-primary transition-all duration-300"
-                    strokeWidth="2"
-                    strokeDasharray={`${displayProgress * 100.53 / 100} 100.53`}
-                    strokeLinecap="round"
-                  />
-                </svg>
-                <span className="absolute inset-0 flex items-center justify-center text-sm font-medium text-foreground">
-                  {Math.round(displayProgress)}%
-                </span>
-              </div>
+              <Loader2 className="h-10 w-10 animate-spin text-primary" strokeWidth={1.5} />
               <span className="text-xs text-muted-foreground font-medium">Creating...</span>
               {timeRemaining && (
                 <span className="text-xs text-muted-foreground/70">{timeRemaining}</span>

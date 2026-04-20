@@ -560,17 +560,6 @@ export default function FirstFrameStage({ pipelineId, onContinue }: FirstFrameSt
                   <Loader2 className="h-10 w-10 animate-spin text-primary mx-auto" strokeWidth={1.5} />
                   <div className="space-y-2">
                     <p className="text-sm text-muted-foreground">Generating your image...</p>
-                    {pipeline?.progress !== undefined && pipeline.progress > 0 && pipeline.progress < 100 && (
-                      <div className="flex flex-col items-center gap-1">
-                        <div className="w-32 h-1.5 bg-secondary rounded-full overflow-hidden">
-                          <div 
-                            className="h-full bg-primary rounded-full transition-all duration-300"
-                            style={{ width: `${pipeline.progress}%` }}
-                          />
-                        </div>
-                        <p className="text-xs text-muted-foreground">{pipeline.progress}%</p>
-                      </div>
-                    )}
                   </div>
                 </div>
               </div>
