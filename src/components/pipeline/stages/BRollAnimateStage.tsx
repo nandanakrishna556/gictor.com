@@ -42,6 +42,8 @@ export default function BRollAnimateStage({ pipelineId, onComplete }: BRollAnima
   const [prompt, setPrompt] = useState('');
   const [selectedActorId, setSelectedActorId] = useState<string | null>(null);
   const [selectedActor, setSelectedActor] = useState<Actor | null>(null);
+  const [useActorImage, setUseActorImage] = useState(true);
+  const [useActorVoice, setUseActorVoice] = useState(true);
   
   // Custom frame uploads (override the generated ones)
   const [firstFrameUrl, setFirstFrameUrl] = useState('');
