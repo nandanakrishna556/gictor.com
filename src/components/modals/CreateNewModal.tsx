@@ -52,13 +52,6 @@ const createItems = [
     description: 'Organize your content',
   },
   {
-    id: 'seedance' as const,
-    type: 'element' as const,
-    icon: Wand2,
-    title: 'Seedance 2.0',
-    description: 'AI video with references',
-  },
-  {
     id: 'talking_head' as const,
     type: 'workflow' as const,
     icon: CircleUser,
@@ -71,6 +64,13 @@ const createItems = [
     icon: Clapperboard,
     title: 'B-Roll',
     description: 'Generate video clips',
+  },
+  {
+    id: 'seedance' as const,
+    type: 'element' as const,
+    icon: Wand2,
+    title: 'Seedance 2.0',
+    description: 'AI video with references',
   },
 ];
 
