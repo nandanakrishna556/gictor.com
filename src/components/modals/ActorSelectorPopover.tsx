@@ -359,24 +359,20 @@ export default function ActorSelectorPopover({
               !hasVoice && 'opacity-50 cursor-not-allowed hover:border-border',
             )}
           >
-            <button
-              type="button"
-              disabled={!hasVoice}
-              onClick={toggleVoicePreview}
+            <div
               className={cn(
-                'h-10 w-10 shrink-0 rounded-md flex items-center justify-center transition-colors',
-                hasVoice
-                  ? 'bg-primary text-primary-foreground hover:bg-primary/90'
-                  : 'bg-muted text-muted-foreground cursor-not-allowed',
+                'h-10 w-10 shrink-0 rounded-md flex items-center justify-center',
+                hasVoice && useVoice ? 'bg-primary/10' : 'bg-muted',
               )}
-              aria-label={isPlayingVoice ? 'Pause voice preview' : 'Play voice preview'}
             >
-              {isPlayingVoice ? (
-                <Pause className="h-4 w-4" strokeWidth={2} />
-              ) : (
-                <Play className="h-4 w-4 ml-0.5" strokeWidth={2} />
-              )}
-            </button>
+              <Mic
+                className={cn(
+                  'h-4 w-4',
+                  hasVoice && useVoice ? 'text-primary' : 'text-muted-foreground',
+                )}
+                strokeWidth={1.5}
+              />
+            </div>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium leading-tight">Actor voice</p>
               <p className="text-xs text-muted-foreground leading-tight mt-0.5">
