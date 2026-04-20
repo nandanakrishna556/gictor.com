@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
-import { Progress } from '@/components/ui/progress';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { Video, Image as ImageIcon, Loader2, Download, X, Upload, Sparkles } from 'lucide-react';
@@ -34,9 +33,6 @@ export default function BRollFinalVideoStage({ pipelineId, onComplete, stageNavi
   
   const [resolution, setResolution] = useState<string>(pipeline?.final_video_input?.resolution || '720p');
   const [isGenerating, setIsGenerating] = useState(false);
-  const [generationProgress, setGenerationProgress] = useState(0);
-  const [currentStep, setCurrentStep] = useState(0);
-  const [elapsedTime, setElapsedTime] = useState(0);
   
   // Custom first frame upload
   const [customFirstFrame, setCustomFirstFrame] = useState<string | null>(null);
@@ -62,57 +58,10 @@ export default function BRollFinalVideoStage({ pipelineId, onComplete, stageNavi
   const outputVideo = pipeline?.final_video_output;
   const isProcessing = pipeline?.status === 'processing';
 
-  // Progress simulation during generation
-  useEffect(() => {
-    if (!isProcessing) {
-      setGenerationProgress(0);
-      setCurrentStep(0);
-      setElapsedTime(0);
-      return;
-    }
-
-    const interval = setInterval(() => {
-      setElapsedTime(prev => {
-        const newElapsed = prev + 1;
-        
-        let accumulated = 0;
-        for (let i = 0; i < GENERATION_STEPS.length; i++) {
-          accumulated += GENERATION_STEPS[i].duration;
-          if (newElapsed <= accumulated) {
-            setCurrentStep(i);
-            break;
-          }
-        }
-        
-        const progress = Math.min(95, (newElapsed / TOTAL_ESTIMATED_TIME) * 100);
-        setGenerationProgress(progress);
-        
-        return newElapsed;
-      });
-    }, 1000);
-
-    return () => clearInterval(interval);
-  }, [isProcessing]);
-
-  useEffect(() => {
-    if (hasOutput && isProcessing) {
-      setGenerationProgress(100);
-    }
-  }, [hasOutput, isProcessing]);
-
   const formatDuration = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
     const secs = Math.floor(seconds % 60);
     return `${mins}:${secs.toString().padStart(2, '0')}`;
-  };
-
-  const formatTimeRemaining = () => {
-    const remaining = Math.max(0, TOTAL_ESTIMATED_TIME - elapsedTime);
-    if (remaining <= 0) return 'Almost done...';
-    const mins = Math.floor(remaining / 60);
-    const secs = remaining % 60;
-    if (mins > 0) return `~${mins}m ${secs}s remaining`;
-    return `~${secs}s remaining`;
   };
 
   const formatCredits = (credits: number) => {
