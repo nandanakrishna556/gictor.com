@@ -149,6 +149,8 @@ export default function BRollAnimateStage({ pipelineId, onComplete }: BRollAnima
     setAspectRatio(resolvedAspectRatio as '16:9' | '9:16' | '1:1');
     setAudioEnabled(Boolean(input?.audio_enabled));
     setSelectedActorId(resolvedActorId);
+    setUseActorImage(input?.use_actor_image !== false);
+    setUseActorVoice(input?.use_actor_voice !== false);
     setFirstFrameUrl(resolvedFirstFrameUrl);
     setLastFrameUrl(resolvedLastFrameUrl);
 
@@ -179,6 +181,8 @@ export default function BRollAnimateStage({ pipelineId, onComplete }: BRollAnima
       aspect_ratio: aspectRatio,
       audio_enabled: audioEnabled,
       actor_id: selectedActorId,
+      use_actor_image: useActorImage,
+      use_actor_voice: useActorVoice,
       first_frame_url: effectiveFirstFrame,
       last_frame_url: effectiveLastFrame,
     };
@@ -458,7 +462,12 @@ export default function BRollAnimateStage({ pipelineId, onComplete }: BRollAnima
             aspect_ratio: aspectRatio,
             audio_enabled: audioEnabled,
             actor_id: selectedActorId || null,
-            actor_audio_url: selectedActor?.voice_url || selectedActor?.custom_audio_url || null,
+            actor_image_url: selectedActorId && useActorImage
+              ? (selectedActor?.profile_image_url || selectedActor?.profile_360_url || null)
+              : null,
+            actor_audio_url: selectedActorId && useActorVoice
+              ? (selectedActor?.voice_url || selectedActor?.custom_audio_url || null)
+              : null,
             credits_cost: creditCost,
             supabase_url: import.meta.env.VITE_SUPABASE_URL,
           },
