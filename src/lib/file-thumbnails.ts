@@ -83,6 +83,10 @@ export function getFilePipelineGenerationInfo(
   estimatedDurationSeconds: number | null;
 } | null {
   if (!pipelineThumbnails) return null;
+  // Defensive: if the file already has a finished output, never show a generating overlay,
+  // even if the linked pipeline row hasn't flipped to completed yet.
+  if (file.download_url || file.preview_url) return null;
+  if (file.generation_status === 'completed' || file.generation_status === 'failed') return null;
   const genParams = file.generation_params as Record<string, unknown> | null;
   const pipelineId = (genParams?.pipeline_id as string) || null;
   if (!pipelineId) return null;
