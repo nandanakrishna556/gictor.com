@@ -36,7 +36,6 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { TagList, TagSelector, TagData } from '@/components/ui/tag-badge';
 import { Slider } from '@/components/ui/slider';
 import {
-  ArrowLeft,
   X,
   Check,
   Loader2,
