@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Coins, Loader2, CheckCircle2, PartyPopper, Check, ArrowRight, Gift, Crown, Settings } from 'lucide-react';
+import { Coins, Loader2, CheckCircle2, PartyPopper, Check, ArrowRight, Gift, Crown, Settings, ArrowDownLeft, ArrowUpRight, RotateCcw, History } from 'lucide-react';
 import MainLayout from '@/components/layout/MainLayout';
 import AppHeader from '@/components/layout/AppHeader';
 import { Button } from '@/components/ui/button';
@@ -10,6 +10,7 @@ import { toast } from 'sonner';
 import { CREDIT_PACKAGES } from '@/constants/creditPackages';
 import { cn } from '@/lib/utils';
 import { syncSubscription } from '@/lib/subscription-sync';
+import { useCreditTransactions } from '@/hooks/useCreditTransactions';
 
 export default function Billing() {
   const { profile, refetch: refetchProfile } = useProfile();
@@ -19,6 +20,7 @@ export default function Billing() {
   const [isYearly, setIsYearly] = useState(false);
   const [activePriceId, setActivePriceId] = useState<string | null>(null);
   const [loadingPortal, setLoadingPortal] = useState(false);
+  const { data: transactions = [], isLoading: isLoadingTransactions } = useCreditTransactions(50);
 
   const handleManageSubscription = async () => {
     setLoadingPortal(true);
