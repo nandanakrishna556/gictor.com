@@ -451,6 +451,23 @@ serve(async (req) => {
       }
     };
 
+    // Persist user_id + credits_cost on the pipeline row so update-pipeline-status
+    // can always refund on failure even if n8n doesn't echo those fields back.
+    if (validatedBody.type?.startsWith('pipeline_') && validatedBody.payload?.pipeline_id) {
+      const { error: pipelineMetaError } = await supabase
+        .from('pipelines')
+        .update({
+          user_id: user.id,
+          last_credits_cost: actualCost,
+          last_credits_stage: validatedBody.type,
+        })
+        .eq('id', validatedBody.payload.pipeline_id);
+      if (pipelineMetaError) {
+        // Non-fatal: refund metadata is best-effort, generation should still proceed
+        console.warn('Could not persist pipeline refund metadata:', pipelineMetaError.message);
+      }
+    }
+
     console.log('Forwarding to n8n:', { type: validatedBody.type });
 
     const controller = new AbortController();
