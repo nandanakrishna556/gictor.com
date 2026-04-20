@@ -59,34 +59,52 @@ export default function ActorSelectorPopover({
   const voiceUrl = selectedActor?.voice_url || selectedActor?.custom_audio_url || null;
   const hasVoice = !!voiceUrl;
 
-  // Inline voice preview state
+  // Per-card voice preview (single audio element, only one plays at a time)
   const audioRef = useRef<HTMLAudioElement | null>(null);
-  const [isPlayingVoice, setIsPlayingVoice] = useState(false);
+  const [playingActorId, setPlayingActorId] = useState<string | null>(null);
 
-  // Stop & reset playback when actor changes
+  // Stop playback when popover closes
   useEffect(() => {
-    if (audioRef.current) {
+    if (!open && audioRef.current) {
       audioRef.current.pause();
       audioRef.current.currentTime = 0;
+      setPlayingActorId(null);
     }
-    setIsPlayingVoice(false);
-  }, [voiceUrl]);
+  }, [open]);
 
-  const toggleVoicePreview = (e: React.MouseEvent) => {
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current = null;
+      }
+    };
+  }, []);
+
+  const toggleActorVoice = (e: React.MouseEvent, actorId: string, url: string | null) => {
     e.stopPropagation();
-    if (!voiceUrl) return;
-    if (!audioRef.current) {
-      audioRef.current = new Audio(voiceUrl);
-      audioRef.current.addEventListener('ended', () => setIsPlayingVoice(false));
-    }
-    if (isPlayingVoice) {
+    if (!url) return;
+
+    // If this actor is already playing -> pause
+    if (playingActorId === actorId && audioRef.current) {
       audioRef.current.pause();
-      setIsPlayingVoice(false);
-    } else {
-      audioRef.current.play().catch(() => setIsPlayingVoice(false));
-      setIsPlayingVoice(true);
+      setPlayingActorId(null);
+      return;
     }
+
+    // Stop any current audio
+    if (audioRef.current) {
+      audioRef.current.pause();
+    }
+
+    const audio = new Audio(url);
+    audio.addEventListener('ended', () => setPlayingActorId(null));
+    audioRef.current = audio;
+    audio.play().catch(() => setPlayingActorId(null));
+    setPlayingActorId(actorId);
   };
+
 
   return (
     <div className="space-y-2">
