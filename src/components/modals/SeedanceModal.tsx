@@ -170,6 +170,8 @@ export default function SeedanceModal({
     profile_image_url: string | null;
     voice_url: string | null;
   } | null>(null);
+  const [useActorImage, setUseActorImage] = useState(true);
+  const [useActorVoice, setUseActorVoice] = useState(true);
   const [firstFrameUrl, setFirstFrameUrl] = useState<string | undefined>();
   const [lastFrameUrl, setLastFrameUrl] = useState<string | undefined>();
   const [referenceImages, setReferenceImages] = useState<string[]>([]);
@@ -256,6 +258,8 @@ export default function SeedanceModal({
       if (params) {
         setActorId((params.actor_id as string) || null);
         setActorSnapshot((params.actor_snapshot as typeof actorSnapshot) || null);
+        setUseActorImage(params.use_actor_image !== false);
+        setUseActorVoice(params.use_actor_voice !== false);
         setFirstFrameUrl((params.first_frame_url as string) || undefined);
         setLastFrameUrl((params.last_frame_url as string) || undefined);
         setReferenceImages(Array.isArray(params.reference_images) ? (params.reference_images as string[]) : []);
@@ -267,6 +271,8 @@ export default function SeedanceModal({
       } else {
         setActorId(null);
         setActorSnapshot(null);
+        setUseActorImage(true);
+        setUseActorVoice(true);
         setFirstFrameUrl(undefined);
         setLastFrameUrl(undefined);
         setReferenceImages([]);
@@ -305,6 +311,8 @@ export default function SeedanceModal({
     () => ({
       actor_id: actorId,
       actor_snapshot: actorSnapshot,
+      use_actor_image: useActorImage,
+      use_actor_voice: useActorVoice,
       first_frame_url: firstFrameUrl || null,
       last_frame_url: lastFrameUrl || null,
       reference_images: referenceImages,
@@ -317,6 +325,8 @@ export default function SeedanceModal({
     [
       actorId,
       actorSnapshot,
+      useActorImage,
+      useActorVoice,
       firstFrameUrl,
       lastFrameUrl,
       referenceImages,
