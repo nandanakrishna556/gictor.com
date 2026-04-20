@@ -394,12 +394,12 @@ export default function Billing() {
                               </p>
                               {tx.description && !isRefund && !isPurchase && (
                                 <p className="truncate text-xs text-muted-foreground">
-                                  {tx.description}
+                                  {rawDescription}
                                 </p>
                               )}
                               {isRefund && tx.description && (
                                 <p className="truncate text-xs text-muted-foreground">
-                                  {tx.description}
+                                  {rawDescription}
                                 </p>
                               )}
                               <p className="text-xs text-muted-foreground/80">{dateText}</p>
