@@ -135,8 +135,14 @@ export default function PipelineHeader({
             <span className="invisible">Saved</span>
           )}
         </div>
-        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={onClose}>
-          <X className="h-4 w-4" strokeWidth={1.5} />
+        <Button
+          variant="outline"
+          size="icon"
+          className="h-8 w-8 rounded-full border-border bg-secondary text-foreground hover:bg-muted hover:text-foreground"
+          onClick={onClose}
+          aria-label="Close"
+        >
+          <X className="h-4 w-4" strokeWidth={2} />
         </Button>
       </div>
     </div>
