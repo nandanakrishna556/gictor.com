@@ -211,7 +211,7 @@ export default function CreateActorModal({ open, onOpenChange }: CreateActorModa
                 
                 {/* Text */}
                 <h3 className="font-semibold text-base sm:text-lg text-foreground mb-1">
-                  Upload Your Own
+                  Clone Your Own
                 </h3>
                 <p className="text-xs sm:text-sm text-muted-foreground text-center">
                   Use your own media files
