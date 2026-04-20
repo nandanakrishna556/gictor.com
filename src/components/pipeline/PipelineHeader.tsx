@@ -1,7 +1,7 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { ArrowLeft, X, Check, Loader2 } from 'lucide-react';
+import { X, Check, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -53,11 +53,8 @@ export default function PipelineHeader({
 }: PipelineHeaderProps) {
   return (
     <div className="flex items-center gap-3 border-b bg-background px-4 h-[52px] flex-nowrap shrink-0 relative z-10">
-      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={onClose}>
-        <ArrowLeft className="h-4 w-4" strokeWidth={1.5} />
-      </Button>
       <h2 className="text-lg font-semibold">{title}</h2>
-      
+
       <div className="h-5 w-px bg-border" />
       
       <Input
@@ -138,8 +135,14 @@ export default function PipelineHeader({
             <span className="invisible">Saved</span>
           )}
         </div>
-        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={onClose}>
-          <X className="h-4 w-4" strokeWidth={1.5} />
+        <Button
+          variant="outline"
+          size="icon"
+          className="h-8 w-8 rounded-full border-border bg-secondary text-foreground hover:bg-muted hover:text-foreground"
+          onClick={onClose}
+          aria-label="Close"
+        >
+          <X className="h-4 w-4" strokeWidth={2} />
         </Button>
       </div>
     </div>
