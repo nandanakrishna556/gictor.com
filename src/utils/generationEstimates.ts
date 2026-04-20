@@ -68,7 +68,7 @@ export function getTimeRemaining(
   const remaining = Math.max(0, estimatedDurationSeconds - elapsed);
 
   if (remaining <= 0) {
-    return 'Almost done...';
+    return '';
   } else if (remaining < 60) {
     return `~${Math.ceil(remaining)}s remaining`;
   } else {
@@ -76,3 +76,4 @@ export function getTimeRemaining(
     return `~${minutes}m remaining`;
   }
 }
+

@@ -23,8 +23,6 @@ const GENERATION_STEPS = [
   { label: 'Finalizing output', duration: 5 },
 ];
 
-const TOTAL_ESTIMATED_TIME = GENERATION_STEPS.reduce((sum, step) => sum + step.duration, 0);
-
 // B-Roll video cost is based on duration
 const BROLL_CREDITS_PER_SECOND = 0.2;
 

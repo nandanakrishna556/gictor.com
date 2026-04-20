@@ -24,8 +24,6 @@ const GENERATION_STEPS = [
   { label: 'Finalizing output', duration: 10 },
 ];
 
-const TOTAL_ESTIMATED_TIME = GENERATION_STEPS.reduce((sum, step) => sum + step.duration, 0);
-
 export default function FinalVideoStage({ pipelineId, onComplete }: FinalVideoStageProps) {
   const { pipeline, updateFinalVideo, updateScript, updateFirstFrame, updateVoice, isUpdating } = usePipeline(pipelineId);
   

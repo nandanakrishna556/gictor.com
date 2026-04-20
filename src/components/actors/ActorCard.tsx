@@ -10,7 +10,6 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { ActorDetailsModal } from '@/components/modals/ActorDetailsModal';
 import { AudioPlayer } from '@/components/ui/AudioPlayer';
-import { getTimeRemaining } from '@/utils/generationEstimates';
 
 interface ActorCardProps {
   actor: Actor;
@@ -23,10 +22,6 @@ export function ActorCard({ actor, onDelete }: ActorCardProps) {
   const isProcessing = actor.status === 'processing';
   const isFailed = actor.status === 'failed';
   const isCompleted = actor.status === 'completed';
-
-  const timeRemaining = isProcessing && actor.generation_started_at && actor.estimated_duration_seconds
-    ? getTimeRemaining(actor.generation_started_at, actor.estimated_duration_seconds)
-    : null;
 
   return (
     <>
@@ -46,9 +41,6 @@ export function ActorCard({ actor, onDelete }: ActorCardProps) {
             <div className="flex h-full w-full flex-col items-center justify-center gap-3 p-4">
               <Loader2 className="h-10 w-10 animate-spin text-primary" strokeWidth={1.5} />
               <span className="text-xs text-muted-foreground font-medium">Creating...</span>
-              {timeRemaining && (
-                <span className="text-xs text-muted-foreground/70">{timeRemaining}</span>
-              )}
             </div>
           )}
 
