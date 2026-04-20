@@ -1516,9 +1516,9 @@ function FileCard({
             return (
               <GeneratingOverlay
                 status={file.generation_status || 'processing'}
-                generationStartedAt={file.generation_started_at}
-                estimatedDurationSeconds={file.estimated_duration_seconds}
-                label={getFileGeneratingLabel(file.file_type)}
+                generationStartedAt={generationStartedAt}
+                estimatedDurationSeconds={estimatedDurationSeconds}
+                label={generatingLabel}
               />
             );
           }
@@ -1885,7 +1885,11 @@ function KanbanCard({
   const isFolder = item.itemType === 'folder';
   const isFile = item.itemType === 'file';
   const file = isFile ? (item as File) : null;
-  const isProcessing = file?.generation_status === 'processing';
+  const pipelineGenInfo = file ? getFilePipelineGenerationInfo(file, pipelineThumbnails) : null;
+  const isProcessing = file?.generation_status === 'processing' || !!pipelineGenInfo;
+  const generatingLabel = pipelineGenInfo?.label ?? getFileGeneratingLabel(file?.file_type || 'script');
+  const generationStartedAt = pipelineGenInfo?.generationStartedAt ?? file?.generation_started_at ?? null;
+  const estimatedDurationSeconds = pipelineGenInfo?.estimatedDurationSeconds ?? file?.estimated_duration_seconds ?? null;
   const thumbnailUrl = file ? getFileThumbnailUrl(file, pipelineThumbnails) : null;
 
   const toggleTag = (tagId: string) => {
