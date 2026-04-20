@@ -613,6 +613,10 @@ export default function SeedanceModal({
           file_name: name,
           actor_id: actorId,
           actor_snapshot: actorSnapshot,
+          actor_image_url: actorId && useActorImage ? (actorSnapshot?.profile_image_url || null) : null,
+          actor_audio_url: actorId && useActorVoice ? (actorSnapshot?.voice_url || null) : null,
+          use_actor_image: useActorImage,
+          use_actor_voice: useActorVoice,
           first_frame_url: firstFrameUrl || null,
           last_frame_url: lastFrameUrl || null,
           reference_images: referenceImages,
@@ -843,8 +847,22 @@ export default function SeedanceModal({
 
                 {/* Actor */}
                 <div className="space-y-2">
-                  <Label>Actor</Label>
-                  <ActorSelectorPopover selectedActorId={actorId} onSelect={handleActorSelect} />
+                  <Label>Actor (Optional)</Label>
+                  <ActorSelectorPopover
+                    selectedActorId={actorId}
+                    onSelect={handleActorSelect}
+                    showAssetToggles
+                    useImage={useActorImage}
+                    useVoice={useActorVoice}
+                    onUseImageChange={(v) => {
+                      setUseActorImage(v);
+                      markDirty();
+                    }}
+                    onUseVoiceChange={(v) => {
+                      setUseActorVoice(v);
+                      markDirty();
+                    }}
+                  />
                 </div>
 
                 {/* First / Last frame in same row */}
