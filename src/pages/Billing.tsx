@@ -321,6 +321,97 @@ export default function Billing() {
                 );
               })}
             </div>
+
+            {/* Credit Transactions History */}
+            <div className="mt-12">
+              <div className="mb-4 flex items-center gap-2">
+                <History className="h-5 w-5 text-muted-foreground" />
+                <h2 className="text-2xl font-bold text-foreground">Credit history</h2>
+              </div>
+              <p className="mb-5 text-sm text-muted-foreground">
+                Recent credit usage, purchases, and refunds for failed generations.
+              </p>
+
+              <div className="rounded-2xl border border-border bg-card overflow-hidden">
+                {isLoadingTransactions ? (
+                  <div className="flex items-center justify-center py-12">
+                    <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                  </div>
+                ) : transactions.length === 0 ? (
+                  <div className="py-12 text-center text-sm text-muted-foreground">
+                    No credit activity yet.
+                  </div>
+                ) : (
+                  <ul className="divide-y divide-border">
+                    {transactions.map((tx) => {
+                      const isRefund = tx.transaction_type === 'refund';
+                      const isPurchase = tx.transaction_type === 'purchase' || tx.transaction_type === 'subscription';
+                      const isPositive = tx.amount > 0;
+
+                      const Icon = isRefund ? RotateCcw : isPositive ? ArrowDownLeft : ArrowUpRight;
+                      const iconBg = isRefund
+                        ? 'bg-warning/10 text-warning'
+                        : isPositive
+                        ? 'bg-success/10 text-success'
+                        : 'bg-muted text-muted-foreground';
+
+                      const label = isRefund
+                        ? 'Credits refunded'
+                        : isPurchase
+                        ? 'Credits added'
+                        : tx.description || 'Credit usage';
+
+                      const dateText = tx.created_at
+                        ? new Date(tx.created_at).toLocaleString(undefined, {
+                            dateStyle: 'medium',
+                            timeStyle: 'short',
+                          })
+                        : '';
+
+                      return (
+                        <li key={tx.id} className="flex items-center justify-between gap-4 px-5 py-4">
+                          <div className="flex min-w-0 items-center gap-3">
+                            <div
+                              className={cn(
+                                'flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full',
+                                iconBg
+                              )}
+                            >
+                              <Icon className="h-4 w-4" strokeWidth={1.75} />
+                            </div>
+                            <div className="min-w-0">
+                              <p className="truncate text-sm font-medium text-foreground">
+                                {label}
+                              </p>
+                              {tx.description && !isRefund && !isPurchase && (
+                                <p className="truncate text-xs text-muted-foreground">
+                                  {tx.description}
+                                </p>
+                              )}
+                              {isRefund && tx.description && (
+                                <p className="truncate text-xs text-muted-foreground">
+                                  {tx.description}
+                                </p>
+                              )}
+                              <p className="text-xs text-muted-foreground/80">{dateText}</p>
+                            </div>
+                          </div>
+                          <span
+                            className={cn(
+                              'shrink-0 text-sm font-semibold tabular-nums',
+                              isPositive ? 'text-success' : 'text-foreground'
+                            )}
+                          >
+                            {isPositive ? '+' : ''}
+                            {tx.amount.toFixed(2)}
+                          </span>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                )}
+              </div>
+            </div>
           </div>
         </div>
       </div>
