@@ -355,11 +355,20 @@ export default function Billing() {
                         ? 'bg-success/10 text-success'
                         : 'bg-muted text-muted-foreground';
 
+                      // Normalize text to sentence case for consistency
+                      const toSentenceCase = (s: string) => {
+                        const trimmed = s.trim();
+                        if (!trimmed) return trimmed;
+                        return trimmed.charAt(0).toUpperCase() + trimmed.slice(1);
+                      };
+
+                      const rawDescription = tx.description ? toSentenceCase(tx.description) : '';
+
                       const label = isRefund
                         ? 'Credits refunded'
                         : isPurchase
                         ? 'Credits added'
-                        : tx.description || 'Credit usage';
+                        : rawDescription || 'Credit usage';
 
                       const dateText = tx.created_at
                         ? new Date(tx.created_at).toLocaleString(undefined, {
