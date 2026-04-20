@@ -20,7 +20,7 @@ import { InputModeToggle, InputMode } from '@/components/ui/input-mode-toggle';
 import LocationSelector from '@/components/forms/LocationSelector';
 import { ArrowLeft, X, Loader2, Download, Upload, Film, Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { downloadFile } from '@/lib/download-file';
+import { useDownload } from '@/lib/download-file';
 import { uploadToR2 } from '@/lib/cloudflare-upload';
 
 interface StatusOption {
@@ -63,6 +63,7 @@ export default function AnimateModal({
   const queryClient = useQueryClient();
   const { tags } = useTags();
   const { profile } = useProfile();
+  const { download, isDownloading } = useDownload();
   
   // Core state
   const initialStatusRef = useRef(initialStatus);
@@ -863,10 +864,15 @@ export default function AnimateModal({
                   <Button
                     variant="secondary"
                     className="w-full"
-                    onClick={() => downloadFile(file.download_url!, `${name}.mp4`)}
+                    disabled={isDownloading}
+                    onClick={() => download(file.download_url!, `${name}.mp4`)}
                   >
-                    <Download className="h-4 w-4 mr-2" strokeWidth={1.5} />
-                    Download Video
+                    {isDownloading ? (
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" strokeWidth={1.5} />
+                    ) : (
+                      <Download className="h-4 w-4 mr-2" strokeWidth={1.5} />
+                    )}
+                    {isDownloading ? 'Downloading...' : 'Download Video'}
                   </Button>
                 </div>
               )}

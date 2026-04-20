@@ -47,7 +47,7 @@ import {
   Trash2,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { downloadFile } from '@/lib/download-file';
+import { useDownload } from '@/lib/download-file';
 import { uploadToR2, validateFile } from '@/lib/cloudflare-upload';
 import type { Actor } from '@/hooks/useActors';
 
@@ -144,6 +144,7 @@ export default function SeedanceModal({
   const queryClient = useQueryClient();
   const { tags } = useTags();
   const { profile } = useProfile();
+  const { download, isDownloading } = useDownload();
 
   const initialStatusRef = useRef(initialStatus);
   initialStatusRef.current = initialStatus;
@@ -1136,10 +1137,15 @@ export default function SeedanceModal({
                   <Button
                     variant="secondary"
                     className="w-full"
-                    onClick={() => downloadFile(file.download_url!, `${name}.mp4`)}
+                    disabled={isDownloading}
+                    onClick={() => download(file.download_url!, `${name}.mp4`)}
                   >
-                    <Download className="h-4 w-4 mr-2" strokeWidth={1.5} />
-                    Download Video
+                    {isDownloading ? (
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" strokeWidth={1.5} />
+                    ) : (
+                      <Download className="h-4 w-4 mr-2" strokeWidth={1.5} />
+                    )}
+                    {isDownloading ? 'Downloading...' : 'Download Video'}
                   </Button>
                 </div>
               )}

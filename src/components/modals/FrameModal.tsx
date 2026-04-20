@@ -3,7 +3,7 @@ import { useQueryClient, useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
-import { downloadFile } from '@/lib/download-file';
+import { useDownload } from '@/lib/download-file';
 import { useTags } from "@/hooks/useTags";
 import { useProfile } from "@/hooks/useProfile";
 import { Actor } from "@/hooks/useActors";
@@ -77,6 +77,7 @@ export default function FrameModal({
   const queryClient = useQueryClient();
   const { tags, createTag } = useTags();
   const { profile } = useProfile();
+  const { download, isDownloading } = useDownload();
 
   // Core state
   const initialStatusRef = useRef(initialStatus);
@@ -1138,10 +1139,15 @@ export default function FrameModal({
                   <Button
                     variant="secondary"
                     className="w-full"
-                    onClick={() => downloadFile(file.download_url!, `${name}.png`)}
+                    disabled={isDownloading}
+                    onClick={() => download(file.download_url!, `${name}.png`)}
                   >
-                    <Download className="h-4 w-4 mr-2" strokeWidth={1.5} />
-                    Download Image
+                    {isDownloading ? (
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" strokeWidth={1.5} />
+                    ) : (
+                      <Download className="h-4 w-4 mr-2" strokeWidth={1.5} />
+                    )}
+                    {isDownloading ? 'Downloading...' : 'Download Image'}
                   </Button>
                 </div>
               ) : (

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
 import {
   Download,
+  Loader2,
   MoreHorizontal,
   Trash2,
   Plus,
@@ -15,7 +16,7 @@ import {
   Copy,
 } from 'lucide-react';
 import { cardDragState, CARD_DRAG_MIME } from '@/lib/drag-state';
-import { downloadFile } from '@/lib/download-file';
+import { useDownload } from '@/lib/download-file';
 import { Input } from '@/components/ui/input';
 import { GeneratingOverlay } from '@/components/ui/GeneratingOverlay';
 import { cn } from '@/lib/utils';
@@ -1410,6 +1411,7 @@ function FileCard({
   onMove?: () => void;
 }) {
   const [renameValue, setRenameValue] = useState(file.name);
+  const { download, isDownloading } = useDownload();
   const isProcessing = file.generation_status === 'processing';
   const isFailed = file.generation_status === 'failed';
   // Default status to first stage if not set
@@ -1764,13 +1766,18 @@ function FileCard({
       {file.download_url && (
         <button
           type="button"
-          className="absolute bottom-20 right-3 rounded-lg p-1.5 text-muted-foreground opacity-0 transition-all duration-200 hover:bg-secondary group-hover:opacity-100"
+          disabled={isDownloading}
+          className="absolute bottom-20 right-3 rounded-lg p-1.5 text-muted-foreground opacity-0 transition-all duration-200 hover:bg-secondary group-hover:opacity-100 disabled:opacity-100 disabled:cursor-wait"
           onClick={(e) => {
             e.stopPropagation();
-            downloadFile(file.download_url!, file.name || 'download');
+            download(file.download_url!, file.name || 'download');
           }}
         >
-          <Download className="h-4 w-4" />
+          {isDownloading ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            <Download className="h-4 w-4" />
+          )}
         </button>
       )}
 
@@ -1867,6 +1874,7 @@ function KanbanCard({
 }) {
   const navigate = useNavigate();
   const [renameValue, setRenameValue] = useState(item.name);
+  const { download, isDownloading } = useDownload();
   const itemTags = item.tags || [];
   const isFolder = item.itemType === 'folder';
   const isFile = item.itemType === 'file';
@@ -2241,13 +2249,18 @@ function KanbanCard({
       {file?.download_url && (
         <button
           type="button"
-          className="absolute bottom-12 right-3 rounded-lg p-1.5 text-muted-foreground opacity-0 transition-all duration-200 hover:bg-secondary group-hover:opacity-100"
+          disabled={isDownloading}
+          className="absolute bottom-12 right-3 rounded-lg p-1.5 text-muted-foreground opacity-0 transition-all duration-200 hover:bg-secondary group-hover:opacity-100 disabled:opacity-100 disabled:cursor-wait"
           onClick={(e) => {
             e.stopPropagation();
-            downloadFile(file.download_url!, file.name || 'download');
+            download(file.download_url!, file.name || 'download');
           }}
         >
-          <Download className="h-4 w-4" />
+          {isDownloading ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            <Download className="h-4 w-4" />
+          )}
         </button>
       )}
 
