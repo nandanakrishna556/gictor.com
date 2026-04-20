@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
-import { Progress } from '@/components/ui/progress';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { Video, Image as ImageIcon, Loader2, Download, X, Upload, Sparkles } from 'lucide-react';
@@ -34,9 +33,6 @@ export default function BRollFinalVideoStage({ pipelineId, onComplete, stageNavi
   
   const [resolution, setResolution] = useState<string>(pipeline?.final_video_input?.resolution || '720p');
   const [isGenerating, setIsGenerating] = useState(false);
-  const [generationProgress, setGenerationProgress] = useState(0);
-  const [currentStep, setCurrentStep] = useState(0);
-  const [elapsedTime, setElapsedTime] = useState(0);
   
   // Custom first frame upload
   const [customFirstFrame, setCustomFirstFrame] = useState<string | null>(null);
@@ -62,57 +58,10 @@ export default function BRollFinalVideoStage({ pipelineId, onComplete, stageNavi
   const outputVideo = pipeline?.final_video_output;
   const isProcessing = pipeline?.status === 'processing';
 
-  // Progress simulation during generation
-  useEffect(() => {
-    if (!isProcessing) {
-      setGenerationProgress(0);
-      setCurrentStep(0);
-      setElapsedTime(0);
-      return;
-    }
-
-    const interval = setInterval(() => {
-      setElapsedTime(prev => {
-        const newElapsed = prev + 1;
-        
-        let accumulated = 0;
-        for (let i = 0; i < GENERATION_STEPS.length; i++) {
-          accumulated += GENERATION_STEPS[i].duration;
-          if (newElapsed <= accumulated) {
-            setCurrentStep(i);
-            break;
-          }
-        }
-        
-        const progress = Math.min(95, (newElapsed / TOTAL_ESTIMATED_TIME) * 100);
-        setGenerationProgress(progress);
-        
-        return newElapsed;
-      });
-    }, 1000);
-
-    return () => clearInterval(interval);
-  }, [isProcessing]);
-
-  useEffect(() => {
-    if (hasOutput && isProcessing) {
-      setGenerationProgress(100);
-    }
-  }, [hasOutput, isProcessing]);
-
   const formatDuration = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
     const secs = Math.floor(seconds % 60);
     return `${mins}:${secs.toString().padStart(2, '0')}`;
-  };
-
-  const formatTimeRemaining = () => {
-    const remaining = Math.max(0, TOTAL_ESTIMATED_TIME - elapsedTime);
-    if (remaining <= 0) return 'Almost done...';
-    const mins = Math.floor(remaining / 60);
-    const secs = remaining % 60;
-    if (mins > 0) return `~${mins}m ${secs}s remaining`;
-    return `~${secs}s remaining`;
   };
 
   const formatCredits = (credits: number) => {
@@ -308,40 +257,14 @@ export default function BRollFinalVideoStage({ pipelineId, onComplete, stageNavi
           </span>
         </div>
       ) : isProcessing ? (
-        <div className="flex flex-col items-center justify-center text-center gap-6 w-full max-w-md">
-          <Loader2 className="h-12 w-12 animate-spin text-primary" />
-          <div className="w-full space-y-3">
-            <div className="space-y-1">
-              <p className="text-lg font-medium">Generating your B-Roll video...</p>
-              <p className="text-sm text-primary font-medium">
-                {GENERATION_STEPS[currentStep]?.label || 'Processing...'}
-              </p>
-            </div>
-            
-            <div className="space-y-2">
-            </div>
-            
-            <div className="flex justify-center gap-1.5 pt-2">
-              {GENERATION_STEPS.map((step, idx) => (
-                <div
-                  key={idx}
-                  className={`h-1.5 w-6 rounded-full transition-colors ${
-                    idx < currentStep 
-                      ? 'bg-primary' 
-                      : idx === currentStep 
-                        ? 'bg-primary/60 animate-pulse' 
-                        : 'bg-muted'
-                  }`}
-                  title={step.label}
-                />
-              ))}
-            </div>
-          </div>
+        <div className="flex flex-col items-center justify-center text-center gap-3">
+          <Loader2 className="h-12 w-12 animate-spin text-primary" strokeWidth={1.5} />
+          <p className="text-sm text-muted-foreground font-medium">Generating your B-Roll video...</p>
         </div>
       ) : pipeline?.status === 'failed' ? (
         <div className="flex flex-col items-center justify-center text-center gap-2">
           <p className="text-lg font-medium text-destructive">Generation failed</p>
-          <p className="text-sm text-muted-foreground">Please try again</p>
+          <p className="text-sm text-muted-foreground">Credits have been refunded to your account.</p>
         </div>
       ) : (
         <div className="flex flex-col items-center justify-center text-center gap-2">
