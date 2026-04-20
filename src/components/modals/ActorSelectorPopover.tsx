@@ -59,52 +59,6 @@ export default function ActorSelectorPopover({
   const voiceUrl = selectedActor?.voice_url || selectedActor?.custom_audio_url || null;
   const hasVoice = !!voiceUrl;
 
-  // Per-card voice preview (single audio element, only one plays at a time)
-  const audioRef = useRef<HTMLAudioElement | null>(null);
-  const [playingActorId, setPlayingActorId] = useState<string | null>(null);
-
-  // Stop playback when popover closes
-  useEffect(() => {
-    if (!open && audioRef.current) {
-      audioRef.current.pause();
-      audioRef.current.currentTime = 0;
-      setPlayingActorId(null);
-    }
-  }, [open]);
-
-  // Cleanup on unmount
-  useEffect(() => {
-    return () => {
-      if (audioRef.current) {
-        audioRef.current.pause();
-        audioRef.current = null;
-      }
-    };
-  }, []);
-
-  const toggleActorVoice = (e: React.MouseEvent, actorId: string, url: string | null) => {
-    e.stopPropagation();
-    if (!url) return;
-
-    // If this actor is already playing -> pause
-    if (playingActorId === actorId && audioRef.current) {
-      audioRef.current.pause();
-      setPlayingActorId(null);
-      return;
-    }
-
-    // Stop any current audio
-    if (audioRef.current) {
-      audioRef.current.pause();
-    }
-
-    const audio = new Audio(url);
-    audio.addEventListener('ended', () => setPlayingActorId(null));
-    audioRef.current = audio;
-    audio.play().catch(() => setPlayingActorId(null));
-    setPlayingActorId(actorId);
-  };
-
 
   return (
     <div className="space-y-2">
