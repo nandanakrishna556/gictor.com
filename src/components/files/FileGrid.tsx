@@ -2022,9 +2022,9 @@ function KanbanCard({
             return (
               <GeneratingOverlay
                 status={file?.generation_status || 'processing'}
-                generationStartedAt={file?.generation_started_at || null}
-                estimatedDurationSeconds={file?.estimated_duration_seconds || null}
-                label={getFileGeneratingLabel(file?.file_type || 'script')}
+                generationStartedAt={generationStartedAt}
+                estimatedDurationSeconds={estimatedDurationSeconds}
+                label={generatingLabel}
               />
             );
           }
