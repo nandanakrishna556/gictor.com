@@ -6,7 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ThemeProvider } from "next-themes";
 import { AuthProvider } from "@/contexts/AuthContext";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
-import Landing from "./pages/Landing";
+import Index from "./pages/Index";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import ForgotPassword from "./pages/ForgotPassword";
