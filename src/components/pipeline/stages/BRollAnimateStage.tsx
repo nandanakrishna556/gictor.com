@@ -2,7 +2,10 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Film, Loader2, Download, Upload, X } from 'lucide-react';
+import { Film, Loader2, Download, Upload, X, Search, User, Play, Pause, Check } from 'lucide-react';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
+import { AudioPlayer } from '@/components/ui/AudioPlayer';
 import { downloadFile } from '@/lib/download-file';
 import { usePipeline } from '@/hooks/usePipeline';
 import { useProfile } from '@/hooks/useProfile';
@@ -13,7 +16,6 @@ import { useQueryClient } from '@tanstack/react-query';
 import { InputModeToggle, InputMode } from '@/components/ui/input-mode-toggle';
 import { uploadToR2 } from '@/lib/cloudflare-upload';
 import { Slider } from '@/components/ui/slider';
-import ActorSelectorPopover from '@/components/modals/ActorSelectorPopover';
 import { useActors, Actor } from '@/hooks/useActors';
 
 interface BRollAnimateStageProps {
