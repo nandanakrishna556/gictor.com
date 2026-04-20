@@ -541,26 +541,18 @@ export default function BRollAnimateStage({ pipelineId, onComplete }: BRollAnima
           <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">Input</h3>
           
           {/* Generate Mode UI */}
-              {/* Actor Selector */}
+              {/* Actor Voice Selector */}
               <div className="space-y-2">
-                <Label>Actor (Optional)</Label>
+                <Label>Actor Voice (Optional)</Label>
                 <ActorSelectorPopover
                   selectedActorId={selectedActorId}
                   onSelect={(actorId, actor) => {
                     markUserInteracted();
                     setSelectedActorId(actorId);
                     setSelectedActor(actor || null);
-                  }}
-                  showAssetToggles
-                  useImage={useActorImage}
-                  useVoice={useActorVoice}
-                  onUseImageChange={(v) => {
-                    markUserInteracted();
-                    setUseActorImage(v);
-                  }}
-                  onUseVoiceChange={(v) => {
-                    markUserInteracted();
-                    setUseActorVoice(v);
+                    // B-Roll only uses actor voice (no image passthrough)
+                    setUseActorImage(false);
+                    setUseActorVoice(true);
                   }}
                 />
               </div>

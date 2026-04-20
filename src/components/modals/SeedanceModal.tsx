@@ -612,7 +612,13 @@ export default function SeedanceModal({
           folder_id: currentFolderId,
           file_name: name,
           actor_id: actorId,
-          actor_snapshot: actorSnapshot,
+          actor_snapshot: actorId
+            ? {
+                ...(actorSnapshot || {}),
+                profile_image_url: useActorImage ? (actorSnapshot?.profile_image_url || null) : null,
+                voice_url: useActorVoice ? (actorSnapshot?.voice_url || null) : null,
+              }
+            : null,
           actor_image_url: actorId && useActorImage ? (actorSnapshot?.profile_image_url || null) : null,
           actor_audio_url: actorId && useActorVoice ? (actorSnapshot?.voice_url || null) : null,
           use_actor_image: useActorImage,
