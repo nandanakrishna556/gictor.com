@@ -55,7 +55,11 @@ export default function ActorSelectorPopover({
     setSearchQuery('');
   };
 
+  const hasImage = !!(selectedActor?.profile_image_url || selectedActor?.profile_360_url);
+  const hasVoice = !!(selectedActor?.voice_url || selectedActor?.custom_audio_url);
+
   return (
+    <div className="space-y-2">
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <Button
