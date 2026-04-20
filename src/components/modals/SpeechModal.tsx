@@ -160,31 +160,35 @@ export default function SpeechModal({
       if (params?.script) setScript(params.script);
       if (params?.actor_id) setSelectedActorId(params.actor_id);
       
-      // Check if generation is in progress
       if (file.generation_status === 'processing') {
-        setIsGenerating(true);
         setGenerationProgress(file.progress || 0);
       }
     }
   }, [file]);
   
-  // Update progress when file updates during generation
+  // Detect terminal transitions
+  const prevFileStatusRef = useRef<string | null | undefined>(null);
   useEffect(() => {
-    if (file && isGenerating) {
-      if (file.generation_status === 'completed' && file.download_url) {
-        setIsGenerating(false);
-        setGenerationProgress(100);
-        toast.success('Speech audio generated!');
-        onSuccess?.();
-      } else if (file.generation_status === 'failed') {
-        setIsGenerating(false);
-        setGenerationProgress(0);
-        toast.error(file.error_message || 'Generation failed');
-      } else if (file.progress) {
-        setGenerationProgress(file.progress);
-      }
+    if (!file) return;
+    const prev = prevFileStatusRef.current;
+    const curr = file.generation_status;
+    prevFileStatusRef.current = curr;
+
+    if (prev === 'processing' && curr === 'completed' && file.download_url) {
+      setLocalGenerating(false);
+      setGenerationProgress(100);
+      toast.success('Speech audio generated!');
+      onSuccess?.();
+    } else if (prev === 'processing' && curr === 'failed') {
+      setLocalGenerating(false);
+      setGenerationProgress(0);
+      toast.error('Generation failed', {
+        description: `${file.error_message || 'Something went wrong.'} Credits have been refunded to your account.`,
+      });
+    } else if (curr === 'processing' && typeof file.progress === 'number') {
+      setGenerationProgress(file.progress);
     }
-  }, [file, isGenerating, onSuccess]);
+  }, [file, onSuccess]);
   
   // Auto-save functionality
   const triggerAutoSave = useCallback(() => {

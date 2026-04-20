@@ -574,7 +574,7 @@ export default function SeedanceModal({
       return;
     }
 
-    setIsGenerating(true);
+    setLocalGenerating(true);
 
     try {
       const { data: sessionData, error: sessionError } = await supabase.auth.refreshSession();
@@ -629,7 +629,7 @@ export default function SeedanceModal({
       queryClient.invalidateQueries({ queryKey: ['files', currentProjectId] });
     } catch (err) {
       console.error('Generation error:', err);
-      setIsGenerating(false);
+      setLocalGenerating(false);
       toast.error((err as Error).message || 'Failed to start generation');
       await supabase
         .from('files')
