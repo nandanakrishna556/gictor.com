@@ -1,10 +1,11 @@
 import { useState } from 'react';
-import { User, Search, Check, Plus } from 'lucide-react';
+import { User, Search, Check, Plus, ImageIcon, Mic } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useActors, Actor } from '@/hooks/useActors';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Input } from '@/components/ui/input';
+import { Checkbox } from '@/components/ui/checkbox';
 import { cn } from '@/lib/utils';
 
 interface ActorSelectorPopoverProps {
@@ -12,6 +13,12 @@ interface ActorSelectorPopoverProps {
   onSelect: (actorId: string | null, actor?: Actor) => void;
   showVoicePreview?: boolean;
   className?: string;
+  /** When true, shows checkboxes to choose whether to pass image/voice. */
+  showAssetToggles?: boolean;
+  useImage?: boolean;
+  useVoice?: boolean;
+  onUseImageChange?: (value: boolean) => void;
+  onUseVoiceChange?: (value: boolean) => void;
 }
 
 export default function ActorSelectorPopover({
@@ -19,6 +26,11 @@ export default function ActorSelectorPopover({
   onSelect,
   showVoicePreview = false,
   className,
+  showAssetToggles = false,
+  useImage = true,
+  useVoice = true,
+  onUseImageChange,
+  onUseVoiceChange,
 }: ActorSelectorPopoverProps) {
   const { actors } = useActors();
   const navigate = useNavigate();
@@ -43,7 +55,11 @@ export default function ActorSelectorPopover({
     setSearchQuery('');
   };
 
+  const hasImage = !!(selectedActor?.profile_image_url || selectedActor?.profile_360_url);
+  const hasVoice = !!(selectedActor?.voice_url || selectedActor?.custom_audio_url);
+
   return (
+    <div className="space-y-2">
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <Button
@@ -233,5 +249,42 @@ export default function ActorSelectorPopover({
         </div>
       </PopoverContent>
     </Popover>
+
+    {showAssetToggles && selectedActor && (
+      <div className="flex flex-wrap items-center gap-4 rounded-md border border-border bg-secondary/30 px-3 py-2">
+        <span className="text-xs font-medium text-muted-foreground">
+          Pass to generation:
+        </span>
+        <label
+          className={cn(
+            'flex items-center gap-2 text-sm',
+            !hasImage && 'opacity-50 cursor-not-allowed',
+          )}
+        >
+          <Checkbox
+            checked={hasImage && useImage}
+            disabled={!hasImage}
+            onCheckedChange={(v) => onUseImageChange?.(v === true)}
+          />
+          <ImageIcon className="h-3.5 w-3.5 text-muted-foreground" strokeWidth={1.5} />
+          <span>Actor image</span>
+        </label>
+        <label
+          className={cn(
+            'flex items-center gap-2 text-sm',
+            !hasVoice && 'opacity-50 cursor-not-allowed',
+          )}
+        >
+          <Checkbox
+            checked={hasVoice && useVoice}
+            disabled={!hasVoice}
+            onCheckedChange={(v) => onUseVoiceChange?.(v === true)}
+          />
+          <Mic className="h-3.5 w-3.5 text-muted-foreground" strokeWidth={1.5} />
+          <span>Actor voice</span>
+        </label>
+      </div>
+    )}
+    </div>
   );
 }
