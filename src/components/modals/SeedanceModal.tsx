@@ -869,10 +869,7 @@ export default function SeedanceModal({
 
                 {/* Reference images */}
                 <div className="space-y-2">
-                  <Label>Reference images</Label>
-                  <p className="text-xs text-muted-foreground">
-                    Up to {MAX_REFERENCE_IMAGES} images
-                  </p>
+                  <Label>Reference images (Optional, up to {MAX_REFERENCE_IMAGES})</Label>
                   <ImageUpload
                     maxFiles={MAX_REFERENCE_IMAGES}
                     folder="seedance-reference-images"
@@ -886,9 +883,8 @@ export default function SeedanceModal({
 
                 {/* Reference videos */}
                 <div className="space-y-2">
-                  <Label>Reference videos</Label>
+                  <Label>Reference videos (Optional, up to {MAX_REFERENCE_VIDEOS_DURATION}s combined)</Label>
                   <p className="text-xs text-muted-foreground">
-                    Up to {MAX_REFERENCE_VIDEOS_DURATION}s combined ·{' '}
                     <span
                       className={cn(
                         totalVideoDuration > MAX_REFERENCE_VIDEOS_DURATION && 'text-destructive',
