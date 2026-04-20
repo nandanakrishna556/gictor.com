@@ -5,6 +5,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Label } from '@/components/ui/label';
 import { Video, Image as ImageIcon, Loader2, Download, X, Upload, Sparkles } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { downloadFile } from '@/lib/download-file';
 import { usePipeline } from '@/hooks/usePipeline';
 import { toast } from 'sonner';
 import StageLayout from './StageLayout';
@@ -357,11 +358,13 @@ export default function BRollFinalVideoStage({ pipelineId, onComplete, stageNavi
 
   const outputActions = hasOutput ? (
     <div className="flex items-center gap-2">
-      <Button variant="ghost" size="sm" asChild>
-        <a href={outputVideo?.url} download>
-          <Download className="h-4 w-4 mr-2" />
-          Download
-        </a>
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={() => outputVideo?.url && downloadFile(outputVideo.url, `b-roll-${Date.now()}.mp4`)}
+      >
+        <Download className="h-4 w-4 mr-2" />
+        Download
       </Button>
     </div>
   ) : undefined;

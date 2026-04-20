@@ -5,6 +5,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Video, Image as ImageIcon, FileAudio, Loader2, Download, Sparkles, X, Upload, ChevronDown, ChevronUp, Save } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { downloadFile } from '@/lib/download-file';
 import { usePipeline } from '@/hooks/usePipeline';
 import { generateFinalVideo } from '@/lib/pipeline-service';
 import { calculateVideoCost } from '@/types/pipeline';
@@ -469,11 +470,13 @@ export default function FinalVideoStage({ pipelineId, onComplete }: FinalVideoSt
   );
 
   const outputActions = hasOutput && outputVideo && (
-    <Button variant="ghost" size="sm" asChild>
-      <a href={outputVideo.url} download>
-        <Download className="h-4 w-4 mr-1.5" />
-        Download
-      </a>
+    <Button
+      variant="ghost"
+      size="sm"
+      onClick={() => downloadFile(outputVideo.url, `final-video-${Date.now()}.mp4`)}
+    >
+      <Download className="h-4 w-4 mr-1.5" />
+      Download
     </Button>
   );
 

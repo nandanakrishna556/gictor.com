@@ -10,6 +10,7 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import { AudioPlayer } from '@/components/ui/AudioPlayer';
 import { Loader2, Download, Search, User, Play, Pause, Check, Mic } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { downloadFile } from '@/lib/download-file';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
@@ -614,11 +615,13 @@ export default function SpeechStage({ pipelineId, onContinue }: SpeechStageProps
               </div>
               <audio src={outputUrl} controls className="w-full" />
             </div>
-            <Button variant="secondary" className="w-full" asChild>
-              <a href={outputUrl} download="speech.mp3">
-                <Download className="h-4 w-4 mr-2" strokeWidth={1.5} />
-                Download Audio
-              </a>
+            <Button
+              variant="secondary"
+              className="w-full"
+              onClick={() => downloadFile(outputUrl, 'speech.mp3')}
+            >
+              <Download className="h-4 w-4 mr-2" strokeWidth={1.5} />
+              Download Audio
             </Button>
           </div>
         ) : (

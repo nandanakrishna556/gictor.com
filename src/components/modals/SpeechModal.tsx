@@ -20,6 +20,7 @@ import { TagList, TagSelector, TagData } from '@/components/ui/tag-badge';
 import { InputModeToggle, InputMode } from '@/components/ui/input-mode-toggle';
 import { ArrowLeft, X, Check, Loader2, Download, AlertCircle, User, Search, Play, Pause, Mic } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { downloadFile } from '@/lib/download-file';
 import { AudioPlayer } from '@/components/ui/AudioPlayer';
 import { uploadToR2, validateFile } from '@/lib/cloudflare-upload';
 
@@ -906,11 +907,13 @@ export default function SpeechModal({
                       className="w-full"
                     />
                   </div>
-                  <Button variant="secondary" className="w-full" asChild>
-                    <a href={file.download_url} download={`${name}.mp3`}>
-                      <Download className="h-4 w-4 mr-2" strokeWidth={1.5} />
-                      Download Audio
-                    </a>
+                  <Button
+                    variant="secondary"
+                    className="w-full"
+                    onClick={() => downloadFile(file.download_url!, `${name}.mp3`)}
+                  >
+                    <Download className="h-4 w-4 mr-2" strokeWidth={1.5} />
+                    Download Audio
                   </Button>
                 </div>
               )}

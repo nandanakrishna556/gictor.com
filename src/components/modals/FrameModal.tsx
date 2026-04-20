@@ -3,6 +3,7 @@ import { useQueryClient, useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
+import { downloadFile } from '@/lib/download-file';
 import { useTags } from "@/hooks/useTags";
 import { useProfile } from "@/hooks/useProfile";
 import { Actor } from "@/hooks/useActors";
@@ -1134,11 +1135,13 @@ export default function FrameModal({
                   <div className="rounded-xl border border-border overflow-hidden">
                     <img src={file.download_url} alt={name} className="w-full object-contain" />
                   </div>
-                  <Button variant="secondary" className="w-full" asChild>
-                    <a href={file.download_url} download={`${name}.png`}>
-                      <Download className="h-4 w-4 mr-2" strokeWidth={1.5} />
-                      Download Image
-                    </a>
+                  <Button
+                    variant="secondary"
+                    className="w-full"
+                    onClick={() => downloadFile(file.download_url!, `${name}.png`)}
+                  >
+                    <Download className="h-4 w-4 mr-2" strokeWidth={1.5} />
+                    Download Image
                   </Button>
                 </div>
               ) : (

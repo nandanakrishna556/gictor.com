@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Film, Loader2, Download, Upload, X } from 'lucide-react';
+import { downloadFile } from '@/lib/download-file';
 import { usePipeline } from '@/hooks/usePipeline';
 import { useProfile } from '@/hooks/useProfile';
 import { useAuth } from '@/contexts/AuthContext';
@@ -729,11 +730,13 @@ export default function BRollAnimateStage({ pipelineId, onComplete }: BRollAnima
                   loop
                 />
               </div>
-              <Button variant="secondary" className="w-full" asChild>
-                <a href={outputVideo.url} download>
-                  <Download className="h-4 w-4 mr-2" strokeWidth={1.5} />
-                  Download Video
-                </a>
+              <Button
+                variant="secondary"
+                className="w-full"
+                onClick={() => downloadFile(outputVideo.url, `b-roll-${Date.now()}.mp4`)}
+              >
+                <Download className="h-4 w-4 mr-2" strokeWidth={1.5} />
+                Download Video
               </Button>
             </div>
           )}

@@ -4,6 +4,7 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Film, Loader2, Download, Upload, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { downloadFile } from '@/lib/download-file';
 import { usePipeline } from '@/hooks/usePipeline';
 import { useProfile } from '@/hooks/useProfile';
 import { useAuth } from '@/contexts/AuthContext';
@@ -490,11 +491,13 @@ export default function MoGraphAnimateStage({ pipelineId, onComplete }: MoGraphA
                   loop
                 />
               </div>
-              <Button variant="secondary" className="w-full" asChild>
-                <a href={outputVideo.url} download={`motion-graphics-${Date.now()}.mp4`}>
-                  <Download className="h-4 w-4 mr-2" strokeWidth={1.5} />
-                  Download Video
-                </a>
+              <Button
+                variant="secondary"
+                className="w-full"
+                onClick={() => downloadFile(outputVideo.url, `motion-graphics-${Date.now()}.mp4`)}
+              >
+                <Download className="h-4 w-4 mr-2" strokeWidth={1.5} />
+                Download Video
               </Button>
             </div>
           ) : (

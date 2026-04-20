@@ -11,6 +11,7 @@ import { InputModeToggle, InputMode } from '@/components/ui/input-mode-toggle';
 import ActorSelectorPopover from '@/components/modals/ActorSelectorPopover';
 import { Loader2, Download, Image as ImageIcon, X, Plus } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { downloadFile } from '@/lib/download-file';
 import { toast } from 'sonner';
 import { useQueryClient } from '@tanstack/react-query';
 import { Actor, useActors } from '@/hooks/useActors';
@@ -579,11 +580,13 @@ export default function FirstFrameStage({ pipelineId, onContinue }: FirstFrameSt
               <div className="rounded-xl border border-border overflow-hidden">
                 <img src={outputUrl} alt="Generated frame" className="w-full object-contain" />
               </div>
-              <Button variant="secondary" className="w-full" asChild>
-                <a href={outputUrl} download="first-frame.png">
-                  <Download className="h-4 w-4 mr-2" strokeWidth={1.5} />
-                  Download Image
-                </a>
+              <Button
+                variant="secondary"
+                className="w-full"
+                onClick={() => downloadFile(outputUrl, 'first-frame.png')}
+              >
+                <Download className="h-4 w-4 mr-2" strokeWidth={1.5} />
+                Download Image
               </Button>
             </div>
           ) : (
