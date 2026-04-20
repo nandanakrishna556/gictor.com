@@ -257,40 +257,14 @@ export default function BRollFinalVideoStage({ pipelineId, onComplete, stageNavi
           </span>
         </div>
       ) : isProcessing ? (
-        <div className="flex flex-col items-center justify-center text-center gap-6 w-full max-w-md">
-          <Loader2 className="h-12 w-12 animate-spin text-primary" />
-          <div className="w-full space-y-3">
-            <div className="space-y-1">
-              <p className="text-lg font-medium">Generating your B-Roll video...</p>
-              <p className="text-sm text-primary font-medium">
-                {GENERATION_STEPS[currentStep]?.label || 'Processing...'}
-              </p>
-            </div>
-            
-            <div className="space-y-2">
-            </div>
-            
-            <div className="flex justify-center gap-1.5 pt-2">
-              {GENERATION_STEPS.map((step, idx) => (
-                <div
-                  key={idx}
-                  className={`h-1.5 w-6 rounded-full transition-colors ${
-                    idx < currentStep 
-                      ? 'bg-primary' 
-                      : idx === currentStep 
-                        ? 'bg-primary/60 animate-pulse' 
-                        : 'bg-muted'
-                  }`}
-                  title={step.label}
-                />
-              ))}
-            </div>
-          </div>
+        <div className="flex flex-col items-center justify-center text-center gap-3">
+          <Loader2 className="h-12 w-12 animate-spin text-primary" strokeWidth={1.5} />
+          <p className="text-sm text-muted-foreground font-medium">Generating your B-Roll video...</p>
         </div>
       ) : pipeline?.status === 'failed' ? (
         <div className="flex flex-col items-center justify-center text-center gap-2">
           <p className="text-lg font-medium text-destructive">Generation failed</p>
-          <p className="text-sm text-muted-foreground">Please try again</p>
+          <p className="text-sm text-muted-foreground">Credits have been refunded to your account.</p>
         </div>
       ) : (
         <div className="flex flex-col items-center justify-center text-center gap-2">
