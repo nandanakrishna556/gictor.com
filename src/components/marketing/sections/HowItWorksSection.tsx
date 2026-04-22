@@ -4,19 +4,19 @@ const STEPS = [
   {
     n: "01",
     title: "Choose your actor",
-    desc: "Pick from our library or generate a custom AI actor. Even clone your own face and voice in under a minute.",
+    desc: "Generate a custom ai actor from scratch. Even clone your own face and voice in under a minute or clone someone else.",
     Icon: Users,
   },
   {
     n: "02",
-    title: "Write your script",
+    title: "Write your prompt",
     desc: "Enter your own script or let AI generate a high-converting ad script tailored to your product and audience.",
     Icon: FileText,
   },
   {
     n: "03",
     title: "Generate your video",
-    desc: "Realistic lip-synced talking head ads, ready to launch in minutes. Export for Meta, TikTok, or YouTube.",
+    desc: "Realistic lip-synced talking head ads, ugc videos, b-roll ready to launch in minutes. Export for Meta, TikTok, or YouTube.",
     Icon: Sparkles,
   },
 ];
