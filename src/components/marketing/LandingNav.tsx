@@ -47,7 +47,7 @@ export default function LandingNav() {
           <Link
             to="/#how-it-works"
             onClick={(e) => handleAnchor(e, "how-it-works")}
-            className="rounded-full px-4 py-2 font-medium text-gray-600 transition hover:bg-gray-100 hover:text-gray-950 text-base"
+            className="rounded-full px-4 py-2 font-medium text-gray-600 transition hover:text-gray-950 text-base bg-gray-100/0"
           >
             How it works
           </Link>
@@ -59,7 +59,7 @@ export default function LandingNav() {
           >
             <button
               type="button"
-              className="rounded-full px-4 py-2 font-medium text-gray-600 transition hover:bg-gray-100 hover:text-gray-950 text-base"
+              className="rounded-full px-4 py-2 font-medium text-gray-600 transition hover:text-gray-950 text-base bg-gray-100/0"
             >
               Services
             </button>
@@ -146,14 +146,14 @@ export default function LandingNav() {
           <Link
             to="/#pricing"
             onClick={(e) => handleAnchor(e, "pricing")}
-            className="rounded-full px-4 py-2 font-medium text-gray-600 transition hover:bg-gray-100 hover:text-gray-950 text-base"
+            className="rounded-full px-4 py-2 font-medium text-gray-600 transition hover:text-gray-950 text-base bg-gray-100/0"
           >
             Pricing
           </Link>
           <Link
             to="/#faq"
             onClick={(e) => handleAnchor(e, "faq")}
-            className="rounded-full px-4 py-2 font-medium text-gray-600 transition hover:bg-gray-100 hover:text-gray-950 text-base"
+            className="rounded-full px-4 py-2 font-medium text-gray-600 transition hover:text-gray-950 text-base bg-gray-100/0"
           >
             FAQ
           </Link>
