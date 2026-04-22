@@ -49,25 +49,25 @@ export default function ComparisonSection() {
 
             <ul className="mt-6 space-y-3">
               {OLD.map((row) => (
-                <li key={row.step} className="flex items-center gap-3 rounded-2xl border border-rose-100 bg-rose-50/40 p-3">
+                <li key={row.step} className="flex flex-wrap items-center gap-x-3 gap-y-1.5 rounded-2xl border border-rose-100 bg-rose-50/40 p-3">
                   <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-rose-100 text-rose-600">
                     <X className="h-3.5 w-3.5" strokeWidth={3} />
                   </span>
-                  <span className="flex-1 text-[14px] text-gray-700">{row.step}</span>
-                  <span className="hidden rounded-full bg-white px-2 py-0.5 text-[11px] font-medium text-gray-500 sm:inline">{row.time}</span>
+                  <span className="min-w-0 flex-1 text-[14px] text-gray-700">{row.step}</span>
+                  <span className="rounded-full bg-white px-2 py-0.5 text-[11px] font-medium text-gray-500">{row.time}</span>
                   <span className="text-[12.5px] font-semibold text-rose-600">{row.cost}</span>
                 </li>
               ))}
             </ul>
 
             <div className="mt-6 grid grid-cols-2 gap-3 border-t border-gray-100 pt-5 text-center">
-              <div>
+              <div className="min-w-0">
                 <div className="text-[11px] uppercase tracking-wide text-gray-400">Total time</div>
-                <div className="mt-1 text-lg font-bold text-gray-400 line-through">2+ weeks</div>
+                <div className="mt-1 text-base font-bold text-gray-400 line-through sm:text-lg">2+ weeks</div>
               </div>
-              <div>
+              <div className="min-w-0">
                 <div className="text-[11px] uppercase tracking-wide text-gray-400">Cost per video</div>
-                <div className="mt-1 text-lg font-bold text-gray-400 line-through">$300 — often much more</div>
+                <div className="mt-1 break-words text-base font-bold leading-tight text-gray-400 line-through sm:text-lg">$300+</div>
               </div>
             </div>
           </div>
@@ -86,27 +86,27 @@ export default function ComparisonSection() {
 
               <ul className="mt-6 space-y-3">
                 {NEW.map((row) => (
-                  <li key={row.step} className="flex items-center gap-3 rounded-2xl bg-white/15 p-3 backdrop-blur">
+                  <li key={row.step} className="flex flex-wrap items-center gap-x-3 gap-y-1.5 rounded-2xl bg-white/15 p-3 backdrop-blur">
                     <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-white text-orange-600">
                       <Check className="h-3.5 w-3.5" strokeWidth={3} />
                     </span>
-                    <span className="flex-1 text-[14px]">{row.step}</span>
-                    <span className="hidden rounded-full bg-white/20 px-2 py-0.5 text-[11px] font-medium sm:inline">{row.time}</span>
+                    <span className="min-w-0 flex-1 text-[14px]">{row.step}</span>
+                    <span className="rounded-full bg-white/20 px-2 py-0.5 text-[11px] font-medium">{row.time}</span>
                     <span className="text-[12.5px] font-semibold">{row.cost}</span>
                   </li>
                 ))}
               </ul>
 
               <div className="mt-6 grid grid-cols-2 gap-3 border-t border-white/20 pt-5 text-center">
-                <div>
+                <div className="min-w-0">
                   <div className="text-[11px] uppercase tracking-wide opacity-80">Total time</div>
-                  <div className="mt-1 text-lg font-bold">~10 min ⚡</div>
-                  <div className="text-[11px] opacity-80">5,000× faster</div>
+                  <div className="mt-1 text-base font-bold leading-tight sm:text-lg">~10 min ⚡</div>
+                  <div className="mt-0.5 text-[11px] opacity-80">100× faster</div>
                 </div>
-                <div>
+                <div className="min-w-0">
                   <div className="text-[11px] uppercase tracking-wide opacity-80">Cost per video</div>
-                  <div className="mt-1 text-lg font-bold">~$5 to $10 💸</div>
-                  <div className="text-[11px] opacity-80">Save 99%</div>
+                  <div className="mt-1 break-words text-base font-bold leading-tight sm:text-lg">~$5 to $10 💸</div>
+                  <div className="mt-0.5 text-[11px] opacity-80">Save 95%+</div>
                 </div>
               </div>
             </div>
