@@ -1,17 +1,17 @@
 import { Check, X } from "lucide-react";
 
 const OLD = [
-  { step: "Brief an actor or UGC creator", time: "3 to 7 days", cost: "$200+" },
-  { step: "Shoot, reshoot, revise", time: "1 to 2 weeks", cost: "$300+" },
-  { step: "Edit, subtitle, color, export", time: "2 to 4 days", cost: "$150+" },
-  { step: "Flops on launch, start again", time: "Repeat", cost: "$650+ again" },
+  { step: "Find the right ugc creator", time: "1 to 3 days", cost: "$0 to $50+" },
+  { step: "Research, brief, meetings, iterations", time: "1 to 3 days", cost: "$0 to $100+" },
+  { step: "Ship the product for free", time: "5 to 14 days", cost: "$20 to $100+" },
+  { step: "Contracts and legal headache", time: "Repeat", cost: "$100+ again" },
 ];
 
 const NEW = [
-  { step: "Pick or clone an AI actor", time: "10 sec", cost: "Included" },
-  { step: "Write or AI-generate a script", time: "30 sec", cost: "Included" },
-  { step: "Render a finished video", time: "~3 min", cost: "~$1 credits" },
-  { step: "Iterate and scale the same day", time: "Unlimited", cost: "~$1 each" },
+  { step: "Generate or clone an AI actor", time: "3 min", cost: "~$1 per actor" },
+  { step: "Prompt like you're texting a friend", time: "2 min", cost: "~$1 per actor" },
+  { step: "Render a finished video", time: "~5 min", cost: "~$5 per video" },
+  { step: "Iterate and scale the same day", time: "Unlimited", cost: "~$5 each" },
 ];
 
 export default function ComparisonSection() {
@@ -67,7 +67,7 @@ export default function ComparisonSection() {
               </div>
               <div>
                 <div className="text-[11px] uppercase tracking-wide text-gray-400">Cost per video</div>
-                <div className="mt-1 text-lg font-bold text-gray-400 line-through">$650 — often much more</div>
+                <div className="mt-1 text-lg font-bold text-gray-400 line-through">$300 — often much more</div>
               </div>
             </div>
           </div>
@@ -100,12 +100,12 @@ export default function ComparisonSection() {
               <div className="mt-6 grid grid-cols-2 gap-3 border-t border-white/20 pt-5 text-center">
                 <div>
                   <div className="text-[11px] uppercase tracking-wide opacity-80">Total time</div>
-                  <div className="mt-1 text-lg font-bold">~4 min ⚡</div>
+                  <div className="mt-1 text-lg font-bold">~10 min ⚡</div>
                   <div className="text-[11px] opacity-80">5,000× faster</div>
                 </div>
                 <div>
                   <div className="text-[11px] uppercase tracking-wide opacity-80">Cost per video</div>
-                  <div className="mt-1 text-lg font-bold">~$1 💸</div>
+                  <div className="mt-1 text-lg font-bold">~$5 to $10 💸</div>
                   <div className="text-[11px] opacity-80">Save 99%</div>
                 </div>
               </div>
