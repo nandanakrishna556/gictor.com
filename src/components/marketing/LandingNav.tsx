@@ -47,7 +47,7 @@ export default function LandingNav() {
           <Link
             to="/#how-it-works"
             onClick={(e) => handleAnchor(e, "how-it-works")}
-            className="rounded-full px-4 py-2 text-sm font-medium text-gray-600 transition hover:bg-gray-100 hover:text-gray-950"
+            className="rounded-full px-4 py-2 font-medium text-gray-600 transition hover:bg-gray-100 hover:text-gray-950 text-base"
           >
             How it works
           </Link>
@@ -59,7 +59,7 @@ export default function LandingNav() {
           >
             <button
               type="button"
-              className="rounded-full px-4 py-2 text-sm font-medium text-gray-600 transition hover:bg-gray-100 hover:text-gray-950"
+              className="rounded-full px-4 py-2 font-medium text-gray-600 transition hover:bg-gray-100 hover:text-gray-950 text-base"
             >
               Services
             </button>
@@ -146,14 +146,14 @@ export default function LandingNav() {
           <Link
             to="/#pricing"
             onClick={(e) => handleAnchor(e, "pricing")}
-            className="rounded-full px-4 py-2 text-sm font-medium text-gray-600 transition hover:bg-gray-100 hover:text-gray-950"
+            className="rounded-full px-4 py-2 font-medium text-gray-600 transition hover:bg-gray-100 hover:text-gray-950 text-base"
           >
             Pricing
           </Link>
           <Link
             to="/#faq"
             onClick={(e) => handleAnchor(e, "faq")}
-            className="rounded-full px-4 py-2 text-sm font-medium text-gray-600 transition hover:bg-gray-100 hover:text-gray-950"
+            className="rounded-full px-4 py-2 font-medium text-gray-600 transition hover:bg-gray-100 hover:text-gray-950 text-base"
           >
             FAQ
           </Link>
@@ -163,13 +163,13 @@ export default function LandingNav() {
         <div className="hidden items-center gap-2 md:flex">
           <Link
             to="/login"
-            className="rounded-full px-4 py-2 text-sm font-medium text-gray-600 transition hover:text-gray-950"
+            className="rounded-full px-4 py-2 font-medium text-gray-600 transition hover:text-gray-950 text-base"
           >
             Log in
           </Link>
           <Link
             to="/signup"
-            className="inline-flex items-center gap-1.5 rounded-full bg-gray-950 px-4 py-2 text-sm font-semibold text-white transition hover:bg-gray-800"
+            className="inline-flex items-center gap-1.5 rounded-full bg-gray-950 px-4 py-2 font-semibold text-white transition hover:bg-gray-800 text-base"
           >
             Start Free <ArrowRight className="h-3.5 w-3.5" />
           </Link>
