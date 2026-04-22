@@ -7,6 +7,12 @@ import { ThemeProvider } from "next-themes";
 import { AuthProvider } from "@/contexts/AuthContext";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import Index from "./pages/Index";
+import Landing from "./pages/Landing";
+import ServiceYouTube from "./pages/ServiceYouTube";
+import ServiceMediaBuying from "./pages/ServiceMediaBuying";
+import ServiceShortForm from "./pages/ServiceShortForm";
+import Privacy from "./pages/Privacy";
+import Terms from "./pages/Terms";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import ForgotPassword from "./pages/ForgotPassword";
@@ -31,8 +37,13 @@ const App = () => (
           <AuthProvider>
             <Routes>
               {/* Public routes */}
-              <Route path="/" element={<Index />} />
+              <Route path="/" element={<Landing />} />
               <Route path="/home" element={<Index />} />
+              <Route path="/services/youtube-videos" element={<ServiceYouTube />} />
+              <Route path="/services/media-buying" element={<ServiceMediaBuying />} />
+              <Route path="/services/short-form-content" element={<ServiceShortForm />} />
+              <Route path="/privacy" element={<Privacy />} />
+              <Route path="/terms" element={<Terms />} />
               <Route path="/login" element={<Login />} />
               <Route path="/signup" element={<Signup />} />
               <Route path="/forgot-password" element={<ForgotPassword />} />
