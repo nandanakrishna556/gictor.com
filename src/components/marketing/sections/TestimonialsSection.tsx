@@ -46,7 +46,7 @@ const TESTIMONIALS = [
     role: "Head of Marketing",
     company: "Flowstack",
     avatar: "https://randomuser.me/api/portraits/women/90.jpg",
-    metric: "$1.2k → $1",
+    metric: "$1.2k → $5",
   },
 ];
 
