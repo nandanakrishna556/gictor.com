@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { ArrowUp, Sparkles } from "lucide-react";
+import { ArrowUp, ScanFace } from "lucide-react";
 import LandingNav from "@/components/marketing/LandingNav";
 import LandingFooter from "@/components/marketing/LandingFooter";
 import { useScrollReveal } from "@/hooks/useScrollReveal";
@@ -82,7 +82,7 @@ export default function LegalPageLayout(props: LegalPageProps) {
           <div className="mx-auto max-w-3xl text-center">
             <div className="inline-flex items-center gap-2 rounded-full border border-gray-200 bg-white/80 px-3.5 py-1.5 text-[12.5px] font-semibold text-gray-700 shadow-sm backdrop-blur">
               <span>{props.eyebrowEmoji}</span> {props.eyebrow}
-              <Sparkles className="h-3.5 w-3.5 text-orange-500" />
+              <ScanFace className="h-3.5 w-3.5 text-orange-500" />
             </div>
             <h1 className="mt-6 text-4xl font-black tracking-[-0.03em] text-gray-950 md:text-6xl">
               {props.title}

@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { Link } from "react-router-dom";
-import { ArrowRight, Check, Sparkles, Star } from "lucide-react";
+import { ArrowRight, Check, ScanFace, Star } from "lucide-react";
 import LandingNav from "@/components/marketing/LandingNav";
 import LandingFooter from "@/components/marketing/LandingFooter";
 import { useScrollReveal } from "@/hooks/useScrollReveal";
@@ -72,7 +72,7 @@ export default function ServicePageLayout(props: ServicePageProps) {
             <div className="reveal inline-flex items-center gap-2 rounded-full border border-gray-200 bg-white/80 px-3.5 py-1.5 text-[12.5px] font-semibold text-gray-700 shadow-sm backdrop-blur">
               <span>{props.eyebrowEmoji}</span>
               {props.eyebrow}
-              <Sparkles className="h-3.5 w-3.5 text-orange-500" />
+              <ScanFace className="h-3.5 w-3.5 text-orange-500" />
             </div>
             <h1 className="reveal mt-7 text-[44px] font-black tracking-[-0.03em] text-gray-950 sm:text-6xl md:text-7xl lg:text-[78px]">
               {props.h1Top}

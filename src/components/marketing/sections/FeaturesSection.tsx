@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Sparkles, Mic, Globe, Layers, Film, Users, User, Check, ArrowRight } from "lucide-react";
+import { ScanFace, Mic, Globe, Layers, Film, Users, User, Check, ArrowRight } from "lucide-react";
 
 export default function FeaturesSection() {
   return (
@@ -63,7 +63,7 @@ export default function FeaturesSection() {
             </div>
           </div>
 
-          <BentoCard className="md:col-span-2" Icon={Sparkles} title="Custom AI Actors" desc="Generate hyper-realistic actors tailored to your brand from scratch." />
+          <BentoCard className="md:col-span-2" Icon={ScanFace} title="Custom AI Actors" desc="Generate hyper-realistic actors tailored to your brand from scratch." />
           <BentoCard className="md:col-span-2" Icon={Mic} title="Realistic Lip-Sync" desc="Precise sync that fools the eye and the ear." />
           <BentoCard
             className="md:col-span-2 bg-gradient-to-br from-orange-50 to-white border-orange-100"
@@ -111,7 +111,7 @@ function BentoCard({
   footer,
 }: {
   className?: string;
-  Icon: typeof Sparkles;
+  Icon: typeof ScanFace;
   title: string;
   desc: string;
   footer?: React.ReactNode;

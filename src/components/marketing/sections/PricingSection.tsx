@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { Check, ArrowRight, Gift, Sparkles } from "lucide-react";
+import { Check, ArrowRight, Gift, ScanFace } from "lucide-react";
 import { CREDIT_PACKAGES } from "../data";
 import { cn } from "@/lib/utils";
 
@@ -58,7 +58,7 @@ export default function PricingSection() {
                   <>
                     <div className="pointer-events-none absolute -right-20 -top-20 h-56 w-56 rounded-full bg-orange-500/30 blur-3xl" />
                     <span className="absolute -top-3 left-1/2 inline-flex -translate-x-1/2 items-center gap-1 rounded-full bg-gradient-to-br from-[#ff8a4c] to-[#e85a1f] px-3 py-1 text-[11px] font-bold uppercase tracking-wide text-white shadow-lg">
-                      <Sparkles className="h-3 w-3" /> Most Popular
+                      <ScanFace className="h-3 w-3" /> Most Popular
                     </span>
                   </>
                 )}
