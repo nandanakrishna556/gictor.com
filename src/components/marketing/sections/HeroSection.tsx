@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { ArrowRight, Play, Sparkles, Star } from "lucide-react";
+import { ArrowRight, Play, ScanFace, Star } from "lucide-react";
 
 const AVATARS = [
   "https://randomuser.me/api/portraits/women/44.jpg",
@@ -35,7 +35,7 @@ export default function HeroSection() {
             </span>
             <span className="font-semibold">New</span>
             <span className="text-gray-500">Clone yourself, or someone else</span>
-            <Sparkles className="h-3.5 w-3.5 text-orange-500" />
+            <ScanFace className="h-3.5 w-3.5 text-orange-500" />
           </div>
 
           {/* H1 */}
