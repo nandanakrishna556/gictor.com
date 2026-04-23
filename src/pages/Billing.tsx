@@ -288,7 +288,7 @@ export default function Billing() {
                         {(() => {
                           const features = isYearly
                             ? [
-                                `${pkg.yearlyTotalCredits} credits per year (${pkg.yearlyFreeCredits} bonus)`,
+                                `${pkg.yearlyBaseCredits} credits per year (+${pkg.yearlyFreeCredits} bonus) total ${pkg.yearlyTotalCredits} credits per year`,
                                 pkg.yearlyVideoTime,
                                 `${pkg.actorSlots} active AI actors`,
                                 "Credits never expire",
