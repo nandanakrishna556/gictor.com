@@ -932,7 +932,7 @@ export default function BRollAnimateStage({ pipelineId, onComplete }: BRollAnima
               <Button
                 variant="secondary"
                 className="w-full"
-                onClick={() => downloadFile(outputVideo.url, `b-roll-${Date.now()}.mp4`)}
+                onClick={() => downloadFile(outputVideo.url, `clips-${Date.now()}.mp4`)}
               >
                 <Download className="h-4 w-4 mr-2" strokeWidth={1.5} />
                 Download Video

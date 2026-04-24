@@ -37,15 +37,15 @@ const FILE_TYPE_CONFIG: Record<FileType, { icon: LucideIcon; label: string; colo
     label: 'Clips',
     color: 'text-primary',
   },
-  // Legacy: veo3 now maps to b_roll display
+  // Legacy: veo3 now maps to clips display
   veo3: {
     icon: Clapperboard,
-    label: 'B-Roll',
+    label: 'Clips',
     color: 'text-primary',
   },
   b_roll: {
     icon: Clapperboard,
-    label: 'B-Roll',
+    label: 'Clips',
     color: 'text-primary',
   },
   script: {

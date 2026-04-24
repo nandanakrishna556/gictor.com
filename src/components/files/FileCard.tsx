@@ -48,7 +48,7 @@ const getGeneratingLabel = (fileType: string) => {
       return 'Writing script...';
     case 'b_roll':
     case 'clips':
-      return 'Generating B-Roll...';
+      return 'Generating Clips...';
     case 'motion_graphics':
       return 'Generating Motion Graphics...';
     default: 

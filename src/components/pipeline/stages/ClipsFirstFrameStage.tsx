@@ -107,7 +107,7 @@ export default function BRollFirstFrameStage({ pipelineId, onComplete }: BRollFi
         return;
       }
 
-      toast.success('B-Roll first frame generation started!');
+      toast.success('Clips first frame generation started!');
     } catch (error) {
       toast.error('Failed to start generation');
     } finally {
@@ -218,7 +218,7 @@ export default function BRollFirstFrameStage({ pipelineId, onComplete }: BRollFi
             <Textarea
               value={prompt}
               onChange={(e) => setPrompt(e.target.value)}
-              placeholder={isEditing ? "Describe the changes you want..." : "Describe the B-Roll scene you want to generate..."}
+              placeholder={isEditing ? "Describe the changes you want..." : "Describe the Clips scene you want to generate..."}
               className="min-h-32 rounded-xl resize-none"
             />
           </div>
@@ -237,7 +237,7 @@ export default function BRollFirstFrameStage({ pipelineId, onComplete }: BRollFi
 
   const handleDownload = async () => {
     if (!outputUrl) return;
-    const success = await downloadFile(outputUrl, buildDownloadFilename(`b-roll-frame-${Date.now()}`, 'png'));
+    const success = await downloadFile(outputUrl, buildDownloadFilename(`clips-frame-${Date.now()}`, 'png'));
     if (success) {
       toast.success('Image downloaded');
     } else {
@@ -263,16 +263,16 @@ export default function BRollFirstFrameStage({ pipelineId, onComplete }: BRollFi
     <div className="w-full max-w-md mx-auto">
       <img
         src={outputUrl}
-        alt="Generated B-Roll first frame"
+        alt="Generated Clips first frame"
         className="w-full rounded-xl shadow-lg"
       />
     </div>
   ) : (
     <div className="flex flex-col items-center justify-center text-center gap-2 min-h-[300px]">
       <Video className="h-16 w-16 text-muted-foreground/50" />
-      <p className="text-lg font-medium">Generate B-Roll First Frame</p>
+      <p className="text-lg font-medium">Generate Clips First Frame</p>
       <p className="text-sm text-muted-foreground">
-        Create a starting frame for your B-Roll video
+        Create a starting frame for your Clips video
       </p>
     </div>
   );

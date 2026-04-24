@@ -94,7 +94,7 @@ export default function FeaturesSection() {
               </div>
             }
           />
-          <BentoCard className="md:col-span-2" Icon={Film} title="AI B-Roll" desc="Cinematic B-roll auto-generated for every ad." />
+          <BentoCard className="md:col-span-2" Icon={Film} title="AI Clips" desc="Cinematic clips auto-generated for every ad." />
           <BentoCard className="md:col-span-2" Icon={Users} title="Actor Library" desc="Diverse pre-built actors for every niche." />
           <BentoCard className="md:col-span-2" Icon={User} title="AI Avatar Generator" desc="Unique avatars via our image model." />
         </div>

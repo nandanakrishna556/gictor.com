@@ -60,8 +60,8 @@ const ALL_FILE_TYPE_OPTIONS = [
   { value: 'animate', label: 'Animate' },
   { value: 'frame', label: 'Frame' },
   { value: 'seedance', label: 'Seedance' },
-  { value: 'clips', label: 'B-Roll' },
-  { value: 'b_roll', label: 'B-Roll' },
+  { value: 'clips', label: 'Clips' },
+  { value: 'b_roll', label: 'Clips' },
   { value: 'folder', label: 'Folder' },
 ];
 
