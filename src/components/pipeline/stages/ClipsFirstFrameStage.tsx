@@ -270,9 +270,9 @@ export default function BRollFirstFrameStage({ pipelineId, onComplete }: BRollFi
   ) : (
     <div className="flex flex-col items-center justify-center text-center gap-2 min-h-[300px]">
       <Video className="h-16 w-16 text-muted-foreground/50" />
-      <p className="text-lg font-medium">Generate B-Roll First Frame</p>
+      <p className="text-lg font-medium">Generate Clips First Frame</p>
       <p className="text-sm text-muted-foreground">
-        Create a starting frame for your B-Roll video
+        Create a starting frame for your Clips video
       </p>
     </div>
   );
