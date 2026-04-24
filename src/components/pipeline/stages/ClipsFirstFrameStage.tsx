@@ -237,7 +237,7 @@ export default function BRollFirstFrameStage({ pipelineId, onComplete }: BRollFi
 
   const handleDownload = async () => {
     if (!outputUrl) return;
-    const success = await downloadFile(outputUrl, buildDownloadFilename(`b-roll-frame-${Date.now()}`, 'png'));
+    const success = await downloadFile(outputUrl, buildDownloadFilename(`clips-frame-${Date.now()}`, 'png'));
     if (success) {
       toast.success('Image downloaded');
     } else {

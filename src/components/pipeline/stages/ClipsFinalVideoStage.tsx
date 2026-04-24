@@ -282,7 +282,7 @@ export default function BRollFinalVideoStage({ pipelineId, onComplete, stageNavi
       <Button
         variant="ghost"
         size="sm"
-        onClick={() => outputVideo?.url && downloadFile(outputVideo.url, `b-roll-${Date.now()}.mp4`)}
+        onClick={() => outputVideo?.url && downloadFile(outputVideo.url, `clips-${Date.now()}.mp4`)}
       >
         <Download className="h-4 w-4 mr-2" />
         Download
