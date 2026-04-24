@@ -41,7 +41,7 @@ export function getPipelineStageGeneratingLabel(
       case 'animate':
       case 'voice': // DB alias for Animate in B-Roll
       case 'final_video':
-        return 'Generating B-Roll...';
+        return 'Generating Clips...';
       default:
         return 'Generating...';
     }

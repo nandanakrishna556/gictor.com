@@ -152,7 +152,7 @@ export default function BRollPromptStage({ pipelineId, onContinue, stageNavigati
           className="min-h-32 rounded-xl resize-none"
         />
         <p className="text-xs text-muted-foreground">
-          Describe the motion and animation you want in your B-Roll video
+          Describe the motion and animation you want in your Clips video
         </p>
       </div>
 
@@ -258,7 +258,7 @@ export default function BRollPromptStage({ pipelineId, onContinue, stageNavigati
       <Video className="h-16 w-16 text-muted-foreground/50" />
       <p className="text-lg font-medium">Configure Video Motion</p>
       <p className="text-sm text-muted-foreground max-w-sm">
-        Set up how your B-Roll video will animate from the first frame
+        Set up how your Clips video will animate from the first frame
       </p>
     </div>
   );

@@ -107,7 +107,7 @@ export default function BRollFirstFrameStage({ pipelineId, onComplete }: BRollFi
         return;
       }
 
-      toast.success('B-Roll first frame generation started!');
+      toast.success('Clips first frame generation started!');
     } catch (error) {
       toast.error('Failed to start generation');
     } finally {
@@ -218,7 +218,7 @@ export default function BRollFirstFrameStage({ pipelineId, onComplete }: BRollFi
             <Textarea
               value={prompt}
               onChange={(e) => setPrompt(e.target.value)}
-              placeholder={isEditing ? "Describe the changes you want..." : "Describe the B-Roll scene you want to generate..."}
+              placeholder={isEditing ? "Describe the changes you want..." : "Describe the Clips scene you want to generate..."}
               className="min-h-32 rounded-xl resize-none"
             />
           </div>
@@ -263,7 +263,7 @@ export default function BRollFirstFrameStage({ pipelineId, onComplete }: BRollFi
     <div className="w-full max-w-md mx-auto">
       <img
         src={outputUrl}
-        alt="Generated B-Roll first frame"
+        alt="Generated Clips first frame"
         className="w-full rounded-xl shadow-lg"
       />
     </div>

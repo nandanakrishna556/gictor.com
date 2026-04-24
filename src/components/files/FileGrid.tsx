@@ -114,7 +114,7 @@ const getFileGeneratingLabel = (fileType: string) => {
       return 'Writing script...';
     case 'b_roll':
     case 'clips':
-      return 'Generating B-Roll...';
+      return 'Generating Clips...';
     case 'animate':
       return 'Generating animation...';
     default:

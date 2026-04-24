@@ -78,8 +78,8 @@ const ProcessingPreview: React.FC<{
   const getGeneratingLabel = () => {
     switch (pipelineType) {
       case 'talking_head': return 'Generating video...';
-      case 'clips': return 'Generating B-Roll...';
-      case 'b_roll': return 'Generating B-Roll...';
+      case 'clips': return 'Generating Clips...';
+      case 'b_roll': return 'Generating Clips...';
       case 'first_frame': return 'Generating image...';
       case 'speech': return 'Generating audio...';
       case 'script': return 'Writing script...';

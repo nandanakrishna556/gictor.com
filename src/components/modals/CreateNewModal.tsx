@@ -62,7 +62,7 @@ const createItems = [
     id: 'b_roll' as const,
     type: 'workflow' as const,
     icon: Clapperboard,
-    title: 'B-Roll',
+    title: 'Clips',
     description: 'Generate video clips',
   },
   {

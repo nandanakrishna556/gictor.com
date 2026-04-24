@@ -917,7 +917,7 @@ export default function FrameModal({
                       >
                         {style === "broll" && <div className="h-2 w-2 rounded-full bg-primary" />}
                       </div>
-                      <span className="text-sm font-medium">B-Roll</span>
+                      <span className="text-sm font-medium">Clips</span>
                     </div>
                     {style === "broll" && (
                       <div className="flex gap-1">

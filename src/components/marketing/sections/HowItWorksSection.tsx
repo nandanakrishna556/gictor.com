@@ -16,7 +16,7 @@ const STEPS = [
   {
     n: "03",
     title: "Generate your video",
-    desc: "Realistic lip-synced talking head ads, ugc videos, b-roll ready to launch in minutes. Export for Meta, TikTok, or YouTube.",
+    desc: "Realistic lip-synced talking head ads, ugc videos, clips ready to launch in minutes. Export for Meta, TikTok, or YouTube.",
     Icon: Sparkles,
   },
 ];

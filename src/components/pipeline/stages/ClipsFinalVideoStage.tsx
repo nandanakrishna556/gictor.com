@@ -134,7 +134,7 @@ export default function BRollFinalVideoStage({ pipelineId, onComplete, stageNavi
         return;
       }
 
-      toast.success('B-Roll video generation started!');
+      toast.success('Clips video generation started!');
     } catch (error) {
       toast.error('Failed to start generation');
       await updateFinalVideo({ status: 'failed' });
@@ -257,7 +257,7 @@ export default function BRollFinalVideoStage({ pipelineId, onComplete, stageNavi
       ) : isProcessing ? (
         <div className="flex flex-col items-center justify-center text-center gap-3">
           <Loader2 className="h-12 w-12 animate-spin text-primary" strokeWidth={1.5} />
-          <p className="text-sm text-muted-foreground font-medium">Generating your B-Roll video...</p>
+          <p className="text-sm text-muted-foreground font-medium">Generating your Clips video...</p>
         </div>
       ) : pipeline?.status === 'failed' ? (
         <div className="flex flex-col items-center justify-center text-center gap-2">
@@ -267,7 +267,7 @@ export default function BRollFinalVideoStage({ pipelineId, onComplete, stageNavi
       ) : (
         <div className="flex flex-col items-center justify-center text-center gap-2">
           <Video className="h-16 w-16 text-muted-foreground/50" />
-          <p className="text-lg font-medium">Generate B-Roll Video</p>
+          <p className="text-lg font-medium">Generate Clips Video</p>
           <p className="text-sm text-muted-foreground">
             Animate your first frame with the motion settings
           </p>
@@ -304,7 +304,7 @@ export default function BRollFinalVideoStage({ pipelineId, onComplete, stageNavi
       creditsCost={`${formatCredits(estimatedCost)} Credits`}
       outputActions={outputActions}
       generateDisabled={!canGenerate}
-      generatingLabel="Generating B-Roll..."
+      generatingLabel="Generating Clips..."
     />
   );
 }
