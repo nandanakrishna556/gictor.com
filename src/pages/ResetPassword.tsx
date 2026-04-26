@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { ArrowLeft, CheckCircle2 } from 'lucide-react';
 import { z } from 'zod';
+import logoLight from '@/assets/gictor-logo-light.svg';
 
 const passwordSchema = z.object({
   password: z.string().min(8, 'Password must be at least 8 characters').max(72, 'Password must be less than 72 characters'),

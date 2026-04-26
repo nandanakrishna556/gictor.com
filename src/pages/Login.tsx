@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { ArrowLeft } from 'lucide-react';
 import { z } from 'zod';
+import logoLight from '@/assets/gictor-logo-light.svg';
 
 const loginSchema = z.object({
   email: z.string().trim().email('Please enter a valid email'),

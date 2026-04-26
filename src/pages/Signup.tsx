@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { ArrowLeft, Mail, CheckCircle2 } from 'lucide-react';
 import { z } from 'zod';
+import logoLight from '@/assets/gictor-logo-light.svg';
 
 const signupSchema = z.object({
   fullName: z.string().trim().min(1, 'Full name is required').max(100, 'Name must be less than 100 characters'),

@@ -13,6 +13,7 @@ import { useTheme } from 'next-themes';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { CARD_DRAG_MIME, cardDragState, type CardDragPayload } from '@/lib/drag-state';
+import logoDark from '@/assets/gictor-logo-dark.svg';
 import { moveItems } from '@/lib/item-move';
 import {
   DropdownMenu,
