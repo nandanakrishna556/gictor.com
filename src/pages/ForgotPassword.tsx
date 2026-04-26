@@ -102,10 +102,7 @@ export default function ForgotPassword() {
           {/* Logo */}
           <div className="mb-8 flex flex-col items-center">
             <Link to="/" className="mb-4">
-              <>
-                <img src="/gictor-logo-light.svg" alt="Gictor" className="h-10 w-auto block dark:hidden" draggable={false} />
-                <img src="/gictor-logo-dark.svg" alt="Gictor" className="h-10 w-auto hidden dark:block" draggable={false} />
-              </>
+              <img src="/logo.png" alt="Gictor" className="h-12" />
             </Link>
             <h1 className="text-2xl font-bold text-foreground">Forgot password?</h1>
             <p className="mt-2 text-base text-muted-foreground text-center">

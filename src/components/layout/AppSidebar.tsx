@@ -138,20 +138,7 @@ export default function AppSidebar() {
     <aside className="flex h-screen w-60 shrink-0 flex-col bg-sidebar gradient-sidebar border-r border-sidebar-border overflow-hidden">
       {/* Logo */}
       <div className="flex h-14 items-center border-b border-sidebar-border px-4">
-        <Link to="/dashboard" className="inline-flex items-center" aria-label="Gictor home">
-          <img
-            src="/gictor-logo-light.svg"
-            alt="Gictor"
-            className="h-7 w-auto block dark:hidden"
-            draggable={false}
-          />
-          <img
-            src="/gictor-logo-dark.svg"
-            alt="Gictor"
-            className="h-7 w-auto hidden dark:block"
-            draggable={false}
-          />
-        </Link>
+        <img src="/logo.png" alt="Gictor" className="h-7" />
       </div>
 
       {/* Navigation */}
