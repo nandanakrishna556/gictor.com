@@ -120,10 +120,10 @@ export default function LandingNav() {
                         <div className="text-[10px] font-semibold uppercase tracking-[0.16em] text-orange-300">DIY</div>
                         <h4 className="mt-1 text-[17px] font-bold leading-tight">Want to do it yourself?</h4>
                         <p className="mt-2 text-[12px] leading-relaxed text-gray-300">
-                          Spin up your own AI studio in under 60 seconds. 10 free credits.
+                          Spin up your own AI studio in under 60 seconds. Plans from $29/mo.
                         </p>
                         <ul className="mt-3 space-y-1.5">
-                          {["No card required", "Credits never expire", "Cancel anytime"].map((b) => (
+                          {["No long-term contract", "Credits never expire", "Cancel anytime"].map((b) => (
                             <li key={b} className="flex items-center gap-1.5 text-[11.5px] text-gray-300">
                               <Check className="h-3 w-3 text-orange-400" /> {b}
                             </li>
@@ -133,7 +133,7 @@ export default function LandingNav() {
                           to="/signup"
                           className="mt-4 inline-flex w-full items-center justify-center gap-1.5 rounded-full bg-white px-4 py-2 text-[12.5px] font-semibold text-gray-950 transition hover:bg-gray-100"
                         >
-                          Start Free <ArrowRight className="h-3.5 w-3.5" />
+                          Get started <ArrowRight className="h-3.5 w-3.5" />
                         </Link>
                       </div>
                     </div>
@@ -171,7 +171,7 @@ export default function LandingNav() {
             to="/signup"
             className="inline-flex items-center gap-1.5 rounded-full bg-gray-950 px-4 py-2 font-semibold text-white transition hover:bg-gray-800 text-base"
           >
-            Start Free <ArrowRight className="h-3.5 w-3.5" />
+            Get started <ArrowRight className="h-3.5 w-3.5" />
           </Link>
         </div>
 
@@ -202,7 +202,7 @@ export default function LandingNav() {
             <Link to="/#faq" onClick={(e) => handleAnchor(e, "faq")} className="rounded-xl px-3 py-3 text-sm font-medium text-gray-700 hover:bg-gray-50">FAQ</Link>
             <div className="mt-2 flex gap-2 border-t border-gray-100 pt-3">
               <Link to="/login" className="flex-1 rounded-full border border-gray-200 px-4 py-2 text-center text-sm font-medium text-gray-700">Log in</Link>
-              <Link to="/signup" className="flex-1 rounded-full bg-gray-950 px-4 py-2 text-center text-sm font-semibold text-white">Start Free</Link>
+              <Link to="/signup" className="flex-1 rounded-full bg-gray-950 px-4 py-2 text-center text-sm font-semibold text-white">Get started</Link>
             </div>
           </div>
         </div>

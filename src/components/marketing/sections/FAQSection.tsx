@@ -24,8 +24,8 @@ const FAQS = [
     a: "Not at all. Gictor handles everything from script to final video. No editing software needed.",
   },
   {
-    q: "Is there a free trial?",
-    a: "Yes. You can create a free account and explore the platform. No credit card required to get started.",
+    q: "How does pricing work?",
+    a: "Plans start at $29/month for the Starter (10 credits) and scale up to Creator and Pro for higher-volume teams. You can cancel anytime, and your credits never expire.",
   },
 ];
 

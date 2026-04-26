@@ -22,10 +22,10 @@ export interface CreditPackage {
 export const CREDIT_PACKAGES: CreditPackage[] = [
   {
     credits: 10,
-    monthlyPrice: 30,
-    yearlyPrice: 360,
-    monthlyPriceId: "price_1TLFlxJzf8eDXLMZ5L5jFgIO",
-    yearlyPriceId: "price_1TLHxbJzf8eDXLMZFO5vCR8t",
+    monthlyPrice: 29,
+    yearlyPrice: 348,
+    monthlyPriceId: "price_1TQHWZJzf8eDXLMZ5cvMNlDP",
+    yearlyPriceId: "price_1TQHWqJzf8eDXLMZvjVO3E4q",
     name: "Starter",
     description: "For creators just getting started",
     actorSlots: 3,

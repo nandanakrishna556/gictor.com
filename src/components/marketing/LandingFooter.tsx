@@ -60,7 +60,7 @@ export default function LandingFooter() {
                   type="submit"
                   className="inline-flex items-center justify-center gap-1.5 rounded-full bg-gradient-to-br from-[#ff8a4c] via-[#ff6b35] to-[#e85a1f] px-6 py-3 text-sm font-semibold text-white cta-glow"
                 >
-                  {submitted ? "Subscribed ✓" : (<>Subscribe for free <ArrowRight className="h-3.5 w-3.5" /></>)}
+                  {submitted ? "Subscribed ✓" : (<>Subscribe <ArrowRight className="h-3.5 w-3.5" /></>)}
                 </button>
               </form>
               <p className="mt-3 text-[12px] text-gray-500">2,000+ operators already reading. Unsubscribe anytime.</p>

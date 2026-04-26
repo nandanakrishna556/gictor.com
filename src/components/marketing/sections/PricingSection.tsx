@@ -34,7 +34,7 @@ export default function PricingSection() {
               className={cn("relative rounded-full px-5 py-2 text-sm font-semibold transition", yearly ? "bg-white text-gray-950 shadow-sm" : "text-gray-500")}
             >
               Yearly
-              <span className="ml-2 rounded-full bg-emerald-100 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-emerald-700">Save 25%</span>
+              <span className="ml-2 rounded-full bg-emerald-100 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-emerald-700">+ Bonus credits</span>
             </button>
           </div>
         </div>
@@ -42,7 +42,7 @@ export default function PricingSection() {
         <div className="mt-12 grid items-stretch gap-6 md:grid-cols-3 md:gap-5">
           {CREDIT_PACKAGES.map((pkg, i) => {
             const popular = pkg.popular;
-            const price = yearly ? Math.round(pkg.yearlyPrice / 12) : pkg.monthlyPrice;
+            const price = yearly ? pkg.yearlyPrice : pkg.monthlyPrice;
             return (
               <div
                 key={pkg.name}
@@ -69,21 +69,18 @@ export default function PricingSection() {
 
                   <div className="mt-6 flex items-end gap-1.5">
                     <span className={cn("text-5xl font-black tracking-[-0.03em]", popular ? "text-white" : "text-gray-950")}>${price}</span>
-                    <span className={cn("pb-2 text-sm", popular ? "text-gray-400" : "text-gray-500")}>/month</span>
+                    <span className={cn("pb-2 text-sm", popular ? "text-gray-400" : "text-gray-500")}>{yearly ? "/year" : "/month"}</span>
                   </div>
 
                   {yearly && (
                     <>
-                      <span className={cn("mt-2 inline-block rounded-full px-2 py-0.5 text-[11px] font-medium", popular ? "bg-white/10 text-gray-300" : "bg-gray-100 text-gray-600")}>
-                        Billed annually (${pkg.yearlyPrice})
-                      </span>
                       <div className={cn("mt-3 flex items-center gap-2 rounded-2xl p-3", popular ? "bg-white/10" : "bg-orange-50")}>
                         <span className={cn("grid h-8 w-8 place-items-center rounded-lg", popular ? "bg-orange-500/30 text-orange-300" : "bg-orange-100 text-orange-600")}>
                           <Gift className="h-4 w-4" />
                         </span>
                         <div className="text-[12px]">
-                          <div className={cn("font-semibold", popular ? "text-white" : "text-gray-950")}>+{pkg.yearlyFreeCredits} bonus credits</div>
-                          <div className={cn(popular ? "text-gray-400" : "text-gray-500")}>Worth {pkg.yearlyFreeCreditsValue}</div>
+                          <div className={cn("font-semibold", popular ? "text-white" : "text-gray-950")}>+{pkg.yearlyFreeCredits} bonus credits free</div>
+                          <div className={cn(popular ? "text-gray-400" : "text-gray-500")}>Worth {pkg.yearlyFreeCreditsValue} at no extra cost</div>
                         </div>
                       </div>
                     </>
@@ -105,12 +102,14 @@ export default function PricingSection() {
                     <div className={cn("text-[11px] font-semibold uppercase tracking-wide", popular ? "text-gray-400" : "text-gray-500")}>What's included</div>
                     <ul className="mt-3 space-y-2.5">
                       {[
-                        `${pkg.credits} credits / mo`,
+                        yearly
+                          ? `${pkg.yearlyBaseCredits} credits per year (+${pkg.yearlyFreeCredits} bonus) total ${pkg.yearlyTotalCredits} credits per year`
+                          : `${pkg.credits} credits per month`,
                         yearly ? pkg.yearlyVideoTime : pkg.monthlyVideoTime,
-                        `${pkg.actorSlots} custom actor slots`,
-                        "Unlimited renders & exports",
-                        "30+ languages with native lip-sync",
-                        "Commercial license included",
+                        `${pkg.actorSlots} active AI actors`,
+                        "Credits never expire",
+                        popular ? "Priority support" : "All core features",
+                        i === 0 ? "Email support" : i === 1 ? "All Starter features" : "All Creator features",
                       ].map((f) => (
                         <li key={f} className="flex items-start gap-2 text-[13.5px]">
                           <span className={cn("mt-0.5 grid h-4 w-4 shrink-0 place-items-center rounded-full", popular ? "bg-orange-500/20 text-orange-300" : "bg-orange-100 text-orange-600")}>
@@ -128,7 +127,7 @@ export default function PricingSection() {
         </div>
 
         <p className="mt-10 text-center text-[13px] text-gray-500">
-          No credit card required. Cancel anytime.
+          Cancel anytime. Credits never expire.
         </p>
       </div>
     </section>

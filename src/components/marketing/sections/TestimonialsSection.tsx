@@ -95,7 +95,7 @@ export default function TestimonialsSection() {
               to="/signup"
               className="mt-7 inline-flex items-center gap-1.5 rounded-full bg-gray-950 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-gray-800"
             >
-              Join them free <ArrowRight className="h-3.5 w-3.5" />
+              Join them <ArrowRight className="h-3.5 w-3.5" />
             </Link>
           </div>
 

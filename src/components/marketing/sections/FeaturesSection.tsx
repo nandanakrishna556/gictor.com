@@ -18,7 +18,7 @@ export default function FeaturesSection() {
             to="/signup"
             className="inline-flex items-center gap-1.5 rounded-full bg-gray-950 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-gray-800"
           >
-            Start free trial <ArrowRight className="h-3.5 w-3.5" />
+            Start creating <ArrowRight className="h-3.5 w-3.5" />
           </Link>
         </div>
 
