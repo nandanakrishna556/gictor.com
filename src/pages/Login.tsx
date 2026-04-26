@@ -109,7 +109,7 @@ export default function Login() {
           {/* Logo */}
           <div className="mb-8 flex flex-col items-center">
             <Link to="/" className="mb-4">
-              <img src="/logo.png" alt="Gictor" className="h-12" />
+              <img src={logoLight} alt="Gictor" className="h-10 w-auto" />
             </Link>
             <h1 className="text-2xl font-bold text-foreground">Welcome back</h1>
             <p className="mt-2 text-base text-muted-foreground">
