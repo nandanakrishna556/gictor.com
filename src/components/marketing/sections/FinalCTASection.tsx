@@ -23,7 +23,7 @@ export default function FinalCTASection() {
 
           <div className="relative mx-auto max-w-3xl">
             <span className="inline-flex items-center gap-1.5 rounded-full bg-white/15 px-3.5 py-1.5 text-[12px] font-semibold backdrop-blur">
-              ✨ Start free, no card required.
+              ✨ Plans from $29/mo. Cancel anytime.
             </span>
             <h2 className="mt-6 text-4xl font-black tracking-[-0.03em] md:text-6xl lg:text-7xl">
               Your first AI ad is
@@ -39,7 +39,7 @@ export default function FinalCTASection() {
                 to="/signup"
                 className="inline-flex items-center gap-1.5 rounded-full bg-white px-6 py-3 text-sm font-bold text-gray-950 shadow-xl transition hover:scale-[1.02]"
               >
-                Start Creating Free <ArrowRight className="h-4 w-4" />
+                Start creating <ArrowRight className="h-4 w-4" />
               </Link>
               <Link
                 to="/login"

@@ -54,7 +54,7 @@ export default function HeroSection() {
               to="/signup"
               className="inline-flex items-center gap-2 rounded-full bg-gradient-to-br from-[#ff8a4c] via-[#ff6b35] to-[#e85a1f] px-7 py-3.5 text-[15px] font-semibold text-white cta-glow transition hover:scale-[1.02]"
             >
-              Start Creating Free
+              Start creating
               <ArrowRight className="h-4 w-4" />
             </Link>
             <button

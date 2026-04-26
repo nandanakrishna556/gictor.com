@@ -127,7 +127,7 @@ export default function PricingSection() {
         </div>
 
         <p className="mt-10 text-center text-[13px] text-gray-500">
-          No credit card required. Cancel anytime.
+          Cancel anytime. Credits never expire.
         </p>
       </div>
     </section>

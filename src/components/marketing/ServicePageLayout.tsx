@@ -273,7 +273,7 @@ export default function ServicePageLayout(props: ServicePageProps) {
                   to="/signup"
                   className="inline-flex items-center gap-1.5 rounded-full border border-white/40 bg-white/10 px-6 py-3 text-sm font-semibold text-white backdrop-blur transition hover:bg-white/20"
                 >
-                  Try the app free
+                  Try the app
                 </Link>
               </div>
             </div>
