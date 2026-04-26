@@ -32,17 +32,65 @@ async function processUpdate(body: Record<string, any>) {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
     );
 
-    if (status === 'completed') {
-      await supabase
+    // Resolve the linked file row for this pipeline. n8n often passes the
+    // pipeline_id as file_id (legacy fallback), so the direct .eq('id', file_id)
+    // update silently no-ops and leaves the grid card stuck on "Generating...".
+    // We always look up the file via generation_params->>pipeline_id so the
+    // file row that represents this pipeline in the grid/kanban actually
+    // gets updated.
+    async function resolveLinkedFileIds(): Promise<string[]> {
+      const ids = new Set<string>();
+
+      // 1) Direct file_id match (only if it's a real file row)
+      if (file_id && file_id !== pipeline_id) {
+        const { data: directFile } = await supabase
+          .from('files')
+          .select('id')
+          .eq('id', file_id)
+          .maybeSingle();
+        if (directFile?.id) ids.add(directFile.id);
+      }
+
+      // 2) Pipeline.output_file_id
+      const { data: pipelineRow } = await supabase
+        .from('pipelines')
+        .select('output_file_id')
+        .eq('id', pipeline_id)
+        .maybeSingle();
+      const outFileId = pipelineRow?.output_file_id as string | null | undefined;
+      if (outFileId) ids.add(outFileId);
+
+      // 3) files.generation_params->>pipeline_id == pipeline_id
+      const { data: linkedFiles } = await supabase
         .from('files')
-        .update({
-          generation_status: 'completed',
-          download_url: video_url,
-          preview_url: video_url,
-          progress: 100,
-          error_message: null,
-        })
-        .eq('id', file_id);
+        .select('id')
+        .filter('generation_params->>pipeline_id', 'eq', pipeline_id);
+      for (const f of linkedFiles || []) {
+        if (f?.id) ids.add(f.id);
+      }
+
+      return Array.from(ids);
+    }
+
+    if (status === 'completed') {
+      const linkedFileIds = await resolveLinkedFileIds();
+      if (linkedFileIds.length === 0) {
+        console.warn('No linked file rows found for pipeline:', pipeline_id);
+      }
+      for (const fid of linkedFileIds) {
+        const { error: fErr } = await supabase
+          .from('files')
+          .update({
+            generation_status: 'completed',
+            download_url: video_url,
+            preview_url: video_url,
+            progress: 100,
+            error_message: null,
+          })
+          .eq('id', fid);
+        if (fErr) console.error('File completion update error:', fid, fErr);
+        else console.log('File marked completed:', fid);
+      }
 
       const { error: pipelineError } = await supabase
         .from('pipelines')
@@ -51,6 +99,8 @@ async function processUpdate(body: Record<string, any>) {
           status: 'completed',
           progress: 100,
           updated_at: new Date().toISOString(),
+          // Persist link to the canonical file row when we found one
+          ...(linkedFileIds[0] ? { output_file_id: linkedFileIds[0] } : {}),
         })
         .eq('id', pipeline_id);
 
@@ -60,14 +110,17 @@ async function processUpdate(body: Record<string, any>) {
         console.log('Pipeline updated with video:', pipeline_id);
       }
     } else if (status === 'failed') {
-      await supabase
-        .from('files')
-        .update({
-          generation_status: 'failed',
-          error_message: error_message || 'Animation failed',
-          progress: 0,
-        })
-        .eq('id', file_id);
+      const linkedFileIds = await resolveLinkedFileIds();
+      for (const fid of linkedFileIds) {
+        await supabase
+          .from('files')
+          .update({
+            generation_status: 'failed',
+            error_message: error_message || 'Animation failed',
+            progress: 0,
+          })
+          .eq('id', fid);
+      }
 
       await supabase
         .from('pipelines')
