@@ -59,7 +59,7 @@ export default function ForgotPassword() {
     return (
       <div className="flex min-h-screen items-center justify-center bg-secondary/30 p-4">
         <Link 
-          to="/home" 
+          to="/" 
           className="absolute top-6 left-6 flex items-center gap-2 text-base text-muted-foreground hover:text-foreground transition-colors"
         >
           <ArrowLeft className="h-4 w-4" />
@@ -90,7 +90,7 @@ export default function ForgotPassword() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-secondary/30 p-4">
       <Link 
-        to="/home" 
+        to="/" 
         className="absolute top-6 left-6 flex items-center gap-2 text-base text-muted-foreground hover:text-foreground transition-colors"
       >
         <ArrowLeft className="h-4 w-4" />
@@ -101,7 +101,7 @@ export default function ForgotPassword() {
         <div className="rounded-2xl bg-card p-8 shadow-elevated">
           {/* Logo */}
           <div className="mb-8 flex flex-col items-center">
-            <Link to="/home" className="mb-4">
+            <Link to="/" className="mb-4">
               <img src="/logo.png" alt="Gictor" className="h-12" />
             </Link>
             <h1 className="text-2xl font-bold text-foreground">Forgot password?</h1>
