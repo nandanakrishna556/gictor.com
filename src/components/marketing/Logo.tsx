@@ -12,6 +12,8 @@ interface LogoProps {
 }
 
 export default function Logo({ className, asStatic, variant = "dark" }: LogoProps) {
+  // variant "light" = light wordmark used on dark backgrounds (gictor-logo-dark.svg has light text)
+  // variant "dark"  = dark wordmark used on light backgrounds (gictor-logo-light.svg has dark text)
   const src = variant === "light" ? logoDark : logoLight;
   const inner = (
     <img
