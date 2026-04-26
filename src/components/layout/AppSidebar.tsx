@@ -14,6 +14,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { CARD_DRAG_MIME, cardDragState, type CardDragPayload } from '@/lib/drag-state';
 import logoDark from '@/assets/gictor-logo-dark.svg';
+import logoLight from '@/assets/gictor-logo-light.svg';
 import { moveItems } from '@/lib/item-move';
 import {
   DropdownMenu,
@@ -139,7 +140,8 @@ export default function AppSidebar() {
     <aside className="flex h-screen w-60 shrink-0 flex-col bg-sidebar gradient-sidebar border-r border-sidebar-border overflow-hidden">
       {/* Logo */}
       <div className="flex h-14 items-center border-b border-sidebar-border px-4">
-        <img src={logoDark} alt="Gictor" className="h-7 w-auto" />
+        <img src={logoLight} alt="Gictor" className="h-7 w-auto block dark:hidden" />
+        <img src={logoDark} alt="Gictor" className="h-7 w-auto hidden dark:block" />
       </div>
 
       {/* Navigation */}
