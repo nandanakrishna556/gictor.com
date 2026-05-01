@@ -86,7 +86,6 @@ export function getFilePipelineGenerationInfo(
   // Defensive: if the file already has a finished output, never show a generating overlay,
   // even if the linked pipeline row hasn't flipped to completed yet.
   if (file.download_url || file.preview_url) return null;
-  if (file.file_type === 'seedance' && getFileThumbnailUrl(file, pipelineThumbnails)) return null;
   if (file.generation_status === 'completed' || file.generation_status === 'failed') return null;
   const genParams = file.generation_params as Record<string, unknown> | null;
   const pipelineId = (genParams?.pipeline_id as string) || null;
@@ -181,8 +180,6 @@ export function getFileThumbnailUrl(
       return (
         (genParams?.last_frame_url as string) ||
         (genParams?.first_frame_url as string) ||
-        file.preview_url ||
-        file.download_url ||
         null
       );
 
