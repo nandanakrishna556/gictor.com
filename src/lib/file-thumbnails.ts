@@ -176,6 +176,13 @@ export function getFileThumbnailUrl(
         null
       );
 
+    case 'seedance':
+      return (
+        (genParams?.last_frame_url as string) ||
+        (genParams?.first_frame_url as string) ||
+        null
+      );
+
     // speech, script, and others → flat icon
     default:
       return null;

@@ -201,6 +201,41 @@ async function handlePipelineUpdate(supabase: any, body: PipelineUpdateInput, co
 // deno-lint-ignore no-explicit-any
 async function handleFileUpdate(supabase: any, body: FileUpdateInput, corsHeaders: Record<string, string>, _remaining: number) {
   const { file_id, status, progress, preview_url, download_url, script_output, audio_url, error_message, metadata } = body;
+  const pipelineIdFromMetadata = metadata?.pipeline_id as string | undefined;
+  const possiblePipelineId = pipelineIdFromMetadata || file_id;
+
+  async function resolveTargetFileIds() {
+    const ids = new Set<string>();
+
+    const { data: directFile } = await supabase
+      .from('files')
+      .select('id')
+      .eq('id', file_id)
+      .maybeSingle();
+    if (directFile?.id) ids.add(directFile.id);
+
+    if (possiblePipelineId) {
+      const { data: pipelineRow } = await supabase
+        .from('pipelines')
+        .select('output_file_id')
+        .eq('id', possiblePipelineId)
+        .maybeSingle();
+
+      const outputFileId = pipelineRow?.output_file_id as string | null | undefined;
+      if (outputFileId) ids.add(outputFileId);
+
+      const { data: linkedFiles } = await supabase
+        .from('files')
+        .select('id')
+        .filter('generation_params->>pipeline_id', 'eq', possiblePipelineId);
+
+      for (const linkedFile of linkedFiles || []) {
+        if (linkedFile?.id) ids.add(linkedFile.id);
+      }
+    }
+
+    return Array.from(ids);
+  }
 
   // deno-lint-ignore no-explicit-any
   const updateData: Record<string, any> = {
@@ -224,12 +259,19 @@ async function handleFileUpdate(supabase: any, body: FileUpdateInput, corsHeader
 
   console.log('Updating file:', file_id, updateData);
 
-  const { error } = await supabase.from('files').update(updateData).eq('id', file_id);
-  if (error) {
-    return new Response(JSON.stringify({ success: false, error: error.message }), { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+  const targetFileIds = await resolveTargetFileIds();
+  if (targetFileIds.length === 0) {
+    return new Response(JSON.stringify({ success: false, error: 'No linked file found' }), { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
   }
 
-  console.log('File updated:', file_id);
+  for (const targetFileId of targetFileIds) {
+    const { error } = await supabase.from('files').update(updateData).eq('id', targetFileId);
+    if (error) {
+      return new Response(JSON.stringify({ success: false, error: error.message }), { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    }
+  }
+
+  console.log('File updated:', targetFileIds);
 
   // ========== REFUND CREDITS ON FAILURE ==========
   // Look up user_id and credits_cost from the file's generation_params
@@ -280,13 +322,12 @@ async function handleFileUpdate(supabase: any, body: FileUpdateInput, corsHeader
   // ========== ALSO UPDATE PIPELINE ==========
   // Pipeline ID can come from metadata OR from file_id if it's actually a pipeline ID
   // (some workflows use the pipeline_id as file_id for simplicity)
-  const pipelineIdFromMetadata = metadata?.pipeline_id as string | undefined;
   const stage = metadata?.stage as string | undefined;
   // Also check common alternative field names from n8n
   const frameType = metadata?.frame_type as string | undefined;
   
   // Use pipeline_id from metadata, or fall back to file_id if it looks like a pipeline was targeted
-  const pipelineId = pipelineIdFromMetadata || file_id;
+  const pipelineId = possiblePipelineId;
   // Determine stage from metadata.stage or metadata.frame_type
   const effectiveStage = stage || (frameType === 'first' ? 'first_frame' : frameType === 'last' ? 'last_frame' : undefined);
   
@@ -356,6 +397,9 @@ async function handleFileUpdate(supabase: any, body: FileUpdateInput, corsHeader
     
     // Only update if we have meaningful changes
     if (Object.keys(pipelineUpdates).length > 1) {
+      if (targetFileIds[0]) {
+        pipelineUpdates.output_file_id = targetFileIds[0];
+      }
       const { error: pipelineError } = await supabase.from('pipelines').update(pipelineUpdates).eq('id', pipelineId);
       if (pipelineError) {
         console.error('Pipeline update error:', pipelineError);
