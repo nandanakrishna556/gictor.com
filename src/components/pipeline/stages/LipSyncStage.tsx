@@ -8,6 +8,7 @@ import { useProfile } from '@/hooks/useProfile';
 import { toast } from 'sonner';
 import StageLayout from './StageLayout';
 import { uploadToR2, validateFile } from '@/lib/cloudflare-upload';
+import { downloadFile } from '@/lib/download-file';
 import { supabase } from '@/integrations/supabase/client';
 import { SingleImageUpload } from '@/components/ui/single-image-upload';
 import { InputModeToggle, InputMode } from '@/components/ui/input-mode-toggle';
@@ -507,21 +508,7 @@ export default function LipSyncStage({ pipelineId, onComplete }: LipSyncStagePro
   const handleDownloadVideo = async () => {
     const videoUrl = outputVideo?.url;
     if (!videoUrl) return;
-    try {
-      const response = await fetch(videoUrl);
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `lip-sync-${Date.now()}.mp4`;
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
-      toast.success('Video downloaded');
-    } catch (error) {
-      toast.error('Failed to download video');
-    }
+    await downloadFile(videoUrl, `lip-sync-${Date.now()}.mp4`, { silent: true });
   };
 
   const inputContent = (
