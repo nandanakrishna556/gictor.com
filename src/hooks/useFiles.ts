@@ -62,6 +62,11 @@ export function useFiles(projectId: string, folderId?: string) {
       return data as File[];
     },
     enabled: !!projectId,
+    refetchInterval: (query) => {
+      const data = query.state.data as File[] | undefined;
+      const hasProcessingFiles = data?.some((file) => file.generation_status === 'processing');
+      return hasProcessingFiles ? 2000 : false;
+    },
   });
 
   const { data: folders, isLoading: foldersLoading } = useQuery({
@@ -99,23 +104,45 @@ export function useFiles(projectId: string, folderId?: string) {
           filter: `project_id=eq.${projectId}`,
         },
         (payload) => {
-          queryClient.invalidateQueries({ queryKey: ['files', projectId] });
-
           if (payload.eventType === 'UPDATE') {
             const file = payload.new as File;
+
+            queryClient.setQueriesData<File[]>({ queryKey: ['files', projectId] }, (currentFiles) => {
+              if (!currentFiles) return currentFiles;
+              return currentFiles.map((existingFile) =>
+                existingFile.id === file.id ? { ...existingFile, ...file } : existingFile
+              );
+            });
+
             if (file.generation_status === 'completed') {
               toast({
                 title: 'Generation complete',
                 description: `"${file.name}" is ready.`,
               });
             } else if (file.generation_status === 'failed') {
+              queryClient.invalidateQueries({ queryKey: ['profile'] });
               toast({
                 title: 'Generation failed',
                 description: `Failed to generate "${file.name}".`,
                 variant: 'destructive',
               });
             }
+          } else if (payload.eventType === 'INSERT') {
+            const file = payload.new as File;
+            queryClient.setQueriesData<File[]>({ queryKey: ['files', projectId] }, (currentFiles) => {
+              if (!currentFiles) return currentFiles;
+              if (currentFiles.some((existingFile) => existingFile.id === file.id)) return currentFiles;
+              return [file, ...currentFiles];
+            });
+          } else if (payload.eventType === 'DELETE') {
+            const file = payload.old as File;
+            queryClient.setQueriesData<File[]>({ queryKey: ['files', projectId] }, (currentFiles) => {
+              if (!currentFiles) return currentFiles;
+              return currentFiles.filter((existingFile) => existingFile.id !== file.id);
+            });
           }
+
+          queryClient.invalidateQueries({ queryKey: ['files', projectId] });
         }
       )
       .subscribe();
