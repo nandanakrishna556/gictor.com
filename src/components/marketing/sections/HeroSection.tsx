@@ -94,49 +94,17 @@ export default function HeroSection() {
         </div>
 
         {/* VSL */}
-        <div id="reel-marquee" className="relative mx-auto mt-16 max-w-5xl">
+        <div id="reel-marquee" className="relative mx-auto mt-16 max-w-3xl">
           <div className="pointer-events-none absolute inset-x-10 -top-10 h-40 rounded-[40px] bg-gradient-to-r from-orange-300/40 via-pink-300/30 to-amber-200/40 blur-3xl" />
-          <div className="relative aspect-video overflow-hidden rounded-3xl border border-gray-200 bg-gray-950 shadow-[0_40px_100px_-30px_rgba(0,0,0,0.35)]">
-            {playing ? (
-              <iframe
-                title="Gictor demo"
-                src="https://www.youtube.com/embed/dQw4w9WgXcQ?autoplay=1&rel=0&modestbranding=1"
-                allow="autoplay; encrypted-media; fullscreen"
-                allowFullScreen
-                className="h-full w-full"
-              />
-            ) : (
-              <button
-                type="button"
-                onClick={() => setPlaying(true)}
-                className="group relative block h-full w-full"
-              >
-                <img
-                  src="https://images.unsplash.com/photo-1574717024653-61fd2cf4d44d?auto=format&fit=crop&w=1600&q=80"
-                  alt="Watch the Gictor demo"
-                  className="h-full w-full object-cover opacity-90 transition group-hover:opacity-100"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent" />
-                {/* glass play */}
-                <div className="absolute inset-0 grid place-items-center">
-                  <div className="grid h-20 w-20 place-items-center rounded-full bg-white/20 backdrop-blur-md ring-1 ring-white/30 transition group-hover:scale-110">
-                    <div className="grid h-14 w-14 place-items-center rounded-full bg-white shadow-2xl">
-                      <Play className="ml-1 h-6 w-6 fill-gray-950 text-gray-950" />
-                    </div>
-                  </div>
-                </div>
-                {/* caption */}
-                <div className="absolute bottom-5 left-5 right-5 flex flex-col gap-3 text-left md:bottom-7 md:left-8 md:right-8">
-                  <span className="inline-flex w-fit items-center gap-1.5 rounded-full bg-white/15 px-3 py-1 text-[12px] font-medium text-white backdrop-blur">
-                    <span className="h-1.5 w-1.5 rounded-full bg-orange-400" />
-                    Watch demo
-                  </span>
-                  <span className="max-w-2xl text-[18px] font-bold leading-snug text-white md:text-2xl">
-                    See how brands ship 40+ winning ads a month — without a camera.
-                  </span>
-                </div>
-              </button>
-            )}
+          <div className="relative overflow-hidden rounded-3xl border border-gray-200 bg-gray-950 shadow-[0_40px_100px_-30px_rgba(0,0,0,0.35)]" style={{ padding: "75% 0 0 0" }}>
+            <iframe
+              title="VSL"
+              src="https://player.vimeo.com/video/1188441965?badge=0&autopause=0&player_id=0&app_id=58479"
+              frameBorder="0"
+              allow="autoplay; fullscreen; picture-in-picture; clipboard-write; encrypted-media; web-share"
+              referrerPolicy="strict-origin-when-cross-origin"
+              style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%" }}
+            />
           </div>
         </div>
       </div>
