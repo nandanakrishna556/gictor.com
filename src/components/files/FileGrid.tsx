@@ -134,6 +134,7 @@ const defaultStatusOptions = [
 const getEffectiveIconType = (file: File): FileType => {
   const metadata = file.metadata as { source_type?: string } | null;
   const sourceType = metadata?.source_type;
+  const generationParams = file.generation_params as { pipeline_id?: string; pipeline_type?: string } | null;
   
   // If source_type is set, use it for icon rendering
   if (sourceType === 'talking_head') {
@@ -141,6 +142,16 @@ const getEffectiveIconType = (file: File): FileType => {
   }
   if (sourceType === 'lip_sync') {
     return 'lip_sync';
+  }
+
+  // Talking Head workflow cards are stored as lip_sync files linked to a pipeline.
+  // If older callback data clobbered source_type, infer the correct display type.
+  if (
+    (file.file_type === 'lip_sync' || file.file_type === 'seedance') &&
+    generationParams?.pipeline_id &&
+    generationParams?.pipeline_type === 'lip_sync'
+  ) {
+    return 'talking_head';
   }
   
   // Fallback to file_type
