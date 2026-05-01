@@ -11,7 +11,23 @@ const AVATARS = [
 ];
 
 export default function HeroSection() {
+  const vslRef = useRef<HTMLDivElement>(null);
+  const [vslVisible, setVslVisible] = useState(false);
 
+  useEffect(() => {
+    if (!vslRef.current || vslVisible) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((e) => e.isIntersecting)) {
+          setVslVisible(true);
+          observer.disconnect();
+        }
+      },
+      { rootMargin: "300px" }
+    );
+    observer.observe(vslRef.current);
+    return () => observer.disconnect();
+  }, [vslVisible]);
 
   const scrollToReel = () => {
     document.getElementById("reel-marquee")?.scrollIntoView({ behavior: "smooth", block: "start" });
