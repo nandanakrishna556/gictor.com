@@ -10,7 +10,7 @@ const AVATARS = [
 ];
 
 export default function HeroSection() {
-  const [playing, setPlaying] = useState(false);
+
 
   const scrollToReel = () => {
     document.getElementById("reel-marquee")?.scrollIntoView({ behavior: "smooth", block: "start" });
