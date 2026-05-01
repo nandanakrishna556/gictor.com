@@ -203,6 +203,7 @@ async function handleFileUpdate(supabase: any, body: FileUpdateInput, corsHeader
   const { file_id, status, progress, preview_url, download_url, script_output, audio_url, error_message, metadata } = body;
   const pipelineIdFromMetadata = metadata?.pipeline_id as string | undefined;
   const possiblePipelineId = pipelineIdFromMetadata || file_id;
+  let preservedMetadata: Record<string, unknown> | null = null;
 
   async function resolveTargetFileIds() {
     const ids = new Set<string>();
@@ -264,8 +265,51 @@ async function handleFileUpdate(supabase: any, body: FileUpdateInput, corsHeader
     return new Response(JSON.stringify({ success: false, error: 'No linked file found' }), { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
   }
 
+  const { data: targetFiles } = await supabase
+    .from('files')
+    .select('id, metadata')
+    .in('id', targetFileIds);
+
+  const talkingHeadTarget = (targetFiles || []).find((targetFile: any) => {
+    const existingMetadata = (targetFile?.metadata || {}) as Record<string, unknown>;
+    return existingMetadata.source_type === 'talking_head';
+  });
+
+  if (talkingHeadTarget) {
+    preservedMetadata = {
+      ...((talkingHeadTarget.metadata || {}) as Record<string, unknown>),
+      ...(metadata || {}),
+      source_type: 'talking_head',
+    };
+    updateData.metadata = preservedMetadata;
+  } else {
+    const existingSourceType = (targetFiles || []).find((targetFile: any) => {
+      const existingMetadata = (targetFile?.metadata || {}) as Record<string, unknown>;
+      return typeof existingMetadata.source_type === 'string' && existingMetadata.source_type.length > 0;
+    })?.metadata?.source_type;
+
+    if (existingSourceType) {
+      preservedMetadata = {
+        ...(metadata || {}),
+        source_type: existingSourceType,
+      };
+      updateData.metadata = preservedMetadata;
+    }
+  }
+
   for (const targetFileId of targetFileIds) {
-    const { error } = await supabase.from('files').update(updateData).eq('id', targetFileId);
+      const existingMetadata = (targetFiles || []).find((targetFile: any) => targetFile.id === targetFileId)?.metadata as Record<string, unknown> | undefined;
+      const mergedUpdateData = preservedMetadata || metadata
+        ? {
+            ...updateData,
+            metadata: {
+              ...(existingMetadata || {}),
+              ...(updateData.metadata || {}),
+            },
+          }
+        : updateData;
+
+      const { error } = await supabase.from('files').update(mergedUpdateData).eq('id', targetFileId);
     if (error) {
       return new Response(JSON.stringify({ success: false, error: error.message }), { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
