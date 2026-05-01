@@ -282,6 +282,19 @@ async function handleFileUpdate(supabase: any, body: FileUpdateInput, corsHeader
       source_type: 'talking_head',
     };
     updateData.metadata = preservedMetadata;
+  } else {
+    const existingSourceType = (targetFiles || []).find((targetFile: any) => {
+      const existingMetadata = (targetFile?.metadata || {}) as Record<string, unknown>;
+      return typeof existingMetadata.source_type === 'string' && existingMetadata.source_type.length > 0;
+    })?.metadata?.source_type;
+
+    if (existingSourceType) {
+      preservedMetadata = {
+        ...(metadata || {}),
+        source_type: existingSourceType,
+      };
+      updateData.metadata = preservedMetadata;
+    }
   }
 
   for (const targetFileId of targetFileIds) {
