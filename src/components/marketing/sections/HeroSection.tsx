@@ -110,17 +110,27 @@ export default function HeroSection() {
         </div>
 
         {/* VSL */}
-        <div id="reel-marquee" className="relative mx-auto mt-16 max-w-3xl">
+        <div id="reel-marquee" ref={vslRef} className="relative mx-auto mt-16 max-w-5xl">
           <div className="pointer-events-none absolute inset-x-10 -top-10 h-40 rounded-[40px] bg-gradient-to-r from-orange-300/40 via-pink-300/30 to-amber-200/40 blur-3xl" />
-          <div className="relative overflow-hidden rounded-3xl border border-gray-200 bg-gray-950 shadow-[0_40px_100px_-30px_rgba(0,0,0,0.35)]" style={{ padding: "75% 0 0 0" }}>
-            <iframe
-              title="VSL"
-              src="https://player.vimeo.com/video/1188441965?badge=0&autopause=0&player_id=0&app_id=58479"
-              frameBorder="0"
-              allow="autoplay; fullscreen; picture-in-picture; clipboard-write; encrypted-media; web-share"
-              referrerPolicy="strict-origin-when-cross-origin"
-              style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%" }}
-            />
+          <div className="relative aspect-video overflow-hidden rounded-3xl border border-gray-200 bg-gray-950 shadow-[0_40px_100px_-30px_rgba(0,0,0,0.35)]">
+            {vslVisible ? (
+              <iframe
+                title="VSL"
+                src="https://player.vimeo.com/video/1188441965?badge=0&autopause=0&player_id=0&app_id=58479"
+                frameBorder="0"
+                allow="autoplay; fullscreen; picture-in-picture; clipboard-write; encrypted-media; web-share"
+                referrerPolicy="strict-origin-when-cross-origin"
+                className="absolute inset-0 h-full w-full"
+              />
+            ) : (
+              <div className="absolute inset-0 grid place-items-center bg-gray-950">
+                <div className="grid h-20 w-20 place-items-center rounded-full bg-white/20 backdrop-blur-md ring-1 ring-white/30">
+                  <div className="grid h-14 w-14 place-items-center rounded-full bg-white shadow-2xl">
+                    <Play className="ml-1 h-6 w-6 fill-gray-950 text-gray-950" />
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>
