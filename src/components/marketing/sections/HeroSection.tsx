@@ -116,9 +116,10 @@ export default function HeroSection() {
             {vslVisible ? (
               <iframe
                 title="VSL"
-                src="https://www.loom.com/embed/5c61f195ba0a4f4a954b4f5460cb6d31"
+                src="https://player.vimeo.com/video/1188441965?badge=0&autopause=0&player_id=0&app_id=58479"
                 frameBorder="0"
-                allowFullScreen
+                allow="autoplay; fullscreen; picture-in-picture; clipboard-write; encrypted-media; web-share"
+                referrerPolicy="strict-origin-when-cross-origin"
                 className="absolute inset-0 h-full w-full"
               />
             ) : (
