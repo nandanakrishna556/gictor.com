@@ -115,8 +115,8 @@ export default function HeroSection() {
           <div className="relative aspect-video overflow-hidden rounded-3xl border border-gray-200 bg-gray-950 shadow-[0_40px_100px_-30px_rgba(0,0,0,0.35)]">
             {vslVisible ? (
               <iframe
-                title="VSL"
-                src="https://player.vimeo.com/video/1188441965?badge=0&autopause=0&player_id=0&app_id=58479"
+                title="Demo"
+                src="https://player.vimeo.com/video/1188607283?badge=0&autopause=0&player_id=0&app_id=58479"
                 frameBorder="0"
                 allow="autoplay; fullscreen; picture-in-picture; clipboard-write; encrypted-media; web-share"
                 referrerPolicy="strict-origin-when-cross-origin"
