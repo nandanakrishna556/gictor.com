@@ -11,7 +11,7 @@ import { InputModeToggle, InputMode } from '@/components/ui/input-mode-toggle';
 import ActorSelectorPopover from '@/components/modals/ActorSelectorPopover';
 import { Loader2, Download, Image as ImageIcon, X, Plus } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { downloadFile } from '@/lib/download-file';
+import { useDownload } from '@/lib/download-file';
 import { toast } from 'sonner';
 import { useQueryClient } from '@tanstack/react-query';
 import { Actor, useActors } from '@/hooks/useActors';
@@ -29,6 +29,7 @@ type Resolution = '1K' | '2K' | '4K';
 
 export default function FirstFrameStage({ pipelineId, onContinue }: FirstFrameStageProps) {
   const queryClient = useQueryClient();
+  const { download, isDownloading } = useDownload();
   const { user } = useAuth();
   const { profile } = useProfile();
   const { actors } = useActors();
@@ -572,10 +573,15 @@ export default function FirstFrameStage({ pipelineId, onContinue }: FirstFrameSt
               <Button
                 variant="secondary"
                 className="w-full"
-                onClick={() => downloadFile(outputUrl, 'first-frame.png')}
+                disabled={isDownloading}
+                onClick={() => void download(outputUrl, 'first-frame.png')}
               >
-                <Download className="h-4 w-4 mr-2" strokeWidth={1.5} />
-                Download Image
+                {isDownloading ? (
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" strokeWidth={1.5} />
+                ) : (
+                  <Download className="h-4 w-4 mr-2" strokeWidth={1.5} />
+                )}
+                {isDownloading ? 'Downloading...' : 'Download Image'}
               </Button>
             </div>
           ) : (

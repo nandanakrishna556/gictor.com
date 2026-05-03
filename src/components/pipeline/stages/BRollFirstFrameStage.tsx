@@ -17,6 +17,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/contexts/AuthContext';
 import { Actor, useActors } from '@/hooks/useActors';
 import { uploadToR2 } from '@/lib/cloudflare-upload';
+import { useDownload } from '@/lib/download-file';
 
 interface BRollFirstFrameStageProps {
   pipelineId: string;
@@ -48,6 +49,7 @@ export default function BRollFirstFrameStage({ pipelineId, onComplete }: BRollFi
   const { user } = useAuth();
   const { actors } = useActors();
   const queryClient = useQueryClient();
+  const { download, isDownloading } = useDownload();
   
   // Input state - matching FrameModal structure with B-Roll defaults
   const [inputMode, setInputMode] = useState<InputMode>('generate');
@@ -574,11 +576,18 @@ export default function BRollFirstFrameStage({ pipelineId, onComplete }: BRollFi
   ) : null;
 
   const outputActions = hasOutput && outputUrl ? (
-    <Button variant="secondary" className="w-full" asChild>
-      <a href={outputUrl} download={`first-frame-${Date.now()}.png`}>
+    <Button
+      variant="secondary"
+      className="w-full"
+      disabled={isDownloading}
+      onClick={() => void download(outputUrl, 'first-frame.png')}
+    >
+      {isDownloading ? (
+        <Loader2 className="h-4 w-4 mr-2 animate-spin" strokeWidth={1.5} />
+      ) : (
         <Download className="h-4 w-4 mr-2" strokeWidth={1.5} />
-        Download Image
-      </a>
+      )}
+      {isDownloading ? 'Downloading...' : 'Download Image'}
     </Button>
   ) : undefined;
 

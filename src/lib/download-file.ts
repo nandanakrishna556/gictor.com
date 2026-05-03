@@ -31,7 +31,17 @@ function triggerBrowserDownload(blob: Blob, filename: string) {
 
 async function getAccessToken() {
   const { data: sessionData } = await supabase.auth.getSession();
-  return sessionData.session?.access_token ?? null;
+  const existingToken = sessionData.session?.access_token ?? null;
+
+  if (!sessionData.session) return null;
+
+  try {
+    const { data: refreshedData, error } = await supabase.auth.refreshSession();
+    if (error) throw error;
+    return refreshedData.session?.access_token ?? existingToken;
+  } catch {
+    return existingToken;
+  }
 }
 
 async function fetchViaProxy(url: string, filename: string) {
