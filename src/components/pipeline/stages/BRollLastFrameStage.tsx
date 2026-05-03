@@ -8,7 +8,7 @@ import { InputModeToggle, InputMode } from '@/components/ui/input-mode-toggle';
 import ActorSelectorPopover from '@/components/modals/ActorSelectorPopover';
 import { Upload, Sparkles, Download, Image as ImageIcon, Loader2, Plus, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { downloadFile } from '@/lib/download-file';
+import { useDownload } from '@/lib/download-file';
 import { usePipeline } from '@/hooks/usePipeline';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -50,6 +50,7 @@ export default function BRollLastFrameStage({ pipelineId, onComplete }: BRollLas
   const { user } = useAuth();
   const { actors } = useActors();
   const queryClient = useQueryClient();
+  const { download, isDownloading } = useDownload();
   
   // Input state - matching FrameModal structure with B-Roll defaults
   const [inputMode, setInputMode] = useState<InputMode>('generate');
@@ -645,10 +646,15 @@ export default function BRollLastFrameStage({ pipelineId, onComplete }: BRollLas
     <Button
       variant="secondary"
       className="w-full"
-      onClick={() => downloadFile(outputUrl, `last-frame-${Date.now()}.png`)}
+      disabled={isDownloading}
+      onClick={() => void download(outputUrl, 'last-frame.png')}
     >
-      <Download className="h-4 w-4 mr-2" strokeWidth={1.5} />
-      Download Image
+      {isDownloading ? (
+        <Loader2 className="h-4 w-4 mr-2 animate-spin" strokeWidth={1.5} />
+      ) : (
+        <Download className="h-4 w-4 mr-2" strokeWidth={1.5} />
+      )}
+      {isDownloading ? 'Downloading...' : 'Download Image'}
     </Button>
   ) : undefined;
 
