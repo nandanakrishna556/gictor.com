@@ -1,7 +1,8 @@
 import React, { useState, useCallback, useId } from 'react';
 import { uploadToR2, validateFile, UploadOptions } from '@/lib/cloudflare-upload';
-import { X, Loader2, Image as ImageIcon, RefreshCw } from 'lucide-react';
+import { X, Loader2, Image as ImageIcon, RefreshCw, Download } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useDownload } from '@/lib/download-file';
 
 interface SingleImageUploadProps {
   /** Current image URL value */
@@ -45,6 +46,7 @@ export const SingleImageUpload: React.FC<SingleImageUploadProps> = ({
   const [preview, setPreview] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
+  const { download, isDownloading } = useDownload();
   const inputId = useId();
 
   const uploadOptions: UploadOptions = { folder, maxSize, allowedTypes };
@@ -100,6 +102,12 @@ export const SingleImageUpload: React.FC<SingleImageUploadProps> = ({
 
   const displayImage = value || preview;
 
+  const handleDownload = useCallback((e: React.MouseEvent<HTMLButtonElement>) => {
+    e.stopPropagation();
+    if (!displayImage) return;
+    void download(displayImage, 'image');
+  }, [displayImage, download]);
+
   return (
     <div className={cn('space-y-2', className)}>
       {displayImage ? (
@@ -119,13 +127,28 @@ export const SingleImageUpload: React.FC<SingleImageUploadProps> = ({
           </div>
           
           {!isUploading && !disabled && (
-            <button
-              type="button"
-              onClick={handleRemove}
-              className="absolute -left-2 -top-2 z-10 rounded-full bg-foreground/80 p-1.5 text-background backdrop-blur transition-all duration-200 hover:bg-foreground opacity-0 group-hover:opacity-100"
-            >
-              <X className="h-4 w-4" />
-            </button>
+            <>
+              <button
+                type="button"
+                onClick={handleRemove}
+                className="absolute -left-2 -top-2 z-10 rounded-full bg-foreground/80 p-1.5 text-background backdrop-blur transition-all duration-200 hover:bg-foreground opacity-0 group-hover:opacity-100"
+              >
+                <X className="h-4 w-4" />
+              </button>
+
+              <button
+                type="button"
+                onClick={handleDownload}
+                disabled={isDownloading}
+                className="absolute -right-2 -top-2 z-10 rounded-full bg-foreground/80 p-1.5 text-background backdrop-blur transition-all duration-200 hover:bg-foreground disabled:cursor-not-allowed disabled:opacity-100 opacity-0 group-hover:opacity-100"
+              >
+                {isDownloading ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Download className="h-4 w-4" />
+                )}
+              </button>
+            </>
           )}
         </div>
       ) : (
