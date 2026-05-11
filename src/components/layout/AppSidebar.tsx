@@ -358,20 +358,6 @@ export default function AppSidebar() {
 
       {/* Bottom Section */}
       <div className="shrink-0 border-t border-sidebar-border px-3 py-3 space-y-0.5">
-        {/* Settings */}
-        <Link
-          to="/settings"
-          className={cn(
-            'flex w-full items-center gap-2 rounded-sm px-3 py-2.5 text-sm font-medium transition-fast',
-            isActive('/settings')
-              ? 'bg-primary/15 text-primary'
-              : 'text-sidebar-muted hover:bg-sidebar-border/50 hover:text-sidebar-foreground'
-          )}
-        >
-          <Settings className="h-[18px] w-[18px]" strokeWidth={1.5} />
-          <span>Settings</span>
-        </Link>
-
         {/* Dark Mode Toggle */}
         <div className="flex items-center justify-between rounded-sm px-3 py-2.5">
           <div className="flex items-center gap-2.5">
@@ -388,6 +374,20 @@ export default function AppSidebar() {
           />
         </div>
 
+        {/* Settings */}
+        <Link
+          to="/settings"
+          className={cn(
+            'flex w-full items-center gap-2 rounded-sm px-3 py-2.5 text-sm font-medium transition-fast',
+            isActive('/settings')
+              ? 'bg-primary/15 text-primary'
+              : 'text-sidebar-muted hover:bg-sidebar-border/50 hover:text-sidebar-foreground'
+          )}
+        >
+          <Settings className="h-[18px] w-[18px]" strokeWidth={1.5} />
+          <span>Settings</span>
+        </Link>
+
         {/* Buy Credits */}
         <Link
           to="/billing"
@@ -403,9 +403,11 @@ export default function AppSidebar() {
         </Link>
 
         {/* Credits Counter (non-interactive) */}
-        <div className="flex items-center gap-2.5 rounded-sm px-3 py-2.5 text-sm text-sidebar-muted">
-          <Coins className="h-[18px] w-[18px] text-primary" strokeWidth={1.5} />
-          <span className="flex-1">{(profile?.credits ?? 0).toFixed(2)} Credits</span>
+        <div className="mt-2 flex items-center justify-between rounded-md border border-sidebar-border px-3 py-2.5 text-sm text-sidebar-muted">
+          <span>Credits</span>
+          <span className="rounded-full bg-primary/15 px-2 py-0.5 text-xs font-medium text-primary tabular-nums">
+            {(profile?.credits ?? 0).toFixed(2)}
+          </span>
         </div>
       </div>
 
