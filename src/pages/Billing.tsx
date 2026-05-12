@@ -68,7 +68,20 @@ export default function Billing() {
 
     if (success === 'true') {
       setShowSuccess(true);
-      refetchProfile();
+      toast.success('Purchase successful! Your credits have been added.');
+      // Sync subscription + refetch credits (webhook may take a moment)
+      (async () => {
+        try {
+          const { data: sessionData } = await supabase.auth.getSession();
+          const accessToken = sessionData?.session?.access_token;
+          if (accessToken) await syncSubscription(accessToken);
+        } catch (e) {
+          console.error('Subscription sync failed:', e);
+        }
+        refetchProfile();
+        setTimeout(() => refetchProfile(), 2000);
+        setTimeout(() => refetchProfile(), 5000);
+      })();
       setSearchParams({});
       setTimeout(() => setShowSuccess(false), 4000);
     } else if (canceled === 'true') {
