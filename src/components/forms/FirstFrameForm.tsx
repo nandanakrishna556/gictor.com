@@ -350,7 +350,7 @@ export default function FirstFrameForm({
             id="prompt"
             value={prompt}
             onChange={(e) => setPrompt(e.target.value)}
-            placeholder="Describe the image you want to generate..."
+            placeholder="Describe the setting of this scene + actor's expression + clothing + the action they are performing"
             className="min-h-24 rounded-xl resize-none"
           />
         </div>
