@@ -1081,7 +1081,7 @@ export default function FrameModal({
                 <Textarea
                   value={prompt}
                   onChange={(e) => handlePromptChange(e.target.value)}
-                  placeholder="Describe the setting of this scene, actor's expression, clothing and the action they are performing"
+                  placeholder="Describe the setting of this scene + actor's expression + clothing + the action they are performing"
                   rows={3}
                   className="resize-none"
                 />
