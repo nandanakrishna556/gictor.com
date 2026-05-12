@@ -511,13 +511,7 @@ export default function FirstFrameStage({ pipelineId, onContinue }: FirstFrameSt
                 <Textarea
                   value={prompt}
                   onChange={(e) => setPrompt(e.target.value)}
-                  placeholder={
-                    frameStyle === 'talking_head' 
-                      ? "Describe the person, their expression, clothing, and setting (looking at camera)..."
-                      : frameStyle === 'broll'
-                        ? "Describe the scene, environment, and visual elements..."
-                        : "Describe the background: colors, gradients, patterns, abstract shapes..."
-                  }
+                  placeholder="Describe the setting of this scene, actor's expression, clothing and the action they are performing"
                   rows={3}
                   className="resize-none"
                 />

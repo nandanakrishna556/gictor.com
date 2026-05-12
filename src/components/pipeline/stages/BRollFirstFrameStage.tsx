@@ -558,11 +558,7 @@ export default function BRollFirstFrameStage({ pipelineId, onComplete }: BRollFi
             <Textarea
               value={prompt}
               onChange={(e) => setPrompt(e.target.value)}
-              placeholder={
-                style === 'broll'
-                  ? "Describe the action, scene, and environment (person will be captured mid-action)..."
-                  : "Describe the person, their expression, clothing, and setting (looking at camera)..."
-              }
+              placeholder="Describe the setting of this scene, actor's expression, clothing and the action they are performing"
               className="min-h-24 rounded-xl resize-none"
             />
           </div>
