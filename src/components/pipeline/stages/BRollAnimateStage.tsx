@@ -873,7 +873,7 @@ export default function BRollAnimateStage({ pipelineId, onComplete }: BRollAnima
                     markUserInteracted();
                     setPrompt(e.target.value);
                   }}
-                  placeholder="Describe the video"
+                  placeholder="Describe the scene and any actions or camera movement (e.g., 'a man walks through a forest at sunset, slow dolly in')"
                   rows={3}
                 />
               </div>

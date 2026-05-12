@@ -811,7 +811,7 @@ export default function AnimateModal({
                     setPrompt(e.target.value);
                     setHasUnsavedChanges(true);
                   }}
-                  placeholder="Describe the video"
+                  placeholder="Describe the motion you want (e.g., 'gentle camera pan across the scene')"
                   rows={3}
                 />
                 <p className="text-xs text-muted-foreground">

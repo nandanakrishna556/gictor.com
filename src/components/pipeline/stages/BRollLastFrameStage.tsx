@@ -18,7 +18,6 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/contexts/AuthContext';
 import { Actor, useActors } from '@/hooks/useActors';
 import { uploadToR2 } from '@/lib/cloudflare-upload';
-import { PromptTemplateChips } from '@/components/ui/prompt-template-chips';
 
 interface BRollLastFrameStageProps {
   pipelineId: string;
@@ -628,12 +627,6 @@ export default function BRollLastFrameStage({ pipelineId, onComplete }: BRollLas
               }}
               placeholder="Describe the setting of this scene, actor's expression, clothing and the action they are performing"
               className="min-h-24 rounded-xl resize-none"
-            />
-            <PromptTemplateChips
-              onSelect={(p) => {
-                markUserInteracted();
-                setPrompt(p);
-              }}
             />
           </div>
     </div>

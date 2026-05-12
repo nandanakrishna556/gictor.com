@@ -15,7 +15,6 @@ import { useDownload } from '@/lib/download-file';
 import { toast } from 'sonner';
 import { useQueryClient } from '@tanstack/react-query';
 import { Actor, useActors } from '@/hooks/useActors';
-import { PromptTemplateChips } from '@/components/ui/prompt-template-chips';
 
 interface FirstFrameStageProps {
   pipelineId: string;
@@ -516,7 +515,6 @@ export default function FirstFrameStage({ pipelineId, onContinue }: FirstFrameSt
                   rows={3}
                   className="resize-none"
                 />
-                <PromptTemplateChips onSelect={(p) => setPrompt(p)} />
                 {hasOutput && !isGenerating && (
                   <p className="text-xs text-muted-foreground">Describe what you'd like to change</p>
                 )}
