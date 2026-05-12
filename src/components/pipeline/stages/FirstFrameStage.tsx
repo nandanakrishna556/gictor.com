@@ -511,11 +511,7 @@ export default function FirstFrameStage({ pipelineId, onContinue }: FirstFrameSt
                 <Textarea
                   value={prompt}
                   onChange={(e) => setPrompt(e.target.value)}
-                  placeholder={
-                    frameStyle === 'background'
-                      ? "Describe the background: colors, gradients, patterns, abstract shapes..."
-                      : "Describe the setting of this scene, actor's expression, clothing and the action they are performing"
-                  }
+                  placeholder="Describe the setting of this scene, actor's expression, clothing and the action they are performing"
                   rows={3}
                   className="resize-none"
                 />
