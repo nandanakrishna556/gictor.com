@@ -628,6 +628,12 @@ export default function BRollLastFrameStage({ pipelineId, onComplete }: BRollLas
               placeholder="Describe the setting of this scene, actor's expression, clothing and the action they are performing"
               className="min-h-24 rounded-xl resize-none"
             />
+            <PromptTemplateChips
+              onSelect={(p) => {
+                markUserInteracted();
+                setPrompt(p);
+              }}
+            />
           </div>
     </div>
   );

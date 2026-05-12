@@ -1085,6 +1085,7 @@ export default function FrameModal({
                   rows={3}
                   className="resize-none"
                 />
+                <PromptTemplateChips onSelect={(p) => handlePromptChange(p)} />
                 {hasOutput && !isGenerating && (
                   <p className="text-xs text-muted-foreground">Describe what you'd like to change</p>
                 )}
