@@ -18,6 +18,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/contexts/AuthContext';
 import { Actor, useActors } from '@/hooks/useActors';
 import { uploadToR2 } from '@/lib/cloudflare-upload';
+import { PromptTemplateChips } from '@/components/ui/prompt-template-chips';
 
 interface BRollLastFrameStageProps {
   pipelineId: string;

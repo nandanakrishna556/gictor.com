@@ -27,6 +27,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { TagList, TagSelector, TagData } from "@/components/ui/tag-badge";
 import { SingleImageUpload } from "@/components/ui/single-image-upload";
 import { InputModeToggle, InputMode } from "@/components/ui/input-mode-toggle";
+import { PromptTemplateChips } from "@/components/ui/prompt-template-chips";
 import LocationSelector from "@/components/forms/LocationSelector";
 import ActorSelectorPopover from "./ActorSelectorPopover";
 import { ArrowLeft, X, Loader2, Download, Upload, Image as ImageIcon, Check, Plus } from "lucide-react";

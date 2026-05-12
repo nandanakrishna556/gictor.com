@@ -18,6 +18,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Actor, useActors } from '@/hooks/useActors';
 import { uploadToR2 } from '@/lib/cloudflare-upload';
 import { useDownload } from '@/lib/download-file';
+import { PromptTemplateChips } from '@/components/ui/prompt-template-chips';
 
 interface BRollFirstFrameStageProps {
   pipelineId: string;
