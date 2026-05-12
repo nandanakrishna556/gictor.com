@@ -18,6 +18,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Actor, useActors } from '@/hooks/useActors';
 import { uploadToR2 } from '@/lib/cloudflare-upload';
 import { useDownload } from '@/lib/download-file';
+import { PromptTemplateChips } from '@/components/ui/prompt-template-chips';
 
 interface BRollFirstFrameStageProps {
   pipelineId: string;
@@ -561,6 +562,7 @@ export default function BRollFirstFrameStage({ pipelineId, onComplete }: BRollFi
               placeholder="Describe the setting of this scene, actor's expression, clothing and the action they are performing"
               className="min-h-24 rounded-xl resize-none"
             />
+            <PromptTemplateChips onSelect={(p) => setPrompt(p)} />
           </div>
     </div>
   );
