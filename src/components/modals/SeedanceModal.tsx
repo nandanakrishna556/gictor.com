@@ -1100,16 +1100,23 @@ export default function SeedanceModal({
                     <Label className="text-sm font-medium">Duration</Label>
                     <span className="text-sm font-medium tabular-nums">{duration}s</span>
                   </div>
-                  <Slider
-                    min={4}
-                    max={15}
-                    step={1}
-                    value={[duration]}
-                    onValueChange={(v) => {
-                      setDuration(v[0] ?? 8);
-                      markDirty();
-                    }}
-                  />
+                  <div className="relative">
+                    <Slider
+                      min={4}
+                      max={15}
+                      step={1}
+                      value={[duration]}
+                      onValueChange={(v) => {
+                        setDuration(v[0] ?? 8);
+                        markDirty();
+                      }}
+                      className="[&_[data-orientation=horizontal]>span:first-child>span]:!bg-transparent"
+                    />
+                    <div
+                      className="pointer-events-none absolute left-0 top-1/2 h-2 -translate-y-1/2 rounded-full bg-primary"
+                      style={{ width: `${(duration / 15) * 100}%` }}
+                    />
+                  </div>
                   <div className="flex justify-between text-xs text-muted-foreground">
                     <span>4s</span>
                     <span>15s</span>
