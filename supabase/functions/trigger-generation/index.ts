@@ -291,7 +291,7 @@ serve(async (req) => {
     if (authError || !userData?.user) {
       console.error('Auth error:', authError);
       return new Response(
-        JSON.stringify({ success: false, error: 'Unauthorized', details: authError?.message }),
+        JSON.stringify({ success: false, error: 'Unauthorized' }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
