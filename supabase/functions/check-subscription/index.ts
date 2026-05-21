@@ -76,7 +76,7 @@ serve(async (req) => {
         status: 401,
       });
     }
-    logStep("User authenticated", { userId, email });
+    logStep("User authenticated", { userId });
 
     const { data: profileData, error: profileError } = await supabaseAdmin
       .from("profiles")
