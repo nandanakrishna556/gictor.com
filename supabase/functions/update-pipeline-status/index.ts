@@ -134,7 +134,7 @@ serve(async (req) => {
     if (updateError) {
       console.error('Update error:', updateError)
       return new Response(
-        JSON.stringify({ success: false, error: updateError.message }),
+        JSON.stringify({ success: false, error: 'Database update failed' }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }

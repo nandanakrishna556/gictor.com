@@ -76,7 +76,7 @@ serve(async (req) => {
         status: 401,
       });
     }
-    logStep("User authenticated", { userId, email });
+    logStep("User authenticated", { userId });
 
     const { data: profileData, error: profileError } = await supabaseAdmin
       .from("profiles")
@@ -147,7 +147,7 @@ serve(async (req) => {
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
     logStep("ERROR", { message: errorMessage });
-    return new Response(JSON.stringify({ error: errorMessage }), {
+    return new Response(JSON.stringify({ error: "Subscription check failed" }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 500,
     });

@@ -605,6 +605,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      deduct_credits: {
+        Args: { p_amount: number; p_description?: string; p_user_id: string }
+        Returns: number
+      }
       is_admin: { Args: { _user_id: string }; Returns: boolean }
       refund_credits: {
         Args: { p_amount: number; p_description?: string; p_user_id: string }

@@ -76,9 +76,8 @@ serve(async (req) => {
       status: 200,
     });
   } catch (error) {
-    console.error("Checkout error:", error);
-    const errorMessage = error instanceof Error ? error.message : "Unknown error";
-    return new Response(JSON.stringify({ error: errorMessage }), {
+    console.error("Checkout error:", error instanceof Error ? error.message : String(error));
+    return new Response(JSON.stringify({ error: "Unable to start checkout" }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 500,
     });
