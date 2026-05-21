@@ -82,10 +82,9 @@ serve(async (req) => {
     });
 
   } catch (error: unknown) {
-    console.error("Error fetching voices:", error);
-    const errorMessage = error instanceof Error ? error.message : "Failed to fetch voices";
+    console.error("Error fetching voices:", error instanceof Error ? error.message : String(error));
     return new Response(
-      JSON.stringify({ error: errorMessage }),
+      JSON.stringify({ error: "Failed to fetch voices" }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
