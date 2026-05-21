@@ -32,10 +32,10 @@ export type ServicePageProps = {
   deliverables: Deliverable[];
   processHeader: string;
   process: ProcessStep[];
-  pricingHeadline: string;
-  pricingPrice: string;
-  pricingCadence: string;
-  pricingIncluded: string[];
+  pricingHeadline?: string;
+  pricingPrice?: string;
+  pricingCadence?: string;
+  pricingIncluded?: string[];
   whoItsFor: string[];
   finalCtaTitle: { plain: string; italic: string };
   finalCtaSub: string;
