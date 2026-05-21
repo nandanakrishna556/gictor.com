@@ -370,48 +370,6 @@ serve(async (req) => {
     const actualCost = calculateServerSideCost(validatedBody.type, validatedBody.payload);
     console.log('Server-calculated cost:', { type: validatedBody.type, cost: actualCost });
 
-    // Check user has enough credits
-    const { data: profile, error: profileError } = await supabase
-      .from('profiles')
-      .select('credits')
-      .eq('id', user.id)
-      .single();
-
-    if (profileError || !profile) {
-      console.error('Profile fetch error:', profileError);
-      return new Response(
-        JSON.stringify({ success: false, error: 'Unable to verify credits' }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
-    if ((profile.credits || 0) < actualCost) {
-      console.warn('Insufficient credits:', { available: profile.credits, required: actualCost });
-      return new Response(
-        JSON.stringify({ 
-          success: false, 
-          error: 'Insufficient credits',
-          required: actualCost,
-          available: profile.credits || 0
-        }),
-        { status: 402, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
-    // Deduct credits server-side (service_role bypasses the trigger)
-    const { error: deductError } = await supabase
-      .from('profiles')
-      .update({ credits: (profile.credits || 0) - actualCost })
-      .eq('id', user.id);
-
-    if (deductError) {
-      console.error('Credit deduction error:', deductError);
-      return new Response(
-        JSON.stringify({ success: false, error: 'Failed to process credits' }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
     // Human-readable label for the generation type (sentence case, no snake_case)
     const formatGenerationLabel = (rawType: string): string => {
       const t = (rawType || '').replace(/^pipeline_/, '').toLowerCase();
@@ -430,21 +388,41 @@ serve(async (req) => {
         final_video: 'Final video generation',
       };
       if (map[t]) return map[t];
-      // Fallback: capitalize first letter, replace underscores with spaces
       const pretty = t.replace(/_/g, ' ').trim();
       return pretty ? pretty.charAt(0).toUpperCase() + pretty.slice(1) : 'Generation';
     };
     const generationLabel = formatGenerationLabel(validatedBody.type);
 
-    // Log transaction
-    await supabase.from('credit_transactions').insert({
-      user_id: user.id,
-      amount: -actualCost,
-      transaction_type: 'usage',
-      description: generationLabel,
+    // Atomic balance check + deduction + transaction insert in a single RPC.
+    // Eliminates the TOCTOU race that allowed concurrent requests to double-spend.
+    const { data: newBalance, error: deductError } = await supabase.rpc('deduct_credits', {
+      p_user_id: user.id,
+      p_amount: actualCost,
+      p_description: generationLabel,
     });
 
-    console.log('Credits deducted server-side:', { userId: user.id, amount: actualCost });
+    if (deductError) {
+      console.error('Credit deduction error:', deductError);
+      return new Response(
+        JSON.stringify({ success: false, error: 'Failed to process credits' }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    if (newBalance === null) {
+      console.warn('Insufficient credits for user:', user.id, 'required:', actualCost);
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: 'Insufficient credits',
+          required: actualCost,
+        }),
+        { status: 402, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    console.log('Credits deducted server-side:', { userId: user.id, amount: actualCost, newBalance });
+
 
     // Get n8n configuration (server-side secrets)
     const n8nWebhookUrl = Deno.env.get('N8N_WEBHOOK_URL');
