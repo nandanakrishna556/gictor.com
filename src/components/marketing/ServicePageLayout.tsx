@@ -183,71 +183,28 @@ export default function ServicePageLayout(props: ServicePageProps) {
         </div>
       </section>
 
-      {/* Pricing + Who */}
+      {/* Who it's for */}
       <section className="bg-white section-pad">
         <div className="container-page">
-          <div className="grid gap-6 md:grid-cols-[1.1fr_1fr] md:gap-8">
-            <div className="reveal rounded-3xl border border-gray-100 bg-white p-8 md:p-10 shadow-[0_10px_40px_-20px_rgba(0,0,0,0.08)]">
-              <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-orange-600">Who this is for</div>
-              <h3 className="mt-3 text-2xl font-black tracking-[-0.02em] text-gray-950 md:text-3xl">
-                Built for teams that ship, not plan.
-              </h3>
-              <ul className="mt-6 space-y-3">
-                {props.whoItsFor.map((w) => (
-                  <li key={w} className="flex items-start gap-2.5 text-[14.5px] text-gray-700">
-                    <span className="mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded-full bg-orange-100 text-orange-600">
-                      <Check className="h-3 w-3" />
-                    </span>
-                    {w}
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            <div className="reveal relative overflow-hidden rounded-3xl bg-gradient-to-br from-gray-900 via-gray-900 to-gray-950 p-8 text-white md:p-10">
-              <div className="pointer-events-none absolute -right-20 -top-20 h-60 w-60 rounded-full bg-orange-500/30 blur-3xl" />
-              <div className="pointer-events-none absolute -bottom-20 -left-10 h-60 w-60 rounded-full bg-pink-500/20 blur-3xl" />
-              <div className="relative">
-                <span className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1 text-[11px] font-semibold backdrop-blur">
-                  ✨ Flat monthly
-                </span>
-                <h3 className="mt-4 text-xl font-bold">{props.pricingHeadline}</h3>
-                <div className="mt-5 flex items-end gap-1.5">
-                  <span className="text-5xl font-black tracking-[-0.03em] md:text-6xl">{props.pricingPrice}</span>
-                  <span className="pb-2 text-sm text-gray-400">{props.pricingCadence}</span>
-                </div>
-                <ul className="mt-6 space-y-2.5">
-                  {props.pricingIncluded.map((f) => (
-                    <li key={f} className="flex items-start gap-2 text-[14px] text-gray-200">
-                      <span className="mt-0.5 grid h-4 w-4 shrink-0 place-items-center rounded-full bg-orange-500/20 text-orange-300">
-                        <Check className="h-2.5 w-2.5" strokeWidth={3} />
-                      </span>
-                      {f}
-                    </li>
-                  ))}
-                </ul>
-                <div className="mt-7 flex flex-col gap-2 sm:flex-row">
-                  <a
-                    href="mailto:support@gictor.com"
-                    className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-full bg-white px-5 py-3 text-sm font-semibold text-gray-950 transition hover:bg-gray-100"
-                  >
-                    Book a call <ArrowRight className="h-3.5 w-3.5" />
-                  </a>
-                  <Link
-                    to="/signup"
-                    className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-full border border-white/20 bg-white/5 px-5 py-3 text-sm font-semibold text-white backdrop-blur transition hover:bg-white/10"
-                  >
-                    Or DIY
-                  </Link>
-                </div>
-                <p className="mt-5 text-[12px] text-gray-400">
-                  Final price depends on volume and platform. Typical engagement covers 4 to 12 weeks.
-                </p>
-              </div>
-            </div>
+          <div className="reveal mx-auto max-w-3xl rounded-3xl border border-gray-100 bg-white p-8 md:p-10 shadow-[0_10px_40px_-20px_rgba(0,0,0,0.08)]">
+            <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-orange-600">Who this is for</div>
+            <h3 className="mt-3 text-2xl font-black tracking-[-0.02em] text-gray-950 md:text-3xl">
+              Built for teams that ship, not plan.
+            </h3>
+            <ul className="mt-6 grid gap-3 sm:grid-cols-2">
+              {props.whoItsFor.map((w) => (
+                <li key={w} className="flex items-start gap-2.5 text-[14.5px] text-gray-700">
+                  <span className="mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded-full bg-orange-100 text-orange-600">
+                    <Check className="h-3 w-3" />
+                  </span>
+                  {w}
+                </li>
+              ))}
+            </ul>
           </div>
         </div>
       </section>
+
 
       {/* Final CTA */}
       <section className="bg-white pb-20 md:pb-28">
