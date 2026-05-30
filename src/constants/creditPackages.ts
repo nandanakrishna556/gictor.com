@@ -7,7 +7,6 @@ export interface CreditPackage {
   popular?: boolean;
   name: string;
   description: string;
-  actorSlots: number;
   features: string[];
   // Yearly bonus info
   yearlyTotalCredits: number;
@@ -28,7 +27,7 @@ export const CREDIT_PACKAGES: CreditPackage[] = [
     yearlyPriceId: "price_1TQHWqJzf8eDXLMZvjVO3E4q",
     name: "Starter",
     description: "For creators just getting started",
-    actorSlots: 3,
+    
     yearlyTotalCredits: 151,
     yearlyBaseCredits: 120,
     yearlyFreeCredits: 31,
@@ -36,7 +35,7 @@ export const CREDIT_PACKAGES: CreditPackage[] = [
     monthlyVideoTime: "~1 min 6 sec of video",
     yearlyVideoTime: "~16 min 46 sec of video",
     features: [
-      "3 active actors",
+      "Unlimited actors",
       "Credits never expire",
     ],
   },
@@ -49,7 +48,7 @@ export const CREDIT_PACKAGES: CreditPackage[] = [
     popular: true,
     name: "Creator",
     description: "For growing brands ready to scale",
-    actorSlots: 10,
+    
     yearlyTotalCredits: 444,
     yearlyBaseCredits: 360,
     yearlyFreeCredits: 84,
@@ -57,7 +56,7 @@ export const CREDIT_PACKAGES: CreditPackage[] = [
     monthlyVideoTime: "~3 min 20 sec of video",
     yearlyVideoTime: "~49 min 20 sec of video",
     features: [
-      "10 active actors",
+      "Unlimited actors",
       "Credits never expire",
       "Priority support",
     ],
@@ -70,7 +69,7 @@ export const CREDIT_PACKAGES: CreditPackage[] = [
     yearlyPriceId: "price_1TLI3CJzf8eDXLMZuXujtzyx",
     name: "Pro",
     description: "For teams and agencies at scale",
-    actorSlots: 30,
+    
     yearlyTotalCredits: 1008,
     yearlyBaseCredits: 840,
     yearlyFreeCredits: 168,
@@ -78,7 +77,7 @@ export const CREDIT_PACKAGES: CreditPackage[] = [
     monthlyVideoTime: "~7 min 46 sec of video",
     yearlyVideoTime: "~1 hr 52 min of video",
     features: [
-      "30 active actors",
+      "Unlimited actors",
       "Credits never expire",
       "Priority support",
     ],

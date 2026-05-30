@@ -106,7 +106,7 @@ export default function PricingSection() {
                           ? `${pkg.yearlyBaseCredits} credits per year (+${pkg.yearlyFreeCredits} bonus) total ${pkg.yearlyTotalCredits} credits per year`
                           : `${pkg.credits} credits per month`,
                         yearly ? pkg.yearlyVideoTime : pkg.monthlyVideoTime,
-                        `${pkg.actorSlots} active AI actors`,
+                        "Unlimited AI actors",
                         "Credits never expire",
                         popular ? "Priority support" : "All core features",
                         i === 0 ? "Email support" : i === 1 ? "All Starter features" : "All Creator features",
