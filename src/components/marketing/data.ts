@@ -51,7 +51,7 @@ export const CREDIT_PACKAGES = [
     yearlyFreeCreditsValue: "$93+",
     monthlyVideoTime: "~1 min 6 sec of video / mo",
     yearlyVideoTime: "~16 min 46 sec of video / yr",
-    actorSlots: 3,
+    
     popular: false,
   },
   {
@@ -66,7 +66,7 @@ export const CREDIT_PACKAGES = [
     yearlyFreeCreditsValue: "$210+",
     monthlyVideoTime: "~3 min 20 sec of video / mo",
     yearlyVideoTime: "~49 min 20 sec of video / yr",
-    actorSlots: 10,
+    
     popular: true,
   },
   {
@@ -81,7 +81,7 @@ export const CREDIT_PACKAGES = [
     yearlyFreeCreditsValue: "$420+",
     monthlyVideoTime: "~7 min 46 sec of video / mo",
     yearlyVideoTime: "~1 hr 52 min of video / yr",
-    actorSlots: 30,
+    
     popular: false,
   },
 ];

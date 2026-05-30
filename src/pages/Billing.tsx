@@ -303,7 +303,7 @@ export default function Billing() {
                             ? [
                                 `${pkg.yearlyBaseCredits} credits per year (+${pkg.yearlyFreeCredits} bonus) total ${pkg.yearlyTotalCredits} credits per year`,
                                 pkg.yearlyVideoTime,
-                                `${pkg.actorSlots} active AI actors`,
+                                "Unlimited AI actors",
                                 "Credits never expire",
                                 ...(pkg.features.includes("Priority support") ? ["Priority support"] : ["All core features"]),
                                 i === 0 ? "Email support" : i === 1 ? "All Starter features" : "All Creator features",
@@ -311,7 +311,7 @@ export default function Billing() {
                             : [
                                 `${pkg.credits} credits per month`,
                                 pkg.monthlyVideoTime,
-                                `${pkg.actorSlots} active AI actors`,
+                                "Unlimited AI actors",
                                 "Credits never expire",
                                 ...(pkg.features.includes("Priority support") ? ["Priority support"] : ["All core features"]),
                                 i === 0 ? "Email support" : i === 1 ? "All Starter features" : "All Creator features",
