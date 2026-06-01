@@ -17,7 +17,6 @@ export default function Billing() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [loadingPriceId, setLoadingPriceId] = useState<string | null>(null);
   const [showSuccess, setShowSuccess] = useState(false);
-  const [isYearly, setIsYearly] = useState(false);
   const [activePriceId, setActivePriceId] = useState<string | null>(null);
   const [loadingPortal, setLoadingPortal] = useState(false);
   const { data: transactions = [], isLoading: isLoadingTransactions } = useCreditTransactions(50);
@@ -184,74 +183,45 @@ export default function Billing() {
                 Choose the best plan for your needs. No hidden fees. Cancel anytime.
               </p>
 
-              {/* Billing Toggle - matching landing page style */}
-              <div className="flex items-center justify-center gap-3 mt-6">
-                <button
-                  onClick={() => setIsYearly(false)}
-                  className={cn(
-                    "px-6 py-2.5 rounded-full font-semibold transition-colors text-base",
-                    !isYearly
-                      ? "bg-foreground text-background"
-                      : "bg-muted text-muted-foreground hover:bg-muted/80"
-                  )}
-                >
-                  Monthly
-                </button>
-                <button
-                  onClick={() => setIsYearly(true)}
-                  className={cn(
-                    "px-6 py-2.5 rounded-full font-semibold transition-colors text-base",
-                    isYearly
-                      ? "bg-primary text-primary-foreground"
-                      : "bg-muted text-muted-foreground hover:bg-muted/80"
-                  )}
-                >
-                  Yearly (Get free credits)
-                </button>
-              </div>
             </div>
 
-            {/* Pricing Cards - matching landing page design */}
-            <div className="grid gap-6 lg:grid-cols-3">
-              {CREDIT_PACKAGES.map((pkg, i) => {
-                const priceId = isYearly ? pkg.yearlyPriceId : pkg.monthlyPriceId;
+            {/* Pricing Cards */}
+            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+              {CREDIT_PACKAGES.map((pkg) => {
+                const priceId = pkg.monthlyPriceId;
                 const isCurrentPlan = activePriceId === priceId;
                 const isLoading = loadingPriceId === priceId;
+                const hasBonus = pkg.bonusCredits > 0;
 
                 return (
                   <div
                     key={pkg.name}
                     className={cn(
-                      "relative rounded-2xl p-8 border-2 transition-shadow",
+                      "relative rounded-2xl p-6 border-2 transition-shadow flex flex-col",
                       pkg.popular
                         ? "border-primary shadow-lg ring-1 ring-primary"
                         : "border-border shadow-sm"
                     )}
                   >
                     {pkg.popular && (
-                      <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-primary text-primary-foreground text-base font-bold px-5 py-1 rounded-full whitespace-nowrap">
+                      <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-primary text-primary-foreground text-sm font-bold px-4 py-1 rounded-full whitespace-nowrap">
                         Most Popular
                       </div>
                     )}
 
-                    <div className="mb-6">
-                      <h3 className="font-bold text-foreground mb-1 text-3xl">{pkg.name}</h3>
-                      <p className="text-muted-foreground text-lg">{pkg.description}</p>
+                    <div className="mb-4">
+                      <h3 className="font-bold text-foreground mb-1 text-2xl">{pkg.name}</h3>
+                      <p className="text-muted-foreground text-base">{pkg.description}</p>
                     </div>
 
-                    <div className="mb-6">
-                      <span className="text-5xl font-bold text-foreground">
-                        ${isYearly ? pkg.yearlyPrice : pkg.monthlyPrice}
-                      </span>
-                      <span className="text-base text-muted-foreground ml-1">
-                        {isYearly ? 'per year' : 'per month'}
-                      </span>
+                    <div className="mb-5">
+                      <span className="text-4xl font-bold text-foreground">${pkg.monthlyPrice}</span>
+                      <span className="text-base text-muted-foreground ml-1">per month</span>
                     </div>
 
-                    {/* CTA Button */}
                     <Button
                       className={cn(
-                        "w-full rounded-full py-3.5 h-auto text-base font-semibold mb-6",
+                        "w-full rounded-full py-3 h-auto text-base font-semibold mb-5",
                         isCurrentPlan
                           ? ""
                           : "bg-primary hover:bg-primary/90 text-primary-foreground"
@@ -278,56 +248,42 @@ export default function Billing() {
                       )}
                     </Button>
 
-                    {/* Bonus credits gift box for yearly */}
-                    {isYearly && (
-                      <div className="flex items-start gap-3 rounded-xl bg-primary/10 border border-primary/20 px-4 py-3 mb-6">
+                    {hasBonus && (
+                      <div className="flex items-start gap-3 rounded-xl bg-primary/10 border border-primary/20 px-4 py-3 mb-5">
                         <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-primary/20">
                           <Gift className="h-4 w-4 text-primary" />
                         </div>
                         <div>
-                          <p className="text-[15px] font-bold text-primary">
-                            +{pkg.yearlyFreeCredits} bonus credits free
+                          <p className="text-sm font-bold text-primary">
+                            +{pkg.bonusCredits} bonus credits/mo
                           </p>
                           <p className="mt-0.5 text-sm text-muted-foreground">
-                            Worth <span className="font-semibold text-foreground">{pkg.yearlyFreeCreditsValue}</span> at no additional cost
+                            Included every month
                           </p>
                         </div>
                       </div>
                     )}
 
-                    <div className="border-t border-border pt-6">
-                      <p className="text-base font-bold text-foreground mb-4 uppercase tracking-wide">What's included</p>
-                      <ul className="space-y-3">
-                        {(() => {
-                          const features = isYearly
-                            ? [
-                                `${pkg.yearlyBaseCredits} credits per year (+${pkg.yearlyFreeCredits} bonus) total ${pkg.yearlyTotalCredits} credits per year`,
-                                pkg.yearlyVideoTime,
-                                "Unlimited AI actors",
-                                "Credits never expire",
-                                ...(pkg.features.includes("Priority support") ? ["Priority support"] : ["All core features"]),
-                                i === 0 ? "Email support" : i === 1 ? "All Starter features" : "All Creator features",
-                              ]
-                            : [
-                                `${pkg.credits} credits per month`,
-                                pkg.monthlyVideoTime,
-                                "Unlimited AI actors",
-                                "Credits never expire",
-                                ...(pkg.features.includes("Priority support") ? ["Priority support"] : ["All core features"]),
-                                i === 0 ? "Email support" : i === 1 ? "All Starter features" : "All Creator features",
-                              ];
-                          return features.map((feature, j) => (
-                            <li key={j} className="flex items-start gap-3">
-                              <div className={cn(
-                                "w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5",
-                                pkg.popular ? "bg-primary/15" : "bg-muted"
-                              )}>
-                                <Check className={cn("h-3.5 w-3.5", pkg.popular ? "text-primary" : "text-muted-foreground")} />
-                              </div>
-                              <span className="text-foreground text-lg">{feature}</span>
-                            </li>
-                          ));
-                        })()}
+                    <div className="border-t border-border pt-5 mt-auto">
+                      <p className="text-sm font-bold text-foreground mb-3 uppercase tracking-wide">What's included</p>
+                      <ul className="space-y-2.5">
+                        {[
+                          hasBonus
+                            ? `${pkg.baseCredits} + ${pkg.bonusCredits} bonus = ${pkg.totalCredits} credits/mo`
+                            : `${pkg.totalCredits} credits per month`,
+                          pkg.monthlyVideoTime,
+                          ...pkg.features,
+                        ].map((feature, j) => (
+                          <li key={j} className="flex items-start gap-3">
+                            <div className={cn(
+                              "w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5",
+                              pkg.popular ? "bg-primary/15" : "bg-muted"
+                            )}>
+                              <Check className={cn("h-3 w-3", pkg.popular ? "text-primary" : "text-muted-foreground")} />
+                            </div>
+                            <span className="text-foreground text-base">{feature}</span>
+                          </li>
+                        ))}
                       </ul>
                     </div>
                   </div>

@@ -27,7 +27,7 @@ export default function Terms() {
           emoji: "👤",
           title: "Accounts and Subscriptions",
           body: [
-            "Creating an account is free. Some features require a paid subscription. Subscription fees are billed in advance on a monthly or yearly basis and are non-refundable except as required by law or as explicitly stated in these Terms.",
+            "Creating an account is free. Some features require a paid subscription. Subscription fees are billed in advance on a monthly basis and are non-refundable except as required by law or as explicitly stated in these Terms.",
             "You may cancel your subscription at any time from your account settings. Cancellation takes effect at the end of the current billing period. We do not prorate refunds for partial billing periods.",
             "We may change subscription pricing with at least 30 days' notice. Changes apply to your next renewal period.",
           ],
