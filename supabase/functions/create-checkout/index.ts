@@ -7,17 +7,15 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-// Valid subscription price IDs
-const VALID_PRICE_IDS = new Set([
-  // Monthly
-  "price_1TLFlxJzf8eDXLMZ5L5jFgIO",
-  "price_1TLFmHJzf8eDXLMZkoSzptGy",
-  "price_1TLFmWJzf8eDXLMZb5LO6VQP",
-  // Yearly
-  "price_1TLFn0Jzf8eDXLMZ2tMm9eT8",
-  "price_1TLFnOJzf8eDXLMZdcIKZjCm",
-  "price_1TLFncJzf8eDXLMZlgW2E0RQ",
-]);
+// Map of valid subscription price IDs -> total credits delivered per month
+const PRICE_TO_CREDITS: Record<string, number> = {
+  "price_1TdOh3Jzf8eDXLMZ8inf1qYZ": 1.7,   // Trial $6
+  "price_1TdOhNJzf8eDXLMZlGdHKNU6": 9,     // Starter $29
+  "price_1TdOhfJzf8eDXLMZScwouVCX": 27,    // Creator $79
+  "price_1TdOi4Jzf8eDXLMZ0teAHouz": 61,    // Pro $149 (51 + 10 bonus)
+  "price_1TdOiIJzf8eDXLMZhZSHMl1P": 130,   // Studio $299 (105 + 25 bonus)
+  "price_1TdOiwJzf8eDXLMZwokNhBZj": 230,   // Agency $499 (180 + 50 bonus)
+};
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -31,8 +29,8 @@ serve(async (req) => {
 
   try {
     const { priceId } = await req.json();
-    
-    if (!priceId || !VALID_PRICE_IDS.has(priceId)) {
+
+    if (!priceId || !(priceId in PRICE_TO_CREDITS)) {
       throw new Error("Invalid price ID");
     }
 
@@ -68,6 +66,8 @@ serve(async (req) => {
       cancel_url: `${req.headers.get("origin")}/billing?canceled=true`,
       metadata: {
         user_id: user.id,
+        price_id: priceId,
+        credits: String(PRICE_TO_CREDITS[priceId]),
       },
     });
 
