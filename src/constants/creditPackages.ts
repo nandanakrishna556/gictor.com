@@ -1,85 +1,115 @@
 export interface CreditPackage {
-  credits: number;
-  monthlyPrice: number;
-  yearlyPrice: number;
-  monthlyPriceId: string;
-  yearlyPriceId: string;
-  popular?: boolean;
   name: string;
   description: string;
-  features: string[];
-  // Yearly bonus info
-  yearlyTotalCredits: number;
-  yearlyBaseCredits: number;
-  yearlyFreeCredits: number;
-  yearlyFreeCreditsValue: string;
-  // Video time display
+  monthlyPrice: number;
+  monthlyPriceId: string;
+  productId: string;
+  baseCredits: number;
+  bonusCredits: number;
+  totalCredits: number;
   monthlyVideoTime: string;
-  yearlyVideoTime: string;
+  features: string[];
+  popular?: boolean;
 }
 
 export const CREDIT_PACKAGES: CreditPackage[] = [
   {
-    credits: 10,
-    monthlyPrice: 29,
-    yearlyPrice: 348,
-    monthlyPriceId: "price_1TQHWZJzf8eDXLMZ5cvMNlDP",
-    yearlyPriceId: "price_1TQHWqJzf8eDXLMZvjVO3E4q",
+    name: "Trial",
+    description: "Test drive Gictor for a week.",
+    monthlyPrice: 6,
+    monthlyPriceId: "price_1TdOh3Jzf8eDXLMZ8inf1qYZ",
+    productId: "prod_Ucdzjww2wSiE1Y",
+    baseCredits: 1.7,
+    bonusCredits: 0,
+    totalCredits: 1.7,
+    monthlyVideoTime: "~11 sec of video",
+    features: [
+      "Unlimited actors",
+      "Credits roll over and never expire",
+    ],
+  },
+  {
     name: "Starter",
-    description: "For creators just getting started",
-    
-    yearlyTotalCredits: 151,
-    yearlyBaseCredits: 120,
-    yearlyFreeCredits: 31,
-    yearlyFreeCreditsValue: "$93+",
-    monthlyVideoTime: "~1 min 6 sec of video",
-    yearlyVideoTime: "~16 min 46 sec of video",
+    description: "For creators just getting started.",
+    monthlyPrice: 29,
+    monthlyPriceId: "price_1TdOhNJzf8eDXLMZlGdHKNU6",
+    productId: "prod_UcdzyGbUFQxYYH",
+    baseCredits: 9,
+    bonusCredits: 0,
+    totalCredits: 9,
+    monthlyVideoTime: "~1 min of video",
     features: [
       "Unlimited actors",
-      "Credits never expire",
+      "Credits roll over and never expire",
+      "Email support",
     ],
   },
   {
-    credits: 30,
-    monthlyPrice: 79,
-    yearlyPrice: 948,
-    monthlyPriceId: "price_1TLFmHJzf8eDXLMZkoSzptGy",
-    yearlyPriceId: "price_1TLHy3Jzf8eDXLMZfBnpjQ6v",
-    popular: true,
     name: "Creator",
-    description: "For growing brands ready to scale",
-    
-    yearlyTotalCredits: 444,
-    yearlyBaseCredits: 360,
-    yearlyFreeCredits: 84,
-    yearlyFreeCreditsValue: "$210+",
-    monthlyVideoTime: "~3 min 20 sec of video",
-    yearlyVideoTime: "~49 min 20 sec of video",
+    description: "For growing brands ready to scale.",
+    monthlyPrice: 79,
+    monthlyPriceId: "price_1TdOhfJzf8eDXLMZScwouVCX",
+    productId: "prod_UcdzZxCSby0rTU",
+    baseCredits: 27,
+    bonusCredits: 0,
+    totalCredits: 27,
+    monthlyVideoTime: "~3 min of video",
     features: [
       "Unlimited actors",
-      "Credits never expire",
-      "Priority support",
+      "Credits roll over and never expire",
+      "All Starter features",
     ],
   },
   {
-    credits: 70,
-    monthlyPrice: 149,
-    yearlyPrice: 1788,
-    monthlyPriceId: "price_1TLFmWJzf8eDXLMZb5LO6VQP",
-    yearlyPriceId: "price_1TLI3CJzf8eDXLMZuXujtzyx",
     name: "Pro",
-    description: "For teams and agencies at scale",
-    
-    yearlyTotalCredits: 1008,
-    yearlyBaseCredits: 840,
-    yearlyFreeCredits: 168,
-    yearlyFreeCreditsValue: "$420+",
-    monthlyVideoTime: "~7 min 46 sec of video",
-    yearlyVideoTime: "~1 hr 52 min of video",
+    description: "For pros producing more video weekly.",
+    monthlyPrice: 149,
+    monthlyPriceId: "price_1TdOi4Jzf8eDXLMZ0teAHouz",
+    productId: "prod_Uce0fI11YcWVSG",
+    baseCredits: 51,
+    bonusCredits: 10,
+    totalCredits: 61,
+    monthlyVideoTime: "~6 min 47 sec of video",
+    popular: true,
     features: [
       "Unlimited actors",
-      "Credits never expire",
+      "Credits roll over and never expire",
       "Priority support",
+      "All Creator features",
+    ],
+  },
+  {
+    name: "Studio",
+    description: "For studios shipping content at scale.",
+    monthlyPrice: 299,
+    monthlyPriceId: "price_1TdOiIJzf8eDXLMZhZSHMl1P",
+    productId: "prod_Uce0fhFJM8wHwd",
+    baseCredits: 105,
+    bonusCredits: 25,
+    totalCredits: 130,
+    monthlyVideoTime: "~14 min 27 sec of video",
+    features: [
+      "Unlimited actors",
+      "Credits roll over and never expire",
+      "Priority support",
+      "All Pro features",
+    ],
+  },
+  {
+    name: "Agency",
+    description: "For agencies running multiple brands.",
+    monthlyPrice: 499,
+    monthlyPriceId: "price_1TdOiwJzf8eDXLMZwokNhBZj",
+    productId: "prod_Uce0ao4H63hmqT",
+    baseCredits: 180,
+    bonusCredits: 50,
+    totalCredits: 230,
+    monthlyVideoTime: "~25 min 33 sec of video",
+    features: [
+      "Unlimited actors",
+      "Credits roll over and never expire",
+      "Priority support",
+      "All Studio features",
     ],
   },
 ];

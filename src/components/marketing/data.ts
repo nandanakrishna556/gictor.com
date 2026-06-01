@@ -38,50 +38,5 @@ export const SERVICES: ServiceItem[] = [
   },
 ];
 
-export const CREDIT_PACKAGES = [
-  {
-    name: "Starter",
-    description: "For creators just getting started.",
-    monthlyPrice: 29,
-    yearlyPrice: 348,
-    credits: 10,
-    yearlyBaseCredits: 120,
-    yearlyTotalCredits: 151,
-    yearlyFreeCredits: 31,
-    yearlyFreeCreditsValue: "$93+",
-    monthlyVideoTime: "~1 min 6 sec of video / mo",
-    yearlyVideoTime: "~16 min 46 sec of video / yr",
-    
-    popular: false,
-  },
-  {
-    name: "Creator",
-    description: "For growing brands ready to scale.",
-    monthlyPrice: 79,
-    yearlyPrice: 948,
-    credits: 30,
-    yearlyBaseCredits: 360,
-    yearlyTotalCredits: 444,
-    yearlyFreeCredits: 84,
-    yearlyFreeCreditsValue: "$210+",
-    monthlyVideoTime: "~3 min 20 sec of video / mo",
-    yearlyVideoTime: "~49 min 20 sec of video / yr",
-    
-    popular: true,
-  },
-  {
-    name: "Pro",
-    description: "For teams and agencies at scale.",
-    monthlyPrice: 149,
-    yearlyPrice: 1788,
-    credits: 70,
-    yearlyBaseCredits: 840,
-    yearlyTotalCredits: 1008,
-    yearlyFreeCredits: 168,
-    yearlyFreeCreditsValue: "$420+",
-    monthlyVideoTime: "~7 min 46 sec of video / mo",
-    yearlyVideoTime: "~1 hr 52 min of video / yr",
-    
-    popular: false,
-  },
-];
+// Re-export the unified credit packages so marketing and app stay in sync.
+export { CREDIT_PACKAGES } from "@/constants/creditPackages";
