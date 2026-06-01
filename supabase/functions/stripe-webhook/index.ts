@@ -103,49 +103,43 @@ serve(async (req) => {
         const credits = Number(session.metadata.credits);
         
         if (userId && credits) {
-          console.log(`Adding ${credits} credits to user ${userId}`);
-          
-          // Get current credits
-          const { data: profile, error: profileError } = await supabaseAdmin
-            .from("profiles")
-            .select("credits")
-            .eq("id", userId)
-            .single();
-          
-          if (profileError) {
-            console.error("Error fetching profile:", profileError);
-            throw profileError;
+          await grantCredits(userId, credits, `Subscription credits (${credits})`);
+        }
+      }
+    }
+
+    // Recurring monthly renewals (and initial invoice). We grant credits based on the
+    // subscription's price ID via PRICE_TO_CREDITS. Skip the very first invoice tied to the
+    // checkout session to avoid double-granting alongside checkout.session.completed.
+    if (event.type === "invoice.payment_succeeded") {
+      const invoice = event.data.object as Stripe.Invoice & { subscription?: string | null; billing_reason?: string };
+      const billingReason = invoice.billing_reason;
+      // Only grant for renewals (skip subscription_create handled by checkout.session.completed)
+      if (billingReason === "subscription_cycle" || billingReason === "subscription_update") {
+        const subscriptionId = invoice.subscription as string | undefined;
+        if (subscriptionId) {
+          const subscription = await stripe.subscriptions.retrieve(subscriptionId);
+          const priceId = subscription.items.data[0]?.price.id;
+          const credits = priceId ? PRICE_TO_CREDITS[priceId] : undefined;
+          const userId = (subscription.metadata?.user_id as string | undefined) ||
+            (invoice.metadata?.user_id as string | undefined);
+
+          // Resolve userId from customer email if not in metadata
+          let resolvedUserId = userId;
+          if (!resolvedUserId && invoice.customer_email) {
+            const { data: prof } = await supabaseAdmin
+              .from("profiles")
+              .select("id")
+              .eq("email", invoice.customer_email)
+              .maybeSingle();
+            resolvedUserId = prof?.id;
           }
-          
-          const currentCredits = profile?.credits || 0;
-          const newCredits = currentCredits + credits;
-          
-          // Update credits
-          const { error: updateError } = await supabaseAdmin
-            .from("profiles")
-            .update({ credits: newCredits, updated_at: new Date().toISOString() })
-            .eq("id", userId);
-          
-          if (updateError) {
-            console.error("Error updating credits:", updateError);
-            throw updateError;
+
+          if (resolvedUserId && credits) {
+            await grantCredits(resolvedUserId, credits, `Monthly renewal (${credits} credits)`);
+          } else {
+            console.log("Skipping renewal: missing userId or unknown price", { priceId, resolvedUserId });
           }
-          
-          // Log transaction
-          const { error: txError } = await supabaseAdmin
-            .from("credit_transactions")
-            .insert({
-              user_id: userId,
-              amount: credits,
-              transaction_type: "purchase",
-              description: `Purchased ${credits} credits`,
-            });
-          
-          if (txError) {
-            console.error("Error logging transaction:", txError);
-          }
-          
-          console.log(`Successfully added ${credits} credits. New balance: ${newCredits}`);
         }
       }
     }
