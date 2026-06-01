@@ -17,7 +17,6 @@ export default function Billing() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [loadingPriceId, setLoadingPriceId] = useState<string | null>(null);
   const [showSuccess, setShowSuccess] = useState(false);
-  const [isYearly, setIsYearly] = useState(false);
   const [activePriceId, setActivePriceId] = useState<string | null>(null);
   const [loadingPortal, setLoadingPortal] = useState(false);
   const { data: transactions = [], isLoading: isLoadingTransactions } = useCreditTransactions(50);
