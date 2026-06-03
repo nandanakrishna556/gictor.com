@@ -11,6 +11,7 @@ import { CREDIT_PACKAGES } from '@/constants/creditPackages';
 import { cn } from '@/lib/utils';
 import { syncSubscription } from '@/lib/subscription-sync';
 import { useCreditTransactions } from '@/hooks/useCreditTransactions';
+import PricingComparisonTable from '@/components/billing/PricingComparisonTable';
 
 export default function Billing() {
   const { profile, refetch: refetchProfile } = useProfile();
@@ -289,6 +290,15 @@ export default function Billing() {
                   </div>
                 );
               })}
+            </div>
+
+            {/* Plan Comparison Table */}
+            <div className="mt-12">
+              <h2 className="mb-4 text-2xl font-bold text-foreground">Compare plans side by side</h2>
+              <p className="mb-5 text-sm text-muted-foreground">
+                See exactly how monthly credits, bonus credits, and features stack up across plans.
+              </p>
+              <PricingComparisonTable />
             </div>
 
             {/* Credit Transactions History */}
