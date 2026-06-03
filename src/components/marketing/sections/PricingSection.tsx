@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { Check, ArrowRight, Gift, ScanFace } from "lucide-react";
 import { CREDIT_PACKAGES } from "../data";
 import { cn } from "@/lib/utils";
+import PricingComparisonTable from "@/components/billing/PricingComparisonTable";
 
 export default function PricingSection() {
   return (
@@ -97,6 +98,13 @@ export default function PricingSection() {
               </div>
             );
           })}
+        </div>
+
+        <div className="mt-16">
+          <h3 className="mb-6 text-center text-2xl font-black tracking-[-0.02em] text-gray-950">
+            Full plan comparison
+          </h3>
+          <PricingComparisonTable />
         </div>
 
         <p className="mt-10 text-center text-[13px] text-gray-500">

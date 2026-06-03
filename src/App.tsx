@@ -23,6 +23,7 @@ import ProjectDetail from "./pages/ProjectDetail";
 import Settings from "./pages/Settings";
 import Billing from "./pages/Billing";
 import Actors from "./pages/Actors";
+import AdminAudit from "./pages/AdminAudit";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -103,6 +104,14 @@ const App = () => (
                 element={
                   <ProtectedRoute>
                     <Actors />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/audit"
+                element={
+                  <ProtectedRoute>
+                    <AdminAudit />
                   </ProtectedRoute>
                 }
               />

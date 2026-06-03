@@ -11,6 +11,7 @@ import { CREDIT_PACKAGES } from '@/constants/creditPackages';
 import { cn } from '@/lib/utils';
 import { syncSubscription } from '@/lib/subscription-sync';
 import { useCreditTransactions } from '@/hooks/useCreditTransactions';
+import PricingComparisonTable from '@/components/billing/PricingComparisonTable';
 
 export default function Billing() {
   const { profile, refetch: refetchProfile } = useProfile();
@@ -70,16 +71,21 @@ export default function Billing() {
       toast.success('Purchase successful! Your credits have been added.');
       // Sync subscription + refetch credits (webhook may take a moment)
       (async () => {
-        try {
-          const { data: sessionData } = await supabase.auth.getSession();
-          const accessToken = sessionData?.session?.access_token;
-          if (accessToken) await syncSubscription(accessToken);
-        } catch (e) {
-          console.error('Subscription sync failed:', e);
-        }
-        refetchProfile();
-        setTimeout(() => refetchProfile(), 2000);
-        setTimeout(() => refetchProfile(), 5000);
+        const sync = async () => {
+          try {
+            const { data: sessionData } = await supabase.auth.getSession();
+            const accessToken = sessionData?.session?.access_token;
+            if (!accessToken) return;
+            const { data } = await syncSubscription(accessToken);
+            if (data?.price_id) setActivePriceId(data.price_id);
+          } catch (e) {
+            console.error('Subscription sync failed:', e);
+          }
+          refetchProfile();
+        };
+        await sync();
+        setTimeout(sync, 2500);
+        setTimeout(sync, 6000);
       })();
       setSearchParams({});
       setTimeout(() => setShowSuccess(false), 4000);
@@ -289,6 +295,15 @@ export default function Billing() {
                   </div>
                 );
               })}
+            </div>
+
+            {/* Plan Comparison Table */}
+            <div className="mt-12">
+              <h2 className="mb-4 text-2xl font-bold text-foreground">Compare plans side by side</h2>
+              <p className="mb-5 text-sm text-muted-foreground">
+                See exactly how monthly credits, bonus credits, and features stack up across plans.
+              </p>
+              <PricingComparisonTable />
             </div>
 
             {/* Credit Transactions History */}

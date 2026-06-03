@@ -480,6 +480,60 @@ export type Database = {
           },
         ]
       }
+      subscription_events: {
+        Row: {
+          billing_reason: string | null
+          created_at: string
+          credits_granted: number | null
+          error_message: string | null
+          event_type: string
+          id: string
+          payload: Json
+          plan: string | null
+          status: string
+          stripe_customer_id: string | null
+          stripe_event_id: string | null
+          stripe_price_id: string | null
+          stripe_subscription_id: string | null
+          user_email: string | null
+          user_id: string | null
+        }
+        Insert: {
+          billing_reason?: string | null
+          created_at?: string
+          credits_granted?: number | null
+          error_message?: string | null
+          event_type: string
+          id?: string
+          payload?: Json
+          plan?: string | null
+          status?: string
+          stripe_customer_id?: string | null
+          stripe_event_id?: string | null
+          stripe_price_id?: string | null
+          stripe_subscription_id?: string | null
+          user_email?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          billing_reason?: string | null
+          created_at?: string
+          credits_granted?: number | null
+          error_message?: string | null
+          event_type?: string
+          id?: string
+          payload?: Json
+          plan?: string | null
+          status?: string
+          stripe_customer_id?: string | null
+          stripe_event_id?: string | null
+          stripe_price_id?: string | null
+          stripe_subscription_id?: string | null
+          user_email?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       user_pipelines: {
         Row: {
           created_at: string | null
