@@ -18,7 +18,7 @@ export default function PricingSection() {
           </p>
         </div>
 
-        <div className="mt-12 grid items-stretch gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+        <div className="mt-12 grid items-stretch gap-6 md:grid-cols-2 lg:grid-cols-3">
           {CREDIT_PACKAGES.map((pkg, i) => {
             const popular = pkg.popular;
             const hasBonus = pkg.bonusCredits > 0;
