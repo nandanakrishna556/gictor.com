@@ -413,4 +413,25 @@
     50%      { opacity: 0.6; transform: scale(0.85); }
   }
   .animate-pulse-dot { animation: pulse-dot 1.6s ease-in-out infinite; }
+
+  /* ===== LANDING PAGE TYPOGRAPHY ===== */
+  /* Scoped so the rest of the app keeps Inter. */
+  .landing-root {
+    font-family: 'DM Sans', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-feature-settings: 'ss01', 'ss02', 'cv11';
+  }
+  .landing-root h1,
+  .landing-root h2,
+  .landing-root h3,
+  .landing-root h4,
+  .landing-root h5,
+  .landing-root h6,
+  .landing-root .font-display {
+    font-family: 'Space Grotesk', 'Inter', sans-serif;
+    font-feature-settings: 'ss01', 'ss02';
+    letter-spacing: -0.025em;
+  }
+  .landing-root .font-body {
+    font-family: 'DM Sans', sans-serif;
+  }
 }
