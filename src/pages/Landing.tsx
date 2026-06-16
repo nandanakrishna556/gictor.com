@@ -29,7 +29,7 @@ export default function Landing() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-white text-gray-950 antialiased">
+    <div className="landing-root min-h-screen bg-white text-gray-950 antialiased">
       <LandingNav />
       <main>
         <HeroSection />
