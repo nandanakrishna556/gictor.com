@@ -215,7 +215,7 @@ export default function MoveToFolderDialog({
                     disabled && 'opacity-50 cursor-not-allowed'
                   )}
                 >
-                  <FolderOpen className="h-5 w-5 text-amber-500" />
+                  <FolderOpen className="h-5 w-5 text-sky-500" />
                   <span className="truncate flex-1">{folder.name}</span>
                   {disabled && (
                     <span className="text-xs text-muted-foreground">(current)</span>

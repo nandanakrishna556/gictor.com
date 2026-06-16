@@ -38,20 +38,20 @@ export default function HeroSection() {
       {/* dot grid overlay */}
       <div className="pointer-events-none absolute inset-0 bg-dot-grid bg-grid-fade opacity-50" />
       {/* big orange blob */}
-      <div className="pointer-events-none absolute left-1/2 top-0 h-[600px] w-[800px] -translate-x-1/2 rounded-full bg-orange-200/30 blur-[120px]" />
-      <div className="pointer-events-none absolute right-0 top-40 h-[400px] w-[400px] rounded-full bg-pink-300/20 blur-[100px]" />
+      <div className="pointer-events-none absolute left-1/2 top-0 h-[600px] w-[800px] -translate-x-1/2 rounded-full bg-blue-100/30 blur-[120px]" />
+      <div className="pointer-events-none absolute right-0 top-40 h-[400px] w-[400px] rounded-full bg-indigo-300/20 blur-[100px]" />
 
       <div className="container-page relative">
         <div className="mx-auto max-w-4xl text-center">
           {/* Badge */}
           <div className="reveal inline-flex items-center gap-2 rounded-full border border-gray-200 bg-white/80 px-3.5 py-1.5 text-[12.5px] font-medium text-gray-700 shadow-sm backdrop-blur">
             <span className="relative inline-flex h-1.5 w-1.5">
-              <span className="absolute inset-0 animate-ping rounded-full bg-orange-500 opacity-75" />
-              <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-orange-500" />
+              <span className="absolute inset-0 animate-ping rounded-full bg-blue-500 opacity-75" />
+              <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-blue-500" />
             </span>
             <span className="font-semibold">New</span>
             <span className="text-gray-500">Clone yourself, or someone else</span>
-            <ScanFace className="h-3.5 w-3.5 text-orange-500" />
+            <ScanFace className="h-3.5 w-3.5 text-blue-500" />
           </div>
 
           {/* H1 */}
@@ -68,7 +68,7 @@ export default function HeroSection() {
           <div className="reveal mt-9 flex flex-col items-center justify-center gap-3 sm:flex-row" style={{ animationDelay: "180ms" }}>
             <Link
               to="/signup"
-              className="inline-flex items-center gap-2 rounded-full bg-gradient-to-br from-[#ff8a4c] via-[#ff6b35] to-[#e85a1f] px-7 py-3.5 text-[15px] font-semibold text-white cta-glow transition hover:scale-[1.02]"
+              className="inline-flex items-center gap-2 rounded-full bg-gradient-to-br from-[#5b8bff] via-[#1e5bff] to-[#0040d6] px-7 py-3.5 text-[15px] font-semibold text-white cta-glow transition hover:scale-[1.02]"
             >
               Start creating
               <ArrowRight className="h-4 w-4" />
@@ -101,7 +101,7 @@ export default function HeroSection() {
             <div className="flex items-center gap-2 text-[13px] text-gray-600">
               <span className="flex">
                 {[0, 1, 2, 3, 4].map((i) => (
-                  <Star key={i} className="h-3.5 w-3.5 fill-orange-500 text-orange-500" />
+                  <Star key={i} className="h-3.5 w-3.5 fill-blue-500 text-blue-500" />
                 ))}
               </span>
               <span><span className="font-semibold text-gray-950">Rated 4.9</span> from 1,000+ brands</span>
@@ -111,7 +111,7 @@ export default function HeroSection() {
 
         {/* VSL */}
         <div id="reel-marquee" ref={vslRef} className="relative mx-auto mt-16 max-w-5xl">
-          <div className="pointer-events-none absolute inset-x-10 -top-10 h-40 rounded-[40px] bg-gradient-to-r from-orange-300/40 via-pink-300/30 to-amber-200/40 blur-3xl" />
+          <div className="pointer-events-none absolute inset-x-10 -top-10 h-40 rounded-[40px] bg-gradient-to-r from-blue-300/40 via-indigo-300/30 to-sky-200/40 blur-3xl" />
           <div className="relative aspect-video overflow-hidden rounded-3xl border border-gray-200 bg-gray-950 shadow-[0_40px_100px_-30px_rgba(0,0,0,0.35)]">
             {vslVisible ? (
               <iframe

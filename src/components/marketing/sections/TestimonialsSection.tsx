@@ -61,12 +61,12 @@ export default function TestimonialsSection() {
   }, []);
 
   return (
-    <section className="relative bg-gradient-to-b from-orange-50/50 to-white section-pad">
+    <section className="relative bg-gradient-to-b from-blue-50/50 to-white section-pad">
       <div className="container-page">
         <div className="grid gap-10 md:grid-cols-5">
           {/* Left intro */}
           <div className="reveal md:col-span-2">
-            <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-orange-600">💬 Loved by operators</div>
+            <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-blue-600">💬 Loved by operators</div>
             <h2 className="mt-3 text-4xl font-black tracking-[-0.02em] text-gray-950 md:text-5xl">
               They swapped their creative stack. <span className="text-gradient-orange">You probably should too.</span>
             </h2>
@@ -83,7 +83,7 @@ export default function TestimonialsSection() {
               <div>
                 <div className="flex items-center gap-1">
                   {[0, 1, 2, 3, 4].map((i) => (
-                    <Star key={i} className="h-3.5 w-3.5 fill-orange-500 text-orange-500" />
+                    <Star key={i} className="h-3.5 w-3.5 fill-blue-500 text-blue-500" />
                   ))}
                   <span className="ml-1 text-sm font-bold text-gray-950">4.9</span>
                 </div>
@@ -119,11 +119,11 @@ export default function TestimonialsSection() {
                     style={{ zIndex: z, top, transform: `scale(${scale})`, opacity }}
                   >
                     <div className="relative overflow-hidden rounded-3xl border border-gray-100 bg-white p-7 shadow-[0_30px_80px_-30px_rgba(0,0,0,0.18)] md:p-9">
-                      <Quote className="absolute right-5 top-5 h-12 w-12 fill-orange-100 text-orange-100" />
+                      <Quote className="absolute right-5 top-5 h-12 w-12 fill-blue-100 text-blue-100" />
                       <div className="flex items-center gap-3">
                         <div className="flex">
                           {[0, 1, 2, 3, 4].map((s) => (
-                            <Star key={s} className="h-3.5 w-3.5 fill-orange-500 text-orange-500" />
+                            <Star key={s} className="h-3.5 w-3.5 fill-blue-500 text-blue-500" />
                           ))}
                         </div>
                         <span className="rounded-full bg-emerald-50 px-2.5 py-0.5 text-[11.5px] font-bold text-emerald-700">{t.metric}</span>
@@ -151,7 +151,7 @@ export default function TestimonialsSection() {
                   key={i}
                   onClick={() => setActive(i)}
                   aria-label={`Show testimonial ${i + 1}`}
-                  className={`h-1.5 rounded-full transition-all ${i === active ? "w-7 bg-orange-500" : "w-1.5 bg-gray-300"}`}
+                  className={`h-1.5 rounded-full transition-all ${i === active ? "w-7 bg-blue-500" : "w-1.5 bg-gray-300"}`}
                 />
               ))}
             </div>

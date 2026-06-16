@@ -52,7 +52,7 @@ interface FrameModalProps {
 const DEFAULT_STATUS_OPTIONS: StatusOption[] = [
   { value: "draft", label: "Draft", color: "bg-zinc-500" },
   { value: "in_progress", label: "In Progress", color: "bg-blue-500" },
-  { value: "review", label: "Review", color: "bg-amber-500" },
+  { value: "review", label: "Review", color: "bg-sky-500" },
   { value: "complete", label: "Complete", color: "bg-emerald-500" },
 ];
 

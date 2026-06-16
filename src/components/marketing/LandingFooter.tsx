@@ -11,11 +11,11 @@ export default function LandingFooter() {
   return (
     <footer className="relative overflow-hidden bg-gray-950 text-gray-300">
       {/* Top hairline */}
-      <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-orange-500/40 to-transparent" />
+      <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-blue-500/40 to-transparent" />
       {/* Ambient glows */}
-      <div className="pointer-events-none absolute -left-32 top-32 h-[480px] w-[480px] rounded-full bg-orange-600/15 blur-[140px]" />
-      <div className="pointer-events-none absolute right-0 top-0 h-[400px] w-[400px] rounded-full bg-pink-600/10 blur-[120px]" />
-      <div className="pointer-events-none absolute bottom-0 left-1/3 h-[360px] w-[360px] rounded-full bg-amber-500/10 blur-[120px]" />
+      <div className="pointer-events-none absolute -left-32 top-32 h-[480px] w-[480px] rounded-full bg-blue-600/15 blur-[140px]" />
+      <div className="pointer-events-none absolute right-0 top-0 h-[400px] w-[400px] rounded-full bg-indigo-600/10 blur-[120px]" />
+      <div className="pointer-events-none absolute bottom-0 left-1/3 h-[360px] w-[360px] rounded-full bg-sky-500/10 blur-[120px]" />
       <div
         className="pointer-events-none absolute inset-0 opacity-[0.05]"
         style={{
@@ -26,11 +26,11 @@ export default function LandingFooter() {
 
       <div className="container-page relative pt-20 pb-10">
         {/* Newsletter */}
-        <div className="relative overflow-hidden rounded-[32px] border border-orange-500/20 bg-gradient-to-br from-orange-500/10 via-orange-500/5 to-transparent p-8 backdrop-blur-sm md:p-12">
-          <div className="pointer-events-none absolute -right-24 -top-24 h-72 w-72 rounded-full bg-orange-500/20 blur-3xl" />
+        <div className="relative overflow-hidden rounded-[32px] border border-blue-500/20 bg-gradient-to-br from-blue-500/10 via-blue-500/5 to-transparent p-8 backdrop-blur-sm md:p-12">
+          <div className="pointer-events-none absolute -right-24 -top-24 h-72 w-72 rounded-full bg-blue-500/20 blur-3xl" />
           <div className="relative grid gap-8 md:grid-cols-2 md:items-center">
             <div>
-              <span className="inline-flex items-center gap-1.5 rounded-full border border-orange-400/30 bg-orange-500/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-orange-300">
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-blue-400/30 bg-blue-500/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-blue-300">
                 ✨ Creator Newsletter
               </span>
               <h3 className="mt-4 text-2xl font-black tracking-[-0.02em] text-white md:text-3xl">
@@ -54,11 +54,11 @@ export default function LandingFooter() {
                   placeholder="you@brand.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="flex-1 rounded-full border border-white/10 bg-white/5 px-5 py-3 text-sm text-white placeholder:text-gray-500 outline-none focus:border-orange-400/50 focus:bg-white/10"
+                  className="flex-1 rounded-full border border-white/10 bg-white/5 px-5 py-3 text-sm text-white placeholder:text-gray-500 outline-none focus:border-blue-400/50 focus:bg-white/10"
                 />
                 <button
                   type="submit"
-                  className="inline-flex items-center justify-center gap-1.5 rounded-full bg-gradient-to-br from-[#ff8a4c] via-[#ff6b35] to-[#e85a1f] px-6 py-3 text-sm font-semibold text-white cta-glow"
+                  className="inline-flex items-center justify-center gap-1.5 rounded-full bg-gradient-to-br from-[#5b8bff] via-[#1e5bff] to-[#0040d6] px-6 py-3 text-sm font-semibold text-white cta-glow"
                 >
                   {submitted ? "Subscribed ✓" : (<>Subscribe <ArrowRight className="h-3.5 w-3.5" /></>)}
                 </button>
@@ -107,7 +107,7 @@ export default function LandingFooter() {
                   key={i}
                   href={href}
                   aria-label="Social link"
-                  className="grid h-9 w-9 place-items-center rounded-full border border-white/10 bg-white/5 text-gray-400 transition hover:border-orange-400/40 hover:text-white"
+                  className="grid h-9 w-9 place-items-center rounded-full border border-white/10 bg-white/5 text-gray-400 transition hover:border-blue-400/40 hover:text-white"
                 >
                   <Icon className="h-4 w-4" />
                 </a>

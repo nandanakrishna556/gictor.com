@@ -134,9 +134,9 @@ export const FileCard: React.FC<FileCardProps> = ({
         )}
 
         {status === 'completed' && isAudioType && (
-          <div className="absolute inset-0 bg-gradient-to-br from-orange-500/10 to-amber-500/10 flex items-center justify-center">
-            <div className="h-16 w-16 rounded-full bg-orange-500/20 flex items-center justify-center">
-              <Mic className="h-8 w-8 text-orange-500" strokeWidth={1.5} />
+          <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 to-sky-500/10 flex items-center justify-center">
+            <div className="h-16 w-16 rounded-full bg-blue-500/20 flex items-center justify-center">
+              <Mic className="h-8 w-8 text-blue-500" strokeWidth={1.5} />
             </div>
           </div>
         )}

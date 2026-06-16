@@ -32,7 +32,7 @@ export default function Dashboard() {
       title: 'Images Generated',
       value: 0,
       icon: Image,
-      color: 'text-orange-500',
+      color: 'text-blue-500',
     },
   ];
 

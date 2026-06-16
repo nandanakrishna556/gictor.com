@@ -15,7 +15,7 @@ interface StatusConfig {
 const STATUS_CONFIG: Record<StatusType, StatusConfig> = {
   processing: {
     label: 'Processing',
-    className: 'bg-amber-500/10 text-amber-500 border-amber-500/20',
+    className: 'bg-sky-500/10 text-sky-500 border-sky-500/20',
     showLoader: true,
   },
   generating: {
@@ -25,7 +25,7 @@ const STATUS_CONFIG: Record<StatusType, StatusConfig> = {
   },
   pending: {
     label: 'Pending',
-    className: 'bg-amber-500/10 text-amber-500 border-amber-500/20',
+    className: 'bg-sky-500/10 text-sky-500 border-sky-500/20',
     icon: <Clock className="h-3 w-3" strokeWidth={1.5} />,
   },
   completed: {

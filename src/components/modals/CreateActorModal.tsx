@@ -205,8 +205,8 @@ export default function CreateActorModal({ open, onOpenChange }: CreateActorModa
                 )}
               >
                 {/* Icon Container */}
-                <div className="flex h-16 w-16 sm:h-20 sm:w-20 items-center justify-center rounded-2xl bg-orange-500/10 mb-4 group-hover:bg-orange-500/20 group-hover:scale-105 transition-all duration-300">
-                  <FolderUp className="h-8 w-8 sm:h-10 sm:w-10 text-orange-500" strokeWidth={1.5} />
+                <div className="flex h-16 w-16 sm:h-20 sm:w-20 items-center justify-center rounded-2xl bg-blue-500/10 mb-4 group-hover:bg-blue-500/20 group-hover:scale-105 transition-all duration-300">
+                  <FolderUp className="h-8 w-8 sm:h-10 sm:w-10 text-blue-500" strokeWidth={1.5} />
                 </div>
                 
                 {/* Text */}

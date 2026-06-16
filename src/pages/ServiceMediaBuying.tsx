@@ -19,11 +19,11 @@ export default function ServiceMediaBuying() {
       deliverablesHeader="One team running creative and media as one engine."
       deliverables={[
         { emoji: "🎯", title: "Campaign strategy", description: "We audit your current funnel, map your audiences, and build a test plan that ties creative directly to the metrics you report to your board.", accent: "from-blue-500 to-indigo-500", bg: "bg-blue-50" },
-        { emoji: "⚡", title: "AI creative engine", description: "Dozens of ad variations per week using Gictor's AI actors. You never wait on a production schedule to test a new hook again.", accent: "from-orange-500 to-amber-500", bg: "bg-orange-50" },
+        { emoji: "⚡", title: "AI creative engine", description: "Dozens of ad variations per week using Gictor's AI actors. You never wait on a production schedule to test a new hook again.", accent: "from-blue-500 to-sky-500", bg: "bg-blue-50" },
         { emoji: "🎛️", title: "Daily account ops", description: "Bid tuning, audience refinement, budget reallocation, and pixel hygiene. We don't wait a week to fix what's broken.", accent: "from-emerald-500 to-teal-500", bg: "bg-emerald-50" },
-        { emoji: "🔁", title: "Creative iteration", description: "Ad fatigue is the silent killer of ROAS. We spin up fresh variations the moment frequency creeps up, so your CPMs stay honest.", accent: "from-rose-500 to-pink-500", bg: "bg-rose-50" },
+        { emoji: "🔁", title: "Creative iteration", description: "Ad fatigue is the silent killer of ROAS. We spin up fresh variations the moment frequency creeps up, so your CPMs stay honest.", accent: "from-sky-500 to-indigo-500", bg: "bg-rose-50" },
         { emoji: "📊", title: "Weekly reporting", description: "Clean, operator-ready reports. What we spent, what we learned, what we're changing next week. No dashboard spaghetti.", accent: "from-purple-500 to-fuchsia-500", bg: "bg-purple-50" },
-        { emoji: "🚀", title: "Scale & protect", description: "When a winner appears, we scale it aggressively while protecting CPA. When a loser appears, we cut it before it drains the budget.", accent: "from-amber-500 to-orange-500", bg: "bg-amber-50" },
+        { emoji: "🚀", title: "Scale & protect", description: "When a winner appears, we scale it aggressively while protecting CPA. When a loser appears, we cut it before it drains the budget.", accent: "from-sky-500 to-blue-500", bg: "bg-sky-50" },
       ]}
       processHeader="Onboarded in a week, optimized every week after."
       process={[

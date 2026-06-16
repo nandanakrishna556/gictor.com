@@ -9,7 +9,7 @@ export default function FeaturesSection() {
       <div className="container-page relative">
         <div className="reveal flex flex-col items-start justify-between gap-6 md:flex-row md:items-end">
           <div className="max-w-2xl">
-            <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-orange-600">Features</div>
+            <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-blue-600">Features</div>
             <h2 className="mt-3 text-4xl font-black tracking-[-0.02em] text-gray-950 md:text-5xl lg:text-6xl">
               Everything to make ads <span className="text-gradient-orange">that convert.</span>
             </h2>
@@ -25,8 +25,8 @@ export default function FeaturesSection() {
         <div className="mt-14 grid gap-4 md:grid-cols-6 md:auto-rows-[minmax(180px,auto)]">
           {/* Big dark hero card */}
           <div className="reveal relative overflow-hidden rounded-3xl bg-gradient-to-br from-gray-900 via-gray-900 to-gray-800 p-7 text-white md:col-span-4 md:row-span-2 md:p-10">
-            <div className="pointer-events-none absolute -right-24 -top-24 h-72 w-72 rounded-full bg-orange-500/30 blur-3xl" />
-            <div className="pointer-events-none absolute -bottom-20 right-1/3 h-56 w-56 rounded-full bg-pink-500/20 blur-3xl" />
+            <div className="pointer-events-none absolute -right-24 -top-24 h-72 w-72 rounded-full bg-blue-500/30 blur-3xl" />
+            <div className="pointer-events-none absolute -bottom-20 right-1/3 h-56 w-56 rounded-full bg-indigo-500/20 blur-3xl" />
             <div className="relative grid gap-8 md:grid-cols-[1fr_auto] md:items-end">
               <div>
                 <span className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1 text-[11.5px] font-semibold backdrop-blur">
@@ -45,7 +45,7 @@ export default function FeaturesSection() {
                     "Unlimited scripts + languages",
                   ].map((b) => (
                     <li key={b} className="flex items-center gap-2 text-[14px] text-gray-300">
-                      <span className="grid h-4 w-4 place-items-center rounded-full bg-orange-500/20 text-orange-400">
+                      <span className="grid h-4 w-4 place-items-center rounded-full bg-blue-500/20 text-blue-400">
                         <Check className="h-3 w-3" />
                       </span>
                       {b}
@@ -56,8 +56,8 @@ export default function FeaturesSection() {
 
               {/* Stacked tilted cards */}
               <div className="relative hidden h-56 w-44 md:block">
-                <div className="absolute right-8 top-2 h-44 w-32 rotate-[-10deg] rounded-2xl bg-gradient-to-br from-rose-400 to-pink-600 shadow-2xl" />
-                <div className="absolute right-2 top-6 h-44 w-32 rotate-[6deg] rounded-2xl bg-gradient-to-br from-orange-400 to-amber-600 shadow-2xl" />
+                <div className="absolute right-8 top-2 h-44 w-32 rotate-[-10deg] rounded-2xl bg-gradient-to-br from-sky-400 to-indigo-600 shadow-2xl" />
+                <div className="absolute right-2 top-6 h-44 w-32 rotate-[6deg] rounded-2xl bg-gradient-to-br from-blue-400 to-sky-600 shadow-2xl" />
                 <div className="absolute right-16 top-10 h-44 w-32 rotate-[-2deg] rounded-2xl bg-gradient-to-br from-violet-500 to-fuchsia-600 shadow-2xl" />
               </div>
             </div>
@@ -66,14 +66,14 @@ export default function FeaturesSection() {
           <BentoCard className="md:col-span-2" Icon={ScanFace} title="Custom AI Actors" desc="Generate hyper-realistic actors tailored to your brand from scratch." />
           <BentoCard className="md:col-span-2" Icon={Mic} title="Realistic Lip-Sync" desc="Precise sync that fools the eye and the ear." />
           <BentoCard
-            className="md:col-span-2 bg-gradient-to-br from-orange-50 to-white border-orange-100"
+            className="md:col-span-2 bg-gradient-to-br from-blue-50 to-white border-blue-100"
             Icon={Globe}
             title="30+ Languages"
             desc="Global audiences with native accents."
             footer={
               <div className="mt-4 flex flex-wrap gap-1.5">
                 {["EN", "ES", "FR", "DE", "PT", "JP", "+24"].map((c) => (
-                  <span key={c} className="rounded-full border border-orange-200 bg-white px-2 py-0.5 text-[11px] font-semibold text-orange-700">{c}</span>
+                  <span key={c} className="rounded-full border border-blue-100 bg-white px-2 py-0.5 text-[11px] font-semibold text-blue-700">{c}</span>
                 ))}
               </div>
             }
@@ -118,7 +118,7 @@ function BentoCard({
 }) {
   return (
     <div className={`reveal hover-lift relative overflow-hidden rounded-3xl border border-gray-100 bg-white p-6 shadow-[0_10px_40px_-20px_rgba(0,0,0,0.08)] ${className}`}>
-      <div className="grid h-10 w-10 place-items-center rounded-xl bg-gradient-to-br from-[#ff8a4c] to-[#e85a1f] text-white">
+      <div className="grid h-10 w-10 place-items-center rounded-xl bg-gradient-to-br from-[#5b8bff] to-[#0040d6] text-white">
         <Icon className="h-5 w-5" />
       </div>
       <h4 className="mt-4 text-lg font-bold tracking-tight text-gray-950">{title}</h4>

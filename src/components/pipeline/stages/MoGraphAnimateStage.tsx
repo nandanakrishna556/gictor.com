@@ -442,7 +442,7 @@ export default function MoGraphAnimateStage({ pipelineId, onComplete }: MoGraphA
                   </div>
                 </div>
                 {!hasRequiredInputs && (
-                  <p className="text-xs text-amber-500">
+                  <p className="text-xs text-sky-500">
                     Both first and last frames are required for motion graphics transitions
                   </p>
                 )}

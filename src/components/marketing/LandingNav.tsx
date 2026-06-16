@@ -68,8 +68,8 @@ export default function LandingNav() {
               <div className="absolute left-1/2 top-full -translate-x-1/2 pt-3">
                 <div className="relative w-[680px] overflow-hidden rounded-[28px] border border-gray-100 bg-white p-4 shadow-2xl">
                   {/* blobs */}
-                  <div className="pointer-events-none absolute -left-20 -top-20 h-56 w-56 rounded-full bg-orange-200/40 blur-[80px]" />
-                  <div className="pointer-events-none absolute -bottom-24 -right-16 h-56 w-56 rounded-full bg-pink-300/25 blur-[80px]" />
+                  <div className="pointer-events-none absolute -left-20 -top-20 h-56 w-56 rounded-full bg-blue-100/40 blur-[80px]" />
+                  <div className="pointer-events-none absolute -bottom-24 -right-16 h-56 w-56 rounded-full bg-indigo-300/25 blur-[80px]" />
 
                   <div className="relative grid gap-4" style={{ gridTemplateColumns: "1fr 240px" }}>
                     {/* Services list */}
@@ -115,9 +115,9 @@ export default function LandingNav() {
 
                     {/* DIY card */}
                     <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-gray-950 via-gray-900 to-gray-950 p-5 text-white">
-                      <div className="pointer-events-none absolute -right-10 -top-10 h-40 w-40 rounded-full bg-orange-500/30 blur-3xl" />
+                      <div className="pointer-events-none absolute -right-10 -top-10 h-40 w-40 rounded-full bg-blue-500/30 blur-3xl" />
                       <div className="relative">
-                        <div className="text-[10px] font-semibold uppercase tracking-[0.16em] text-orange-300">DIY</div>
+                        <div className="text-[10px] font-semibold uppercase tracking-[0.16em] text-blue-300">DIY</div>
                         <h4 className="mt-1 text-[17px] font-bold leading-tight">Want to do it yourself?</h4>
                         <p className="mt-2 text-[12px] leading-relaxed text-gray-300">
                           Spin up your own AI studio in under 60 seconds. Plans from $29/mo.
@@ -125,7 +125,7 @@ export default function LandingNav() {
                         <ul className="mt-3 space-y-1.5">
                           {["No long-term contract", "Credits never expire", "Cancel anytime"].map((b) => (
                             <li key={b} className="flex items-center gap-1.5 text-[11.5px] text-gray-300">
-                              <Check className="h-3 w-3 text-orange-400" /> {b}
+                              <Check className="h-3 w-3 text-blue-400" /> {b}
                             </li>
                           ))}
                         </ul>

@@ -77,12 +77,12 @@ export default function LegalPageLayout(props: LegalPageProps) {
       {/* Hero */}
       <section className="relative overflow-hidden bg-hero-radial pt-32 pb-16">
         <div className="pointer-events-none absolute inset-0 bg-dot-grid bg-grid-fade opacity-40" />
-        <div className="pointer-events-none absolute left-1/2 top-0 h-[400px] w-[600px] -translate-x-1/2 rounded-full bg-orange-200/30 blur-[120px]" />
+        <div className="pointer-events-none absolute left-1/2 top-0 h-[400px] w-[600px] -translate-x-1/2 rounded-full bg-blue-100/30 blur-[120px]" />
         <div className="container-page relative">
           <div className="mx-auto max-w-3xl text-center">
             <div className="inline-flex items-center gap-2 rounded-full border border-gray-200 bg-white/80 px-3.5 py-1.5 text-[12.5px] font-semibold text-gray-700 shadow-sm backdrop-blur">
               <span>{props.eyebrowEmoji}</span> {props.eyebrow}
-              <ScanFace className="h-3.5 w-3.5 text-orange-500" />
+              <ScanFace className="h-3.5 w-3.5 text-blue-500" />
             </div>
             <h1 className="mt-6 text-4xl font-black tracking-[-0.03em] text-gray-950 md:text-6xl">
               {props.title}
@@ -93,7 +93,7 @@ export default function LegalPageLayout(props: LegalPageProps) {
                 Last updated: <span className="font-semibold text-gray-950">{props.lastUpdated}</span>
               </span>
               <span className="rounded-full border border-gray-200 bg-white px-3 py-1 text-[12px] text-gray-600">
-                Questions? <a href={`mailto:${props.contactEmail}`} className="font-semibold text-orange-600 hover:underline">{props.contactEmail}</a>
+                Questions? <a href={`mailto:${props.contactEmail}`} className="font-semibold text-blue-600 hover:underline">{props.contactEmail}</a>
               </span>
             </div>
           </div>
@@ -117,7 +117,7 @@ export default function LegalPageLayout(props: LegalPageProps) {
                         className={cn(
                           "-ml-px block border-l-2 py-1.5 pl-4 text-[13px] transition",
                           active
-                            ? "border-orange-500 font-semibold text-orange-600"
+                            ? "border-blue-500 font-semibold text-blue-600"
                             : "border-transparent text-gray-500 hover:text-gray-950"
                         )}
                       >
@@ -148,7 +148,7 @@ export default function LegalPageLayout(props: LegalPageProps) {
                           return <p key={i} className="mb-4 last:mb-0">{renderInline(b)}</p>;
                         }
                         return (
-                          <ul key={i} className="mb-4 list-disc space-y-1.5 pl-5 marker:text-orange-500">
+                          <ul key={i} className="mb-4 list-disc space-y-1.5 pl-5 marker:text-blue-500">
                             {b.ul.map((item) => (
                               <li key={item}>{renderInline(item)}</li>
                             ))}
@@ -166,7 +166,7 @@ export default function LegalPageLayout(props: LegalPageProps) {
                     <h3 className="text-base font-bold text-gray-950">Still have questions?</h3>
                     <p className="mt-1 text-[14px] text-gray-500">
                       Email us at{" "}
-                      <a href={`mailto:${props.contactEmail}`} className="font-semibold text-orange-600 hover:underline">
+                      <a href={`mailto:${props.contactEmail}`} className="font-semibold text-blue-600 hover:underline">
                         {props.contactEmail}
                       </a>
                       .

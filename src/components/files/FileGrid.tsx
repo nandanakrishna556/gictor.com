@@ -1150,7 +1150,7 @@ function FolderCard({
     <div
       onClick={handleCardClick}
       className={cn(
-        'group relative flex aspect-[2/3] cursor-pointer flex-col rounded-2xl border bg-amber-50/50 transition-colors duration-200 hover:border-primary dark:bg-card dark:border-border/50 overflow-hidden',
+        'group relative flex aspect-[2/3] cursor-pointer flex-col rounded-2xl border bg-sky-50/50 transition-colors duration-200 hover:border-primary dark:bg-card dark:border-border/50 overflow-hidden',
         isDragOver && 'border-primary ring-2 ring-primary/30 shadow-sm',
         isSelected && 'border-primary ring-2 ring-primary/20'
       )}
@@ -1190,7 +1190,7 @@ function FolderCard({
             height="64"
             viewBox="0 0 80 64"
             fill="none"
-            className="text-amber-400 dark:text-amber-500"
+            className="text-sky-400 dark:text-sky-500"
           >
             <path
               d="M4 12C4 7.58172 7.58172 4 12 4H28L34 12H68C72.4183 12 76 15.5817 76 20V52C76 56.4183 72.4183 60 68 60H12C7.58172 60 4 56.4183 4 52V12Z"
@@ -1611,9 +1611,9 @@ function FileCard({
           
           if (iconType === 'lip_sync') {
             return (
-              <div className="absolute inset-0 bg-gradient-to-br from-orange-500/10 to-amber-500/10 flex items-center justify-center">
-                <div className="h-16 w-16 rounded-full bg-orange-500/20 flex items-center justify-center">
-                  <FileTypeIcon fileType="lip_sync" size="lg" className="h-8 w-8 text-orange-500" />
+              <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 to-sky-500/10 flex items-center justify-center">
+                <div className="h-16 w-16 rounded-full bg-blue-500/20 flex items-center justify-center">
+                  <FileTypeIcon fileType="lip_sync" size="lg" className="h-8 w-8 text-blue-500" />
                 </div>
               </div>
             );
@@ -1951,7 +1951,7 @@ function KanbanCard({
       className={cn(
         'group relative flex flex-col rounded-2xl border bg-card overflow-hidden transition-all duration-200 hover:border-primary cursor-pointer',
         isDragging && 'rotate-2 scale-105 shadow-lg',
-        isFolder && 'bg-amber-50/50 dark:bg-card dark:border-border/50',
+        isFolder && 'bg-sky-50/50 dark:bg-card dark:border-border/50',
         isNativeDragOver && 'ring-2 ring-primary ring-offset-2',
         isSelected && 'border-primary ring-2 ring-primary/20'
       )}
@@ -1984,7 +1984,7 @@ function KanbanCard({
                 height="14"
                 viewBox="0 0 80 64"
                 fill="none"
-                className="flex-shrink-0 text-amber-400"
+                className="flex-shrink-0 text-sky-400"
               >
                 <path
                   d="M4 20C4 15.5817 7.58172 12 12 12H68C72.4183 12 76 15.5817 76 20V52C76 56.4183 72.4183 60 68 60H12C7.58172 60 4 56.4183 4 52V20Z"
@@ -2008,7 +2008,7 @@ function KanbanCard({
               height="48"
               viewBox="0 0 80 64"
               fill="none"
-              className="text-amber-400 dark:text-amber-500"
+              className="text-sky-400 dark:text-sky-500"
             >
               <path
                 d="M4 12C4 7.58172 7.58172 4 12 4H28L34 12H68C72.4183 12 76 15.5817 76 20V52C76 56.4183 72.4183 60 68 60H12C7.58172 60 4 56.4183 4 52V12Z"
@@ -2117,9 +2117,9 @@ function KanbanCard({
           
           if (iconType === 'lip_sync') {
             return (
-              <div className="absolute inset-0 bg-gradient-to-br from-orange-500/10 to-amber-500/10 flex items-center justify-center">
-                <div className="h-16 w-16 rounded-full bg-orange-500/20 flex items-center justify-center">
-                  <FileTypeIcon fileType="lip_sync" size="lg" className="h-8 w-8 text-orange-500" />
+              <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 to-sky-500/10 flex items-center justify-center">
+                <div className="h-16 w-16 rounded-full bg-blue-500/20 flex items-center justify-center">
+                  <FileTypeIcon fileType="lip_sync" size="lg" className="h-8 w-8 text-blue-500" />
                 </div>
               </div>
             );

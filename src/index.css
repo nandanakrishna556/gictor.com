@@ -14,8 +14,8 @@
     --popover: 0 0% 100%;
     --popover-foreground: 220 20% 10%;
     
-    /* Warmer Orange Primary - #FF6B2C */
-    --primary: 18 100% 59%;
+    /* Brand Blue Primary - #1E5BFF */
+    --primary: 225 100% 56%;
     --primary-foreground: 0 0% 100%;
     
     /* Neutral secondary */
@@ -41,7 +41,7 @@
     /* Borders and inputs - softer */
     --border: 220 13% 88%;           /* #DCDFE4 */
     --input: 220 13% 88%;
-    --ring: 18 100% 59%;
+    --ring: 225 100% 56%;
     
     /* Border radius - unchanged */
     --radius-lg: 0.75rem;
@@ -52,12 +52,12 @@
     /* Light mode sidebar */
     --sidebar-background: 0 0% 100%;
     --sidebar-foreground: 220 10% 40%;
-    --sidebar-primary: 18 100% 59%;
+    --sidebar-primary: 225 100% 56%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 18 100% 59%;
+    --sidebar-accent: 225 100% 56%;
     --sidebar-accent-foreground: 0 0% 100%;
     --sidebar-border: 220 13% 90%;
-    --sidebar-ring: 18 100% 59%;
+    --sidebar-ring: 225 100% 56%;
     --sidebar-muted: 220 10% 40%;
   }
 
@@ -72,8 +72,8 @@
     --popover: 240 6% 13%;           /* #1E1E24 - slightly elevated */
     --popover-foreground: 0 0% 96%;
     
-    /* Warmer Orange Primary - #FF6B2C */
-    --primary: 18 100% 59%;
+    /* Brand Blue Primary - #1E5BFF */
+    --primary: 225 100% 56%;
     --primary-foreground: 0 0% 100%;
     
     --secondary: 240 5% 17%;         /* #252530 */
@@ -98,17 +98,17 @@
     /* Borders - softer */
     --border: 240 4% 20%;            /* #2E2E36 */
     --input: 240 4% 20%;
-    --ring: 18 100% 59%;
+    --ring: 225 100% 56%;
     
     /* Dark mode sidebar */
     --sidebar-background: 240 10% 6%;
     --sidebar-foreground: 0 0% 96%;
-    --sidebar-primary: 18 100% 59%;
+    --sidebar-primary: 225 100% 56%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 18 100% 59%;
+    --sidebar-accent: 225 100% 56%;
     --sidebar-accent-foreground: 0 0% 100%;
     --sidebar-border: 240 4% 18%;
-    --sidebar-ring: 18 100% 59%;
+    --sidebar-ring: 225 100% 56%;
     --sidebar-muted: 240 5% 58%;
   }
 }
@@ -349,7 +349,7 @@
   .section-pad    { @apply py-20 md:py-28 lg:py-32; }
 
   .text-gradient-orange {
-    background: linear-gradient(135deg, #ff8a4c, #ff6b35 50%, #e85a1f);
+    background: linear-gradient(135deg, #5b8bff, #1e5bff 50%, #0040d6);
     -webkit-background-clip: text;
     background-clip: text;
     color: transparent;
@@ -357,8 +357,8 @@
 
   .bg-hero-radial {
     background:
-      radial-gradient(ellipse 80% 50% at 50% -10%, hsl(18 100% 95% / 0.8), transparent 70%),
-      radial-gradient(ellipse 60% 40% at 85% 20%, hsl(18 100% 90% / 0.4), transparent 60%),
+      radial-gradient(ellipse 80% 50% at 50% -10%, hsl(225 100% 95% / 0.8), transparent 70%),
+      radial-gradient(ellipse 60% 40% at 85% 20%, hsl(225 100% 92% / 0.4), transparent 60%),
       #fff;
   }
 
@@ -374,8 +374,8 @@
 
   .cta-glow {
     box-shadow:
-      0 8px 24px -4px hsl(18 100% 59% / 0.4),
-      0 4px 10px -2px hsl(18 100% 59% / 0.25),
+      0 8px 24px -4px hsl(225 100% 56% / 0.4),
+      0 4px 10px -2px hsl(225 100% 56% / 0.25),
       inset 0 1px 0 rgba(255, 255, 255, 0.25);
   }
 
