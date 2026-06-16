@@ -34,7 +34,7 @@ export default function HeroSection() {
   };
 
   return (
-    <section className="relative overflow-hidden bg-hero-radial pt-32 pb-20 md:pt-40 md:pb-24">
+    <section className="landing-hero relative overflow-hidden bg-hero-radial pt-32 pb-20 md:pt-40 md:pb-24">
       {/* dot grid overlay */}
       <div className="pointer-events-none absolute inset-0 bg-dot-grid bg-grid-fade opacity-50" />
       {/* big orange blob */}

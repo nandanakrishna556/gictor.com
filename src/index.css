@@ -434,4 +434,61 @@
   .landing-root .font-body {
     font-family: 'DM Sans', sans-serif;
   }
+
+  /* Hero keeps its bespoke scale; non-hero sections get a calmer, more harmonious rhythm. */
+  .landing-root section:not(.landing-hero) {
+    /* Body paragraphs: comfortable 16-17px reading size */
+    --body-size: 16.5px;
+    --body-lh: 1.65;
+  }
+  .landing-root section:not(.landing-hero) p {
+    font-size: var(--body-size);
+    line-height: var(--body-lh);
+    letter-spacing: -0.005em;
+  }
+  /* Eyebrow / kicker labels: slightly larger, more refined tracking */
+  .landing-root section:not(.landing-hero) .text-\[11px\],
+  .landing-root section:not(.landing-hero) .text-\[11\.5px\] {
+    font-size: 12.5px !important;
+    letter-spacing: 0.14em !important;
+  }
+  /* Tame section H2s: cap the largest jump and balance weight against Space Grotesk */
+  .landing-root section:not(.landing-hero) h2 {
+    font-weight: 600;
+    line-height: 1.08;
+    letter-spacing: -0.03em;
+  }
+  .landing-root section:not(.landing-hero) h2.text-4xl { font-size: 34px; }
+  @media (min-width: 768px) {
+    .landing-root section:not(.landing-hero) h2.md\:text-5xl { font-size: 44px; }
+  }
+  @media (min-width: 1024px) {
+    .landing-root section:not(.landing-hero) h2.lg\:text-6xl { font-size: 56px; }
+  }
+  /* H3s: tighter scale, lighter weight feels more editorial */
+  .landing-root section:not(.landing-hero) h3 {
+    font-weight: 600;
+    line-height: 1.15;
+    letter-spacing: -0.025em;
+  }
+  .landing-root section:not(.landing-hero) h3.text-3xl { font-size: 26px; }
+  .landing-root section:not(.landing-hero) h3.text-2xl { font-size: 22px; }
+  .landing-root section:not(.landing-hero) h3.text-xl { font-size: 18px; }
+  @media (min-width: 768px) {
+    .landing-root section:not(.landing-hero) h3.md\:text-4xl { font-size: 34px; }
+  }
+  /* H4 (bento titles, feature cards) */
+  .landing-root section:not(.landing-hero) h4 {
+    font-weight: 600;
+    letter-spacing: -0.02em;
+  }
+  .landing-root section:not(.landing-hero) h4.text-lg { font-size: 17px; line-height: 1.3; }
+  /* Card descriptions and small support text: bump up the squishy 14px to 15.5px */
+  .landing-root section:not(.landing-hero) .text-\[14px\],
+  .landing-root section:not(.landing-hero) .text-\[15px\] {
+    font-size: 15.5px !important;
+    line-height: 1.6 !important;
+  }
+  /* Black weight on display headings is heavy in Space Grotesk; map to 700 */
+  .landing-root .font-black { font-weight: 700; }
 }
