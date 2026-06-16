@@ -20,7 +20,7 @@ export default function ComparisonSection() {
       <div className="absolute inset-0 bg-gray-50/60" />
       <div className="container-page relative">
         <div className="reveal mx-auto max-w-2xl text-center">
-          <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-orange-600">⚡ Speed to Market</div>
+          <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-blue-600">⚡ Speed to Market</div>
           <h2 className="mt-3 text-4xl font-black tracking-[-0.02em] text-gray-950 md:text-5xl lg:text-6xl">
             Stop waiting. <span className="text-gradient-orange">Start selling.</span>
           </h2>
@@ -50,12 +50,12 @@ export default function ComparisonSection() {
             <ul className="mt-6 space-y-3">
               {OLD.map((row) => (
                 <li key={row.step} className="flex flex-wrap items-center gap-x-3 gap-y-1.5 rounded-2xl border border-rose-100 bg-rose-50/40 p-3">
-                  <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-rose-100 text-rose-600">
+                  <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-rose-100 text-sky-600">
                     <X className="h-3.5 w-3.5" strokeWidth={3} />
                   </span>
                   <span className="min-w-0 flex-1 text-[14px] text-gray-700">{row.step}</span>
                   <span className="rounded-full bg-white px-2 py-0.5 text-[11px] font-medium text-gray-500">{row.time}</span>
-                  <span className="text-[12.5px] font-semibold text-rose-600">{row.cost}</span>
+                  <span className="text-[12.5px] font-semibold text-sky-600">{row.cost}</span>
                 </li>
               ))}
             </ul>
@@ -73,7 +73,7 @@ export default function ComparisonSection() {
           </div>
 
           {/* Gictor way */}
-          <div className="reveal relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#ff8a4c] via-[#ff6b35] to-[#e85a1f] p-7 text-white shadow-[0_30px_80px_-20px_rgba(255,107,53,0.45)]">
+          <div className="reveal relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#5b8bff] via-[#1e5bff] to-[#0040d6] p-7 text-white shadow-[0_30px_80px_-20px_rgba(255,107,53,0.45)]">
             <div className="pointer-events-none absolute -right-20 -top-20 h-60 w-60 rounded-full bg-white/20 blur-3xl" />
             <div className="relative">
               <div className="flex items-center justify-between">
@@ -87,7 +87,7 @@ export default function ComparisonSection() {
               <ul className="mt-6 space-y-3">
                 {NEW.map((row) => (
                   <li key={row.step} className="flex flex-wrap items-center gap-x-3 gap-y-1.5 rounded-2xl bg-white/15 p-3 backdrop-blur">
-                    <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-white text-orange-600">
+                    <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-white text-blue-600">
                       <Check className="h-3.5 w-3.5" strokeWidth={3} />
                     </span>
                     <span className="min-w-0 flex-1 text-[14px]">{row.step}</span>

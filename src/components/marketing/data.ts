@@ -16,7 +16,7 @@ export const SERVICES: ServiceItem[] = [
     tag: "Long-form",
     description: "Long-form AI hosted videos, fully produced",
     bg: "bg-red-50",
-    accent: "from-red-500 to-rose-600",
+    accent: "from-red-500 to-sky-600",
   },
   {
     label: "Media Buying",
@@ -33,8 +33,8 @@ export const SERVICES: ServiceItem[] = [
     emoji: "⚡",
     tag: "Viral",
     description: "Reels, Shorts, and TikToks at creator volume",
-    bg: "bg-orange-50",
-    accent: "from-orange-500 to-amber-500",
+    bg: "bg-blue-50",
+    accent: "from-blue-500 to-sky-500",
   },
 ];
 

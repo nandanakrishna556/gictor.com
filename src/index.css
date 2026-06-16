@@ -349,7 +349,7 @@
   .section-pad    { @apply py-20 md:py-28 lg:py-32; }
 
   .text-gradient-orange {
-    background: linear-gradient(135deg, #ff8a4c, #ff6b35 50%, #e85a1f);
+    background: linear-gradient(135deg, #5b8bff, #1e5bff 50%, #0040d6);
     -webkit-background-clip: text;
     background-clip: text;
     color: transparent;

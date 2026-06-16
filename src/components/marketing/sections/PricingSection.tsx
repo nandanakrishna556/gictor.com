@@ -9,7 +9,7 @@ export default function PricingSection() {
     <section id="pricing" className="relative bg-white section-pad">
       <div className="container-page">
         <div className="reveal mx-auto max-w-2xl text-center">
-          <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-orange-600">Pricing</div>
+          <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-blue-600">Pricing</div>
           <h2 className="mt-3 text-4xl font-black tracking-[-0.02em] text-gray-950 md:text-5xl lg:text-6xl">
             Simple monthly pricing. <span className="text-gradient-orange">Zero surprises.</span>
           </h2>
@@ -35,8 +35,8 @@ export default function PricingSection() {
               >
                 {popular && (
                   <>
-                    <div className="pointer-events-none absolute -right-20 -top-20 h-56 w-56 rounded-full bg-orange-500/30 blur-3xl" />
-                    <span className="absolute -top-3 left-1/2 inline-flex -translate-x-1/2 items-center gap-1 rounded-full bg-gradient-to-br from-[#ff8a4c] to-[#e85a1f] px-3 py-1 text-[11px] font-bold uppercase tracking-wide text-white shadow-lg">
+                    <div className="pointer-events-none absolute -right-20 -top-20 h-56 w-56 rounded-full bg-blue-500/30 blur-3xl" />
+                    <span className="absolute -top-3 left-1/2 inline-flex -translate-x-1/2 items-center gap-1 rounded-full bg-gradient-to-br from-[#5b8bff] to-[#0040d6] px-3 py-1 text-[11px] font-bold uppercase tracking-wide text-white shadow-lg">
                       <ScanFace className="h-3 w-3" /> Most Popular
                     </span>
                   </>
@@ -52,8 +52,8 @@ export default function PricingSection() {
                   </div>
 
                   {hasBonus && (
-                    <div className={cn("mt-3 flex items-center gap-2 rounded-2xl p-3", popular ? "bg-white/10" : "bg-orange-50")}>
-                      <span className={cn("grid h-8 w-8 place-items-center rounded-lg", popular ? "bg-orange-500/30 text-orange-300" : "bg-orange-100 text-orange-600")}>
+                    <div className={cn("mt-3 flex items-center gap-2 rounded-2xl p-3", popular ? "bg-white/10" : "bg-blue-50")}>
+                      <span className={cn("grid h-8 w-8 place-items-center rounded-lg", popular ? "bg-blue-500/30 text-blue-300" : "bg-blue-100 text-blue-600")}>
                         <Gift className="h-4 w-4" />
                       </span>
                       <div className="text-[12px]">
@@ -68,7 +68,7 @@ export default function PricingSection() {
                     className={cn(
                       "mt-5 inline-flex w-full items-center justify-center gap-1.5 rounded-full px-5 py-3 text-sm font-semibold transition",
                       popular
-                        ? "bg-gradient-to-br from-[#ff8a4c] via-[#ff6b35] to-[#e85a1f] text-white cta-glow"
+                        ? "bg-gradient-to-br from-[#5b8bff] via-[#1e5bff] to-[#0040d6] text-white cta-glow"
                         : "bg-gray-950 text-white hover:bg-gray-800"
                     )}
                   >
@@ -86,7 +86,7 @@ export default function PricingSection() {
                         ...pkg.features,
                       ].map((f) => (
                         <li key={f} className="flex items-start gap-2 text-[13px]">
-                          <span className={cn("mt-0.5 grid h-4 w-4 shrink-0 place-items-center rounded-full", popular ? "bg-orange-500/20 text-orange-300" : "bg-orange-100 text-orange-600")}>
+                          <span className={cn("mt-0.5 grid h-4 w-4 shrink-0 place-items-center rounded-full", popular ? "bg-blue-500/20 text-blue-300" : "bg-blue-100 text-blue-600")}>
                             <Check className="h-2.5 w-2.5" strokeWidth={3} />
                           </span>
                           <span className={cn(popular ? "text-gray-200" : "text-gray-700")}>{f}</span>

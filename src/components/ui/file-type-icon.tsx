@@ -81,7 +81,7 @@ const FILE_TYPE_CONFIG: Record<FileType, { icon: LucideIcon; label: string; colo
   folder: {
     icon: Folder,
     label: 'Folder',
-    color: 'text-amber-500',
+    color: 'text-sky-500',
   },
 };
 

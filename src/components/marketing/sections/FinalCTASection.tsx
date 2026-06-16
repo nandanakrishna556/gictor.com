@@ -5,10 +5,10 @@ export default function FinalCTASection() {
   return (
     <section className="bg-white section-pad">
       <div className="container-page">
-        <div className="reveal noise-overlay relative overflow-hidden rounded-[40px] bg-gradient-to-br from-[#ff8a4c] via-[#ff6b35] to-[#e85a1f] p-10 text-center text-white shadow-[0_40px_120px_-30px_rgba(255,107,53,0.5)] md:p-16 lg:p-20">
+        <div className="reveal noise-overlay relative overflow-hidden rounded-[40px] bg-gradient-to-br from-[#5b8bff] via-[#1e5bff] to-[#0040d6] p-10 text-center text-white shadow-[0_40px_120px_-30px_rgba(255,107,53,0.5)] md:p-16 lg:p-20">
           {/* blobs */}
-          <div className="pointer-events-none absolute -left-24 -top-24 h-72 w-72 rounded-full bg-amber-300/40 blur-3xl" />
-          <div className="pointer-events-none absolute -bottom-24 -right-24 h-72 w-72 rounded-full bg-pink-400/40 blur-3xl" />
+          <div className="pointer-events-none absolute -left-24 -top-24 h-72 w-72 rounded-full bg-sky-300/40 blur-3xl" />
+          <div className="pointer-events-none absolute -bottom-24 -right-24 h-72 w-72 rounded-full bg-indigo-400/40 blur-3xl" />
           {/* grid */}
           <div
             className="pointer-events-none absolute inset-0 opacity-[0.15]"

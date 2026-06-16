@@ -36,7 +36,7 @@ export default function FAQSection() {
     <section id="faq" className="relative bg-white section-pad">
       <div className="container-page">
         <div className="reveal mx-auto max-w-2xl text-center">
-          <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-orange-600">FAQ</div>
+          <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-blue-600">FAQ</div>
           <h2 className="mt-3 text-4xl font-black tracking-[-0.02em] text-gray-950 md:text-5xl lg:text-6xl">
             Got questions? <span className="text-gradient-orange">Got answers.</span>
           </h2>
@@ -53,7 +53,7 @@ export default function FAQSection() {
                 key={f.q}
                 className={cn(
                   "reveal overflow-hidden rounded-2xl border bg-white transition",
-                  isOpen ? "border-orange-200 shadow-[0_10px_30px_-15px_rgba(255,107,44,0.3)]" : "border-gray-100"
+                  isOpen ? "border-blue-100 shadow-[0_10px_30px_-15px_rgba(255,107,44,0.3)]" : "border-gray-100"
                 )}
                 style={{ animationDelay: `${i * 50}ms` }}
               >
@@ -67,7 +67,7 @@ export default function FAQSection() {
                   <Plus
                     className={cn(
                       "h-5 w-5 shrink-0 transition-all duration-300",
-                      isOpen ? "rotate-45 text-orange-500" : "text-gray-400"
+                      isOpen ? "rotate-45 text-blue-500" : "text-gray-400"
                     )}
                   />
                 </button>

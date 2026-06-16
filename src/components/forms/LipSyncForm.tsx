@@ -60,7 +60,7 @@ const CHARS_PER_BLOCK = 120;
 const SECONDS_PER_BLOCK = 8;
 
 const defaultStatusOptions: StatusOption[] = [
-  { value: 'processing', label: 'Processing', color: 'bg-amber-500' },
+  { value: 'processing', label: 'Processing', color: 'bg-sky-500' },
   { value: 'completed', label: 'Completed', color: 'bg-green-500' },
   { value: 'failed', label: 'Failed', color: 'bg-red-500' },
   { value: 'review', label: 'Review', color: 'bg-blue-500' },

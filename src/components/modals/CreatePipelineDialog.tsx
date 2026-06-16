@@ -23,7 +23,7 @@ interface CreatePipelineDialogProps {
 }
 
 const STAGE_COLORS = [
-  'bg-amber-500',
+  'bg-sky-500',
   'bg-blue-500',
   'bg-green-500',
   'bg-purple-500',
@@ -34,7 +34,7 @@ const STAGE_COLORS = [
 ];
 
 const DEFAULT_STAGES: PipelineStage[] = [
-  { id: 'stage-1', name: 'To Do', color: 'bg-amber-500' },
+  { id: 'stage-1', name: 'To Do', color: 'bg-sky-500' },
   { id: 'stage-2', name: 'In Progress', color: 'bg-blue-500' },
   { id: 'stage-3', name: 'Done', color: 'bg-green-500' },
 ];

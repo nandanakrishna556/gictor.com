@@ -65,14 +65,14 @@ export default function ServicePageLayout(props: ServicePageProps) {
       {/* Hero */}
       <section className="relative overflow-hidden bg-hero-radial pt-32 pb-20 md:pt-40">
         <div className="pointer-events-none absolute inset-0 bg-dot-grid bg-grid-fade opacity-50" />
-        <div className="pointer-events-none absolute left-1/2 top-0 h-[500px] w-[700px] -translate-x-1/2 rounded-full bg-orange-200/30 blur-[120px]" />
+        <div className="pointer-events-none absolute left-1/2 top-0 h-[500px] w-[700px] -translate-x-1/2 rounded-full bg-blue-100/30 blur-[120px]" />
 
         <div className="container-page relative">
           <div className="mx-auto max-w-4xl text-center">
             <div className="reveal inline-flex items-center gap-2 rounded-full border border-gray-200 bg-white/80 px-3.5 py-1.5 text-[12.5px] font-semibold text-gray-700 shadow-sm backdrop-blur">
               <span>{props.eyebrowEmoji}</span>
               {props.eyebrow}
-              <ScanFace className="h-3.5 w-3.5 text-orange-500" />
+              <ScanFace className="h-3.5 w-3.5 text-blue-500" />
             </div>
             <h1 className="reveal mt-7 text-[44px] font-black tracking-[-0.03em] text-gray-950 sm:text-6xl md:text-7xl lg:text-[78px]">
               {props.h1Top}
@@ -86,7 +86,7 @@ export default function ServicePageLayout(props: ServicePageProps) {
             <div className="reveal mx-auto mt-7 flex max-w-3xl flex-wrap items-center justify-center gap-2">
               {props.heroBullets.map((b) => (
                 <span key={b} className="inline-flex items-center gap-1.5 rounded-full border border-gray-200 bg-white px-3 py-1.5 text-[12.5px] font-medium text-gray-700">
-                  <Check className="h-3 w-3 text-orange-500" /> {b}
+                  <Check className="h-3 w-3 text-blue-500" /> {b}
                 </span>
               ))}
             </div>
@@ -94,7 +94,7 @@ export default function ServicePageLayout(props: ServicePageProps) {
             <div className="reveal mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
               <Link
                 to="/signup"
-                className="inline-flex items-center gap-2 rounded-full bg-gradient-to-br from-[#ff8a4c] via-[#ff6b35] to-[#e85a1f] px-6 py-3 text-[14.5px] font-semibold text-white cta-glow"
+                className="inline-flex items-center gap-2 rounded-full bg-gradient-to-br from-[#5b8bff] via-[#1e5bff] to-[#0040d6] px-6 py-3 text-[14.5px] font-semibold text-white cta-glow"
               >
                 Start your project <ArrowRight className="h-4 w-4" />
               </Link>
@@ -115,7 +115,7 @@ export default function ServicePageLayout(props: ServicePageProps) {
               <span className="inline-flex items-center gap-1.5 rounded-full border border-gray-200 bg-white/70 px-3 py-1.5 text-[12px] text-gray-700 backdrop-blur">
                 <span className="flex">
                   {[0, 1, 2, 3, 4].map((i) => (
-                    <Star key={i} className="h-3 w-3 fill-orange-500 text-orange-500" />
+                    <Star key={i} className="h-3 w-3 fill-blue-500 text-blue-500" />
                   ))}
                 </span>
                 <span className="font-semibold">4.9</span> from operators
@@ -129,7 +129,7 @@ export default function ServicePageLayout(props: ServicePageProps) {
       <section className="bg-white section-pad">
         <div className="container-page">
           <div className="reveal mx-auto max-w-2xl text-center">
-            <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-orange-600">What you get</div>
+            <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-blue-600">What you get</div>
             <h2 className="mt-3 text-3xl font-black tracking-[-0.02em] text-gray-950 md:text-5xl">
               {props.deliverablesHeader}
             </h2>
@@ -159,7 +159,7 @@ export default function ServicePageLayout(props: ServicePageProps) {
         <div className="absolute inset-0 bg-gray-50/60" />
         <div className="container-page relative">
           <div className="reveal mx-auto max-w-2xl text-center">
-            <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-orange-600">How it works</div>
+            <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-blue-600">How it works</div>
             <h2 className="mt-3 text-3xl font-black tracking-[-0.02em] text-gray-950 md:text-5xl">{props.processHeader}</h2>
           </div>
 
@@ -171,7 +171,7 @@ export default function ServicePageLayout(props: ServicePageProps) {
                 style={{ animationDelay: `${i * 60}ms` }}
               >
                 <div className="flex items-center justify-between gap-2">
-                  <span className="rounded-full bg-orange-50 px-2.5 py-1 text-[11px] font-bold text-orange-700">Step {i + 1}</span>
+                  <span className="rounded-full bg-blue-50 px-2.5 py-1 text-[11px] font-bold text-blue-700">Step {i + 1}</span>
                   <span className="rounded-full bg-gray-100 px-2.5 py-1 text-[11px] font-medium text-gray-600">{p.duration}</span>
                 </div>
                 <div className="mt-5 text-3xl">{p.emoji}</div>
@@ -187,14 +187,14 @@ export default function ServicePageLayout(props: ServicePageProps) {
       <section className="bg-white section-pad">
         <div className="container-page">
           <div className="reveal mx-auto max-w-3xl rounded-3xl border border-gray-100 bg-white p-8 md:p-10 shadow-[0_10px_40px_-20px_rgba(0,0,0,0.08)]">
-            <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-orange-600">Who this is for</div>
+            <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-blue-600">Who this is for</div>
             <h3 className="mt-3 text-2xl font-black tracking-[-0.02em] text-gray-950 md:text-3xl">
               Built for teams that ship, not plan.
             </h3>
             <ul className="mt-6 grid gap-3 sm:grid-cols-2">
               {props.whoItsFor.map((w) => (
                 <li key={w} className="flex items-start gap-2.5 text-[14.5px] text-gray-700">
-                  <span className="mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded-full bg-orange-100 text-orange-600">
+                  <span className="mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded-full bg-blue-100 text-blue-600">
                     <Check className="h-3 w-3" />
                   </span>
                   {w}
@@ -209,9 +209,9 @@ export default function ServicePageLayout(props: ServicePageProps) {
       {/* Final CTA */}
       <section className="bg-white pb-20 md:pb-28">
         <div className="container-page">
-          <div className="reveal noise-overlay relative overflow-hidden rounded-[40px] bg-gradient-to-br from-[#ff8a4c] via-[#ff6b35] to-[#e85a1f] p-10 text-center text-white shadow-[0_40px_120px_-30px_rgba(255,107,53,0.5)] md:p-16">
-            <div className="pointer-events-none absolute -left-24 -top-24 h-72 w-72 rounded-full bg-amber-300/40 blur-3xl" />
-            <div className="pointer-events-none absolute -bottom-24 -right-24 h-72 w-72 rounded-full bg-pink-400/40 blur-3xl" />
+          <div className="reveal noise-overlay relative overflow-hidden rounded-[40px] bg-gradient-to-br from-[#5b8bff] via-[#1e5bff] to-[#0040d6] p-10 text-center text-white shadow-[0_40px_120px_-30px_rgba(255,107,53,0.5)] md:p-16">
+            <div className="pointer-events-none absolute -left-24 -top-24 h-72 w-72 rounded-full bg-sky-300/40 blur-3xl" />
+            <div className="pointer-events-none absolute -bottom-24 -right-24 h-72 w-72 rounded-full bg-indigo-400/40 blur-3xl" />
             <div className="relative mx-auto max-w-3xl">
               <h2 className="text-3xl font-black tracking-[-0.03em] md:text-5xl lg:text-6xl">
                 {props.finalCtaTitle.plain} <span className="italic font-black">{props.finalCtaTitle.italic}</span>

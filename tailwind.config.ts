@@ -104,7 +104,7 @@ export default {
         'card-hover': '0 4px 12px rgba(0, 0, 0, 0.08), 0 2px 4px rgba(0, 0, 0, 0.04)',
         'button': '0 1px 2px rgba(0, 0, 0, 0.05)',
         'button-hover': '0 2px 4px rgba(0, 0, 0, 0.08)',
-        'primary-glow': '0 4px 14px rgba(249, 115, 22, 0.25)',
+        'primary-glow': '0 4px 14px rgba(30, 91, 255, 0.25)',
         'dropdown': '0 4px 16px rgba(0, 0, 0, 0.12)',
       },
       keyframes: {

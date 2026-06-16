@@ -18,12 +18,12 @@ export default function ServiceYouTube() {
       ]}
       deliverablesHeader="Everything for a YouTube ad program, in one engagement."
       deliverables={[
-        { emoji: "✍️", title: "Hook-first scripts", description: "Written by operators who've shipped thousands of ads. We open with the strongest pattern interrupt and test multiple hooks per week.", accent: "from-orange-500 to-amber-500", bg: "bg-orange-50" },
-        { emoji: "🎭", title: "Custom AI hosts", description: "Pick from our library or clone your founder. Natural lip-sync, real expressions, zero uncanny valley. Post in your voice at scale.", accent: "from-rose-500 to-pink-500", bg: "bg-rose-50" },
+        { emoji: "✍️", title: "Hook-first scripts", description: "Written by operators who've shipped thousands of ads. We open with the strongest pattern interrupt and test multiple hooks per week.", accent: "from-blue-500 to-sky-500", bg: "bg-blue-50" },
+        { emoji: "🎭", title: "Custom AI hosts", description: "Pick from our library or clone your founder. Natural lip-sync, real expressions, zero uncanny valley. Post in your voice at scale.", accent: "from-sky-500 to-indigo-500", bg: "bg-rose-50" },
         { emoji: "🎙️", title: "Native voiceovers", description: "30+ languages and accents. Localize the same creative for every market without re-shooting or hiring voice talent.", accent: "from-blue-500 to-indigo-500", bg: "bg-blue-50" },
         { emoji: "🎞️", title: "Full post-production", description: "Clips, motion graphics, kinetic captions, music, and pacing. Every deliverable is upload-ready for YouTube and Shorts.", accent: "from-purple-500 to-fuchsia-500", bg: "bg-purple-50" },
         { emoji: "📊", title: "Performance loop", description: "We review the ad data weekly, cut losers, and scale the winners. Your creative stays fresh without ad fatigue killing ROAS.", accent: "from-emerald-500 to-teal-500", bg: "bg-emerald-50" },
-        { emoji: "🧱", title: "Creative library", description: "Every asset organized and reusable. Winning hooks, backgrounds, clip packs you can remix across campaigns forever.", accent: "from-amber-500 to-orange-500", bg: "bg-amber-50" },
+        { emoji: "🧱", title: "Creative library", description: "Every asset organized and reusable. Winning hooks, backgrounds, clip packs you can remix across campaigns forever.", accent: "from-sky-500 to-blue-500", bg: "bg-sky-50" },
       ]}
       processHeader="From kickoff to live in under 2 weeks."
       process={[

@@ -17,7 +17,7 @@ const TABS = [
       "Ready for TikTok Shop, Meta, and more",
     ],
     metric: { value: "3.2x", label: "average ROAS lift" },
-    gradient: "from-orange-400 via-pink-400 to-rose-500",
+    gradient: "from-blue-400 via-indigo-400 to-sky-500",
   },
   {
     id: "agencies",
@@ -75,7 +75,7 @@ export default function UseCasesSection() {
     <section id="use-cases" className="relative bg-white section-pad">
       <div className="container-page">
         <div className="reveal mx-auto max-w-2xl text-center">
-          <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-orange-600">Use Cases</div>
+          <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-blue-600">Use Cases</div>
           <h2 className="mt-3 text-4xl font-black tracking-[-0.02em] text-gray-950 md:text-5xl lg:text-6xl">
             Built for every <span className="text-gradient-orange">creative team.</span>
           </h2>
@@ -112,7 +112,7 @@ export default function UseCasesSection() {
           <div className="grid gap-0 md:grid-cols-2">
             {/* Left */}
             <div className="p-8 md:p-12">
-              <span className="inline-flex items-center gap-1.5 rounded-full border border-orange-200 bg-orange-50 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-orange-700">
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-blue-100 bg-blue-50 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-blue-700">
                 <ActiveIcon className="h-3 w-3" /> For {tab.label}
               </span>
               <h3 className="mt-5 text-3xl font-black tracking-[-0.02em] text-gray-950 md:text-4xl">{tab.headline}</h3>
@@ -121,7 +121,7 @@ export default function UseCasesSection() {
               <ul className="mt-6 space-y-3">
                 {tab.bullets.map((b) => (
                   <li key={b} className="flex items-start gap-2.5 text-[14.5px] text-gray-700">
-                    <span className="mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded-full bg-orange-100 text-orange-600">
+                    <span className="mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded-full bg-blue-100 text-blue-600">
                       <Check className="h-3 w-3" />
                     </span>
                     {b}
@@ -147,7 +147,7 @@ export default function UseCasesSection() {
             {/* Right - phone mock */}
             <div className="relative grid place-items-center overflow-hidden bg-gradient-to-br from-gray-50 to-gray-100 p-8 md:p-12">
               <div className="pointer-events-none absolute inset-0 bg-dot-grid opacity-40" />
-              <div className="pointer-events-none absolute -right-10 top-10 h-60 w-60 rounded-full bg-orange-200/40 blur-[80px]" />
+              <div className="pointer-events-none absolute -right-10 top-10 h-60 w-60 rounded-full bg-blue-100/40 blur-[80px]" />
 
               <div className="relative">
                 {/* Phone */}

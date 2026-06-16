@@ -45,7 +45,7 @@ const ALL_STATUS_OPTIONS = [
   { value: 'review', label: 'Review', color: 'bg-blue-500' },
   { value: 'approved', label: 'Approved', color: 'bg-emerald-500' },
   { value: 'rejected', label: 'Rejected', color: 'bg-red-500' },
-  { value: 'processing', label: 'Processing', color: 'bg-amber-500' },
+  { value: 'processing', label: 'Processing', color: 'bg-sky-500' },
   { value: 'completed', label: 'Completed', color: 'bg-green-500' },
   { value: 'failed', label: 'Failed', color: 'bg-red-500' },
 ];

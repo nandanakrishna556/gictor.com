@@ -18,9 +18,9 @@ export default function ServiceShortForm() {
       ]}
       deliverablesHeader="Everything you need to run a content machine."
       deliverables={[
-        { emoji: "🔍", title: "Trend research", description: "We track what's breaking on TikTok and Reels in real time. Your content rides the wave instead of showing up two weeks late.", accent: "from-fuchsia-500 to-pink-500", bg: "bg-fuchsia-50" },
-        { emoji: "✍️", title: "Hook-tested scripts", description: "Every post opens with a pattern interrupt. We write 40+ hooks a month and test them against your audience every week.", accent: "from-orange-500 to-amber-500", bg: "bg-orange-50" },
-        { emoji: "🎬", title: "AI creator footage", description: "Cloned or library AI creators deliver your script on camera. Natural pacing, authentic delivery, zero filming required.", accent: "from-rose-500 to-red-500", bg: "bg-rose-50" },
+        { emoji: "🔍", title: "Trend research", description: "We track what's breaking on TikTok and Reels in real time. Your content rides the wave instead of showing up two weeks late.", accent: "from-fuchsia-500 to-indigo-500", bg: "bg-fuchsia-50" },
+        { emoji: "✍️", title: "Hook-tested scripts", description: "Every post opens with a pattern interrupt. We write 40+ hooks a month and test them against your audience every week.", accent: "from-blue-500 to-sky-500", bg: "bg-blue-50" },
+        { emoji: "🎬", title: "AI creator footage", description: "Cloned or library AI creators deliver your script on camera. Natural pacing, authentic delivery, zero filming required.", accent: "from-sky-500 to-red-500", bg: "bg-rose-50" },
         { emoji: "📝", title: "Captions & clips", description: "Kinetic captions, trending sounds, and AI clips that actually match the hook. Post-ready in 9:16 for every platform.", accent: "from-purple-500 to-fuchsia-500", bg: "bg-purple-50" },
         { emoji: "🌍", title: "Multi-platform, multi-language", description: "Same concept, localized for English, Spanish, Portuguese, French, Hindi, and 25 more. Scale one script into 10 markets.", accent: "from-blue-500 to-indigo-500", bg: "bg-blue-50" },
         { emoji: "📈", title: "Content calendar", description: "Everything scheduled, tagged, and ready. You know what posts tomorrow, next week, and next month without chasing your team.", accent: "from-emerald-500 to-teal-500", bg: "bg-emerald-50" },
