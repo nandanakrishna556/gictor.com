@@ -68,7 +68,7 @@ export default function TestimonialsSection() {
           <div className="reveal md:col-span-2">
             <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-blue-600">💬 Loved by operators</div>
             <h2 className="mt-3 text-4xl font-black tracking-[-0.02em] text-gray-950 md:text-5xl">
-              They swapped their creative stack. <span className="text-gradient-orange">You probably should too.</span>
+              They swapped their creative stack. <em className="text-gradient-orange not-italic-reset" style="font-style:italic">You probably should too.</span>
             </h2>
             <p className="mt-5 text-[15.5px] leading-relaxed text-gray-500">
               Operators at DTC brands, agencies, SaaS, and creator studios have already replaced their entire production pipeline with Gictor.

@@ -38,7 +38,7 @@ export default function FAQSection() {
         <div className="reveal mx-auto max-w-2xl text-center">
           <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-blue-600">FAQ</div>
           <h2 className="mt-3 text-4xl font-black tracking-[-0.02em] text-gray-950 md:text-5xl lg:text-6xl">
-            Got questions? <span className="text-gradient-orange">Got answers.</span>
+            Got questions? <em className="text-gradient-orange not-italic-reset" style="font-style:italic">Got answers.</span>
           </h2>
           <p className="mt-4 text-[16px] leading-relaxed text-gray-500">
             Still curious? Drop us a line, we'd love to help.
