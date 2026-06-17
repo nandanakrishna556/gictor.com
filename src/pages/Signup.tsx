@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { ArrowLeft, Mail, CheckCircle2 } from 'lucide-react';
 import { z } from 'zod';
-import logoLight from '@/assets/gictor-logo-light.svg';
+import logoLight from '@/assets/gictor-icon.svg';
 
 const signupSchema = z.object({
   fullName: z.string().trim().min(1, 'Full name is required').max(100, 'Name must be less than 100 characters'),
@@ -143,7 +143,7 @@ export default function Signup() {
           {/* Logo */}
           <div className="mb-8 flex flex-col items-center">
             <Link to="/" className="mb-4">
-              <img src={logoLight} alt="Gictor" className="h-10 w-auto" />
+              <span className="inline-flex items-center gap-2"><img src={logoLight} alt="" aria-hidden="true" className="h-9 w-9" /><span className="text-[22px] font-bold tracking-tight text-foreground">Gictor</span></span>
             </Link>
             <h1 className="text-2xl font-bold text-foreground">Create your account</h1>
             <p className="mt-2 text-base text-muted-foreground">
