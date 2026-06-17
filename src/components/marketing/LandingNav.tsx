@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { ArrowRight, Menu, X, Check, ChevronDown } from "lucide-react";
+import { ArrowRight, Menu, X, Check } from "lucide-react";
 import Logo from "./Logo";
 import { SERVICES } from "./data";
 import { cn } from "@/lib/utils";
@@ -36,32 +36,18 @@ export default function LandingNav() {
     <header
       className={cn(
         "fixed inset-x-0 top-0 z-50 transition-all duration-300",
-        scrolled ? "pt-3" : "pt-0"
+        scrolled ? "bg-white/80 backdrop-blur-xl border-b border-gray-100" : "bg-transparent"
       )}
     >
-      <div
-        className={cn(
-          "mx-auto flex items-center justify-between transition-all duration-300",
-          scrolled
-            ? "container-page max-w-6xl rounded-2xl border border-gray-200/70 bg-white/80 px-4 py-2.5 shadow-[0_10px_40px_-12px_rgba(15,23,42,0.12)] backdrop-blur-xl md:px-5"
-            : "container-page h-16 md:h-[72px]"
-        )}
-      >
+      <div className="container-page flex h-16 items-center justify-between md:h-[72px]">
         <Logo />
 
         {/* Center nav */}
-        <nav
-          className={cn(
-            "absolute left-1/2 hidden -translate-x-1/2 items-center gap-0.5 rounded-full border px-1.5 py-1 transition-all duration-300 md:flex",
-            scrolled
-              ? "border-gray-200/80 bg-gray-50/80 backdrop-blur"
-              : "border-transparent bg-gray-50/0"
-          )}
-        >
+        <nav className="absolute left-1/2 hidden -translate-x-1/2 items-center gap-1 md:flex">
           <Link
             to="/#how-it-works"
             onClick={(e) => handleAnchor(e, "how-it-works")}
-            className="rounded-full px-4 py-1.5 text-[15px] font-medium text-gray-600 transition hover:bg-white hover:text-gray-950 hover:shadow-sm"
+            className="rounded-full px-4 py-2 font-medium text-gray-600 transition hover:text-gray-950 text-base bg-gray-100/0"
           >
             How it works
           </Link>
@@ -73,13 +59,9 @@ export default function LandingNav() {
           >
             <button
               type="button"
-              className={cn(
-                "inline-flex items-center gap-1 rounded-full px-4 py-1.5 text-[15px] font-medium transition hover:bg-white hover:text-gray-950 hover:shadow-sm",
-                servicesOpen ? "bg-white text-gray-950 shadow-sm" : "text-gray-600"
-              )}
+              className="rounded-full px-4 py-2 font-medium text-gray-600 transition hover:text-gray-950 text-base bg-gray-100/0"
             >
               Services
-              <ChevronDown className={cn("h-3.5 w-3.5 transition-transform", servicesOpen && "rotate-180")} />
             </button>
 
             {servicesOpen && (
@@ -164,14 +146,14 @@ export default function LandingNav() {
           <Link
             to="/#pricing"
             onClick={(e) => handleAnchor(e, "pricing")}
-            className="rounded-full px-4 py-1.5 text-[15px] font-medium text-gray-600 transition hover:bg-white hover:text-gray-950 hover:shadow-sm"
+            className="rounded-full px-4 py-2 font-medium text-gray-600 transition hover:text-gray-950 text-base bg-gray-100/0"
           >
             Pricing
           </Link>
           <Link
             to="/#faq"
             onClick={(e) => handleAnchor(e, "faq")}
-            className="rounded-full px-4 py-1.5 text-[15px] font-medium text-gray-600 transition hover:bg-white hover:text-gray-950 hover:shadow-sm"
+            className="rounded-full px-4 py-2 font-medium text-gray-600 transition hover:text-gray-950 text-base bg-gray-100/0"
           >
             FAQ
           </Link>
@@ -181,16 +163,15 @@ export default function LandingNav() {
         <div className="hidden items-center gap-2 md:flex">
           <Link
             to="/login"
-            className="rounded-full px-4 py-2 text-[15px] font-medium text-gray-600 transition hover:text-gray-950"
+            className="rounded-full px-4 py-2 font-medium text-gray-600 transition hover:text-gray-950 text-base"
           >
             Log in
           </Link>
           <Link
             to="/signup"
-            className="group inline-flex items-center gap-1.5 rounded-full bg-gray-950 px-4 py-2 text-[15px] font-semibold text-white shadow-[0_6px_16px_-4px_rgba(15,23,42,0.4)] ring-1 ring-white/10 transition hover:bg-gray-900 hover:shadow-[0_8px_22px_-4px_rgba(15,23,42,0.5)]"
+            className="inline-flex items-center gap-1.5 rounded-full bg-gray-950 px-4 py-2 font-semibold text-white transition hover:bg-gray-800 text-base"
           >
-            Get started
-            <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
+            Get started <ArrowRight className="h-3.5 w-3.5" />
           </Link>
         </div>
 

@@ -13,7 +13,8 @@ import { useTheme } from 'next-themes';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { CARD_DRAG_MIME, cardDragState, type CardDragPayload } from '@/lib/drag-state';
-import logoIcon from '@/assets/gictor-icon.svg';
+import logoDark from '@/assets/gictor-logo-dark.svg';
+import logoLight from '@/assets/gictor-logo-light.svg';
 import { moveItems } from '@/lib/item-move';
 import {
   DropdownMenu,
@@ -138,10 +139,10 @@ export default function AppSidebar() {
   return (
     <aside className="flex h-screen w-60 shrink-0 flex-col bg-sidebar gradient-sidebar border-r border-sidebar-border overflow-hidden">
       {/* Logo */}
-      <Link to="/dashboard" className="flex h-14 items-center gap-2 border-b border-sidebar-border px-4 transition-fast hover:opacity-90">
-        <img src={logoIcon} alt="" aria-hidden="true" className="h-7 w-7 shrink-0" />
-        <span className="text-[17px] font-bold leading-none tracking-[-0.02em] text-sidebar-foreground">Gictor</span>
-      </Link>
+      <div className="flex h-14 items-center border-b border-sidebar-border px-4">
+        <img src={logoLight} alt="Gictor" className="h-7 w-auto block dark:hidden" />
+        <img src={logoDark} alt="Gictor" className="h-7 w-auto hidden dark:block" />
+      </div>
 
       {/* Navigation */}
       <div className="flex-1 overflow-y-auto px-3 py-3 space-y-0.5">
