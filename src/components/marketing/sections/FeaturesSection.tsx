@@ -11,7 +11,7 @@ export default function FeaturesSection() {
           <div className="max-w-2xl">
             <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-blue-600">Features</div>
             <h2 className="mt-3 text-4xl font-black tracking-[-0.02em] text-gray-950 md:text-5xl lg:text-6xl">
-              Everything to make ads <em className="text-gradient-orange">that convert.</em>
+              Everything to make ads <span className="text-gradient-orange">that convert.</span>
             </h2>
           </div>
           <Link
