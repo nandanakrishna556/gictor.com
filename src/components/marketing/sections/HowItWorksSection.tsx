@@ -37,7 +37,7 @@ export default function HowItWorksSection() {
         <div className="reveal mx-auto max-w-2xl text-center">
           <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-blue-600">How it works</div>
           <h2 className="mt-3 text-4xl font-black tracking-[-0.02em] text-gray-950 md:text-5xl lg:text-6xl">
-            Video ads in <em className="text-gradient-orange not-italic-reset" style="font-style:italic">3 steps</span>
+            Video ads in <em className="text-gradient-orange">3 steps</em>
           </h2>
           <p className="mt-4 text-[16px] leading-relaxed text-gray-500">
             From idea to lifelike video. Effortless, fast, unbelievably real.

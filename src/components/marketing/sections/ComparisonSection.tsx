@@ -22,7 +22,7 @@ export default function ComparisonSection() {
         <div className="reveal mx-auto max-w-2xl text-center">
           <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-blue-600">⚡ Speed to Market</div>
           <h2 className="mt-3 text-4xl font-black tracking-[-0.02em] text-gray-950 md:text-5xl lg:text-6xl">
-            Stop waiting. <em className="text-gradient-orange not-italic-reset" style="font-style:italic">Start selling.</span>
+            Stop waiting. <em className="text-gradient-orange">Start selling.</em>
           </h2>
           <p className="mt-4 text-[16px] leading-relaxed text-gray-500">
             Same ad, two paths. See how much time and money you actually save per video.

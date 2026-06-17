@@ -11,7 +11,7 @@ export default function PricingSection() {
         <div className="reveal mx-auto max-w-2xl text-center">
           <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-blue-600">Pricing</div>
           <h2 className="mt-3 text-4xl font-black tracking-[-0.02em] text-gray-950 md:text-5xl lg:text-6xl">
-            Simple monthly pricing. <em className="text-gradient-orange not-italic-reset" style="font-style:italic">Zero surprises.</span>
+            Simple monthly pricing. <em className="text-gradient-orange">Zero surprises.</em>
           </h2>
           <p className="mt-4 text-[16px] leading-relaxed text-gray-500">
             All plans are monthly. Credits roll over and never expire.
