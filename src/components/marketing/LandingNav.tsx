@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { ArrowRight, Menu, X, Check } from "lucide-react";
+import { ArrowRight, Menu, X, Check, ChevronDown } from "lucide-react";
 import Logo from "./Logo";
 import { SERVICES } from "./data";
 import { cn } from "@/lib/utils";
@@ -59,9 +59,10 @@ export default function LandingNav() {
           >
             <button
               type="button"
-              className="rounded-full px-4 py-2 font-medium text-gray-600 transition hover:text-gray-950 text-base bg-gray-100/0"
+              className="inline-flex items-center gap-1 rounded-full px-4 py-2 font-medium text-gray-600 transition hover:text-gray-950 text-base bg-gray-100/0"
             >
               Services
+              <ChevronDown className={cn("h-3.5 w-3.5 transition-transform duration-200", servicesOpen && "rotate-180")} />
             </button>
 
             {servicesOpen && (

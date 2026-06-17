@@ -77,7 +77,7 @@ export default function UseCasesSection() {
         <div className="reveal mx-auto max-w-2xl text-center">
           <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-blue-600">Use Cases</div>
           <h2 className="mt-3 text-4xl font-black tracking-[-0.02em] text-gray-950 md:text-5xl lg:text-6xl">
-            Built for every <span className="text-gradient-orange">creative team.</span>
+            Built for every <em className="text-gradient-orange">creative team.</em>
           </h2>
           <p className="mt-4 text-[16px] leading-relaxed text-gray-500">
             Hundreds of ad creatives in minutes, not weeks. No hiring, no filming.
@@ -138,7 +138,7 @@ export default function UseCasesSection() {
 
               <div className="mt-8 border-t border-gray-100 pt-6">
                 <div className="text-4xl font-black tracking-[-0.02em] text-gray-950 md:text-5xl">
-                  <span className="text-gradient-orange">{tab.metric.value}</span>
+                  <em className="text-gradient-orange">{tab.metric.value}</em>
                 </div>
                 <div className="mt-1 text-[13px] text-gray-500">{tab.metric.label}</div>
               </div>
