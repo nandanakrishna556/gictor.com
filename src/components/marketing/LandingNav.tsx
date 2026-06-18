@@ -1,9 +1,10 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { ArrowRight, Menu, X, Check } from "lucide-react";
+import { ArrowRight, Menu, X, Check, ChevronDown } from "lucide-react";
 import Logo from "./Logo";
 import { SERVICES } from "./data";
 import { cn } from "@/lib/utils";
+
 
 export default function LandingNav() {
   const [scrolled, setScrolled] = useState(false);
