@@ -35,11 +35,19 @@ export default function LandingNav() {
   return (
     <header
       className={cn(
-        "fixed inset-x-0 top-0 z-50 transition-all duration-300",
-        scrolled ? "bg-white/80 backdrop-blur-xl border-b border-gray-100" : "bg-transparent"
+        "fixed inset-x-0 z-50 transition-all duration-300",
+        scrolled ? "top-3" : "top-5"
       )}
     >
-      <div className="container-page flex h-16 items-center justify-between md:h-[72px]">
+      <div
+        className={cn(
+          "mx-auto flex h-14 max-w-6xl items-center justify-between rounded-full px-3 pl-5 transition-all duration-300 md:h-16",
+          scrolled
+            ? "border border-gray-200/70 bg-white/80 shadow-[0_8px_30px_-12px_rgba(15,23,42,0.18)] backdrop-blur-xl"
+            : "border border-gray-200/40 bg-white/50 backdrop-blur-md"
+        )}
+        style={{ width: "calc(100% - 2rem)" }}
+      >
         <Logo />
 
         {/* Center nav */}
@@ -169,9 +177,11 @@ export default function LandingNav() {
           </Link>
           <Link
             to="/signup"
-            className="inline-flex items-center gap-1.5 rounded-full bg-gray-950 px-4 py-2 font-semibold text-white transition hover:bg-gray-800 text-base"
+            className="group relative inline-flex items-center gap-1.5 overflow-hidden rounded-full bg-gray-950 px-5 py-2.5 font-semibold text-white shadow-[0_8px_20px_-8px_rgba(15,23,42,0.6)] transition-all hover:shadow-[0_12px_28px_-8px_rgba(30,91,255,0.55)] text-[15px]"
           >
-            Get started <ArrowRight className="h-3.5 w-3.5" />
+            <span className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/15 to-transparent transition-transform duration-700 group-hover:translate-x-full" />
+            <span className="relative">Get started</span>
+            <ArrowRight className="relative h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
           </Link>
         </div>
 
