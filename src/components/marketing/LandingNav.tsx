@@ -35,11 +35,19 @@ export default function LandingNav() {
   return (
     <header
       className={cn(
-        "fixed inset-x-0 top-0 z-50 transition-all duration-300",
-        scrolled ? "bg-white/80 backdrop-blur-xl border-b border-gray-100" : "bg-transparent"
+        "fixed inset-x-0 z-50 transition-all duration-300",
+        scrolled ? "top-3" : "top-5"
       )}
     >
-      <div className="container-page flex h-16 items-center justify-between md:h-[72px]">
+      <div
+        className={cn(
+          "mx-auto flex h-14 max-w-6xl items-center justify-between rounded-full px-3 pl-5 transition-all duration-300 md:h-16",
+          scrolled
+            ? "border border-gray-200/70 bg-white/80 shadow-[0_8px_30px_-12px_rgba(15,23,42,0.18)] backdrop-blur-xl"
+            : "border border-gray-200/40 bg-white/50 backdrop-blur-md"
+        )}
+        style={{ width: "calc(100% - 2rem)" }}
+      >
         <Logo />
 
         {/* Center nav */}
