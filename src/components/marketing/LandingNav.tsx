@@ -102,117 +102,158 @@ export default function LandingNav() {
           <Link
             to="/#how-it-works"
             onClick={(e) => handleAnchor(e, "how-it-works")}
-            className="rounded-full px-4 py-2 font-medium text-gray-600 transition hover:text-gray-950 text-base bg-gray-100/0"
+            className={linkClass}
           >
             How it works
           </Link>
 
           <div
+            ref={servicesWrapRef}
             className="relative"
-            onMouseEnter={() => setServicesOpen(true)}
-            onMouseLeave={() => setServicesOpen(false)}
+            onMouseEnter={openServices}
+            onMouseLeave={closeServices}
           >
             <button
               type="button"
-              className="rounded-full px-4 py-2 font-medium text-gray-600 transition hover:text-gray-950 text-base bg-gray-100/0"
+              aria-expanded={servicesOpen}
+              aria-haspopup="menu"
+              onClick={() => setServicesOpen((v) => !v)}
+              className={cn(
+                "group/svc relative inline-flex items-center gap-1 rounded-full px-4 py-2 font-medium transition-colors duration-200 text-base",
+                servicesOpen
+                  ? "text-[#1E5BFF] bg-[#1E5BFF]/8"
+                  : "text-gray-600 hover:text-gray-950"
+              )}
             >
               Services
+              <ChevronDown
+                className={cn(
+                  "h-3.5 w-3.5 transition-transform duration-300",
+                  servicesOpen && "rotate-180"
+                )}
+                strokeWidth={2.5}
+              />
             </button>
 
-            {servicesOpen && (
-              <div className="absolute left-1/2 top-full -translate-x-1/2 pt-3">
-                <div className="relative w-[680px] overflow-hidden rounded-[28px] border border-gray-100 bg-white p-4 shadow-2xl">
-                  {/* blobs */}
-                  <div className="pointer-events-none absolute -left-20 -top-20 h-56 w-56 rounded-full bg-blue-100/40 blur-[80px]" />
-                  <div className="pointer-events-none absolute -bottom-24 -right-16 h-56 w-56 rounded-full bg-indigo-300/25 blur-[80px]" />
+            {/* Hover bridge to prevent gap-flicker */}
+            <div
+              className={cn(
+                "absolute left-1/2 top-full h-3 w-[700px] -translate-x-1/2",
+                servicesOpen ? "pointer-events-auto" : "pointer-events-none"
+              )}
+            />
 
-                  <div className="relative grid gap-4" style={{ gridTemplateColumns: "1fr 240px" }}>
-                    {/* Services list */}
-                    <div>
-                      <div className="mb-3 flex items-center gap-2 px-2">
-                        <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-gray-500">
-                          ✨ Done-for-you
-                        </span>
-                        <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold text-emerald-700">
-                          <span className="relative inline-flex h-1.5 w-1.5">
-                            <span className="absolute inset-0 animate-ping rounded-full bg-emerald-500 opacity-75" />
-                            <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-emerald-500" />
-                          </span>
-                          Taking clients
-                        </span>
-                      </div>
+            <div
+              role="menu"
+              className={cn(
+                "absolute left-1/2 top-full z-50 -translate-x-1/2 pt-3 transition-all duration-200 ease-out",
+                servicesOpen
+                  ? "pointer-events-auto translate-y-0 opacity-100"
+                  : "pointer-events-none translate-y-[-6px] opacity-0"
+              )}
+            >
+              <div className="relative w-[680px] overflow-hidden rounded-[28px] border border-gray-100 bg-white p-4 shadow-[0_20px_60px_-20px_rgba(15,23,42,0.25)]">
+                {/* blobs */}
+                <div className="pointer-events-none absolute -left-20 -top-20 h-56 w-56 rounded-full bg-blue-100/40 blur-[80px]" />
+                <div className="pointer-events-none absolute -bottom-24 -right-16 h-56 w-56 rounded-full bg-indigo-300/25 blur-[80px]" />
 
-                      <ul className="space-y-1">
-                        {SERVICES.map((s) => (
-                          <li key={s.href}>
-                            <Link
-                              to={s.href}
-                              className="group flex items-start gap-3 rounded-2xl p-2.5 transition hover:bg-gray-50"
+                <div className="relative grid gap-4" style={{ gridTemplateColumns: "1fr 240px" }}>
+                  {/* Services list */}
+                  <div>
+                    <div className="mb-3 flex items-center gap-2 px-2">
+                      <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-gray-500">
+                        ✨ Done-for-you
+                      </span>
+                      <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold text-emerald-700">
+                        <span className="relative inline-flex h-1.5 w-1.5">
+                          <span className="absolute inset-0 animate-ping rounded-full bg-emerald-500 opacity-75" />
+                          <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                        </span>
+                        Taking clients
+                      </span>
+                    </div>
+
+                    <ul className="space-y-1">
+                      {SERVICES.map((s) => (
+                        <li key={s.href}>
+                          <Link
+                            to={s.href}
+                            onClick={() => setServicesOpen(false)}
+                            className="group flex items-start gap-3 rounded-2xl p-2.5 transition-all duration-200 hover:bg-gray-50 hover:translate-x-0.5"
+                          >
+                            <div
+                              className={cn(
+                                "grid h-11 w-11 shrink-0 place-items-center rounded-xl text-xl transition-transform duration-300 group-hover:scale-110 group-hover:-rotate-3",
+                                s.bg
+                              )}
                             >
-                              <div className={cn("grid h-11 w-11 shrink-0 place-items-center rounded-xl text-xl", s.bg)}>
-                                {s.emoji}
+                              {s.emoji}
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <div className="flex items-center gap-2">
+                                <span className="text-sm font-semibold text-gray-950 transition-colors group-hover:text-[#1E5BFF]">
+                                  {s.label}
+                                </span>
+                                <span className="rounded-full border border-gray-200 bg-white px-1.5 py-0.5 text-[10px] font-medium text-gray-600">
+                                  {s.tag}
+                                </span>
                               </div>
-                              <div className="min-w-0 flex-1">
-                                <div className="flex items-center gap-2">
-                                  <span className="text-sm font-semibold text-gray-950">{s.label}</span>
-                                  <span className="rounded-full border border-gray-200 bg-white px-1.5 py-0.5 text-[10px] font-medium text-gray-600">
-                                    {s.tag}
-                                  </span>
-                                </div>
-                                <p className="mt-0.5 text-[12.5px] leading-snug text-gray-500">{s.description}</p>
-                              </div>
-                              <ArrowRight className="mt-2 h-4 w-4 shrink-0 text-gray-400 transition group-hover:translate-x-0.5 group-hover:text-gray-950" />
-                            </Link>
+                              <p className="mt-0.5 text-[12.5px] leading-snug text-gray-500">{s.description}</p>
+                            </div>
+                            <ArrowRight className="mt-2 h-4 w-4 shrink-0 text-gray-400 transition-all duration-200 group-hover:translate-x-1 group-hover:text-[#1E5BFF]" />
+                          </Link>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+
+                  {/* DIY card */}
+                  <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-gray-950 via-gray-900 to-gray-950 p-5 text-white">
+                    <div className="pointer-events-none absolute -right-10 -top-10 h-40 w-40 rounded-full bg-blue-500/30 blur-3xl" />
+                    <div className="relative">
+                      <div className="text-[10px] font-semibold uppercase tracking-[0.16em] text-blue-300">DIY</div>
+                      <h4 className="mt-1 text-[17px] font-bold leading-tight">Want to do it yourself?</h4>
+                      <p className="mt-2 text-[12px] leading-relaxed text-gray-300">
+                        Spin up your own AI studio in under 60 seconds. Plans from $29/mo.
+                      </p>
+                      <ul className="mt-3 space-y-1.5">
+                        {["No long-term contract", "Credits never expire", "Cancel anytime"].map((b) => (
+                          <li key={b} className="flex items-center gap-1.5 text-[11.5px] text-gray-300">
+                            <Check className="h-3 w-3 text-blue-400" /> {b}
                           </li>
                         ))}
                       </ul>
-                    </div>
-
-                    {/* DIY card */}
-                    <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-gray-950 via-gray-900 to-gray-950 p-5 text-white">
-                      <div className="pointer-events-none absolute -right-10 -top-10 h-40 w-40 rounded-full bg-blue-500/30 blur-3xl" />
-                      <div className="relative">
-                        <div className="text-[10px] font-semibold uppercase tracking-[0.16em] text-blue-300">DIY</div>
-                        <h4 className="mt-1 text-[17px] font-bold leading-tight">Want to do it yourself?</h4>
-                        <p className="mt-2 text-[12px] leading-relaxed text-gray-300">
-                          Spin up your own AI studio in under 60 seconds. Plans from $29/mo.
-                        </p>
-                        <ul className="mt-3 space-y-1.5">
-                          {["No long-term contract", "Credits never expire", "Cancel anytime"].map((b) => (
-                            <li key={b} className="flex items-center gap-1.5 text-[11.5px] text-gray-300">
-                              <Check className="h-3 w-3 text-blue-400" /> {b}
-                            </li>
-                          ))}
-                        </ul>
-                        <Link
-                          to="/signup"
-                          className="mt-4 inline-flex w-full items-center justify-center gap-1.5 rounded-full bg-white px-4 py-2 text-[12.5px] font-semibold text-gray-950 transition hover:bg-gray-100"
-                        >
-                          Get started <ArrowRight className="h-3.5 w-3.5" />
-                        </Link>
-                      </div>
+                      <Link
+                        to="/signup"
+                        onClick={() => setServicesOpen(false)}
+                        className="group/diy mt-4 inline-flex w-full items-center justify-center gap-1.5 rounded-full bg-white px-4 py-2 text-[12.5px] font-semibold text-gray-950 transition hover:bg-gray-100"
+                      >
+                        Get started{" "}
+                        <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover/diy:translate-x-0.5" />
+                      </Link>
                     </div>
                   </div>
                 </div>
               </div>
-            )}
+            </div>
           </div>
 
           <Link
             to="/#pricing"
             onClick={(e) => handleAnchor(e, "pricing")}
-            className="rounded-full px-4 py-2 font-medium text-gray-600 transition hover:text-gray-950 text-base bg-gray-100/0"
+            className={linkClass}
           >
             Pricing
           </Link>
           <Link
             to="/#faq"
             onClick={(e) => handleAnchor(e, "faq")}
-            className="rounded-full px-4 py-2 font-medium text-gray-600 transition hover:text-gray-950 text-base bg-gray-100/0"
+            className={linkClass}
           >
             FAQ
           </Link>
         </nav>
+
 
         {/* Right actions */}
         <div className="hidden items-center gap-2 md:flex">
