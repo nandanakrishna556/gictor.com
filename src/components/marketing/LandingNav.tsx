@@ -11,6 +11,9 @@ export default function LandingNav() {
   const [open, setOpen] = useState(false);
   const [servicesOpen, setServicesOpen] = useState(false);
   const location = useLocation();
+  const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const openTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const servicesWrapRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 8);
@@ -25,6 +28,45 @@ export default function LandingNav() {
     setServicesOpen(false);
   }, [location.pathname]);
 
+  // Outside click + Escape for services dropdown
+  useEffect(() => {
+    if (!servicesOpen) return;
+    const onDocClick = (e: MouseEvent) => {
+      if (!servicesWrapRef.current?.contains(e.target as Node)) setServicesOpen(false);
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setServicesOpen(false);
+    };
+    document.addEventListener("mousedown", onDocClick);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", onDocClick);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [servicesOpen]);
+
+  useEffect(() => () => {
+    if (closeTimerRef.current) clearTimeout(closeTimerRef.current);
+    if (openTimerRef.current) clearTimeout(openTimerRef.current);
+  }, []);
+
+  const openServices = () => {
+    if (closeTimerRef.current) {
+      clearTimeout(closeTimerRef.current);
+      closeTimerRef.current = null;
+    }
+    if (servicesOpen) return;
+    openTimerRef.current = setTimeout(() => setServicesOpen(true), 60);
+  };
+
+  const closeServices = () => {
+    if (openTimerRef.current) {
+      clearTimeout(openTimerRef.current);
+      openTimerRef.current = null;
+    }
+    closeTimerRef.current = setTimeout(() => setServicesOpen(false), 160);
+  };
+
   const handleAnchor = (e: React.MouseEvent, id: string) => {
     if (location.pathname === "/") {
       e.preventDefault();
@@ -32,6 +74,10 @@ export default function LandingNav() {
       el?.scrollIntoView({ behavior: "smooth", block: "start" });
     }
   };
+
+  const linkClass =
+    "relative rounded-full px-4 py-2 font-medium text-gray-600 transition-colors duration-200 hover:text-gray-950 text-base after:absolute after:left-1/2 after:-translate-x-1/2 after:bottom-1 after:h-[2px] after:w-0 after:rounded-full after:bg-[#1E5BFF] after:transition-all after:duration-300 hover:after:w-5";
+
 
   return (
     <header
