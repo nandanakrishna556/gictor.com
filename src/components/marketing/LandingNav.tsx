@@ -177,9 +177,11 @@ export default function LandingNav() {
           </Link>
           <Link
             to="/signup"
-            className="inline-flex items-center gap-1.5 rounded-full bg-gray-950 px-4 py-2 font-semibold text-white transition hover:bg-gray-800 text-base"
+            className="group relative inline-flex items-center gap-1.5 overflow-hidden rounded-full bg-gray-950 px-5 py-2.5 font-semibold text-white shadow-[0_8px_20px_-8px_rgba(15,23,42,0.6)] transition-all hover:shadow-[0_12px_28px_-8px_rgba(30,91,255,0.55)] text-[15px]"
           >
-            Get started <ArrowRight className="h-3.5 w-3.5" />
+            <span className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/15 to-transparent transition-transform duration-700 group-hover:translate-x-full" />
+            <span className="relative">Get started</span>
+            <ArrowRight className="relative h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
           </Link>
         </div>
 
