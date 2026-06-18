@@ -359,20 +359,33 @@ export default function AppSidebar() {
       {/* Bottom Section */}
       <div className="shrink-0 border-t border-sidebar-border px-3 py-3 space-y-0.5">
         {/* Dark Mode Toggle */}
-        <div className="flex items-center justify-between rounded-sm px-3 py-2.5">
-          <div className="flex items-center gap-2.5">
-            {theme === 'dark' ? (
-              <Moon className="h-[18px] w-[18px] text-sidebar-muted" strokeWidth={1.5} />
-            ) : (
-              <Sun className="h-[18px] w-[18px] text-sidebar-muted" strokeWidth={1.5} />
+        <button
+          type="button"
+          onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+          className="flex w-full items-center gap-2 rounded-sm px-3 py-2.5 text-sm font-medium text-sidebar-muted transition-fast hover:bg-sidebar-border/50 hover:text-sidebar-foreground"
+        >
+          {theme === 'dark' ? (
+            <Moon className="h-[18px] w-[18px]" strokeWidth={1.5} />
+          ) : (
+            <Sun className="h-[18px] w-[18px]" strokeWidth={1.5} />
+          )}
+          <span>Dark Mode</span>
+          <span
+            className={cn(
+              'ml-auto inline-flex h-5 w-9 items-center rounded-full border transition-colors',
+              theme === 'dark'
+                ? 'border-primary/40 bg-primary/80'
+                : 'border-sidebar-border bg-sidebar-border/60'
             )}
-            <span className="text-sm text-sidebar-muted">Dark Mode</span>
-          </div>
-          <Switch
-            checked={theme === 'dark'}
-            onCheckedChange={(checked) => setTheme(checked ? 'dark' : 'light')}
-          />
-        </div>
+          >
+            <span
+              className={cn(
+                'h-4 w-4 rounded-full bg-background shadow-sm transition-transform',
+                theme === 'dark' ? 'translate-x-[18px]' : 'translate-x-[2px]'
+              )}
+            />
+          </span>
+        </button>
 
         {/* Settings */}
         <Link
