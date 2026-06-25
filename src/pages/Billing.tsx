@@ -118,8 +118,8 @@ export default function Billing() {
       <div className="flex h-screen flex-col">
         <AppHeader breadcrumbs={[{ label: 'Billing' }]} />
 
-        <div className="flex-1 overflow-y-auto p-6">
-          <div className="mx-auto max-w-5xl">
+        <div className="flex-1 overflow-y-auto px-4 py-6 sm:px-6">
+          <div className="mx-auto max-w-6xl">
             {/* Success Overlay */}
             {showSuccess && (
               <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm animate-fade-in">
@@ -184,15 +184,15 @@ export default function Billing() {
                   </Button>
                 )}
               </div>
-              <h1 className="text-3xl font-bold text-foreground">Select plan</h1>
-              <p className="mt-2 text-muted-foreground">
+              <h1 className="text-3xl font-bold text-foreground sm:text-4xl">Select plan</h1>
+              <p className="mx-auto mt-2 max-w-2xl text-muted-foreground">
                 Choose the best plan for your needs. No hidden fees. Cancel anytime.
               </p>
 
             </div>
 
             {/* Pricing Cards */}
-            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-6">
+            <div className="grid items-stretch gap-6 [grid-template-columns:repeat(auto-fit,minmax(min(100%,21rem),1fr))]">
               {CREDIT_PACKAGES.map((pkg) => {
                 const priceId = pkg.monthlyPriceId;
                 const isCurrentPlan = activePriceId === priceId;
@@ -203,34 +203,37 @@ export default function Billing() {
                   <div
                     key={pkg.name}
                     className={cn(
-                      "relative rounded-2xl p-6 border-2 transition-shadow flex flex-col",
+                      "relative flex min-w-0 flex-col rounded-3xl p-6 transition-shadow",
                       pkg.popular
-                        ? "border-primary shadow-lg ring-1 ring-primary"
-                        : "border-border shadow-sm"
+                        ? "bg-foreground text-background shadow-[0_30px_80px_-20px_hsl(var(--foreground)/0.35)] ring-1 ring-primary/30"
+                        : "border border-border bg-card shadow-sm"
                     )}
                   >
                     {pkg.popular && (
-                      <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-primary text-primary-foreground text-sm font-bold px-4 py-1 rounded-full whitespace-nowrap">
+                      <div className="absolute -top-3 left-1/2 inline-flex -translate-x-1/2 items-center gap-1 rounded-full bg-primary px-3 py-1 text-[11px] font-bold uppercase tracking-wide text-primary-foreground shadow-lg whitespace-nowrap">
+                        <Crown className="h-3 w-3" />
                         Most Popular
                       </div>
                     )}
 
-                    <div className="mb-4">
-                      <h3 className="font-bold text-foreground mb-1 text-2xl">{pkg.name}</h3>
-                      <p className="text-muted-foreground text-base">{pkg.description}</p>
+                    <div className="mb-5">
+                      <h3 className={cn("mb-1 text-xl font-bold tracking-tight", pkg.popular ? "text-background" : "text-foreground")}>{pkg.name}</h3>
+                      <p className={cn("text-sm leading-relaxed", pkg.popular ? "text-background/70" : "text-muted-foreground")}>{pkg.description}</p>
                     </div>
 
-                    <div className="mb-5">
-                      <span className="text-4xl font-bold text-foreground">${pkg.monthlyPrice}</span>
-                      <span className="text-base text-muted-foreground ml-1">per month</span>
+                    <div className="mb-5 flex items-end gap-1.5">
+                      <span className={cn("text-4xl font-black tracking-tight", pkg.popular ? "text-background" : "text-foreground")}>${pkg.monthlyPrice}</span>
+                      <span className={cn("pb-1.5 text-sm", pkg.popular ? "text-background/60" : "text-muted-foreground")}>/month</span>
                     </div>
 
                     <Button
                       className={cn(
-                        "w-full rounded-full py-3 h-auto text-base font-semibold mb-5",
+                        "mb-5 h-auto w-full rounded-full py-3 text-sm font-semibold",
                         isCurrentPlan
                           ? ""
-                          : "bg-primary hover:bg-primary/90 text-primary-foreground"
+                          : pkg.popular
+                          ? "bg-primary text-primary-foreground hover:bg-primary/90"
+                          : "bg-foreground text-background hover:bg-foreground/90"
                       )}
                       variant={isCurrentPlan ? "secondary" : "default"}
                       onClick={() => !isCurrentPlan && handlePurchase(priceId)}
@@ -255,23 +258,29 @@ export default function Billing() {
                     </Button>
 
                     {hasBonus && (
-                      <div className="flex items-start gap-3 rounded-xl bg-primary/10 border border-primary/20 px-4 py-3 mb-5">
-                        <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-primary/20">
-                          <Gift className="h-4 w-4 text-primary" />
+                      <div className={cn(
+                        "mb-5 flex items-start gap-3 rounded-2xl border px-4 py-3",
+                        pkg.popular ? "border-background/10 bg-background/10" : "border-primary/20 bg-primary/10"
+                      )}>
+                        <div className={cn(
+                          "flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg",
+                          pkg.popular ? "bg-primary/25 text-primary" : "bg-primary/20 text-primary"
+                        )}>
+                          <Gift className="h-4 w-4" />
                         </div>
                         <div>
-                          <p className="text-sm font-bold text-primary">
+                          <p className={cn("text-sm font-bold", pkg.popular ? "text-background" : "text-primary")}>
                             +{pkg.bonusCredits} bonus credits/mo
                           </p>
-                          <p className="mt-0.5 text-sm text-muted-foreground">
+                          <p className={cn("mt-0.5 text-sm", pkg.popular ? "text-background/60" : "text-muted-foreground")}>
                             Included every month
                           </p>
                         </div>
                       </div>
                     )}
 
-                    <div className="border-t border-border pt-5 mt-auto">
-                      <p className="text-sm font-bold text-foreground mb-3 uppercase tracking-wide">What's included</p>
+                    <div className={cn("mt-auto border-t pt-5", pkg.popular ? "border-background/10" : "border-border")}>
+                      <p className={cn("mb-3 text-[11px] font-semibold uppercase tracking-wide", pkg.popular ? "text-background/60" : "text-muted-foreground")}>What's included</p>
                       <ul className="space-y-2.5">
                         {[
                           hasBonus
@@ -280,14 +289,14 @@ export default function Billing() {
                           pkg.monthlyVideoTime,
                           ...pkg.features,
                         ].map((feature, j) => (
-                          <li key={j} className="flex items-start gap-3">
+                          <li key={j} className="flex items-start gap-2.5">
                             <div className={cn(
-                              "w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5",
-                              pkg.popular ? "bg-primary/15" : "bg-muted"
+                              "mt-0.5 flex h-4 w-4 flex-shrink-0 items-center justify-center rounded-full",
+                              pkg.popular ? "bg-primary/20" : "bg-primary/10"
                             )}>
-                              <Check className={cn("h-3 w-3", pkg.popular ? "text-primary" : "text-muted-foreground")} />
+                              <Check className="h-2.5 w-2.5 text-primary" strokeWidth={3} />
                             </div>
-                            <span className="text-foreground text-base">{feature}</span>
+                            <span className={cn("text-sm leading-relaxed", pkg.popular ? "text-background/85" : "text-foreground")}>{feature}</span>
                           </li>
                         ))}
                       </ul>
