@@ -149,7 +149,7 @@ export default function Billing() {
 
             {/* Header */}
             <div className="mb-10 text-center">
-              <div className="mb-4 flex items-center justify-center gap-3">
+              <div className="mb-4 flex flex-wrap items-center justify-center gap-3">
                 <div className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-4 py-1.5">
                   <Coins className="h-4 w-4 text-warning" />
                   <span className="text-sm font-medium text-foreground">
@@ -192,7 +192,7 @@ export default function Billing() {
             </div>
 
             {/* Pricing Cards */}
-            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-6">
               {CREDIT_PACKAGES.map((pkg) => {
                 const priceId = pkg.monthlyPriceId;
                 const isCurrentPlan = activePriceId === priceId;
