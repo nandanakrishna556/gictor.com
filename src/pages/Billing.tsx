@@ -192,7 +192,7 @@ export default function Billing() {
             </div>
 
             {/* Pricing Cards */}
-            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-6">
               {CREDIT_PACKAGES.map((pkg) => {
                 const priceId = pkg.monthlyPriceId;
                 const isCurrentPlan = activePriceId === priceId;
