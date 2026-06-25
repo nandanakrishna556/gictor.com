@@ -149,7 +149,7 @@ export default function Billing() {
 
             {/* Header */}
             <div className="mb-10 text-center">
-              <div className="mb-4 flex items-center justify-center gap-3">
+              <div className="mb-4 flex flex-wrap items-center justify-center gap-3">
                 <div className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-4 py-1.5">
                   <Coins className="h-4 w-4 text-warning" />
                   <span className="text-sm font-medium text-foreground">
